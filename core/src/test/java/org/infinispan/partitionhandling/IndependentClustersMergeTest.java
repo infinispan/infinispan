@@ -2,6 +2,8 @@ package org.infinispan.partitionhandling;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.Collections;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.CacheEntry;
@@ -40,10 +42,14 @@ public class IndependentClustersMergeTest extends BasePartitionHandlingTest {
             .partitionHandling().whenSplit(partitionHandling).mergePolicy(mergePolicy)
             .hash().numOwners(numberOfOwners);
 
+      partitions = new Partition[numMembersInCluster];
       for (int i = 0; i < numMembersInCluster; i++) {
          EmbeddedCacheManager cm = addClusterEnabledCacheManager(dcc, new TransportFlags().withFD(true).withMerge(true));
          Cache cache = cm.getCache();
          disableDiscoveryProtocol(channel(cache));
+         Partition p = new Partition(Collections.emptyList());
+         p.addNode(channel(cm));
+         partitions[i] = p;
       }
    }
 
@@ -56,6 +62,7 @@ public class IndependentClustersMergeTest extends BasePartitionHandlingTest {
       c1.put(1, 2);
       enableDiscoveryProtocol(channel(c0));
       enableDiscoveryProtocol(channel(c1));
+      partition(0).merge(partition(1));
       TestingUtil.waitForNoRebalance(c0, c1);
       assertEquals(MERGE_RESULT, c0.get(1));
    }
