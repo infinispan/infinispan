@@ -1,6 +1,7 @@
 package org.infinispan.hibernate.cache.commons;
 
 import static org.infinispan.hibernate.cache.spi.InfinispanProperties.DEF_INFINISPAN_CONFIG_RESOURCE;
+import static org.infinispan.hibernate.cache.spi.InfinispanProperties.INFINISPAN_CLASS_ALLOW_LIST;
 import static org.infinispan.hibernate.cache.spi.InfinispanProperties.INFINISPAN_CONFIG_RESOURCE_PROP;
 import static org.infinispan.hibernate.cache.spi.InfinispanProperties.INFINISPAN_GLOBAL_STATISTICS_PROP;
 
@@ -54,6 +55,11 @@ public class DefaultCacheManagerProvider implements EmbeddedCacheManagerProvider
       String globalStatsProperty = ConfigurationHelper.extractPropertyValue(INFINISPAN_GLOBAL_STATISTICS_PROP, properties);
       if (globalStatsProperty != null) {
          holder.getGlobalConfigurationBuilder().jmx().enabled(Boolean.parseBoolean(globalStatsProperty));
+      }
+
+      String classAllowList = ConfigurationHelper.extractPropertyValue(INFINISPAN_CLASS_ALLOW_LIST, properties);
+      if (classAllowList != null) {
+         holder.getGlobalConfigurationBuilder().serialization().allowList().addRegexp(classAllowList);
       }
       holder.getGlobalConfigurationBuilder().serialization().marshaller(new JBossUserMarshaller());
       return holder;

@@ -1,8 +1,10 @@
 package org.infinispan.jboss.marshalling.core;
 
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.jboss.marshalling.commons.AbstractJBossMarshaller;
+import org.infinispan.jboss.marshalling.commons.CheckedClassResolver;
 import org.infinispan.jboss.marshalling.commons.DefaultContextClassResolver;
 import org.jboss.marshalling.AnnotationClassExternalizerFactory;
 import org.jboss.marshalling.ClassResolver;
@@ -34,6 +36,12 @@ public class JBossUserMarshaller extends AbstractJBossMarshaller {
 
    public void initialize(GlobalComponentRegistry gcr) {
       this.globalCfg = gcr.getGlobalConfiguration();
+   }
+
+   @Override
+   public void initialize(ClassAllowList classAllowList) {
+      ClassLoader cl = globalCfg != null ? globalCfg.classLoader() : Thread.currentThread().getContextClassLoader();
+      classResolver = new CheckedClassResolver(classAllowList, cl);
    }
 
    @Override
