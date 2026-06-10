@@ -459,7 +459,7 @@ jobs:
           - name: 'latest'
             args: '-Dorg.infinispan.test.server.rolling.upgrade.from=latest'
           - name: 'first-version'
-            args: '-Dorg.infinispan.test.server.rolling.upgrade.from=16.0.1'
+            args: '-Dorg.infinispan.test.server.rolling.upgrade.from=16.0.2'
     uses: ./.github/workflows/rolling-upgrade-test.yml
     with:
       name: ${{ matrix.targets.name }}
