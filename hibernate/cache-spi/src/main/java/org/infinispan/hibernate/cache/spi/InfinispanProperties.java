@@ -40,6 +40,11 @@ public interface InfinispanProperties {
    String INFINISPAN_CONFIG_RESOURCE_PROP = "hibernate.cache.infinispan.cfg";
 
    /**
+    * Property name that controls the allow list for classes to be serialized.
+    */
+   String INFINISPAN_CLASS_ALLOW_LIST = "hibernate.cache.infinispan.class_allow_list";
+
+   /**
     * Property name that controls whether Infinispan statistics are enabled.
     * The property value is expected to be a boolean true or false, and it
     * overrides statistic configuration in base Infinispan configuration,
