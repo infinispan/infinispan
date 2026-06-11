@@ -150,6 +150,7 @@ jobs:
             --pinentry-mode loopback --detach-sign --armor repo/yum/x86_64/repodata/repomd.xml
           gpg --batch --yes --passphrase "${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}" \
             --pinentry-mode loopback --detach-sign --armor repo/yum/aarch64/repodata/repomd.xml
+          # shellcheck disable=SC2016
           printf '%s\n' \
             '[infinispan]' \
             'name=Infinispan' \

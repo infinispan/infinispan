@@ -32,16 +32,15 @@ jobs:
           gpg-private-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
 
       - name: Server version
-        run: >
-          echo "SERVER_VERSION=$(mvn -q -Dexec.executable=echo
-          -Dexec.args='${project.version}' --non-recursive exec:exec)"
-          >> $GITHUB_ENV
+        run: |
+          # shellcheck disable=SC2016
+          echo "SERVER_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)" >> "$GITHUB_ENV"
 
       - name: Publish SNAPSHOT to Central
         run: |
           mvn -B -Drelease-mode=upstream -Pdistribution -Pcommunity-release \
           -DskipTests deploy \
-          -Dinfinispan.brand.version=${SERVER_VERSION} \
+          -Dinfinispan.brand.version="${SERVER_VERSION}" \
           -Dmaven.snapshots.repo.id=central \
           -Dmaven.snapshots.repo.url=https://central.sonatype.com/repository/maven-snapshots
         env:
