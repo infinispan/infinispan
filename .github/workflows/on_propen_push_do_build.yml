@@ -88,9 +88,9 @@ jobs:
         uses: ./.github/actions/build-infinispan
 
       - name: Server version
-        run: >
-          mvn -q -Dexec.executable=echo -Dexec.args='-n ${project.version}'
-          --non-recursive exec:exec > server-version.txt
+        run: |
+          # shellcheck disable=SC2016
+          mvn -q -Dexec.executable=echo -Dexec.args='-n ${project.version}' --non-recursive exec:exec > server-version.txt
 
       - name: Archive server version
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
