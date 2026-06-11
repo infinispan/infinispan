@@ -90,12 +90,13 @@ public class TasksResourceTest extends AbstractRestResourceTest {
 
    @Test
    public void testTaskUpload() throws Exception {
+      RestTaskClient adminTaskClient = adminClient.tasks();
       RestTaskClient taskClient = client.tasks();
 
       String script = getResourceAsString("hello.js", getClass().getClassLoader());
       RestEntity scriptEntity = RestEntity.create(TEXT_JAVASCRIPT, script);
 
-      CompletionStage<RestResponse> response = taskClient.uploadScript("hello", scriptEntity);
+      CompletionStage<RestResponse> response = adminTaskClient.uploadScript("hello", scriptEntity);
       ResponseAssertion.assertThat(response).isOk();
 
       response = taskClient.exec("hello", Collections.singletonMap("greetee", "Friend"));
@@ -103,7 +104,7 @@ public class TasksResourceTest extends AbstractRestResourceTest {
       Json jsonNode = Json.read(join(response).body());
       assertEquals("Hello Friend", jsonNode.asString());
 
-      response = taskClient.downloadScript("hello");
+      response = adminTaskClient.downloadScript("hello");
       ResponseAssertion.assertThat(response).isOk();
       assertEquals(script, join(response).body());
    }
