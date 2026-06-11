@@ -8,3 +8,4 @@
 *.mkdn text
 *.md   text
 *.g    text
+.cifuzz-corpus/** binary
