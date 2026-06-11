@@ -35,6 +35,7 @@ import org.infinispan.server.test.core.TestSystemPropertyNames;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jboss.shrinkwrap.api.Archive;
+import org.testcontainers.containers.Network;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.RedisClusterClient;
@@ -372,6 +373,11 @@ public class RollingUpgradeHandler {
          toDriver.containerInfinispanServerDriver.stop(configuration.toVersion().imageLabel());
          toDriver = null;
       }
+
+      // Recreate the shared Docker network to prevent cross-test contamination from stale TCP connections
+      // Note this will cause issues if tests are ran concurrently
+      ContainerInfinispanServerDriver.NETWORK.close();
+      ContainerInfinispanServerDriver.NETWORK = Network.newNetwork();
 
       Util.close(remoteCacheManager);
       Arrays.stream(restClients).forEach(Util::close);
