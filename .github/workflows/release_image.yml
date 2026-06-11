@@ -1,5 +1,8 @@
 name: Release Images
 
+permissions:
+  contents: read
+
 on:
   workflow_call:
     inputs:
@@ -48,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           ref: ${{ inputs.branch }}
 
@@ -59,14 +62,14 @@ jobs:
             TYPE: ${{ inputs.type }}
 
       - name: Log in to Docker Hub
-        uses: redhat-actions/podman-login@v1
+        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           registry: docker.io
 
       - name: Log in to Quay.io
-        uses: redhat-actions/podman-login@v1
+        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
         with:
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_TOKEN }}
@@ -79,7 +82,7 @@ jobs:
 
       - name: Build image
         id: build-image
-        uses: redhat-actions/buildah-build@v2
+        uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
         with:
           build-args: |
             BRAND_VERSION=${{ inputs.version }}
@@ -95,7 +98,7 @@ jobs:
       - name: Push to Docker Hub
         id: push-to-docker
         if: ${{ inputs.push }}
-        uses: redhat-actions/push-to-registry@v2
+        uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
         with:
           registry: docker.io/infinispan
           image: server
@@ -107,7 +110,7 @@ jobs:
       - name: Push to Quay.io
         id: push-to-quay
         if: ${{ inputs.push }}
-        uses: redhat-actions/push-to-registry@v2
+        uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
         with:
           registry: quay.io/infinispan
           image: server

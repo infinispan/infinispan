@@ -4,6 +4,12 @@ on:
    workflow_run:
       workflows: [Build]
       types: [completed]
+
+permissions:
+  contents: read
+  statuses: write
+  actions: read
+
 env:
    IMAGE_NAME: ${{ vars.QUAY_IMAGE_NAME  || 'quay.io/infinispan-test/server' }}
 
@@ -28,7 +34,7 @@ jobs:
         publish-image: ${{ steps.publish-image-info.outputs.publish-image }}
         image-name: ${{ steps.image-name.outputs.image-name }}
      steps:
-        - uses: actions/checkout@v6
+        - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
         - id: workflow-run-info
           uses: ./.github/actions/get-origin-info
@@ -39,7 +45,7 @@ jobs:
 
         - if: ${{ github.event.workflow_run.event == 'pull_request' }}
           name: Get Labels Action
-          uses: snnaplab/get-labels-action@v1.0.1
+          uses: snnaplab/get-labels-action@f426df40304808ace3b5282d4f036515f7609576 # v1.0.1
           with:
             number: ${{ steps.workflow-run-info.outputs.pull-request-number }}
 
@@ -56,7 +62,7 @@ jobs:
 
         - name: set-commit-status
           if: steps.publish-image-info.outputs.publish-image == 'true'
-          uses: myrotvorets/set-commit-status-action@v2.0.1
+          uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # v2.0.1
           with:
               status: pending
               sha: ${{ github.event.workflow_run.head_sha }}
@@ -82,7 +88,7 @@ jobs:
     steps:
       - name: set-commit-status
         if: ${{ needs.publish-image.result == 'success'}}
-        uses: myrotvorets/set-commit-status-action@v2.0.1
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # v2.0.1
         with:
           status: success
           sha: ${{ needs.get-info.outputs.source-head-sha }}
@@ -90,7 +96,7 @@ jobs:
 
       - name: set-commit-status
         if: ${{ needs.publish-image.result != 'success'}}
-        uses: myrotvorets/set-commit-status-action@v2.0.1
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # v2.0.1
         with:
           status: failure
           sha: ${{ needs.get-info.outputs.source-head-sha }}
@@ -100,7 +106,7 @@ jobs:
     needs:
       - get-info
     if: ${{ needs.get-info.outputs.publish-image == 'true' && (github.event.workflow_run.head_branch == '15.2.x' || github.event.workflow_run.head_branch == '15.0.x') }}
-    uses: infinispan/infinispan-images/.github/workflows/publish_image.yml@main
+    uses: infinispan/infinispan-images/.github/workflows/publish_image.yml@fbfc22d69cec42331c552279d14502bc7032a009 # main
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
       quayUser: ${{ secrets.QUAY_USERNAME }}
@@ -120,7 +126,7 @@ jobs:
     steps:
       - name: set-commit-status
         if: ${{ needs.publish-image-legacy.result == 'success'}}
-        uses: myrotvorets/set-commit-status-action@v2.0.1
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # v2.0.1
         with:
           status: success
           sha: ${{ needs.get-info.outputs.source-head-sha }}
@@ -128,7 +134,7 @@ jobs:
 
       - name: set-commit-status
         if: ${{ needs.publish-image-legacy.result != 'success'}}
-        uses: myrotvorets/set-commit-status-action@v2.0.1
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # v2.0.1
         with:
           status: failure
           sha: ${{ needs.get-info.outputs.source-head-sha }}

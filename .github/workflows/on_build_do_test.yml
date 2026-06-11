@@ -31,7 +31,7 @@ jobs:
          source-event: ${{ github.event.workflow_run.event }}
          build-type: ${{ steps.build-type.outputs.build-type }}
       steps:
-         - uses: actions/checkout@v6
+         - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
            with:
              sparse-checkout: |
                .github/
@@ -47,7 +47,7 @@ jobs:
 
          - name: Download build type
            id: download-build-type
-           uses: actions/download-artifact@v8.0.1
+           uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
            continue-on-error: true
            with:
              name: build-type
@@ -75,14 +75,14 @@ jobs:
       MAVEN_OPTS: "-Xmx1500m -XX:+HeapDumpOnOutOfMemoryError"
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           sparse-checkout: |
              .github/
           sparse-checkout-cone-mode: false
           fetch-depth: 1
 
-      - uses: graalvm/setup-graalvm@v1
+      - uses: graalvm/setup-graalvm@bef4b0e916c7dd079bf60fb95d49139f67e32c5f # v1
         with:
           java-version: 25
           distribution: 'graalvm'
@@ -110,7 +110,7 @@ jobs:
           unzip -q "${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip"
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
-      - uses: actions/create-github-app-token@v3
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         id: app-token
         with:
           client-id: ${{ secrets.GH_APP_ISPN_ID }}
@@ -135,7 +135,7 @@ jobs:
           echo "$CHECK_RUN" > check-run-id.txt
 
       - name: Upload Check Run ID
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: check-run-id
           path: check-run-id.txt
@@ -176,7 +176,7 @@ jobs:
 
       # Renewing token since it last for 1 hour and cannot be extended
       # see for more info https://github.com/actions/create-github-app-token/issues/128
-      - uses: actions/create-github-app-token@v3
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         if: always() && failure()
         id: app-token-2
         with:
@@ -208,7 +208,7 @@ jobs:
 
       - name: Upload surefire test report
         if: (success() || failure())
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: surefire-test-report
           path: |
@@ -223,7 +223,7 @@ jobs:
 
       - name: Upload infinispan with coverage execution files
         if: (success() || failure())
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: jacoco-files-main
           path: |
@@ -233,7 +233,7 @@ jobs:
 
       - name: Upload jstack files
         if: (success() || failure())
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: jstack-report
           path: |
@@ -244,7 +244,7 @@ jobs:
       - name: Check flaky report existence
         if: success() || failure()
         id: check_flaky_report
-        uses: andstor/file-existence-action@v3
+        uses: andstor/file-existence-action@558493d6c74bf472d87c84eab196434afc2fa029 # v3
         with:
           files: "test_dir/infinispan/**/target/*-reports*/**/TEST-*FLAKY.xml"
 
@@ -261,7 +261,7 @@ jobs:
 
       - name: Upload flaky test report
         if: (success() || failure()) && steps.check_flaky_report.outputs.files_exists == 'true'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: flaky-test-report
           path: |
@@ -273,7 +273,7 @@ jobs:
 
       - name: Upload log files
         if: (success() || failure())
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: log-files
           compression-level: 9
@@ -298,7 +298,7 @@ jobs:
           - db2
           - tomcat
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Setup Java
         uses: ./.github/actions/setup-java
@@ -326,7 +326,7 @@ jobs:
           unzip -q "${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip"
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
-      - uses: actions/create-github-app-token@v3
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         id: app-token
         with:
             client-id: ${{ secrets.GH_APP_ISPN_ID }}
@@ -351,7 +351,7 @@ jobs:
           echo "$CHECK_RUN" > check-run-id-${{ matrix.targets }}.txt
 
       - name: Upload Check Run ID
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: check-run-id-${{ matrix.targets }}
           path: check-run-id-${{ matrix.targets }}.txt
@@ -425,7 +425,7 @@ jobs:
 
       - name: Upload surefire test report
         if: (success() || failure())
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: surefire-test-report-${{ matrix.targets }}
           path: |
@@ -440,7 +440,7 @@ jobs:
 
       - name: Upload jacoco exec files for db
         if: (success() || failure())
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: jacoco-files-${{ matrix.targets }}
           path: |
@@ -479,7 +479,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       ROLLING_UPGRADE_COVERAGE: 'latest'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Setup Java
         uses: ./.github/actions/setup-java
@@ -512,7 +512,7 @@ jobs:
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
           cp -r infinispan infinispan-rolling-upgrade
 
-      - uses: actions/download-artifact@v8.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: jacoco-files-*
 
@@ -544,7 +544,7 @@ jobs:
 
       - name: Add coverage to PR
         id: jacoco
-        uses: vilmosnagy/jacoco-report@1.8.0
+        uses: vilmosnagy/jacoco-report@4982e687fa89217b469696f8633358606c4f3172 # 1.8.0
         with:
           paths: |
             ${{ github.workspace }}/test_dir/infinispan/jacoco-report/jacoco.xml
@@ -564,7 +564,7 @@ jobs:
 
       - name: Upload jacoco report
         if: (success() || failure())
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: jacocoReport
           path: |
@@ -586,7 +586,7 @@ jobs:
 
       - name: Add rolling upgrade coverage to PR
         id: jacoco-rolling-upgrade
-        uses: vilmosnagy/jacoco-report@1.8.0
+        uses: vilmosnagy/jacoco-report@4982e687fa89217b469696f8633358606c4f3172 # 1.8.0
         with:
           paths: |
             ${{ github.workspace }}/test_dir/infinispan-rolling-upgrade/jacoco-report/jacoco.xml
@@ -600,7 +600,7 @@ jobs:
 
       - name: Upload jacoco report for rolling upgrade
         if: (success() || failure())
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: jacocoReport-rolling-upgrade
           path: |

@@ -6,6 +6,10 @@ on:
       - opened
       - reopened
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   targetlabel:
     if: contains(github.event.pull_request.base.ref, '.')

@@ -23,6 +23,9 @@ on:
             - latest
             - prerelease
 
+permissions:
+  contents: read
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -32,7 +35,7 @@ jobs:
 
     steps:
       - name: Set up Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
         with:
           java-version: '25'
           distribution: 'zulu'
@@ -42,7 +45,7 @@ jobs:
           gpg-private-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
 
       - name: Checkout Source
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           ref: ${{ inputs.branch }}
           token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
@@ -152,7 +155,7 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     steps:
-      - uses: GOSCHEN/http-status-code@v1.1.0
+      - uses: GOSCHEN/http-status-code@944938ed534b092b9f7e1e5c6b08c5d9bbc35162 # v1.1.0
         with:
           url: https://repo1.maven.org/maven2/org/infinispan/infinispan-distribution/${{ needs.release.outputs.version }}/infinispan-distribution-${{ needs.release.outputs.version }}.pom
           code: 200
@@ -186,20 +189,20 @@ jobs:
             gu_binary: gu
             native_extra_args: -Dquarkus.native.native-image-xmx=10g
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - if: ${{ matrix.os == 'windows-2022' }}
         name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v3.0.0
+        uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3.0.0
 
-      - uses: graalvm/setup-graalvm@v1
+      - uses: graalvm/setup-graalvm@bef4b0e916c7dd079bf60fb95d49139f67e32c5f # v1
         with:
           java-version: '25'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout Release Tag
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           ref: ${{ needs.release.outputs.version }}
 
@@ -234,7 +237,7 @@ jobs:
   images-legacy:
     needs: [published, release]
     if: startsWith(needs.release.outputs.version, '15.') || startsWith(needs.release.outputs.version, '14.') || startsWith(needs.release.outputs.version, '13.')
-    uses: infinispan/infinispan-images/.github/workflows/release.yml@main
+    uses: infinispan/infinispan-images/.github/workflows/release.yml@fbfc22d69cec42331c552279d14502bc7032a009 # main
     secrets: inherit
     with:
       branch: main
@@ -245,7 +248,7 @@ jobs:
   operator-main:
     needs: [images, release]
     if: ${{ !contains(needs.release.outputs.version, '.Dev') }}
-    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@main
+    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@1440ba6a16218701d3e06aafc6cd7c0743c5c78f # main
     secrets: inherit
     with:
       image: quay.io/infinispan/server:${{ needs.release.outputs.version }}
@@ -267,7 +270,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Update website release data
-        uses: peter-evans/repository-dispatch@v4
+        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4
         with:
           token: ${{ secrets.API_TOKEN_GITHUB }}
           repository: infinispan/infinispan.github.io
@@ -278,7 +281,7 @@ jobs:
     needs: [published, release]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/create-github-app-token@v3
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
         id: app-token
         with:
             client-id: ${{ secrets.GH_APP_ISPN_ID }}

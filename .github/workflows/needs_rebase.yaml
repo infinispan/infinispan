@@ -8,13 +8,17 @@ on:
     branches:
       - '*.0.x'
       - 'main'
+
+permissions:
+  contents: read
+
 jobs:
   triage:
     permissions:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - uses: eps1lon/actions-label-merge-conflict@releases/2.x
+      - uses: eps1lon/actions-label-merge-conflict@fd1f295ee7443d13745804bc49fe158e240f6c6e # releases/2.x
         with:
           dirtyLabel: "pr/needs rebase"
           repoToken: "${{ secrets.GITHUB_TOKEN }}"

@@ -1,5 +1,8 @@
 name: Snapshot Images
 
+permissions:
+  contents: read
+
 on:
   workflow_call:
     inputs:
@@ -36,7 +39,7 @@ jobs:
 
     steps:
       - name: Download Artifact
-        uses: actions/download-artifact@v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           run-id: '${{ inputs.runId }}'
           name: infinispan-dist
@@ -57,7 +60,7 @@ jobs:
 
       - name: Build image
         id: build-image
-        uses: redhat-actions/buildah-build@v2
+        uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
         with:
           build-args: |
             BRAND_VERSION=${{ inputs.runId }}
@@ -71,7 +74,7 @@ jobs:
           tags: ${{ inputs.tag }}
 
       - name: Log in to Quay.io
-        uses: redhat-actions/podman-login@v1
+        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
         with:
           username: ${{ secrets.QUAY_USERNAME_TEST }}
           password: ${{ secrets.QUAY_TOKEN_TEST }}
@@ -79,7 +82,7 @@ jobs:
 
       - name: Push to Quay.io
         id: push-to-quay
-        uses: redhat-actions/push-to-registry@v2
+        uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
         with:
           registry: quay.io/infinispan-test
           image: server

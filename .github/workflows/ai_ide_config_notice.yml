@@ -1,5 +1,8 @@
 name: AI/IDE/CI Config Change Notice
 
+permissions:
+  contents: read
+
 on:
   pull_request_target:
     types: [opened, synchronize, reopened]
