@@ -5,6 +5,9 @@ on:
     types: [closed]
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   find_targets:
     if: github.event.pull_request.merged == true && github.event.pull_request.labels
@@ -35,7 +38,7 @@ jobs:
 
     steps:
       - name: Backport
-        uses: kiegroup/git-backporting@v4.9.1
+        uses: kiegroup/git-backporting@08da0b07ef2330d189f6074ec8db736b3aa9f465 # v4.9.1
         with:
           target-branch: ${{ matrix.branch }}
           pull-request: ${{ github.event.pull_request.url }}

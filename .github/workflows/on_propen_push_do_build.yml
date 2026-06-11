@@ -7,6 +7,9 @@ on:
       - main
       - '*.x'
 
+permissions:
+  contents: read
+
 concurrency:
   # Cancel jobs same head_branch same repo, works
   # both for pull_request and push
@@ -23,7 +26,7 @@ jobs:
     outputs:
       build-type: ${{ steps.check.outputs.build-type }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
 
@@ -69,7 +72,7 @@ jobs:
           echo -n "$BUILD_TYPE" > build-type.txt
 
       - name: Upload build type
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: build-type
           path: build-type.txt
@@ -79,7 +82,7 @@ jobs:
     if: needs.detect-changes.outputs.build-type == 'full'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Build Infinispan
         uses: ./.github/actions/build-infinispan
@@ -90,7 +93,7 @@ jobs:
           --non-recursive exec:exec > server-version.txt
 
       - name: Archive server version
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: server-version
           path: |
@@ -101,7 +104,7 @@ jobs:
     if: needs.detect-changes.outputs.build-type == 'docs-only'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Setup Java
         uses: ./.github/actions/setup-java

@@ -6,6 +6,9 @@ name: Package CLI Native Installers
 # Expects native CLI ZIP artifacts to already be attached to the
 # GitHub release (uploaded by the native-cli job in release.yml).
 
+permissions:
+  contents: read
+
 on:
   workflow_call:
     inputs:
@@ -31,7 +34,7 @@ jobs:
           - nfpm_arch: arm64
             asset_name: linux-aarch_64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Install nfpm
         run: |
@@ -215,7 +218,7 @@ jobs:
   publish-package-managers:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Download all native CLI artifacts
         run: |
@@ -229,7 +232,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run JReleaser
-        uses: jreleaser/release-action@v2
+        uses: jreleaser/release-action@97b5e2f0e845de2fe1dbbdf451ac6a21233fafff # v2
         with:
           arguments: full-release --basedir . --config-file distribution/src/main/packaging/cli/jreleaser/jreleaser.yml
         env:
@@ -238,7 +241,7 @@ jobs:
 
       - name: Upload JReleaser output on failure
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: jreleaser-output
           path: |
@@ -248,7 +251,7 @@ jobs:
   publish-aur:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           sparse-checkout: distribution/src/main/packaging/cli/aur
 

@@ -7,13 +7,16 @@ on:
     branches:
       - '*.0.x'
 
+permissions:
+  contents: read
+
 jobs:
   remove_backport_branch:
     if: startsWith(github.event.pull_request.head.ref, 'bp-')
     runs-on: ubuntu-latest
     steps:
       - name: Delete PR head branches
-        uses: dawidd6/action-delete-branch@v3
+        uses: dawidd6/action-delete-branch@d1efac9a6f7a9b408d4e8ff663a99c1fbac17b3f # v3
         with:
           github_token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
           numbers: ${{github.event.pull_request.number}}

@@ -4,6 +4,13 @@ on:
    workflow_run:
      workflows: [Test]
      types: [completed]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  actions: read
+
 jobs:
    issueForFlakyTest:
       if: github.event.workflow_run.conclusion == 'success'
@@ -11,7 +18,7 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - name: Checkout
-          uses: actions/checkout@v6
+          uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
         - name: Install xmlstarlet tool
 # xmlstarlet is needed by .github/scripts/track_flaky_tests.sh
@@ -24,7 +31,7 @@ jobs:
 # zip file with flaky test reports and file
 # containing PR target branch
         - name: Download a Build Artifact
-          uses: actions/download-artifact@v8.0.1
+          uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
           id: download-artifact
           with:
              name: flaky-test-report
@@ -45,13 +52,13 @@ jobs:
 
         - name: Get event name
           id: event_name
-          uses: juliangruber/read-file-action@v1
+          uses: juliangruber/read-file-action@271ff311a4947af354c6abcd696a306553b9ec18 # v1
           with:
             path: ./event-name.txt
 
         - name: Get PR number
           id: pr-number
-          uses: juliangruber/read-file-action@v1
+          uses: juliangruber/read-file-action@271ff311a4947af354c6abcd696a306553b9ec18 # v1
           with:
             path: ./pr-number.txt
 

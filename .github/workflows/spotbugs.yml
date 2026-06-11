@@ -13,12 +13,16 @@ on:
       - 'CODEOWNERS'
       - 'documentation/**'
 
+permissions:
+  contents: read
+  checks: write
+
 jobs:
   spotbugs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0    # Need full history to compare base vs head
 
@@ -44,6 +48,6 @@ jobs:
 
       - name: Publish SpotBugs report annotation
         # Using a fork since the original action tries to create/update check-run, which is no more allowed
-        uses: rigazilla/spotbugs-github-action@annotations
+        uses: rigazilla/spotbugs-github-action@b5af0f7e19908102974a09af06e381945f46efaf # annotations
         with:
           path: '**/target/spotbugsXml.xml'
