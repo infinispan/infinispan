@@ -97,6 +97,11 @@
          <artifactId>assertj-core</artifactId>
       </dependency>
       <dependency>
+         <groupId>com.code-intelligence</groupId>
+         <artifactId>jazzer-junit</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-testing</artifactId>
          <scope>test</scope>

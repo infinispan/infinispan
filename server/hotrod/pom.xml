@@ -68,6 +68,11 @@
          <scope>test</scope>
       </dependency>
       <dependency>
+         <groupId>com.code-intelligence</groupId>
+         <artifactId>jazzer-junit</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>org.wildfly.security</groupId>
          <artifactId>wildfly-elytron-auth-server-sasl</artifactId>
          <scope>test</scope>
