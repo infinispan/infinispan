@@ -12,6 +12,13 @@
 
    <fileSets>
       <fileSet>
+         <directory>target</directory>
+         <outputDirectory/>
+         <includes>
+            <include>bom.json</include>
+         </includes>
+      </fileSet>
+      <fileSet>
          <directory>target/classes</directory>
          <outputDirectory />
          <includes>

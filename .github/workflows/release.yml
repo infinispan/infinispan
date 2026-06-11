@@ -26,6 +26,10 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     outputs:
       version: ${{ steps.resolve-versions.outputs.RELEASE_VERSION }}
       nextVersion: ${{ steps.resolve-versions.outputs.NEXT_VERSION }}
@@ -147,6 +151,23 @@ jobs:
           gh release upload ${{ steps.resolve-versions.outputs.RELEASE_VERSION }} distribution/target/distribution/infinispan-server-${{ steps.resolve-versions.outputs.RELEASE_VERSION }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+
+      - name: Attach SBOM
+        run: |
+          gh release upload ${{ steps.resolve-versions.outputs.RELEASE_VERSION }} "distribution/target/bom.json#infinispan-sbom-${{ steps.resolve-versions.outputs.RELEASE_VERSION }}.cdx.json"
+        env:
+          GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+
+      - name: Attest server distribution provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: distribution/target/distribution/infinispan-server-${{ steps.resolve-versions.outputs.RELEASE_VERSION }}.zip
+
+      - name: Attest SBOM
+        uses: actions/attest-sbom@v2
+        with:
+          subject-path: distribution/target/distribution/infinispan-server-${{ steps.resolve-versions.outputs.RELEASE_VERSION }}.zip
+          sbom-path: distribution/target/bom.json
 
   published:
     needs: release
