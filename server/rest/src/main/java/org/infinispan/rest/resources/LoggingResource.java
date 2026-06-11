@@ -24,6 +24,8 @@ import org.infinispan.rest.framework.RestRequest;
 import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
+import org.infinispan.security.AuditContext;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.manager.TaskManager;
 
@@ -45,11 +47,21 @@ public final class LoggingResource implements ResourceHandler {
    @Override
    public Invocations getInvocations() {
       return new Invocations.Builder("logging", "REST resource to manage logging.")
-            .invocation().methods(GET).path("/v2/logging/loggers").handleWith(this::listLoggers)
-            .invocation().methods(GET).path("/v2/logging/appenders").handleWith(this::listAppenders)
-            .invocation().methods(DELETE).path("/v2/logging/loggers/{loggerName}").handleWith(this::deleteLogger)
-            .invocation().methods(PUT).path("/v2/logging/loggers/{loggerName}").handleWith(this::setLogger)
-            .invocation().methods(PUT).path("/v2/logging/loggers").handleWith(this::setLogger)
+            .invocation().methods(GET).path("/v2/logging/loggers")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
+               .handleWith(this::listLoggers)
+            .invocation().methods(GET).path("/v2/logging/appenders")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
+               .handleWith(this::listAppenders)
+            .invocation().methods(DELETE).path("/v2/logging/loggers/{loggerName}")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
+               .handleWith(this::deleteLogger)
+            .invocation().methods(PUT).path("/v2/logging/loggers/{loggerName}")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
+               .handleWith(this::setLogger)
+            .invocation().methods(PUT).path("/v2/logging/loggers")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
+               .handleWith(this::setLogger)
             .create();
    }
 

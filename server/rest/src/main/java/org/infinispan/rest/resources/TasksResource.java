@@ -26,6 +26,8 @@ import org.infinispan.rest.framework.RestResponse;
 import org.infinispan.rest.framework.impl.Invocations;
 import org.infinispan.rest.logging.Log;
 import org.infinispan.scripting.ScriptingManager;
+import org.infinispan.security.AuditContext;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.tasks.TaskContext;
@@ -45,9 +47,15 @@ public class TasksResource implements ResourceHandler {
    public Invocations getInvocations() {
       return new Invocations.Builder("tasks", "REST endpoint to manage tasks.")
             .invocation().methods(GET).path("/v2/tasks/").handleWith(this::listTasks)
-            .invocation().methods(PUT, POST).path("/v2/tasks/{taskName}").handleWith(this::createScriptTask)
-            .invocation().methods(POST).path("/v2/tasks/{taskName}").withAction("exec").handleWith(this::runTask)
-            .invocation().methods(GET).path("/v2/tasks/{taskName}").withAction("script").handleWith(this::getScript)
+            .invocation().methods(PUT, POST).path("/v2/tasks/{taskName}")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
+               .handleWith(this::createScriptTask)
+            .invocation().methods(POST).path("/v2/tasks/{taskName}").withAction("exec")
+               .permission(AuthorizationPermission.EXEC).auditContext(AuditContext.SERVER)
+               .handleWith(this::runTask)
+            .invocation().methods(GET).path("/v2/tasks/{taskName}").withAction("script")
+               .permission(AuthorizationPermission.ADMIN).auditContext(AuditContext.SERVER)
+               .handleWith(this::getScript)
             .create();
    }
 
