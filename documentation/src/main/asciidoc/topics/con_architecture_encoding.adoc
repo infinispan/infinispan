@@ -1,0 +1,213 @@
+[id="architecture-encoding_{context}"]
+= Encoding and media types
+
+{brandname} stores cache entries in a configurable binary format and converts between formats on the fly.
+This encoding layer enables multiple protocols (Hot Rod, REST, RESP) to access the same cache using different data formats, and allows queries to index data regardless of how it was written.
+
+== Storage and request formats
+
+Every cache has a configured _storage media type_ that determines how keys and values are stored internally.
+When a client reads or writes data, it specifies a _request media type_ that may differ from the storage format.
+{brandname} automatically converts between the two using transcoders.
+
+[plantuml, target=architecture-encoding-flow, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+rectangle "REST Client\n(JSON)" as REST
+rectangle "Hot Rod Client\n(Protobuf)" as HR
+rectangle "Embedded API\n(Java Object)" as EMB
+
+rectangle "DataConversion" as DC {
+  rectangle "Transcoder" as T
+}
+
+database "Data Container\n(storage format:\napplication/x-protostream)" as Store
+
+REST --> DC : JSON
+HR --> DC : Protobuf
+EMB --> DC : Java Object
+DC --> Store : Protobuf\n(storage format)
+Store --> DC : Protobuf
+DC --> REST : JSON
+DC --> HR : Protobuf\n(no conversion needed)
+DC --> EMB : Java Object
+@enduml
+....
+
+Keys and values can have different storage media types, configured independently:
+
+[source,xml]
+----
+<encoding>
+  <key media-type="application/x-protostream"/>
+  <value media-type="application/x-protostream"/>
+</encoding>
+----
+
+The most common storage formats are:
+
+`application/x-protostream`::
+Protocol Buffers format.
+This is the default for server-mode caches and the recommended format because it supports querying, language-independent clients, and schema evolution.
+
+`application/x-java-object`::
+Raw Java objects stored by reference.
+This is the default for embedded-mode caches.
+Entries are not serialized for storage but must be marshalled when sent over the network.
+
+`application/octet-stream`::
+Raw byte arrays.
+Used when the application manages its own serialization.
+
+== Transcoders
+
+A `Transcoder` converts data between two or more media types.
+Transcoders are registered in the `EncoderRegistry` and looked up by (source, target) media type pair.
+
+[plantuml, target=architecture-transcoder-registry, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+interface Transcoder {
+  +transcode(content, from, to): Object
+  +getSupportedMediaTypes(): Set
+  +supportsConversion(from, to): boolean
+}
+
+class ProtostreamTranscoder implements Transcoder {
+  Protobuf ↔ JSON
+  Protobuf ↔ Java Object
+  Protobuf ↔ Octet Stream
+  Protobuf ↔ Text
+}
+
+class JavaSerializationTranscoder implements Transcoder {
+  Java Serialization ↔
+  Java Object
+}
+
+class BinaryTranscoder implements Transcoder {
+  User marshaller format ↔
+  Java Object
+}
+
+class TwoStepTranscoder implements Transcoder {
+  Chains two transcoders
+  through Java Object
+  as intermediate format.
+}
+
+class EncoderRegistry {
+  -transcoders: List<Transcoder>
+  -transcoderCache: Map
+  +getTranscoder(from, to): Transcoder
+  +isConversionSupported(from, to): boolean
+  +registerTranscoder(t)
+}
+
+EncoderRegistry --> "*" Transcoder : manages
+@enduml
+....
+
+When no direct transcoder exists for a (source, target) pair, the registry automatically creates a `TwoStepTranscoder` that bridges through `application/x-java-object` as an intermediate format.
+For example, converting from `application/json` to `application/octet-stream` would go: JSON -> Java Object -> byte[].
+
+== DataConversion
+
+`DataConversion` is the per-cache component that ties together the request format, storage format, and transcoder lookup.
+Each cache holds two `DataConversion` instances: one for keys and one for values.
+
+[plantuml, target=architecture-data-conversion, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "Client" as C
+participant "EncoderCache" as EC
+participant "DataConversion\n(value)" as DC
+participant "Transcoder" as T
+participant "Wrapper" as W
+participant "Data Container" as Store
+
+== Write Path ==
+
+C -> EC: put(key, jsonValue)
+EC -> DC: toStorage(jsonValue)
+activate DC
+DC -> T: transcode(jsonValue,\nJSON → PROTOSTREAM)
+T --> DC: protobufBytes
+DC -> W: wrap(protobufBytes)
+W --> DC: WrappedByteArray
+DC --> EC: WrappedByteArray
+deactivate DC
+EC -> Store: store(wrappedKey, WrappedByteArray)
+
+== Read Path ==
+
+C -> EC: get(key)
+EC -> Store: load(wrappedKey)
+Store --> EC: WrappedByteArray
+EC -> DC: fromStorage(WrappedByteArray)
+activate DC
+DC -> W: unwrap(WrappedByteArray)
+W --> DC: protobufBytes
+DC -> T: transcode(protobufBytes,\nPROTOSTREAM → JSON)
+T --> DC: jsonValue
+DC --> EC: jsonValue
+deactivate DC
+EC --> C: jsonValue
+@enduml
+....
+
+On writes, `toStorage()` transcodes the client's data to the storage format and wraps it.
+On reads, `fromStorage()` unwraps and transcodes back to the client's requested format.
+
+== Server format negotiation
+
+When a client connects via Hot Rod or REST, it can specify the desired data format.
+The server creates an `EncoderCache` wrapper with `DataConversion` instances configured for the client's requested media types.
+
+[plantuml, target=architecture-format-negotiation, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+participant "REST Client" as RC
+participant "REST Endpoint" as RE
+participant "EncoderRegistry" as ER
+participant "EncoderCache" as EC
+participant "CacheImpl" as CI
+
+RC -> RE: GET /cache/key\nAccept: application/json
+
+RE -> ER: isConversionSupported(\nPROTOSTREAM → JSON)?
+ER --> RE: true
+
+RE -> CI: withMediaType(\nkey=TEXT_PLAIN,\nvalue=JSON)
+CI --> RE: EncoderCache
+
+RE -> EC: get(key)
+note right
+  EncoderCache converts
+  PROTOSTREAM → JSON
+  transparently
+end note
+EC --> RE: JSON value
+
+RE --> RC: 200 OK\nContent-Type: application/json
+@enduml
+....
+
+The `AdvancedCache.withMediaType()` method creates an `EncoderCache` that wraps the original cache with the client's requested media types.
+All subsequent operations through this wrapper automatically convert between the request format and storage format.
+
+This means the same cache can be written to via Hot Rod in Protobuf format, read via REST as JSON, and queried via the Ickle engine — all with automatic format conversion.

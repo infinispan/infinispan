@@ -1,0 +1,130 @@
+[id="architecture-server_{context}"]
+= Server architecture
+
+The {brandname} Server wraps an embedded cache manager and exposes it through multiple network protocols.
+It is built on Netty for high-performance, non-blocking I/O.
+
+== Server components
+
+[plantuml, target=architecture-server-overview, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam packageStyle frame
+
+package "Infinispan Server" {
+  [Server Bootstrap] as Boot
+
+  package "Protocol Endpoints" {
+    [Hot Rod\nEndpoint] as HR
+    [REST\nEndpoint] as REST
+    [RESP\nEndpoint] as RESP
+    [Memcached\nEndpoint] as MC
+  }
+
+  package "Netty Transport" {
+    [Event Loop Group] as ELG
+    [Channel Pipeline] as CP
+  }
+
+  package "Security" {
+    [SASL Authentication] as SASL
+    [SSL/TLS] as SSL
+    [Authorization] as Auth
+  }
+
+  [EmbeddedCacheManager] as ECM
+  [Server Configuration] as SCfg
+}
+
+Boot --> SCfg : reads
+Boot --> ECM : creates
+Boot --> HR : starts
+Boot --> REST : starts
+Boot --> RESP : starts
+Boot --> MC : starts
+
+HR --> CP : registers handlers
+REST --> CP : registers handlers
+RESP --> CP : registers handlers
+MC --> CP : registers handlers
+
+CP --> ELG : I/O events
+
+HR --> SASL : authenticates
+HR --> Auth : authorizes
+REST --> SSL : TLS termination
+REST --> Auth : authorizes
+
+HR --> ECM : cache operations
+REST --> ECM : cache operations
+RESP --> ECM : cache operations
+MC --> ECM : cache operations
+@enduml
+....
+
+== Protocol endpoints
+
+Hot Rod::
+Binary protocol optimized for performance.
+Supports topology-aware clients that can route requests directly to primary owners, avoiding extra network hops.
+Features include near-caching, event listeners, and query.
+
+REST::
+HTTP-based endpoint for language-agnostic access.
+Supports JSON, XML, and binary encodings.
+Provides management operations (cache creation, cluster status, metrics) in addition to data access.
+
+RESP::
+Redis-compatible protocol endpoint.
+Allows Redis clients and tools to connect to {brandname} without modification.
+
+Memcached::
+Text and binary Memcached protocol support.
+Enables drop-in replacement for Memcached deployments.
+
+== Request processing
+
+[plantuml, target=architecture-server-request, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+participant "Client" as C
+participant "Netty\nChannel" as NC
+participant "Protocol\nDecoder" as PD
+participant "Security\nHandler" as SH
+participant "Request\nHandler" as RH
+participant "Embedded\nCacheManager" as ECM
+participant "Cache" as Cache
+
+C -> NC: TCP connection
+NC -> PD: decode bytes
+PD -> PD: parse protocol message
+PD -> SH: authenticate / authorize
+SH -> RH: dispatch request
+RH -> ECM: getCache(name)
+ECM --> RH: Cache instance
+RH -> Cache: cache.put(key, value)
+Cache --> RH: result
+RH -> PD: encode response
+PD -> NC: write bytes
+NC -> C: TCP response
+@enduml
+....
+
+All protocol endpoints share the same underlying `EmbeddedCacheManager`.
+This means a cache created via Hot Rod is accessible via REST and vice versa, with automatic media type conversion between encodings.
+
+== Single-port design
+
+{brandname} Server multiplexes all protocols on a single TCP port (default 11222).
+The server inspects the first bytes of each connection to detect the protocol:
+
+* Hot Rod connections start with a specific magic byte (`0xA0`).
+* HTTP connections start with an HTTP method (`GET`, `POST`, etc.).
+* RESP connections start with Redis protocol markers.
+
+This simplifies deployment and firewall configuration.

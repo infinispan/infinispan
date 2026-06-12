@@ -53,6 +53,12 @@ Use Infinispan caching capabilities to boost application performance with a faul
 * link:titles/mcp_server/mcp_server.html[Model Context Protocol (MCP) Server (experimental)]
 
 [discrete]
+== Architecture
+
+[unstyled]
+* link:titles/architecture/architecture.html[Architecture Guide]
+
+[discrete]
 == Reference documentation
 
 [unstyled]

@@ -187,6 +187,9 @@
                 <groupId>org.asciidoctor</groupId>
                 <artifactId>asciidoctor-maven-plugin</artifactId>
                 <configuration>
+                    <requires>
+                        <require>asciidoctor-diagram</require>
+                    </requires>
                     <logHandler>
                         <failIf>
                             <severity>WARN</severity>
@@ -208,6 +211,16 @@
                       <groupId>com.bmuschko</groupId>
                       <artifactId>asciidoctorj-tabbed-code-extension</artifactId>
                       <version>${version.asciidoctorj.tabbed.code}</version>
+                    </dependency>
+                    <dependency>
+                      <groupId>org.asciidoctor</groupId>
+                      <artifactId>asciidoctorj-diagram</artifactId>
+                      <version>${version.asciidoctorj.diagram}</version>
+                    </dependency>
+                    <dependency>
+                      <groupId>org.asciidoctor</groupId>
+                      <artifactId>asciidoctorj-diagram-plantuml</artifactId>
+                      <version>${version.asciidoctorj.diagram.plantuml}</version>
                     </dependency>
                 </dependencies>
                 <executions>

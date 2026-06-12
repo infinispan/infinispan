@@ -1,0 +1,199 @@
+[id="architecture-interceptor-chain_{context}"]
+= Interceptor chain
+
+The interceptor chain is the central processing pipeline in {brandname}.
+Every cache operation, whether a simple `get` or a distributed `put`, flows through an ordered chain of interceptors.
+Each interceptor handles a specific cross-cutting concern and delegates to the next interceptor in the chain.
+
+== How the chain works
+
+The chain is implemented as a linked list of `AsyncInterceptor` instances managed by `AsyncInterceptorChainImpl`.
+When a cache operation is invoked, the chain starts execution from the first interceptor and proceeds through the chain.
+Each interceptor can:
+
+* Execute logic before passing control to the next interceptor
+* Modify or inspect the command
+* Short-circuit the chain by returning a result directly
+* Execute logic after the next interceptor returns (post-processing)
+
+All interceptors support asynchronous execution through `CompletionStage`, avoiding thread blocking during remote calls and I/O operations.
+
+[plantuml, target=architecture-interceptor-flow, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "CacheImpl" as Cache
+participant "Invocation\nContext" as InvCtx
+participant "Tx\nInterceptor" as TxInt
+participant "Notification\nInterceptor" as NotifInt
+participant "Locking\nInterceptor" as LockInt
+participant "Distribution\nInterceptor" as DistInt
+participant "Persistence\nInterceptor" as PersistInt
+participant "Call\nInterceptor" as CallInt
+participant "DataContainer" as DC
+
+Cache -> InvCtx: invoke(ctx, PutKeyValueCommand)
+activate InvCtx
+InvCtx -> TxInt: visitCommand(ctx, cmd)
+activate TxInt
+TxInt -> TxInt: enlist in transaction
+TxInt -> NotifInt: invokeNext(ctx, cmd)
+activate NotifInt
+NotifInt -> LockInt: invokeNext(ctx, cmd)
+activate LockInt
+LockInt -> LockInt: acquire lock(key)
+LockInt -> DistInt: invokeNext(ctx, cmd)
+activate DistInt
+DistInt -> DistInt: route to primary owner
+DistInt -> PersistInt: invokeNext(ctx, cmd)
+activate PersistInt
+PersistInt -> CallInt: invokeNext(ctx, cmd)
+activate CallInt
+CallInt -> DC: put(key, value)
+DC --> CallInt: previous value
+CallInt --> PersistInt: result
+deactivate CallInt
+PersistInt -> PersistInt: write to store
+PersistInt --> DistInt: result
+deactivate PersistInt
+DistInt --> LockInt: result
+deactivate DistInt
+LockInt --> NotifInt: result
+deactivate LockInt
+NotifInt -> NotifInt: fire event
+NotifInt --> TxInt: result
+deactivate NotifInt
+TxInt --> InvCtx: result
+deactivate TxInt
+InvCtx --> Cache: result
+deactivate InvCtx
+@enduml
+....
+
+== Interceptor class hierarchy
+
+All interceptors extend `BaseAsyncInterceptor`.
+Most concrete interceptors extend `DDAsyncInterceptor`, which implements the Visitor pattern for type-safe command dispatch.
+
+[plantuml, target=architecture-interceptor-hierarchy, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+interface AsyncInterceptor {
+  +visitCommand(ctx, cmd): Object
+  +setNextInterceptor(next)
+}
+
+abstract class BaseAsyncInterceptor implements AsyncInterceptor {
+  #nextInterceptor: AsyncInterceptor
+  #invokeNext(ctx, cmd): Object
+  #invokeNextThenApply(ctx, cmd, fn): Object
+  #invokeNextAndExceptionally(ctx, cmd, fn): Object
+}
+
+abstract class DDAsyncInterceptor extends BaseAsyncInterceptor {
+  +visitCommand(ctx, cmd): Object
+  --
+  Implements Visitor interface.
+  Dispatches to typed visitXxxCommand()
+  methods via double-dispatch.
+}
+
+class InvocationContextInterceptor extends DDAsyncInterceptor
+class TxInterceptor extends DDAsyncInterceptor
+class NotificationInterceptor extends DDAsyncInterceptor
+class CallInterceptor extends DDAsyncInterceptor
+
+abstract class AbstractLockingInterceptor extends DDAsyncInterceptor
+class PessimisticLockingInterceptor extends AbstractLockingInterceptor
+class OptimisticLockingInterceptor extends AbstractLockingInterceptor
+
+abstract class BaseRpcInterceptor extends DDAsyncInterceptor
+abstract class ClusteringInterceptor extends BaseRpcInterceptor
+abstract class BaseDistributionInterceptor extends ClusteringInterceptor
+class NonTxDistributionInterceptor extends BaseDistributionInterceptor
+class TxDistributionInterceptor extends BaseDistributionInterceptor
+class TriangleDistributionInterceptor extends BaseDistributionInterceptor
+
+class CacheLoaderInterceptor extends DDAsyncInterceptor
+class CacheWriterInterceptor extends DDAsyncInterceptor
+
+abstract class BaseBackupInterceptor extends DDAsyncInterceptor
+class NonTransactionalBackupInterceptor extends BaseBackupInterceptor
+@enduml
+....
+
+== Default chain order
+
+The interceptor chain is assembled at cache startup based on the cache configuration.
+The typical ordering is:
+
+[cols="1,3,4"]
+|===
+|Order |Interceptor |Responsibility
+
+|1
+|`InvocationContextInterceptor`
+|Creates and initializes the invocation context for the operation.
+
+|2
+|`IsMarshallableInterceptor`
+|Verifies that keys and values can be serialized.
+
+|3
+|`BatchingInterceptor`
+|Handles manual batch demarcation.
+
+|4
+|`TxInterceptor`
+|Manages transaction enlistment, prepare, commit, and rollback.
+
+|5
+|`NotificationInterceptor`
+|Fires cache event notifications to registered listeners.
+
+|6
+|`VersionInterceptor`
+|Manages entry versioning for optimistic locking.
+
+|7
+|`*LockingInterceptor`
+|Acquires and releases locks. The specific implementation depends on the transaction mode (pessimistic or optimistic).
+
+|8
+|`EntryWrappingInterceptor`
+|Wraps cache entries for transactional isolation.
+
+|9
+|`*DistributionInterceptor`
+|Routes commands to the correct owners in distributed and replicated modes.
+
+|10
+|`StateTransferInterceptor`
+|Coordinates operations during topology changes and state transfer.
+
+|11
+|`CacheLoaderInterceptor`
+|Loads entries from persistent stores on cache miss.
+
+|12
+|`CacheWriterInterceptor`
+|Writes entries to persistent stores after mutation.
+
+|13
+|`*BackupInterceptor`
+|Replicates operations to remote sites for cross-site replication.
+
+|14
+|`CallInterceptor`
+|Executes the actual cache operation on the data container. Always last in the chain.
+|===
+
+Not all interceptors are present in every chain.
+For example, transaction interceptors are omitted for non-transactional caches, and distribution interceptors are omitted for local caches.

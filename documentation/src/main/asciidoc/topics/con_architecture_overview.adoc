@@ -1,0 +1,127 @@
+[id="architecture-overview_{context}"]
+= Architecture overview
+
+{brandname} is a distributed, in-memory key/value data store with optional persistent storage.
+Its architecture is built around several core subsystems that work together to provide caching, clustering, persistence, and remote access.
+
+The following diagram shows a high-level view of the major subsystems and how they relate to each other.
+
+[plantuml, target=architecture-overview, format=svg]
+....
+@startuml
+skinparam componentStyle rectangle
+skinparam defaultFontName sans-serif
+skinparam padding 4
+skinparam shadowing false
+
+package "Client Layer" {
+  [Embedded API\n(Cache / AdvancedCache)] as EmbeddedAPI
+  [Hot Rod Client] as HRClient
+  [REST Client] as RESTClient
+  [RESP Client] as RESPClient
+}
+
+package "Server" {
+  [Hot Rod Endpoint] as HREndpoint
+  [REST Endpoint] as RESTEndpoint
+  [RESP Endpoint] as RESPEndpoint
+  [Memcached Endpoint] as MCEndpoint
+}
+
+package "Cache Container (EmbeddedCacheManager)" {
+  [Cache Instance\n(CacheImpl)] as CacheImpl
+
+  package "Interceptor Chain" {
+    [Invocation Context] as InvCtx
+    [Transactions] as TxInt
+    [Notifications] as NotifInt
+    [Locking] as LockInt
+    [Distribution / Replication] as DistInt
+    [Persistence] as PersistInt
+    [Cross-Site] as XSiteInt
+    [Call Interceptor] as CallInt
+  }
+
+  [Data Container\n(on-heap / off-heap)] as DataContainer
+  [Commands Factory] as CmdFactory
+}
+
+package "Clustering" {
+  [RPC Manager] as RPCMgr
+  [JGroups Transport] as JGroups
+  [Consistent Hashing] as ConsHash
+  [State Transfer] as StateTx
+}
+
+package "Persistence" {
+  [Persistence Manager] as PersistMgr
+  [File Store] as FileStore
+  [JDBC Store] as JDBCStore
+  [RocksDB Store] as RocksStore
+  [Custom Stores] as CustomStore
+}
+
+package "Marshalling" {
+  [ProtoStream\nMarshaller] as Marshaller
+}
+
+EmbeddedAPI --> CacheImpl
+HRClient --> HREndpoint
+RESTClient --> RESTEndpoint
+RESPClient --> RESPEndpoint
+
+HREndpoint --> CacheImpl
+RESTEndpoint --> CacheImpl
+RESPEndpoint --> CacheImpl
+MCEndpoint --> CacheImpl
+
+CacheImpl --> CmdFactory
+CmdFactory --> InvCtx
+InvCtx --> TxInt
+TxInt --> NotifInt
+NotifInt --> LockInt
+LockInt --> DistInt
+DistInt --> PersistInt
+PersistInt --> XSiteInt
+XSiteInt --> CallInt
+CallInt --> DataContainer
+
+DistInt --> RPCMgr
+RPCMgr --> JGroups
+RPCMgr --> Marshaller
+RPCMgr --> ConsHash
+ConsHash --> StateTx
+
+PersistInt --> PersistMgr
+PersistMgr --> FileStore
+PersistMgr --> JDBCStore
+PersistMgr --> RocksStore
+PersistMgr --> CustomStore
+
+XSiteInt --> JGroups
+@enduml
+....
+
+== Core subsystems
+
+{brandname} is organized into the following major subsystems:
+
+Cache Container (EmbeddedCacheManager)::
+The top-level entry point that manages cache lifecycle, global configuration, and cluster membership.
+Each `EmbeddedCacheManager` instance represents a single node in the cluster and can host multiple named caches.
+
+Interceptor Chain::
+Every cache operation flows through a chain of interceptors, each responsible for a cross-cutting concern such as transactions, locking, distribution, or persistence.
+This is the backbone of {brandname}'s processing pipeline.
+
+Clustering::
+Provides distributed communication via JGroups, consistent hashing for data distribution, and state transfer for rebalancing data when the cluster topology changes.
+
+Persistence::
+Pluggable cache stores that persist data to external storage such as the filesystem, JDBC databases, or RocksDB.
+
+Marshalling::
+Serializes and deserializes Java objects using ProtoStream, a Protocol Buffers-based format that supports schema evolution.
+
+Server::
+Exposes caches over multiple network protocols: Hot Rod (binary), REST (HTTP/JSON), RESP (Redis-compatible), and Memcached.

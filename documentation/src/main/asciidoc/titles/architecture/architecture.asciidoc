@@ -1,0 +1,24 @@
+//Directory attributes
+:stories: ../../stories
+:topics: ../topics
+:imagesdir: ../{topics}/images
+
+//Community doc attributes
+include::../{topics}/attributes/community-attributes.adoc[]
+
+//Community title attributes
+:toc2:
+:icons: font
+:toclevels: 3
+:numbered:
+:sectanchors:
+:stem: asciimath
+:context: architecture
+
+//Title
+= {brandname} Architecture Guide
+
+This guide provides a deep dive into the internal architecture of {brandname}, covering the core building blocks, clustering, persistence, and server subsystems.
+
+//User stories
+include::stories.adoc[]

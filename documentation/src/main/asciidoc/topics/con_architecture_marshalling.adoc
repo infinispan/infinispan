@@ -1,0 +1,100 @@
+[id="architecture-marshalling_{context}"]
+= Marshalling
+
+Marshalling is the process of serializing Java objects into a binary format for network transmission and persistent storage.
+{brandname} uses ProtoStream, a Protocol Buffers-based marshalling framework, as its default serialization format.
+
+== Marshalling layers
+
+{brandname} has two marshalling contexts:
+
+[plantuml, target=architecture-marshalling-layers, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam packageStyle frame
+
+package "Internal Marshalling" {
+  [GlobalMarshaller] as GM
+  note right of GM
+    Serializes internal objects:
+    commands, metadata, topology
+    information, internal cache entries.
+    Uses ProtoStream with registered
+    internal schemas.
+  end note
+}
+
+package "User Marshalling" {
+  [PersistenceMarshaller] as PM
+  [User ProtoStream\nContext] as UPC
+  note right of PM
+    Serializes user keys and values.
+    Schemas are registered via
+    SerializationContextInitializer.
+  end note
+}
+
+[RpcManager] --> GM : marshall commands
+[PersistenceManager] --> PM : marshall entries
+[Hot Rod Endpoint] --> PM : marshall\nclient data
+[CacheImpl] --> PM : encode/decode\nuser objects
+
+[ProtoStream\nSerialization] as PS
+
+GM --> PS
+PM --> UPC
+UPC --> PS
+@enduml
+....
+
+Internal marshalling (`GlobalMarshaller`)::
+Handles serialization of {brandname} internal objects: commands, internal cache entries, topology information, and cluster protocol messages.
+These schemas are built into {brandname} and annotated with `@ProtoTypeId`.
+
+User marshalling (`PersistenceMarshaller`)::
+Handles serialization of user-provided keys and values.
+Users register their schemas via `SerializationContextInitializer` implementations that define `.proto` schemas and marshaller adapters.
+
+== ProtoStream serialization
+
+ProtoStream maps Java objects to Protocol Buffer messages using annotations:
+
+[plantuml, target=architecture-protostream, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+rectangle "Java Object" as JO {
+  (Field A)
+  (Field B)
+  (Field C)
+}
+
+rectangle "Proto Schema (.proto)" as PS {
+  (message definition)
+}
+
+rectangle "Binary Wire Format\n(Protocol Buffers)" as BF {
+  (field tag + value bytes)
+}
+
+JO --> PS : @ProtoField\nannotations define\nfield mapping
+PS --> BF : ProtoStream\nencodes to\ncompact binary
+
+note bottom of BF
+  Compact, portable, schema-evolved.
+  Supports backward/forward compatibility.
+  Enables language-independent clients.
+end note
+@enduml
+....
+
+Key characteristics of ProtoStream marshalling:
+
+* *Schema evolution*: Fields can be added or removed without breaking existing data.
+* *Compact binary format*: Protocol Buffers encoding is significantly smaller than Java serialization.
+* *Language independence*: The `.proto` schemas allow non-Java clients (C++, C#, Python) to read and write {brandname} data.
+* *Queryability*: The self-describing schema enables server-side indexing and querying of cached objects.

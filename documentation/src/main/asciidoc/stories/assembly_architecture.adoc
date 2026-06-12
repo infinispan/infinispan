@@ -1,0 +1,25 @@
+ifdef::context[:parent-context: {context}]
+[id="architecture"]
+:context: architecture
+= {brandname} architecture
+
+include::{topics}/con_architecture_overview.adoc[leveloffset=+1]
+include::{topics}/con_architecture_cache_manager.adoc[leveloffset=+1]
+include::{topics}/con_architecture_configuration.adoc[leveloffset=+1]
+include::{topics}/con_architecture_interceptor_chain.adoc[leveloffset=+1]
+include::{topics}/con_architecture_commands.adoc[leveloffset=+1]
+include::{topics}/con_architecture_data_container.adoc[leveloffset=+1]
+include::{topics}/con_architecture_clustering.adoc[leveloffset=+1]
+include::{topics}/con_architecture_partition_handling.adoc[leveloffset=+1]
+include::{topics}/con_architecture_persistence.adoc[leveloffset=+1]
+include::{topics}/con_architecture_notifications.adoc[leveloffset=+1]
+include::{topics}/con_architecture_querying.adoc[leveloffset=+1]
+include::{topics}/con_architecture_marshalling.adoc[leveloffset=+1]
+include::{topics}/con_architecture_server.adoc[leveloffset=+1]
+include::{topics}/con_architecture_authorization.adoc[leveloffset=+1]
+include::{topics}/con_architecture_transactions.adoc[leveloffset=+1]
+include::{topics}/con_architecture_encoding.adoc[leveloffset=+1]
+include::{topics}/con_architecture_xsite.adoc[leveloffset=+1]
+
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]
