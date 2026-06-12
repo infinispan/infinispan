@@ -1,0 +1,375 @@
+[id="architecture-cache-manager_{context}"]
+= Cache manager and cache hierarchy
+
+The cache manager is the entry point to {brandname}.
+It manages the lifecycle of individual caches, holds global configuration, and coordinates cluster membership.
+
+== Class hierarchy
+
+The following diagram shows the key interfaces and classes that make up the cache manager and cache hierarchy.
+
+[plantuml, target=architecture-cache-hierarchy, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+interface CacheContainer {
+  +getCache(name): Cache
+  +getCacheNames(): Set
+}
+
+interface EmbeddedCacheManager extends CacheContainer {
+  +defineConfiguration(name, cfg): Configuration
+  +undefineConfiguration(name)
+  +getClusterName(): String
+  +getMembers(): List<Address>
+  +getAddress(): Address
+  +isCoordinator(): boolean
+  +getHealth(): Health
+}
+
+class DefaultCacheManager implements EmbeddedCacheManager {
+  -globalConfiguration: GlobalConfiguration
+  -cacheManagers: Map
+  -transport: Transport
+  +start()
+  +stop()
+}
+
+interface BasicCache<K, V> {
+  +put(key, value): V
+  +get(key): V
+  +remove(key): V
+  +getName(): String
+}
+
+interface Cache<K, V> extends BasicCache {
+  +putIfAbsent(key, value): V
+  +replace(key, value): V
+  +evict(key)
+  +getCacheConfiguration(): Configuration
+}
+
+interface AdvancedCache<K, V> extends Cache {
+  +withFlags(flags): AdvancedCache
+  +getDataContainer(): DataContainer
+  +getDistributionManager(): DistributionManager
+  +getRpcManager(): RpcManager
+  +getComponentRegistry(): ComponentRegistry
+  +lock(keys)
+}
+
+class CacheImpl<K, V> implements AdvancedCache {
+  -interceptorChain: AsyncInterceptorChain
+  -dataContainer: DataContainer
+  -commandsFactory: CommandsFactory
+  -componentRegistry: ComponentRegistry
+}
+
+class DecoratedCache<K, V> extends CacheImpl {
+  -flags: long
+}
+
+EmbeddedCacheManager --> "manages *" Cache
+@enduml
+....
+
+== Component registry
+
+Each cache instance has an associated `ComponentRegistry` that manages the lifecycle of internal components through dependency injection.
+{brandname} uses two scopes of component registries:
+
+Global scope (`GlobalComponentRegistry`)::
+Holds components shared across all caches on a node: transport, marshaller, thread pools, and global configuration.
+
+Cache scope (`ComponentRegistry`)::
+Holds per-cache components: the interceptor chain, data container, distribution manager, lock manager, and persistence manager.
+
+[plantuml, target=architecture-component-registry, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam packageStyle frame
+
+package "Global Scope" {
+  [GlobalConfiguration] as GCfg
+  [Transport (JGroups)] as Transport
+  [GlobalMarshaller] as GMarsh
+  [Thread Pools] as TPools
+}
+
+package "Cache Scope (per named cache)" {
+  [Configuration] as CCfg
+  [AsyncInterceptorChain] as Chain
+  [DataContainer] as DC
+  [DistributionManager] as DM
+  [LockManager] as LM
+  [PersistenceManager] as PM
+  [CacheNotifier] as CN
+  [ExpirationManager] as EM
+}
+
+[DefaultCacheManager] --> GCfg
+[DefaultCacheManager] --> Transport
+[DefaultCacheManager] --> GMarsh
+[DefaultCacheManager] --> TPools
+
+[CacheImpl] --> CCfg
+[CacheImpl] --> Chain
+[CacheImpl] --> DC
+[CacheImpl] --> DM
+[CacheImpl] --> LM
+[CacheImpl] --> PM
+[CacheImpl] --> CN
+[CacheImpl] --> EM
+
+[DefaultCacheManager] --> "creates" [CacheImpl]
+@enduml
+....
+
+Cache-scoped registries delegate to the global registry when resolving dependencies.
+If a component is not found in the cache scope, the lookup falls through to the global scope automatically.
+
+=== Component lifecycle
+
+Every component in the registry progresses through a state machine that governs instantiation, dependency injection, and lifecycle callbacks.
+
+[plantuml, target=architecture-component-lifecycle, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam StateMessageAlignment left
+
+state "EMPTY" as Empty : Component not yet created
+state "INSTANTIATED" as Inst : Instance created by\nfactory or constructor
+state "WIRING" as Wir : @Inject dependencies\nbeing resolved
+state "WIRED" as Wired : All dependencies injected
+state "STARTING" as Starting : @Start methods executing
+state "STARTED" as Started : Component fully running
+state "STOPPING" as Stopping : @Stop methods executing
+state "STOPPED" as Stopped : Component shut down
+state "FAILED" as Failed : Error during any transition
+
+[*] --> Empty
+Empty --> Inst : factory.construct()\nor new instance
+Inst --> Wir : wire dependencies
+Wir --> Wired : all @Inject resolved
+Wired --> Starting : ComponentRef.running()
+Starting --> Started : @Start complete
+Started --> Stopping : registry.stop()
+Stopping --> Stopped : @Stop complete
+
+Inst --> Failed : error
+Wir --> Failed : circular dependency\nor missing component
+Starting --> Failed : @Start throws
+@enduml
+....
+
+The key transitions are:
+
+. *Instantiation* — The registry creates the component via a factory or no-arg constructor.
+
+. *Wiring* — The generated `ComponentAccessor.wire()` method injects all `@Inject` dependencies.
+Eager dependencies (those not wrapped in `ComponentRef`) are started recursively at this point.
+
+. *Starting* — Deferred until application code calls `ComponentRef.running()`.
+All `@Start` methods are invoked, walking up the class hierarchy (superclass first).
+
+. *Stopping* — When the registry shuts down, components are stopped in reverse order of their startup (LIFO).
+All `@Stop` methods are invoked in reverse inheritance order.
+
+=== Annotations
+
+{brandname} defines a set of annotations in the `org.infinispan.factories.annotations` package that drive dependency injection and lifecycle management.
+These annotations use `@Retention(RetentionPolicy.CLASS)` — they are processed at compile time by an annotation processor and are not available via runtime reflection.
+
+`@Inject`::
+Marks a field or setter method for dependency injection.
+The component name is derived from the field type or method parameter type.
+Fields must be package-private or public.
++
+[source,java]
+----
+@Inject DataContainer dataContainer;
+@Inject void setRpcManager(RpcManager rpcManager) { ... }
+----
+
+`@Start`::
+Marks a no-argument method to be called after all dependencies are wired.
+Used for initialization that depends on injected components.
+
+`@Stop`::
+Marks a no-argument method to be called when the component is being shut down.
+Used for resource cleanup.
+
+`@Scope`::
+Declares the component's scope.
+The scope determines which registry holds the component and must be consistent across the class hierarchy.
++
+[cols="2,4"]
+|===
+|Scope |Description
+
+|`GLOBAL`
+|A single instance shared by all caches (cache manager level).
+
+|`NAMED_CACHE`
+|A separate instance per cache.
+
+|`NONE`
+|Not cached between requests. Used for factories and abstract base classes whose concrete subclasses may be either `GLOBAL` or `NAMED_CACHE`.
+
+|`SERVER`
+|Bound to the lifecycle of the server.
+|===
+
+`@SurvivesRestarts`::
+Marks a component that should persist across registry stop/start cycles rather than being removed.
+Only used for critical bootstrapping components.
+
+`@DefaultFactoryFor`::
+Marks a factory class, listing the component classes or names it can create.
+
+=== Compile-time annotation processing
+
+{brandname} avoids runtime reflection for component wiring.
+Instead, a compile-time annotation processor (`ComponentAnnotationProcessor`) scans annotated classes and generates code that performs dependency injection and lifecycle callbacks directly.
+
+[plantuml, target=architecture-annotation-processor, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "javac" as JC
+participant "Component\nAnnotation\nProcessor" as CAP
+participant "Generated\nPackageImpl" as GPI
+participant "Generated\nModuleMetadata\nBuilder" as GMB
+
+== Compile Time ==
+
+JC -> CAP: Process annotations\n(@Inject, @Start, @Stop,\n@Scope, @DefaultFactoryFor)
+activate CAP
+
+CAP -> CAP: Scan component classes\nCollect inject points,\nlifecycle methods, scopes
+
+CAP -> GPI: Generate *PackageImpl class\nwith registerMetadata()
+note right
+  Contains anonymous
+  ComponentAccessor subclass
+  with wire(), start(),
+  stop() methods
+end note
+
+CAP -> GMB: Generate ModuleMetadataBuilderImpl
+note right
+  Registered via
+  META-INF/services/
+  ModuleMetadataBuilder
+end note
+
+deactivate CAP
+
+== Runtime ==
+
+participant "ModuleRepository\nBuilder" as MRB
+participant "BasicComponent\nRegistryImpl" as BCR
+
+MRB -> MRB: ServiceLoader loads all\nModuleMetadataBuilder impls
+MRB -> GMB: registerMetadata(builder)
+GMB -> GPI: PackageImpl.registerMetadata()
+GPI -> MRB: Register ComponentAccessor\nand factory mappings
+
+MRB -> BCR: Provide component\nand factory lookups
+
+BCR -> BCR: getComponent("X")
+BCR -> BCR: Find factory via\nModuleRepository
+BCR -> BCR: Instantiate, wire, start\nusing generated accessor
+@enduml
+....
+
+For each annotated component, the processor generates a `ComponentAccessor` subclass with concrete implementations of:
+
+`wire(instance, context, start)`::
+Calls `context.get()` for each `@Inject` dependency, assigning fields and calling setter methods directly — no reflection.
+
+`start(instance)`::
+Calls the component's `@Start` methods in superclass-first order.
+
+`stop(instance)`::
+Calls the component's `@Stop` methods in reverse order.
+
+These generated accessors are registered in per-package `*PackageImpl` classes, which are aggregated into a `ModuleMetadataBuilderImpl` per module.
+At runtime, the `ModuleRepository` loads all builders via `ServiceLoader` and provides the registry with direct accessor references for every known component.
+
+=== Component factories
+
+When the registry needs a component that is not yet registered, it looks up a factory via the `ModuleRepository`.
+
+[plantuml, target=architecture-component-factory, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+interface ComponentFactory {
+  +construct(componentName): Object
+}
+
+interface AutoInstantiableFactory {
+  Marker interface.
+  Registry can create
+  with no-arg constructor.
+}
+
+abstract class AbstractComponentFactory implements ComponentFactory {
+  @Inject globalComponentRegistry
+  @Inject globalConfiguration
+}
+
+class "DataContainerFactory" as DCF extends AbstractComponentFactory implements AutoInstantiableFactory {
+  +construct(name): Object
+}
+
+class "LockManagerFactory" as LMF extends AbstractComponentFactory implements AutoInstantiableFactory {
+  +construct(name): Object
+}
+
+note bottom of DCF
+  @DefaultFactoryFor(
+    classes = DataContainer.class
+  )
+end note
+@enduml
+....
+
+Factories are discovered at compile time via the `@DefaultFactoryFor` annotation and registered in the `ModuleRepository`.
+The resolution flow is:
+
+. The registry receives a request for a component (e.g., `DataContainer`).
+. It looks up the factory name in the `ModuleRepository` using the component name.
+. If the factory implements `AutoInstantiableFactory`, the registry creates it with a no-arg constructor.
+. The factory's own dependencies are injected and it is started.
+. `factory.construct(componentName)` is called to create the component instance.
+. The new component is wired and registered in the usual way.
+
+=== Module system
+
+{brandname} is organized into modules, each identified by an `@InfinispanModule` annotation on a `ModuleLifecycle` implementation.
+
+[source,java]
+----
+@InfinispanModule(name = "core",
+                  requiredModules = "commons")
+public class LifecycleManager implements ModuleLifecycle { ... }
+----
+
+At compile time, the annotation processor generates a `ModuleMetadataBuilder` implementation for each module and registers it via `META-INF/services`.
+At runtime, the `ModuleRepository.Builder` loads all module builders, resolves dependencies between modules, sorts them topologically, and calls `registerMetadata()` on each to populate the component and factory registries.
+This allows {brandname} modules (core, server, query, etc.) to contribute their own components and factories without requiring a central registration point.

@@ -1,0 +1,440 @@
+[id="architecture-clustering_{context}"]
+= Clustering and data distribution
+
+{brandname} uses JGroups as its clustering transport to form clusters of nodes that communicate via reliable group messaging.
+Data is distributed across the cluster using consistent hashing, which maps keys to segments and segments to nodes.
+
+== Cluster formation
+
+[plantuml, target=architecture-cluster-formation, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+package "Infinispan Cluster" {
+  node "Node A\n(Coordinator)" as A {
+    [EmbeddedCacheManager] as ECMA
+    [JGroupsTransport] as JGA
+  }
+  node "Node B" as B {
+    [EmbeddedCacheManager] as ECMB
+    [JGroupsTransport] as JGB
+  }
+  node "Node C" as C {
+    [EmbeddedCacheManager] as ECMC
+    [JGroupsTransport] as JGC
+  }
+}
+
+JGA <--> JGB : JGroups\ngroup communication
+JGB <--> JGC : JGroups\ngroup communication
+JGA <--> JGC : JGroups\ngroup communication
+
+note bottom of A
+  The coordinator manages
+  cluster membership and
+  triggers rebalancing.
+end note
+@enduml
+....
+
+The `JGroupsTransport` class adapts the JGroups library to the {brandname} `Transport` interface.
+JGroups handles:
+
+* Node discovery (UDP multicast, TCP, Kubernetes DNS, etc.)
+* Reliable message delivery with ordering guarantees
+* Failure detection and membership management
+* Message fragmentation and flow control
+
+== Consistent hashing
+
+{brandname} divides the key space into a fixed number of **segments** (256 by default).
+Each segment is assigned to a list of **owners** — the first owner is the **primary** and the rest are **backups**.
+
+[plantuml, target=architecture-consistent-hash, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+rectangle "Hash Space (256 segments)" {
+  collections "Seg 0" as S0
+  collections "Seg 1" as S1
+  collections "Seg 2" as S2
+  collections "..." as SDots
+  collections "Seg 255" as S255
+}
+
+node "Node A" as NA
+node "Node B" as NB
+node "Node C" as NC
+
+S0 --> NA : primary
+S0 --> NB : backup
+S1 --> NB : primary
+S1 --> NC : backup
+S2 --> NC : primary
+S2 --> NA : backup
+S255 --> NA : primary
+S255 --> NC : backup
+
+note bottom
+  With numOwners=2, each segment has
+  one primary and one backup owner.
+  The KeyPartitioner maps keys to segments
+  using a hash function (MurmurHash3).
+end note
+@enduml
+....
+
+=== Key components
+
+`ConsistentHash`::
+Immutable mapping of segments to owners.
+Implementations include `DefaultConsistentHash` (distributed mode) and `ReplicatedConsistentHash` (replicated mode, where all nodes own all segments).
+
+`ConsistentHashFactory`::
+Creates `ConsistentHash` instances.
+Variants include `DefaultConsistentHashFactory`, `TopologyAwareConsistentHashFactory` (rack/machine-aware placement), and `SyncConsistentHashFactory`.
+
+`KeyPartitioner`::
+Maps a key to a segment ID using MurmurHash3.
+
+`DistributionManager`::
+Provides the current `CacheTopology`, which holds the read and write consistent hashes.
+During rebalancing, the read and write hashes may differ.
+
+== Cache modes
+
+[plantuml, target=architecture-cache-modes, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+rectangle "Local Cache" as LC {
+  node "Node" as LN {
+    storage "All Data" as LD
+  }
+}
+
+rectangle "Replicated Cache" as RC {
+  node "Node A" as RA {
+    storage "Full Copy" as RDA
+  }
+  node "Node B" as RB {
+    storage "Full Copy" as RDB
+  }
+  node "Node C" as RCC {
+    storage "Full Copy" as RDC
+  }
+  RDA <--> RDB
+  RDB <--> RDC
+}
+
+rectangle "Distributed Cache (numOwners=2)" as DC {
+  node "Node A " as DA {
+    storage "Seg 0, 2, 5" as DDA
+  }
+  node "Node B " as DB {
+    storage "Seg 0, 1, 3" as DDB
+  }
+  node "Node C " as DCC {
+    storage "Seg 1, 2, 4" as DDC
+  }
+}
+
+rectangle "Invalidation Cache" as IC {
+  node "Node A  " as IA {
+    storage "Local data" as IDA
+  }
+  node "Node B  " as IB {
+    storage "Local data" as IDB
+  }
+  IA -[dashed]-> IB : invalidate
+  IB -[dashed]-> IA : invalidate
+}
+@enduml
+....
+
+Local::
+No clustering. Data exists on a single node only.
+
+Replicated::
+Every node holds a full copy of the data.
+Writes are replicated to all nodes.
+Reads are always local.
+
+Distributed::
+Data is partitioned across nodes using consistent hashing.
+Each entry is stored on `numOwners` nodes (typically 2).
+Reads may require remote lookups; writes go to all owners.
+
+Invalidation::
+Each node maintains a local cache.
+On write, other nodes are sent invalidation messages to discard their stale copies.
+The authoritative data lives in an external store.
+
+== Write distribution patterns
+
+{brandname} uses two different patterns to distribute write operations across owners in a cluster: _lock forwarding_ and the _triangle_.
+The choice depends on the cache configuration.
+
+=== When each pattern is used
+
+[cols="3,2,2"]
+|===
+|Configuration |Pattern |Interceptor
+
+|Non-transactional distributed, embedded mode
+|Triangle
+|`TriangleDistributionInterceptor`
+
+|Non-transactional distributed, server mode
+|Lock forwarding
+|`NonTxDistributionInterceptor`
+
+|Non-transactional replicated
+|Lock forwarding
+|`NonTxDistributionInterceptor`
+
+|Transactional (any clustered mode)
+|Lock forwarding
+|`TxDistributionInterceptor`
+
+|Transactional + optimistic locking + REPEATABLE_READ
+|Lock forwarding + versioning
+|`VersionedDistributionInterceptor`
+|===
+
+=== Lock forwarding
+
+In the lock forwarding pattern, the primary owner acts as a coordinator: it acquires the lock, forwards the command to backup owners, waits for their responses, and only then replies to the originator.
+
+[plantuml, target=architecture-lock-forwarding, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "Originator\n(Node A)" as Orig
+participant "Primary Owner\n(Node B)" as Primary
+participant "Backup 1\n(Node C)" as Backup1
+participant "Backup 2\n(Node D)" as Backup2
+
+Orig -> Primary: PutKeyValueCommand
+
+activate Primary
+Primary -> Primary: Acquire lock
+Primary -> Primary: Execute write
+
+Primary -> Backup1: Forward command
+activate Backup1
+Primary -> Backup2: Forward command
+activate Backup2
+
+Backup1 -> Backup1: Apply write
+Backup1 --> Primary: ACK
+deactivate Backup1
+
+Backup2 -> Backup2: Apply write
+Backup2 --> Primary: ACK
+deactivate Backup2
+
+Primary -> Primary: Release lock
+Primary --> Orig: Result
+deactivate Primary
+@enduml
+....
+
+This pattern is used for transactional caches (where lock management must be coordinated with transaction boundaries), replicated caches, and server-mode distributed caches.
+
+=== Triangle
+
+The triangle pattern takes its name from the three-legged message flow between originator, primary owner, and backup owners.
+Unlike lock forwarding, the primary does not wait for backup acknowledgments — it replies to the originator immediately.
+Backups acknowledge directly to the originator instead of going back through the primary.
+
+[plantuml, target=architecture-triangle-overview, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+node "Originator\n(Node A)" as Orig
+node "Primary Owner\n(Node B)" as Primary
+node "Backup Owner\n(Node C)" as Backup
+
+Orig -right-> Primary : **1.** Forward\nwrite command
+Primary -right-> Backup : **2.** BackupWriteCommand\n(with sequence number)
+Primary -left-> Orig : **3.** Primary result
+Backup -left-> Orig : **4.** Backup ACK
+
+note bottom of Orig
+  Completes the operation only after
+  receiving **both** the primary result
+  and ACKs from all backup owners.
+end note
+@enduml
+....
+
+==== Detailed flow
+
+[plantuml, target=architecture-triangle-sequence, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "Originator\n(Node A)" as Orig
+participant "Primary Owner\n(Node B)" as Primary
+participant "Backup 1\n(Node C)" as Backup1
+participant "Backup 2\n(Node D)" as Backup2
+
+Orig -> Orig: Create CommandAckCollector\n(tracks pending ACKs)
+Orig -> Primary: PutKeyValueCommand
+
+activate Primary
+Primary -> Primary: Execute write on\ndata container
+Primary -> Primary: Assign sequence number\nfor this segment
+Primary --> Orig: Primary result\n(return value)
+
+Primary -> Backup1: SingleKeyBackupWriteCommand\n(seq=N)
+Primary -> Backup2: SingleKeyBackupWriteCommand\n(seq=N)
+deactivate Primary
+
+activate Backup1
+Backup1 -> Backup1: Wait for sequence N\n(per-segment ordering)
+Backup1 -> Backup1: Apply write
+Backup1 --> Orig: BackupAckCommand
+deactivate Backup1
+
+activate Backup2
+Backup2 -> Backup2: Wait for sequence N\n(per-segment ordering)
+Backup2 -> Backup2: Apply write
+Backup2 --> Orig: BackupAckCommand
+deactivate Backup2
+
+Orig -> Orig: All ACKs received\nCommandAckCollector completes\nCompletableFuture
+@enduml
+....
+
+The steps in detail:
+
+. The originator creates a `CommandAckCollector` to track responses, then sends the write command to the primary owner.
+. The primary owner executes the write on its data container, obtains a per-segment sequence number from `TriangleOrderManager`, and sends `BackupWriteCommand` to all backup owners in parallel.
+. The primary returns its result to the originator immediately, without waiting for backup acknowledgments. This allows it to release its lock and process other writes.
+. Each backup owner waits until the command's sequence number is the next expected for that segment (guaranteeing per-segment ordering), applies the write, then sends an acknowledgment directly to the originator.
+. The originator's `CommandAckCollector` completes the `CompletableFuture` once it has received the primary result and all backup ACKs. If any ACK does not arrive within the remote timeout, the operation fails.
+
+==== Per-segment ordering
+
+Backup owners must apply writes to the same segment in the same order as the primary owner.
+The `TriangleOrderManager` assigns a monotonically increasing sequence number per segment on the primary side.
+On the backup side, a `TriangleOrderAction` blocks execution until the incoming command's sequence number matches the next expected sequence for that segment.
+
+This allows writes to _different_ segments to execute concurrently on backup nodes while maintaining strict ordering _within_ each segment.
+
+=== Triangle vs lock forwarding
+
+Compared to lock forwarding, the triangle provides several advantages for non-transactional distributed caches:
+
+* *Lower latency*: The primary responds to the originator immediately after executing, rather than waiting for all backups first.
+* *Higher throughput*: The primary releases its lock sooner, allowing other writes to the same key to proceed.
+* *Parallel backup writes*: All backups receive the command simultaneously from the primary, not sequentially.
+* *Non-blocking completion*: The originator tracks acknowledgments via `CompletableFuture`, avoiding thread blocking.
+
+Lock forwarding remains necessary for transactional caches because lock ownership must be coordinated with the two-phase commit protocol, and for replicated caches where the write fan-out pattern differs.
+
+== State transfer
+
+When nodes join or leave the cluster, {brandname} rebalances data to maintain the configured number of owners per segment.
+
+[plantuml, target=architecture-state-transfer, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+participant "Coordinator" as Coord
+participant "Node A\n(existing)" as A
+participant "Node B\n(new)" as B
+
+B -> Coord: JOIN request
+activate Coord
+Coord -> Coord: Compute new ConsistentHash\n(CH_write includes B)
+Coord -> A: Install new topology\n(CH_read=old, CH_write=new)
+Coord -> B: Install new topology
+
+B -> A: Pull segments\nnow owned by B
+activate B
+note right of B
+  StateConsumer on the new node
+  pulls segments from providers
+  via ClusterPublisherManager.
+  This gives the consumer
+  back-pressure control.
+end note
+B -> B: Apply received state
+
+B -> Coord: Confirm segments received
+deactivate B
+
+Coord -> A: Install final topology\n(CH_read=CH_write=new)
+Coord -> B: Install final topology
+deactivate Coord
+@enduml
+....
+
+During rebalancing:
+
+* The _write consistent hash_ reflects the new topology immediately, so writes go to the correct new owners.
+* The _read consistent hash_ uses the old topology until state transfer completes, so reads still find data on old owners.
+* The `StateTransferInterceptor` ensures operations are retried if they arrive during a topology change.
+
+State transfer is pull-based: the new owner's `StateConsumer` requests segments from providers using the `ClusterPublisherManager`, giving the consumer control over flow and back-pressure.
+The transfer is segment-based: only the segments whose ownership changed are transferred, minimizing data movement.
+
+== RPC manager
+
+The `RpcManager` is the high-level API for sending commands to remote nodes.
+
+[plantuml, target=architecture-rpc-flow, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+participant "DistributionInterceptor" as DI
+participant "RpcManager" as RPC
+participant "Marshaller" as M
+participant "JGroupsTransport" as JG
+participant "Remote Node" as RN
+
+DI -> RPC: invokeCommand(target, cmd, collector, opts)
+RPC -> M: marshall(command)
+M --> RPC: byte[]
+RPC -> JG: send(target, bytes)
+JG -> RN: JGroups message
+
+RN -> RN: unmarshall & execute\nthrough local chain
+
+RN --> JG: response bytes
+JG -> M: objectFromByteBuffer(\nresponse bytes)
+M --> JG: Response object
+JG -> RPC: addResponse(sender, response)
+RPC -> RPC: ResponseCollector.addResponse()
+RPC --> DI: CompletionStage<result>
+@enduml
+....
+
+The `RpcManager` supports several invocation patterns:
+
+* *Single target*: Send to one specific node.
+* *Multiple targets*: Send to a collection of nodes and collect responses.
+* *Broadcast*: Send to all cluster members.
+* *Staggered*: Send to targets one at a time, proceeding to the next only if the first does not respond in time.
+* *Fire-and-forget*: Send without waiting for a response.

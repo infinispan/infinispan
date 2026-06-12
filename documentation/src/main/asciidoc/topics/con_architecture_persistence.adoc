@@ -1,0 +1,203 @@
+[id="architecture-persistence_{context}"]
+= Persistence
+
+{brandname} provides a pluggable persistence layer that allows cache data to survive restarts, overflow from memory to disk, or act as a read-through/write-through layer to an external data source.
+
+== Store architecture
+
+The persistence subsystem is managed by `PersistenceManager`, which coordinates one or more cache stores per cache.
+Stores implement the `NonBlockingStore` interface, which provides a fully reactive API based on Reactive Streams.
+
+[plantuml, target=architecture-persistence-overview, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+interface NonBlockingStore<K, V> {
+  +load(segment, key): CompletionStage
+  +write(segment, entry): CompletionStage
+  +delete(segment, key): CompletionStage
+  +publishEntries(segments, filter): Publisher
+  +size(segments): CompletionStage
+  +clear(): CompletionStage
+  +purgeExpired(): CompletionStage
+  +start(ctx): CompletionStage
+  +stop(): CompletionStage
+}
+
+class PersistenceManager {
+  -stores: List<NonBlockingStore>
+  +loadFromAllStores(key, segment)
+  +writeToAllNonTxStores(entry)
+  +deleteFromAllStores(key)
+  +publishEntries(segments)
+  +size(segments)
+  +purgeExpired()
+}
+
+class SoftIndexFileStore implements NonBlockingStore {
+  Default file-based store.
+  Append-only log with
+  B+ tree index.
+}
+
+class JdbcStringBasedStore implements NonBlockingStore {
+  JDBC-based store.
+  Uses string-keyed
+  table mapping.
+}
+
+class RocksDBStore implements NonBlockingStore {
+  RocksDB-backed store.
+  LSM tree storage.
+}
+
+class RemoteStore implements NonBlockingStore {
+  Loads/stores entries
+  from a remote
+  Infinispan cluster.
+}
+
+class CustomStore implements NonBlockingStore {
+  User-provided
+  store implementation.
+}
+
+PersistenceManager --> "*" NonBlockingStore : delegates to
+
+note right of PersistenceManager
+  Coordinates multiple stores.
+  Handles segmented access,
+  expiration purging, and
+  store availability.
+end note
+@enduml
+....
+
+== Integration with the interceptor chain
+
+Persistence is wired into the cache operation flow through two interceptors:
+
+[plantuml, target=architecture-persistence-interceptors, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+rectangle "Interceptor Chain" {
+  [Previous Interceptors] as Prev
+  [CacheLoaderInterceptor] as Loader
+  [CacheWriterInterceptor] as Writer
+  [CallInterceptor] as Call
+}
+
+database "Persistent Store" as Store
+storage "Data Container\n(memory)" as DC
+
+Prev --> Loader
+Loader --> Writer
+Writer --> Call
+
+Loader --> Store : load on\ncache miss
+Call --> DC : read/write\nmemory
+Writer --> Store : write-through\nor write-behind
+
+note bottom of Loader
+  On GET: if the key is not
+  in memory, load it from
+  the store into the
+  data container.
+end note
+
+note bottom of Writer
+  On PUT/REMOVE:
+  propagate the mutation
+  to the persistent store.
+end note
+@enduml
+....
+
+`CacheLoaderInterceptor`::
+Intercepts read operations.
+When a key is not found in the data container (cache miss), it loads the entry from the persistent store and places it in memory.
+
+`CacheWriterInterceptor`::
+Intercepts write operations.
+After a mutation is applied to the data container, it propagates the change to the persistent store.
+
+== Write-through vs write-behind
+
+[plantuml, target=architecture-write-modes, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+rectangle "Write-Through (synchronous)" as WT {
+  (put) --> [Data Container] : 1. write
+  (put) --> [Store] : 2. write (blocking)
+  note bottom of [Store]
+    Operation completes only
+    after the store confirms
+    the write. Consistent but
+    adds latency.
+  end note
+}
+
+rectangle "Write-Behind (asynchronous)" as WB {
+  (put ) --> [Data Container ] : 1. write
+  (put ) --> [Async Queue] : 2. enqueue
+  [Async Queue] --> [Store ] : 3. flush\n(batched)
+  note bottom of [Store ]
+    Writes are batched and
+    flushed asynchronously.
+    Lower latency but risk
+    of data loss on crash.
+  end note
+}
+@enduml
+....
+
+Write-through::
+The store write happens synchronously as part of the cache operation.
+The operation does not complete until the store confirms the write.
+
+Write-behind::
+The store write is enqueued and flushed asynchronously in batches.
+This reduces latency but introduces a window where the store may lag behind the in-memory state.
+
+== Passivation
+
+When passivation is enabled, entries evicted from memory are written to the persistent store rather than discarded.
+When the entry is accessed again, it is activated (loaded back into memory and removed from the store).
+
+[plantuml, target=architecture-passivation, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+storage "Data Container\n(memory)" as DC
+database "Persistent Store" as PS
+
+DC -right-> PS : Eviction triggers\n**passivation**\n(write to store,\nremove from memory)
+PS -left-> DC : Access triggers\n**activation**\n(load to memory,\nremove from store)
+
+note bottom of DC
+  Hot entries live in memory.
+  Cold entries are passivated
+  to the store to free memory.
+end note
+@enduml
+....
+
+== Segmented stores
+
+Stores can be _segmented_, meaning they partition data by consistent hash segment.
+This enables:
+
+* Efficient state transfer: only segments whose ownership changed need to be read from the store.
+* Parallel iteration: segments can be iterated independently.
+* Store partitioning: different segments can map to different physical storage locations.

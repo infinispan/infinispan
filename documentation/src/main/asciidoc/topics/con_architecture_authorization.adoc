@@ -1,0 +1,249 @@
+[id="architecture-authorization_{context}"]
+= Authorization
+
+{brandname} provides a role-based access control (RBAC) mechanism that restricts cache operations based on the authenticated user's roles and permissions.
+Authorization is enforced through a decorator pattern: when enabled, every cache returned by the cache manager is wrapped in a `SecureCacheImpl` that checks permissions before delegating to the underlying cache.
+
+== Authorization model
+
+{brandname} uses a two-level mapping to connect authenticated users to permissions:
+
+[plantuml, target=architecture-authorization-model, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+rectangle "Authentication" {
+  [Subject\n(JAAS)] as Subj
+  [Principal\n(user identity)] as Princ
+}
+
+rectangle "Role Mapping" {
+  [PrincipalRoleMapper\n(e.g. ClusterRoleMapper)] as PRM
+}
+
+rectangle "Permission Mapping" {
+  [RolePermissionMapper] as RPM
+}
+
+rectangle "Roles" {
+  [admin] as R1
+  [application] as R2
+  [deployer] as R3
+  [observer] as R4
+  [monitor] as R5
+}
+
+rectangle "Permissions\n(bitmask)" {
+  [READ] as P1
+  [WRITE] as P2
+  [EXEC] as P3
+  [LISTEN] as P4
+  [BULK_READ] as P5
+  [BULK_WRITE] as P6
+  [CREATE] as P7
+  [ADMIN] as P8
+  [LIFECYCLE] as P9
+  [MONITOR] as P10
+}
+
+Subj --> Princ : contains
+Princ --> PRM : maps to roles
+PRM --> R1
+PRM --> R2
+PRM --> R3
+PRM --> R4
+PRM --> R5
+
+R1 --> RPM
+R2 --> RPM
+RPM --> P1
+RPM --> P2
+RPM --> P3
+RPM --> P4
+@enduml
+....
+
+Principals to roles::
+The `PrincipalRoleMapper` maps security principals (obtained from authentication) to role names.
+The default implementation, `ClusterRoleMapper`, stores these mappings in an internal replicated cache (`org.infinispan.ROLES`) so that role grants are consistent across the cluster.
+If no explicit mapping exists, the principal name is used as a role name.
+
+Roles to permissions::
+The `RolePermissionMapper` maps role names to `Role` objects, each carrying a bitmask of `AuthorizationPermission` values.
+Permissions are combined using bitwise OR, so a user with multiple roles receives the union of all their permissions.
+
+== Default roles
+
+{brandname} defines the following built-in roles:
+
+[cols="2,4"]
+|===
+|Role |Permissions
+
+|`admin`
+|All permissions.
+
+|`deployer`
+|READ, WRITE, LISTEN, EXEC, CREATE, MONITOR.
+
+|`application`
+|READ, WRITE, LISTEN, EXEC, MONITOR.
+
+|`observer`
+|READ, BULK_READ, MONITOR.
+
+|`monitor`
+|MONITOR only.
+|===
+
+Custom roles with arbitrary permission combinations can be defined in the global configuration.
+Caches can optionally restrict which roles are allowed by listing specific role names in their authorization configuration; if no roles are listed, all inheritable global roles apply.
+
+== Secure cache wrapper
+
+When authorization is enabled, the `DefaultCacheManager` wraps each cache in a `SecureCacheImpl`.
+This wrapper interposes on every cache method to check the required permission before delegating.
+
+[plantuml, target=architecture-secure-cache, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "Application" as App
+participant "SecureCacheImpl" as SC
+participant "AuthorizationManager" as AM
+participant "Authorizer" as Auth
+participant "CacheImpl\n(delegate)" as CI
+
+App -> SC: cache.put(key, value)
+activate SC
+
+SC -> AM: checkPermission(subject, WRITE)
+activate AM
+
+AM -> Auth: checkPermission(config, subject,\nCACHE, WRITE)
+activate Auth
+
+Auth -> Auth: Get Subject from\nSecurity.getSubject()
+Auth -> Auth: Lookup SubjectACL\n(cached per subject+cache)
+Auth -> Auth: Map principals to roles\n(PrincipalRoleMapper)
+Auth -> Auth: Combine role permission masks\n(bitwise OR)
+Auth -> Auth: Check: mask & WRITE == WRITE
+
+alt permission granted
+  Auth -> Auth: Audit: ALLOW
+  Auth --> AM: OK
+  deactivate Auth
+  AM --> SC
+  deactivate AM
+
+  SC -> CI: delegate.put(key, value)
+  CI --> SC: result
+  SC --> App: result
+else permission denied
+  Auth -> Auth: Audit: DENY
+  Auth --> AM: throw SecurityException
+  AM --> SC: SecurityException
+  SC --> App: SecurityException
+end
+deactivate SC
+@enduml
+....
+
+The permission required depends on the operation:
+
+[cols="3,2"]
+|===
+|Operation |Permission
+
+|`get()`, `containsKey()`
+|READ
+
+|`put()`, `remove()`, `replace()`, `compute()`
+|WRITE
+
+|`keySet()`, `values()`, `entrySet()`, query
+|BULK_READ
+
+|`clear()`
+|BULK_WRITE
+
+|`addListener()`
+|LISTEN
+
+|`start()`, `stop()`
+|LIFECYCLE
+
+|`getStats()`
+|MONITOR
+
+|`getCacheManager()`, `getAdvancedCache()`
+|ADMIN
+|===
+
+== Subject management
+
+{brandname} uses standard JAAS `Subject` objects to represent authenticated users.
+The current subject is stored in a thread-local stack managed by the `Security` class.
+
+[plantuml, target=architecture-subject-flow, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+participant "Application" as App
+participant "Security" as Sec
+participant "SecureCacheImpl" as SC
+
+App -> Sec: Security.doAs(subject, () -> {
+activate Sec
+Sec -> Sec: Push subject onto\nthread-local stack
+
+Sec -> SC: cache.put(key, value)
+activate SC
+SC -> Sec: Security.getSubject()
+Sec --> SC: subject (stack peek)
+SC -> SC: Check permissions\nagainst subject
+SC --> Sec: result
+deactivate SC
+
+Sec -> Sec: Pop subject from stack
+Sec --> App: result
+deactivate Sec
+@enduml
+....
+
+`Security.doAs(subject, action)`::
+Executes an action with an explicit subject.
+The subject is pushed onto a thread-local stack and popped when the action completes.
+Nesting is supported for operations that require switching subjects.
+
+`Security.doPrivileged(action)`::
+Executes an action in privileged mode, bypassing all authorization checks.
+Used internally by {brandname} components that need unrestricted access (e.g., state transfer, rebalancing).
+
+== ACL caching
+
+Computing the permission mask for a subject requires mapping all of its principals to roles and combining their permissions.
+To avoid repeating this on every operation, {brandname} caches the result as a `SubjectACL` keyed by the (subject, cache) pair.
+
+The ACL cache is invalidated when role definitions or role mappings change, ensuring that permission changes take effect without restarting the cluster.
+
+== Audit logging
+
+Every authorization decision (allow or deny) can be recorded by an `AuditLogger`.
+
+`NullAuditLogger`::
+The default — no auditing.
+
+`LoggingAuditLogger`::
+Logs authorization decisions to the `org.infinispan.AUDIT` logger category, including the subject, permission, resource name, and decision.
+Also emits OpenTelemetry traces when tracing is enabled.
+
+The audit logger is configurable in the global authorization settings.

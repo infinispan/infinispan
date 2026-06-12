@@ -1,0 +1,185 @@
+[id="architecture-xsite_{context}"]
+= Cross-site replication
+
+{brandname} supports replicating data across geographically distributed clusters (sites) for disaster recovery and geo-locality.
+Each site runs an independent {brandname} cluster, and designated _bridge nodes_ relay updates between sites.
+
+== Topology
+
+[plantuml, target=architecture-xsite-topology, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam nodeBackgroundColor #f8f8f8
+
+rectangle "Site: LON" as LON {
+  node "Node A" as LA
+  node "Node B" as LB
+  node "Node C\n(bridge)" as LC
+
+  LA <--> LB : JGroups\n(intra-cluster)
+  LB <--> LC
+  LA <--> LC
+}
+
+rectangle "Site: NYC" as NYC {
+  node "Node D\n(bridge)" as ND
+  node "Node E" as NE
+  node "Node F" as NF
+
+  ND <--> NE : JGroups\n(intra-cluster)
+  NE <--> NF
+  ND <--> NF
+}
+
+rectangle "Site: SFO" as SFO {
+  node "Node G\n(bridge)" as SG
+  node "Node H" as SH
+
+  SG <--> SH : JGroups\n(intra-cluster)
+}
+
+LC <--> ND : JGroups RELAY2\n(inter-site)
+LC <--> SG : JGroups RELAY2\n(inter-site)
+ND <--> SG : JGroups RELAY2\n(inter-site)
+@enduml
+....
+
+Inter-site communication uses the JGroups RELAY2 protocol, which creates a virtual bridge channel between designated nodes in each site.
+Only bridge nodes participate in cross-site communication, minimizing network overhead.
+
+== Replication strategies
+
+{brandname} supports two cross-site replication strategies:
+
+[plantuml, target=architecture-xsite-strategies, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+== Synchronous Replication ==
+
+participant "LON\n(originator)" as L1
+participant "NYC\n(backup)" as N1
+
+L1 -> L1: put(key, value)
+L1 -> N1: XSiteReplicateCommand
+activate N1
+N1 -> N1: apply to local cache
+N1 --> L1: ACK
+deactivate N1
+L1 -> L1: operation completes
+
+== Asynchronous Replication ==
+
+participant "LON\n(originator) " as L2
+participant "NYC\n(backup) " as N2
+
+L2 -> L2: put(key, value)
+L2 -> N2: XSiteReplicateCommand
+L2 -> L2: operation completes\n(no wait for ACK)
+activate N2
+N2 -> N2: apply to local cache
+deactivate N2
+@enduml
+....
+
+Synchronous::
+The originating site waits for acknowledgment from backup sites before completing the operation.
+Guarantees data is present on all sites when the operation returns.
+Adds latency equal to the inter-site round trip.
+
+Asynchronous::
+The originating site sends the update and completes immediately.
+Lower latency but backup sites may lag behind.
+This is the more common choice for geo-distributed deployments.
+
+== Active-active vs active-passive
+
+[plantuml, target=architecture-xsite-modes, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+rectangle "Active-Passive" as AP {
+  rectangle "LON (active)" as APL {
+    (reads)
+    (writes)
+  }
+  rectangle "NYC (passive)" as APN {
+    (backup copy)
+  }
+  APL --> APN : replication
+}
+
+rectangle "Active-Active" as AA {
+  rectangle "LON (active)" as AAL {
+    (reads + writes)
+  }
+  rectangle "NYC (active)" as AAN {
+    (reads + writes)
+  }
+  AAL --> AAN : replication
+  AAN --> AAL : replication
+}
+@enduml
+....
+
+Active-passive::
+One site handles all traffic.
+The backup site receives replicated data and takes over only during failover.
+
+Active-active::
+Both sites handle read and write traffic from local clients.
+Updates are replicated bidirectionally.
+Concurrent writes to the same key on different sites create conflicts that must be resolved.
+
+== Conflict resolution (IRAC)
+
+In active-active deployments, {brandname} uses the **Irac** (Inter-site Asynchronous Conflict resolution) subsystem to detect and resolve concurrent updates.
+
+[plantuml, target=architecture-xsite-conflict, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+participant "LON" as L
+participant "NYC" as N
+
+L -> L: put(key, "A")\nversion: LON=1
+N -> N: put(key, "B")\nversion: NYC=1
+
+L -> N: replicate(key, "A", LON=1)
+N -> L: replicate(key, "B", NYC=1)
+
+N -> N: Conflict detected!\n(concurrent versions)
+L -> L: Conflict detected!\n(concurrent versions)
+
+N -> N: Apply merge policy\n(e.g., prefer site LON)
+L -> L: Apply merge policy\n(e.g., prefer site LON)
+
+note over L, N
+  Both sites converge to the
+  same value after applying
+  the configured merge policy.
+end note
+@enduml
+....
+
+Each entry carries a vector clock (site version) that allows {brandname} to detect concurrent updates.
+When a conflict is detected, {brandname} applies a configurable merge policy to resolve it deterministically on all sites.
+
+== Integration with the interceptor chain
+
+Cross-site replication is implemented through backup interceptors in the interceptor chain:
+
+* `NonTransactionalBackupInterceptor`: Handles replication for non-transactional caches.
+* `OptimisticBackupInterceptor`: Handles replication for optimistic transactional caches.
+* `PessimisticBackupInterceptor`: Handles replication for pessimistic transactional caches.
+
+These interceptors intercept write commands and send `XSiteReplicateCommand` instances to backup sites via the JGroups RELAY2 bridge.

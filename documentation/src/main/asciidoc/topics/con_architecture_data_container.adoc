@@ -1,0 +1,127 @@
+[id="architecture-data-container_{context}"]
+= Data container
+
+The data container is the in-memory storage engine of {brandname}.
+It holds cache entries as `InternalCacheEntry` objects and provides thread-safe access to them.
+
+== Storage model
+
+[plantuml, target=architecture-data-container, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+interface DataContainer<K, V> {
+  +get(key): InternalCacheEntry
+  +peek(key): InternalCacheEntry
+  +put(key, value, metadata)
+  +containsKey(key): boolean
+  +remove(key): InternalCacheEntry
+  +size(): int
+  +clear()
+  +iterator(): Iterator
+}
+
+class DefaultDataContainer<K, V> implements DataContainer {
+  Backed by ConcurrentHashMap.
+  On-heap storage.
+}
+
+class BoundedOffHeapDataContainer<K, V> implements DataContainer {
+  Off-heap native memory.
+  Striped locking.
+}
+
+interface InternalCacheEntry<K, V> {
+  +getKey(): K
+  +getValue(): V
+  +getMetadata(): Metadata
+  +isExpired(now): boolean
+  +canExpire(): boolean
+  +getLifespan(): long
+  +getMaxIdle(): long
+  +touch(now)
+}
+
+class ImmortalCacheEntry implements InternalCacheEntry {
+  No expiration.
+}
+
+class MortalCacheEntry implements InternalCacheEntry {
+  Has lifespan.
+}
+
+class TransientCacheEntry implements InternalCacheEntry {
+  Has max idle time.
+}
+
+class TransientMortalCacheEntry implements InternalCacheEntry {
+  Has both lifespan
+  and max idle time.
+}
+
+DataContainer o--> "*" InternalCacheEntry : stores
+@enduml
+....
+
+== On-heap vs off-heap storage
+
+{brandname} supports two storage modes:
+
+On-heap::
+Entries are stored as regular Java objects on the JVM heap.
+This is the default mode and provides the fastest access but is subject to garbage collection pressure.
+
+Off-heap::
+Entries are serialized and stored in native memory outside the JVM heap.
+On JDK 22 and later, {brandname} uses the Foreign Function & Memory (FFM) API (`java.lang.foreign.MemorySegment`) for safe, supported access to off-heap memory.
+On earlier JDK versions, it falls back to `sun.misc.Unsafe`.
+This reduces GC pressure for large datasets and allows {brandname} to manage memory more predictably.
+Off-heap storage uses striped locking for concurrent access.
+
+== Segmentation
+
+The data container is segmented to align with the consistent hash segments used for data distribution.
+Each segment can be independently iterated, transferred during rebalancing, or assigned to a persistent store partition.
+
+[plantuml, target=architecture-data-container-segments, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+package "Data Container" {
+  [Segment 0] as S0
+  [Segment 1] as S1
+  [Segment 2] as S2
+  [Segment ...] as SN
+  [Segment 255] as S255
+}
+
+note right of S0
+  Each segment holds the entries
+  whose keys hash to that segment.
+  Segments are the unit of ownership,
+  state transfer, and store partitioning.
+end note
+
+S0 --> [Entry A]
+S0 --> [Entry D]
+S1 --> [Entry B]
+S2 --> [Entry C]
+S255 --> [Entry E]
+@enduml
+....
+
+== Expiration and eviction
+
+Expiration::
+Entries can have a _lifespan_ (time since creation) and/or a _max idle time_ (time since last access).
+The `ExpirationManager` lazily removes expired entries on access and runs periodic reaper tasks.
+
+Eviction::
+When the data container exceeds a configured size (entry count or memory), the eviction policy removes entries.
+{brandname} uses Caffeine's W-TinyLFU algorithm for near-optimal hit ratios.
+Evicted entries can be passivated to a persistent store rather than discarded.

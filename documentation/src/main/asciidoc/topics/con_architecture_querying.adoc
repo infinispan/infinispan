@@ -1,0 +1,227 @@
+[id="architecture-querying_{context}"]
+= Querying and indexing
+
+{brandname} provides a query engine that lets you search cached data using the Ickle query language.
+Queries can run in non-indexed mode (scanning all entries) or in indexed mode (backed by Lucene indexes managed through Hibernate Search).
+In clustered environments, queries are automatically distributed across the cluster.
+
+== Architecture overview
+
+[plantuml, target=architecture-query-overview, format=svg]
+....
+@startuml
+skinparam componentStyle rectangle
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam padding 4
+
+package "Query API" {
+  [Cache.query(ickle)] as API
+}
+
+package "Query Engine" {
+  [IckleQueryStringParser\n(ANTLR-based)] as Parser
+  [QueryEngine] as QE
+}
+
+package "Execution" {
+  [Non-Indexed\n(scan all entries)] as NonIdx
+  [Indexed\n(Lucene search)] as Idx
+  [Clustered Query\nInvoker] as CQI
+}
+
+package "Indexing" {
+  [QueryInterceptor] as QI
+  [SearchMapping\n(Hibernate Search)] as SM
+  [SearchIndexer] as SI
+  [Lucene Index\n(per node)] as LI
+}
+
+package "Continuous Queries" {
+  [ContinuousQueryListener] as CQL
+  [Ickle Event\nFilter/Converter] as IFC
+}
+
+API --> Parser
+Parser --> QE : IckleParsingResult
+QE --> NonIdx : non-indexed\nentities
+QE --> Idx : indexed\nentities
+Idx --> CQI : distributed
+CQI --> LI : search each\nnode's segments
+
+QI --> SI : write events
+SI --> SM
+SM --> LI
+
+CQL --> IFC : register
+IFC --> CQL : matching events
+@enduml
+....
+
+== Ickle query language
+
+Ickle is the query language used by {brandname}.
+It uses a SQL-like syntax parsed by an ANTLR-based grammar (`IckleQueryStringParser`) into an `IckleParsingResult` that includes the target entity, WHERE predicates, projections, GROUP BY, ORDER BY, and aggregations.
+
+Example queries:
+[source,sql]
+----
+FROM org.example.Book WHERE title:'infinispan'
+FROM org.example.Book WHERE price > 10 ORDER BY title
+SELECT title, author FROM org.example.Book WHERE year >= 2020
+----
+
+For indexed caches, Ickle predicates are translated into Lucene queries via Hibernate Search.
+For non-indexed caches, entries are scanned and filtered in-memory using object reflection.
+
+== Indexing
+
+When indexing is enabled for a cache, {brandname} maintains Lucene indexes that are automatically updated as cache entries change.
+The indexing subsystem is built on top of Hibernate Search and its Lucene backend.
+
+=== Index updates via the interceptor chain
+
+The `QueryInterceptor` sits in the interceptor chain and intercepts all write operations.
+When a write modifies an indexed entity, the interceptor triggers an index update.
+
+[plantuml, target=architecture-indexing-flow, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "CacheImpl" as Cache
+participant "QueryInterceptor" as QI
+participant "Next Interceptors\n(persistence, etc.)" as Next
+participant "SearchIndexer" as SI
+participant "Lucene Index" as LI
+
+Cache -> QI: visitPutKeyValueCommand(ctx, cmd)
+activate QI
+QI -> QI: Extract key, old value, new value
+QI -> QI: Check if entity type is indexed
+QI -> Next: invokeNext(ctx, cmd)
+activate Next
+Next --> QI: result
+deactivate Next
+QI -> SI: addOrUpdate(entity, id, routingKey)
+activate SI
+SI -> LI: Update Lucene document
+SI --> QI: CompletableFuture
+deactivate SI
+QI --> Cache: result
+deactivate QI
+@enduml
+....
+
+For transactional caches, a `TxQueryInterceptor` defers index updates until the transaction commits, collecting old values during the prepare phase and applying all index changes atomically at commit time.
+
+=== Index storage
+
+Each node maintains its own local Lucene indexes for the segments it owns.
+Indexes are stored in memory by default but can be configured to use the filesystem.
+The `SearchMapping` facade manages the lifecycle of all indexes, and the `SearchIndexer` provides the write API (`add`, `addOrUpdate`, `delete`, `purge`).
+
+Index operations use the consistent hash segment as a routing key, which enables segment-level index partitioning and efficient cleanup during state transfer.
+
+== Clustered queries
+
+In a distributed cache, query results are spread across multiple nodes.
+{brandname} automatically distributes indexed queries across the cluster and merges the results.
+
+[plantuml, target=architecture-clustered-query, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "Client" as C
+participant "Originator\nNode" as Orig
+participant "Node B" as NB
+participant "Node C" as NC
+
+C -> Orig: cache.query("FROM Book\nWHERE title:'guide'")
+
+activate Orig
+Orig -> Orig: Parse Ickle query
+Orig -> Orig: QueryPartitioner:\nsplit segments by node
+
+Orig -> Orig: Execute locally\n(owned segments)
+Orig -> NB: SegmentsClusteredQueryCommand\n(segments: [3,4,5])
+Orig -> NC: SegmentsClusteredQueryCommand\n(segments: [6,7,8])
+
+activate NB
+NB -> NB: Search local Lucene index\n(only requested segments)
+NB --> Orig: QueryResponse\n(NodeTopDocs)
+deactivate NB
+
+activate NC
+NC -> NC: Search local Lucene index\n(only requested segments)
+NC --> Orig: QueryResponse\n(NodeTopDocs)
+deactivate NC
+
+Orig -> Orig: DistributedIterator:\nmerge and sort all\nNodeTopDocs results
+Orig --> C: QueryResult
+deactivate Orig
+@enduml
+....
+
+The distributed query flow:
+
+. The originator parses the Ickle query and uses the `QueryPartitioner` to determine which segments each node owns.
+. A `SegmentsClusteredQueryCommand` is sent to each node, specifying the set of segments to search.
+. Each node searches its local Lucene index, restricted to the requested segments, and returns a `QueryResponse` containing the matching documents.
+. The originator collects all responses and uses a `DistributedIterator` to merge, sort, and paginate the combined results.
+
+This segment-based partitioning ensures that each entry is searched exactly once, even during topology changes.
+
+== Continuous queries
+
+Continuous queries provide a push-based mechanism where listeners are notified in real time as cache entries start or stop matching a query predicate.
+
+[plantuml, target=architecture-continuous-query, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+participant "Application" as App
+participant "ContinuousQuery" as CQ
+participant "Cache Listener\nInfrastructure" as CLI
+participant "Ickle Filter/\nConverter" as IFC
+participant "Cache" as Cache
+
+App -> CQ: addContinuousQueryListener(\nickle, listener)
+CQ -> CLI: Register listener with\nIckle event filter
+
+... cache entry changes ...
+
+Cache -> CLI: Cache entry event\n(put/remove)
+CLI -> IFC: Evaluate Ickle\nWHERE clause
+alt entry matches
+  IFC -> App: listener.resultJoining(key, value)
+else entry no longer matches
+  IFC -> App: listener.resultLeaving(key)
+end
+@enduml
+....
+
+Continuous queries are implemented on top of the cache listener infrastructure.
+When a continuous query is registered, an `IckleContinuousQueryCacheEventFilterConverter` is installed as a cache listener filter.
+On every cache entry change, the filter evaluates the Ickle WHERE clause against the new value:
+
+* If the entry now matches the predicate, the `resultJoining` callback fires.
+* If the entry no longer matches (it previously did), the `resultLeaving` callback fires.
+* If the entry continues to match with updated values, the `resultUpdated` callback fires.
+
+In clustered caches, the filter runs on the node that owns the entry, and matching events are forwarded to the listener's node.
+
+== Mass indexing
+
+When an index needs to be rebuilt from scratch (after configuration changes, data import, or corruption), the mass indexer reindexes all cache data in parallel across the cluster.
+
+The `DistributedExecutorMassIndexer` sends `IndexWorker` tasks to each node.
+Each worker iterates over the locally owned cache entries, extracts indexable values, and feeds them to the `SearchIndexer`.
+A `MassIndexerProgressMonitor` tracks progress and reports errors.

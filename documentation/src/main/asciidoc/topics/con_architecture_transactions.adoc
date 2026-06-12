@@ -1,0 +1,287 @@
+[id="architecture-transactions_{context}"]
+= Transactions
+
+{brandname} integrates with JTA (Java Transaction API) to provide ACID semantics for cache operations.
+When a cache is configured as transactional, operations are enlisted in the current JTA transaction and committed or rolled back as a unit using a two-phase commit (2PC) protocol across the cluster.
+
+== Transaction modes
+
+{brandname} supports two locking strategies for transactional caches:
+
+[plantuml, target=architecture-tx-locking-modes, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+== Optimistic Locking ==
+
+participant "Client" as C1
+participant "TxInterceptor" as T1
+participant "Locking\nInterceptor" as L1
+participant "Data\nContainer" as D1
+
+C1 -> T1: put(key, value)
+T1 -> T1: Record modification\n(no lock yet)
+T1 -> D1: Read current version
+
+...more operations...
+
+C1 -> T1: tm.commit()
+T1 -> L1: PREPARE: acquire locks
+activate L1
+L1 -> L1: Lock all modified keys
+L1 -> L1: Write skew check:\ncompare versions
+L1 --> T1: locks acquired
+deactivate L1
+T1 -> T1: COMMIT: apply & release
+
+== Pessimistic Locking ==
+
+participant "Client " as C2
+participant "TxInterceptor " as T2
+participant "Locking\nInterceptor " as L2
+participant "Data\nContainer " as D2
+
+C2 -> T2: put(key, value)
+T2 -> L2: Acquire lock immediately
+activate L2
+L2 -> L2: Lock key
+L2 --> T2: lock acquired
+deactivate L2
+T2 -> T2: Record modification
+
+...more operations (locks held)...
+
+C2 -> T2: tm.commit()
+T2 -> T2: PREPARE: verify locks
+T2 -> T2: COMMIT: apply & release
+@enduml
+....
+
+Optimistic locking::
+Locks are *not* acquired during operations.
+Instead, the transaction records a snapshot of the entry versions it has read.
+At prepare time, all modified keys are locked and a write skew check compares the current versions against the recorded snapshots.
+If another transaction modified the same key, a `WriteSkewException` is thrown and the transaction rolls back.
+This mode provides better read throughput when conflicts are rare.
+
+Pessimistic locking::
+Locks are acquired *immediately* when a key is first accessed.
+This prevents concurrent modifications by blocking other transactions until the lock holder commits or rolls back.
+No write skew check is needed since conflicts are prevented up front.
+This mode is better when conflicts are frequent and the cost of rollbacks is high.
+
+== Two-phase commit protocol
+
+Transactional writes are committed across the cluster using a two-phase commit (2PC) protocol.
+
+[plantuml, target=architecture-tx-2pc, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "JTA\nTransaction\nManager" as TM
+participant "Originator\n(Node A)" as Orig
+participant "Owner\n(Node B)" as NB
+participant "Owner\n(Node C)" as NC
+
+TM -> Orig: beforeCompletion()
+activate Orig
+note over Orig: PHASE 1: PREPARE
+
+Orig -> NB: PrepareCommand\n(list of modifications)
+Orig -> NC: PrepareCommand\n(list of modifications)
+
+activate NB
+NB -> NB: Acquire locks
+NB -> NB: Execute modifications
+NB --> Orig: Prepare OK\n(+ entry versions)
+deactivate NB
+
+activate NC
+NC -> NC: Acquire locks
+NC -> NC: Execute modifications
+NC --> Orig: Prepare OK\n(+ entry versions)
+deactivate NC
+
+Orig --> TM: beforeCompletion() returns
+deactivate Orig
+
+TM -> Orig: afterCompletion(COMMITTED)
+activate Orig
+note over Orig: PHASE 2: COMMIT
+
+Orig -> NB: CommitCommand\n(+ updated versions)
+Orig -> NC: CommitCommand\n(+ updated versions)
+
+NB -> NB: Apply changes\nRelease locks
+NC -> NC: Apply changes\nRelease locks
+
+Orig -> Orig: Release local locks\nRemove from TransactionTable
+Orig --> TM: done
+deactivate Orig
+@enduml
+....
+
+Phase 1 (Prepare)::
+The originator broadcasts a `PrepareCommand` containing all modifications to every node that owns affected keys.
+Each node acquires locks, executes the modifications tentatively, performs write skew checks (for optimistic locking), and responds with success or failure.
+
+Phase 2 (Commit)::
+If all nodes respond successfully, the originator broadcasts a `CommitCommand`.
+Each node applies the changes permanently and releases locks.
+If any node fails the prepare phase, a `RollbackCommand` is broadcast instead.
+
+=== One-phase commit optimization
+
+For auto-commit transactions that modify a single key, {brandname} can combine prepare and commit into a single phase.
+The `PrepareCommand` carries a `onePhaseCommit` flag, and the receiving nodes apply and commit in one step.
+This halves the number of network round trips for simple operations.
+
+== JTA integration
+
+{brandname} registers with the JTA transaction manager as either a `Synchronization` or an `XAResource`:
+
+[plantuml, target=architecture-tx-jta, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+interface "javax.transaction\n.Synchronization" as Sync {
+  +beforeCompletion()
+  +afterCompletion(status)
+}
+
+interface "javax.transaction\n.xa.XAResource" as XA {
+  +prepare(xid): int
+  +commit(xid, onePhase)
+  +rollback(xid)
+  +recover(flag): Xid[]
+}
+
+class SynchronizationAdapter implements Sync {
+  Bridges JTA callbacks
+  to Infinispan 2PC.
+  Default mode.
+}
+
+class TransactionXaAdapter implements XA {
+  Full XA with recovery.
+  Supports in-doubt
+  transaction resolution.
+}
+
+class "JTA Transaction Manager" as JTM << (T,#FF7700) >>
+class TxInterceptor << (C,#ADD8E6) >>
+
+JTM --> Sync : registers
+JTM --> XA : enlists
+
+SynchronizationAdapter --> TxInterceptor : delegates
+TransactionXaAdapter --> TransactionTable : delegates
+@enduml
+....
+
+Synchronization mode (default)::
+{brandname} registers a `SynchronizationAdapter` with the JTA transaction.
+The transaction manager calls `beforeCompletion()` to trigger the prepare phase and `afterCompletion()` to trigger commit or rollback.
+This is simpler but does not support XA recovery.
+
+Full XA mode::
+{brandname} enlists a `TransactionXaAdapter` as an `XAResource`.
+This enables full XA two-phase commit with recovery support.
+After a crash, the transaction manager can call `recover()` to list in-doubt transactions and `commit()` or `rollback()` to resolve them.
+
+== Transaction table
+
+The `TransactionTable` is the central registry of all active transactions on a node.
+
+[plantuml, target=architecture-tx-table, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+class TransactionTable {
+  -localTransactions: Map<Transaction, LocalTransaction>
+  -remoteTransactions: Map<GlobalTransaction, RemoteTransaction>
+  -completedTransactions: CompletedTransactionsInfo
+  +enlist(tx, localTx)
+  +getGlobalTransaction(tx): GlobalTransaction
+  +remoteTransactionPrepared(gtx)
+  +remoteTransactionCommitted(gtx)
+  +cleanupLeaverTransactions(members)
+  +cleanupTimedOutTransactions()
+}
+
+class LocalTransaction {
+  -jtaTransaction: Transaction
+  -globalTransaction: GlobalTransaction
+  -modifications: List<WriteCommand>
+  -lookedUpEntries: Map<Object, CacheEntry>
+  -lockedKeys: Set<Object>
+}
+
+class RemoteTransaction {
+  -globalTransaction: GlobalTransaction
+  -modifications: List<WriteCommand>
+  -prepared: boolean
+}
+
+class GlobalTransaction {
+  -address: Address
+  -id: long
+  -xid: Xid
+}
+
+TransactionTable --> "*" LocalTransaction : tracks
+TransactionTable --> "*" RemoteTransaction : tracks
+LocalTransaction --> GlobalTransaction
+RemoteTransaction --> GlobalTransaction
+@enduml
+....
+
+The transaction table maps JTA `Transaction` objects to `LocalTransaction` instances (for transactions originated on this node) and tracks `RemoteTransaction` instances (for transactions originated on other nodes).
+Each transaction is identified cluster-wide by a `GlobalTransaction` containing the originator's address and a sequence number.
+
+The table also tracks completed transactions to prevent duplicate commit/rollback messages caused by network retries.
+When a node leaves the cluster, `cleanupLeaverTransactions()` rolls back any unprepared transactions from that node and moves prepared ones to the recovery manager.
+
+== Write skew detection
+
+In optimistic transactional caches with REPEATABLE_READ isolation, {brandname} detects conflicting concurrent modifications using entry versioning.
+
+[plantuml, target=architecture-write-skew, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "Tx A" as A
+participant "Tx B" as B
+participant "Cache" as C
+
+A -> C: get(key) → value v1\n(version=1)
+B -> C: get(key) → value v1\n(version=1)
+
+B -> C: put(key, v2)
+B -> C: commit()\n→ prepare: version==1 ✓\n→ version incremented to 2
+
+A -> C: put(key, v3)
+A -> C: commit()\n→ prepare: version check\nexpected=1, actual=2
+note right: WriteSkewException!\nTx A rolls back.
+@enduml
+....
+
+Each entry carries a `SimpleClusteredVersion` (topology ID + sequence number).
+When a transaction reads an entry, it records the version.
+At prepare time, the `VersionedEntryWrappingInterceptor` compares the recorded version against the current version.
+If they differ, another transaction committed a change in between, and a `WriteSkewException` is thrown.

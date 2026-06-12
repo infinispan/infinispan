@@ -1,0 +1,313 @@
+[id="architecture-partition-handling_{context}"]
+= Partition handling and conflict resolution
+
+In a distributed system, network failures can split the cluster into isolated partitions.
+{brandname} detects these splits, restricts operations to prevent inconsistencies, and automatically resolves conflicts when partitions merge.
+
+== Availability modes
+
+A cache can be in one of three availability modes:
+
+[cols="2,4"]
+|===
+|Mode |Description
+
+|`AVAILABLE`
+|Normal operation. All reads and writes are allowed.
+
+|`DEGRADED_MODE`
+|The cluster has detected a partition or data loss. Operations may be restricted depending on the configured partition handling strategy.
+
+|`STOPPED`
+|The cache is shutting down gracefully and data is unavailable.
+|===
+
+== Partition handling strategies
+
+The `whenSplit` configuration determines how a cache behaves when a network partition is detected:
+
+[plantuml, target=architecture-partition-strategies, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+rectangle "Full Cluster\n[A, B, C, D]" as Full
+rectangle "Partition 1\n[A, B]" as P1
+rectangle "Partition 2\n[C, D]" as P2
+
+Full -down-> P1 : network\nsplit
+Full -down-> P2
+
+note bottom of P1
+  **DENY_READ_WRITES**
+  Reads ✗  Writes ✗
+  (for keys missing an owner)
+
+  **ALLOW_READS**
+  Reads ✓  Writes ✗
+  (reads from local data only)
+
+  **ALLOW_READ_WRITES**
+  Reads ✓  Writes ✓
+  (conflicts resolved on merge)
+end note
+@enduml
+....
+
+`DENY_READ_WRITES`::
+Both reads and writes are denied for any key whose owners are not all present in the current partition.
+This is the safest strategy, preventing stale reads and conflicting writes.
+
+`ALLOW_READS`::
+Reads are allowed if the key exists locally; writes are denied for keys with missing owners.
+This allows applications to continue reading cached data during a split while preventing inconsistencies from writes.
+
+`ALLOW_READ_WRITES`::
+Both reads and writes are allowed in all partitions.
+The cache stays in `AVAILABLE` mode, maximizing uptime at the cost of potential conflicts that must be resolved when partitions merge.
+
+== Partition detection and degraded mode
+
+{brandname} relies on JGroups view changes and merge views to detect partitions.
+
+[plantuml, target=architecture-partition-detection, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "JGroups" as JG
+participant "ClusterTopology\nManager" as CTM
+participant "ClusterCache\nStatus" as CCS
+participant "Availability\nStrategy" as AS
+participant "PartitionHandling\nManager" as PHM
+
+== Partition Detected ==
+
+JG -> CTM: viewChange(newView)
+activate CTM
+CTM -> CCS: handleClusterView(members)
+activate CCS
+
+CCS -> AS: onClusterViewChange(members)
+activate AS
+AS -> AS: Check: any segment\nlost ALL owners?
+AS -> AS: Check: is this a\nminority partition?
+
+alt data loss or minority
+  AS -> CCS: enterDegradedMode()
+  CCS -> PHM: setAvailabilityMode(\nDEGRADED_MODE)
+  PHM -> PHM: Notify listeners
+else no data loss, majority held
+  AS -> CCS: updateTopology()
+  note right: Stay AVAILABLE,\nrebalance as needed
+end
+
+deactivate AS
+deactivate CCS
+deactivate CTM
+@enduml
+....
+
+The `AvailabilityStrategy` makes the decision to enter degraded mode.
+{brandname} provides two built-in strategies:
+
+`PreferConsistencyStrategy`::
+Enters `DEGRADED_MODE` when any segment loses all owners or when the partition is a minority.
+Requires a majority partition to exit degraded mode.
+This is the default and safest choice.
+
+`PreferAvailabilityStrategy`::
+Keeps the cache `AVAILABLE` even in minority partitions.
+Maximizes uptime but is more likely to produce conflicts.
+
+== Operation interception in degraded mode
+
+The `PartitionHandlingInterceptor` sits in the interceptor chain and guards every cache operation based on the current availability mode.
+
+[plantuml, target=architecture-partition-interceptor, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+start
+
+:Incoming cache operation;
+
+if (AvailabilityMode == AVAILABLE?) then (yes)
+  :Execute normally;
+  stop
+else (no)
+  if (Operation type?) then (write)
+    :checkWrite(key);
+    if (All owners present\nin partition?) then (yes)
+      :Execute write;
+      stop
+    else (no)
+      :throw AvailabilityException;
+      stop
+    endif
+  else (read)
+    if (whenSplit == DENY_READ_WRITES?) then (yes)
+      if (Key owned locally?) then (yes)
+        :Execute read;
+        stop
+      else (no)
+        :throw AvailabilityException;
+        stop
+      endif
+    else (ALLOW_READS)
+      :Execute read\n(local data only);
+      stop
+    endif
+  endif
+endif
+
+@enduml
+....
+
+Bulk operations (`clear()`, `keySet()`, `entrySet()`) are always denied in degraded mode since they cannot guarantee completeness across a partial cluster.
+
+== Partition merge and conflict resolution
+
+When network connectivity is restored, JGroups delivers a _merge view_ that triggers conflict resolution.
+
+[plantuml, target=architecture-partition-merge, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "JGroups" as JG
+participant "ClusterTopology\nManager" as CTM
+participant "Availability\nStrategy" as AS
+participant "ConflictManager" as CM
+participant "StateReceiver" as SR
+participant "EntryMergePolicy" as MP
+
+== Merge View Received ==
+
+JG -> CTM: mergeView(mergedMembers)
+activate CTM
+CTM -> CTM: Collect topology\nresponses from\nall partitions
+
+CTM -> AS: onPartitionMerge(\nstatusResponses)
+activate AS
+AS -> AS: Find partition with\nhighest topologyId\n→ preferred partition
+AS -> AS: Compute union\nconsistent hash
+
+AS -> CTM: Install CONFLICT_RESOLUTION\ntopology
+note right
+  Union of all read CHs.
+  All nodes see all segments.
+end note
+
+== Conflict Detection ==
+
+AS -> CM: resolveConflicts(\ntopology, preferredNodes)
+activate CM
+
+loop for each segment
+  CM -> SR: getAllReplicasForSegment(seg)
+  activate SR
+  SR -> SR: Fetch entries from\nall write owners
+  SR --> CM: Map<Address, CacheEntry>
+  deactivate SR
+
+  CM -> CM: Filter: keep only entries\nwhere replicas disagree
+end
+
+== Conflict Resolution ==
+
+loop for each conflict
+  CM -> CM: Determine preferredEntry\n(from preferred partition)
+  CM -> MP: merge(preferredEntry,\notherEntries)
+  activate MP
+  MP --> CM: winning CacheEntry\n(or null to remove)
+  deactivate MP
+
+  alt merge returns entry
+    CM -> CM: PutKeyValueCommand\n(apply winning value)
+  else merge returns null
+    CM -> CM: RemoveCommand\n(delete entry)
+  end
+end
+
+CM --> AS: resolution complete
+deactivate CM
+
+AS -> CTM: completeConflictResolution()
+CTM -> CTM: Install NO_REBALANCE topology
+CTM -> CTM: Set AVAILABLE
+CTM -> CTM: Queue rebalance
+
+deactivate AS
+deactivate CTM
+@enduml
+....
+
+The merge proceeds in phases:
+
+. *Topology collection* — The coordinator collects the current topology and availability mode from every node across all partitions.
+The partition with the highest topology ID is designated the _preferred partition_.
+
+. *Conflict resolution topology* — A special `CONFLICT_RESOLUTION` phase topology is installed with a consistent hash that is the union of all distinct read consistent hashes from each partition.
+This ensures every node can access every segment during conflict detection.
+
+. *Conflict detection* — The `ConflictManager` iterates through each segment and fetches all replica values from their respective owners using the `StateReceiver`.
+Entries where replicas disagree are identified as conflicts.
+
+. *Merge policy application* — For each conflict, the configured `EntryMergePolicy` determines the winning value.
+The `preferredEntry` comes from the preferred partition; `otherEntries` contains values from other partitions.
+
+. *Completion* — A stable `NO_REBALANCE` topology is installed, the cache returns to `AVAILABLE` mode, and a standard rebalance is queued to restore the correct number of replicas.
+
+== Merge policies
+
+The `EntryMergePolicy` interface determines how conflicting entries are resolved:
+
+[source,java]
+----
+CacheEntry<K, V> merge(CacheEntry<K, V> preferredEntry,
+                        List<CacheEntry<K, V>> otherEntries);
+----
+
+{brandname} provides the following built-in policies:
+
+[cols="2,4"]
+|===
+|Policy |Behavior
+
+|`PREFERRED_ALWAYS`
+|Always uses the entry from the preferred partition (the partition with the highest topology ID).
+
+|`PREFERRED_NON_NULL`
+|Uses the preferred entry if it is not null; otherwise uses the first non-null entry from the other partitions.
+
+|`REMOVE_ALL`
+|Returns `null`, which removes the conflicting key from all nodes.
+
+|`NONE`
+|Disables conflict resolution. The merge reinstalls the topology without comparing replicas.
+|===
+
+Applications can provide a custom `EntryMergePolicy` implementation for domain-specific resolution logic, such as choosing the entry with the latest timestamp or merging field-level changes.
+
+== Transactions during partitions
+
+The `PartitionHandlingManager` tracks transactions that were in progress when a partition occurred:
+
+Partial rollbacks::
+Transactions where the rollback was sent but not all participants acknowledged it.
+
+Partial 1PC commits::
+One-phase commit transactions where the commit reached some but not all owners.
+
+Partial 2PC commits::
+Two-phase commit transactions that completed prepare but did not finish the commit phase.
+
+When a stable topology is restored after a merge, `onTopologyUpdate()` completes these partial transactions — committing those that were prepared and rolling back the rest — before normal operation resumes.

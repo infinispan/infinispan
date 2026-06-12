@@ -37,6 +37,14 @@ $(document).ready(function() {
     dchooser.append('<option value="/titles/spring_boot/starter.html">Spring Boot Starter</option>');
     dchooser.append('<option value="/titles/spring/spring.html">Spring Cache and Spring Sessions</option>');
     dchooser.append('<option value="/titles/hibernate/hibernate.html">Hibernate second-level caching (2LC)</option>');
+    dchooser.append('<option value="/titles/mcp_server/mcp_server.html">MCP Server</option>');
+    dchooser.append('</optgroup>');
+    dchooser.append('<optgroup label="Architecture">');
+    dchooser.append('<option value="/titles/architecture/architecture.html">Architecture guide</option>');
+    dchooser.append('</optgroup>');
+    dchooser.append('<optgroup label="Reference">');
+    dchooser.append('<option value="/titles/metrics/metrics.html">Metrics</option>');
+    dchooser.append('<option value="/titles/openapi/openapi.html">OpenAPI</option>');
     dchooser.append('</optgroup>');
 
     dchooser.change(function(e) {

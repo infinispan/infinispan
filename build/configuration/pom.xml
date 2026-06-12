@@ -186,6 +186,8 @@
       <version.maven.assembly>3.8.0</version.maven.assembly>
       <version.asciidoctor.maven.plugin>3.2.0</version.asciidoctor.maven.plugin>
       <version.asciidoctorj>3.0.1</version.asciidoctorj>
+      <version.asciidoctorj.diagram>3.2.1</version.asciidoctorj.diagram>
+      <version.asciidoctorj.diagram.plantuml>1.2026.2</version.asciidoctorj.diagram.plantuml>
       <version.asciidoctorj.tabbed.code>0.3</version.asciidoctorj.tabbed.code>
       <version.jruby>9.4.15.0</version.jruby>
       <version.maven.buildhelper>3.6.1</version.maven.buildhelper>

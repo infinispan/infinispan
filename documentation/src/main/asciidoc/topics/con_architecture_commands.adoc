@@ -1,0 +1,209 @@
+[id="architecture-commands_{context}"]
+= Commands and the Visitor pattern
+
+{brandname} uses the Command pattern to represent every cache operation as a first-class object.
+Commands encapsulate the operation's parameters, can be serialized for remote execution, and flow through the interceptor chain as a unit of work.
+
+== Command flow
+
+When a user calls a cache method such as `cache.put(key, value)`, the following sequence occurs:
+
+[plantuml, target=architecture-command-flow, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam activityBackgroundColor #f8f8f8
+
+start
+:Client calls cache.put(key, value);
+:CacheImpl delegates to CommandsFactory;
+:CommandsFactory creates PutKeyValueCommand;
+:AsyncInterceptorChain.invoke(ctx, command);
+
+while (more interceptors?) is (yes)
+  :Interceptor calls command.acceptVisitor(ctx, this);
+  note right
+    Double-dispatch:
+    command calls back
+    visitor.visitPutKeyValueCommand()
+  end note
+  :Interceptor processes and calls invokeNext();
+endwhile (no)
+
+:CallInterceptor executes the operation;
+:Result propagates back through chain;
+stop
+@enduml
+....
+
+== Double-dispatch (Visitor pattern)
+
+The Visitor pattern eliminates the need for `instanceof` checks when interceptors handle different command types.
+
+The `VisitableCommand` interface defines:
+[source,java]
+----
+Object acceptVisitor(InvocationContext ctx, Visitor visitor);
+----
+
+Each command implements this by calling the appropriate typed method on the visitor:
+[source,java]
+----
+// In PutKeyValueCommand
+public Object acceptVisitor(InvocationContext ctx, Visitor visitor) {
+    return visitor.visitPutKeyValueCommand(ctx, this);
+}
+----
+
+[plantuml, target=architecture-visitor-pattern, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+interface VisitableCommand {
+  +acceptVisitor(ctx, visitor): Object
+}
+
+interface Visitor {
+  +visitPutKeyValueCommand(ctx, cmd): Object
+  +visitGetKeyValueCommand(ctx, cmd): Object
+  +visitRemoveCommand(ctx, cmd): Object
+  +visitReplaceCommand(ctx, cmd): Object
+  +visitClearCommand(ctx, cmd): Object
+  +visitPrepareCommand(ctx, cmd): Object
+  +visitCommitCommand(ctx, cmd): Object
+  +visitRollbackCommand(ctx, cmd): Object
+  ...()
+}
+
+abstract class DDAsyncInterceptor implements Visitor
+
+class PutKeyValueCommand implements VisitableCommand {
+  -key: Object
+  -value: Object
+  -metadata: Metadata
+  +acceptVisitor(ctx, visitor)
+}
+
+class GetKeyValueCommand implements VisitableCommand {
+  -key: Object
+  +acceptVisitor(ctx, visitor)
+}
+
+class RemoveCommand implements VisitableCommand {
+  -key: Object
+  +acceptVisitor(ctx, visitor)
+}
+
+DDAsyncInterceptor ..> VisitableCommand : visits
+PutKeyValueCommand ..> Visitor : calls visitPutKeyValueCommand()
+GetKeyValueCommand ..> Visitor : calls visitGetKeyValueCommand()
+RemoveCommand ..> Visitor : calls visitRemoveCommand()
+@enduml
+....
+
+== Command categories
+
+[plantuml, target=architecture-command-hierarchy, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam packageStyle frame
+
+interface ReplicableCommand {
+  +getCommandId(): byte
+  +invoke(ctx): CompletionStage
+}
+
+interface CacheRpcCommand extends ReplicableCommand {
+  +getCacheName(): ByteString
+  +getOrigin(): Address
+  +setOrigin(origin)
+  +getTopologyId(): int
+}
+
+interface VisitableCommand extends CacheRpcCommand {
+  +acceptVisitor(ctx, visitor): Object
+  +getLoadType(): LoadType
+}
+
+package "Read Commands" {
+  class GetKeyValueCommand
+  class GetCacheEntryCommand
+  class GetAllCommand
+  class SizeCommand
+  class KeySetCommand
+  class EntrySetCommand
+}
+
+package "Write Commands" {
+  class PutKeyValueCommand
+  class RemoveCommand
+  class ReplaceCommand
+  class ComputeCommand
+  class ClearCommand
+  class PutMapCommand
+  class EvictCommand
+}
+
+package "Tx Commands" {
+  class PrepareCommand
+  class CommitCommand
+  class RollbackCommand
+}
+
+package "Functional Commands" {
+  class ReadOnlyKeyCommand
+  class ReadWriteKeyCommand
+  class WriteOnlyKeyCommand
+  class ReadWriteKeyValueCommand
+}
+
+VisitableCommand <|.. GetKeyValueCommand
+VisitableCommand <|.. GetCacheEntryCommand
+VisitableCommand <|.. GetAllCommand
+VisitableCommand <|.. SizeCommand
+VisitableCommand <|.. KeySetCommand
+VisitableCommand <|.. EntrySetCommand
+
+VisitableCommand <|.. PutKeyValueCommand
+VisitableCommand <|.. RemoveCommand
+VisitableCommand <|.. ReplaceCommand
+VisitableCommand <|.. ComputeCommand
+VisitableCommand <|.. ClearCommand
+VisitableCommand <|.. PutMapCommand
+VisitableCommand <|.. EvictCommand
+
+VisitableCommand <|.. PrepareCommand
+VisitableCommand <|.. CommitCommand
+VisitableCommand <|.. RollbackCommand
+
+VisitableCommand <|.. ReadOnlyKeyCommand
+VisitableCommand <|.. ReadWriteKeyCommand
+VisitableCommand <|.. WriteOnlyKeyCommand
+VisitableCommand <|.. ReadWriteKeyValueCommand
+@enduml
+....
+
+Read commands::
+Retrieve data without modification: `GetKeyValueCommand`, `GetCacheEntryCommand`, `GetAllCommand`, `SizeCommand`, `KeySetCommand`, `EntrySetCommand`.
+
+Write commands::
+Mutate the cache: `PutKeyValueCommand`, `RemoveCommand`, `ReplaceCommand`, `ComputeCommand`, `ClearCommand`, `PutMapCommand`, `EvictCommand`.
+
+Transaction commands::
+Coordinate distributed transactions: `PrepareCommand` (2PC prepare phase), `CommitCommand`, `RollbackCommand`.
+
+Functional commands::
+Lambda-based operations: `ReadOnlyKeyCommand`, `ReadWriteKeyCommand`, `WriteOnlyKeyCommand`, `ReadWriteKeyValueCommand`.
+These support the functional map API and enable efficient execution by clearly separating read and write intents.
+
+== Remote execution
+
+Commands implement `CacheRpcCommand`, which means they can be marshalled and sent to remote nodes via the RPC manager.
+The receiving node unmarshals the command and executes it through its own interceptor chain.

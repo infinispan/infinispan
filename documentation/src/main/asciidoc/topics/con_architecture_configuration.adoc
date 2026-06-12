@@ -1,0 +1,771 @@
+[id="architecture-configuration_{context}"]
+= Configuration
+
+{brandname} uses a hierarchical, type-safe configuration system based on attributes, attribute sets, and configuration elements.
+Configuration is built programmatically using a fluent builder API, or declaratively from XML, JSON, or YAML.
+Once built, configuration objects are protected (made immutable) while still allowing select attributes to be modified at runtime.
+
+== Configuration hierarchy
+
+{brandname} has two levels of configuration:
+
+[plantuml, target=architecture-config-hierarchy, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam packageStyle frame
+
+package "GlobalConfiguration" {
+  [TransportConfiguration] as Transport
+  [SerializationConfiguration] as Serial
+  [ThreadPoolConfiguration] as TPool
+  [SecurityConfiguration\n(global)] as GSec
+  [JmxConfiguration] as Jmx
+  [TemporaryGlobalStateConfiguration] as TGS
+}
+
+package "Configuration (per cache)" {
+  [ClusteringConfiguration] as Clust
+  [MemoryConfiguration] as Mem
+  [PersistenceConfiguration] as Pers
+  [TransactionConfiguration] as Tx
+  [ExpirationConfiguration] as Exp
+  [EncodingConfiguration] as Enc
+  [IndexingConfiguration] as Idx
+  [SecurityConfiguration\n(cache)] as CSec
+  [LockingConfiguration] as Lock
+  [SitesConfiguration] as Sites
+}
+
+[GlobalConfigurationBuilder] --> [GlobalConfiguration] : create()
+[ConfigurationBuilder] --> [Configuration] : create()
+[DefaultCacheManager] --> [GlobalConfiguration] : holds one
+[DefaultCacheManager] --> "*" [Configuration] : holds per cache
+@enduml
+....
+
+GlobalConfiguration::
+A single instance per cache manager, holding settings that apply to all caches on a node: transport, serialization, thread pools, global security, and JMX.
+
+Configuration::
+One instance per named cache, holding cache-specific settings: clustering mode, memory limits, persistence stores, transactions, encoding, indexing, and expiration.
+
+Both extend `ConfigurationElement`, forming a tree of nested configuration elements, each backed by an `AttributeSet`.
+
+== Attributes
+
+An `Attribute` is the fundamental unit of configuration.
+It holds a typed value, tracks whether the value has been modified from its default, and supports change listeners.
+
+[plantuml, target=architecture-config-attribute, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+class "AttributeDefinition<T>" as AD {
+  -name: String
+  -defaultValue: T
+  -type: Class<T>
+  -immutable: boolean
+  -global: boolean
+  -autoPersist: boolean
+  -copier: AttributeCopier<T>
+  -initializer: AttributeInitializer<T>
+  -validator: AttributeValidator<T>
+  -serializer: AttributeSerializer<T>
+  -parser: AttributeParser<T>
+  +toAttribute(): Attribute<T>
+}
+
+class "Attribute<T>" as A {
+  -definition: AttributeDefinition<T>
+  -value: T
+  -protect: boolean
+  -modified: boolean
+  -listeners: List<AttributeListener<T>>
+  +get(): T
+  +set(T value)
+  +setImplied(T value)
+  +protect()
+  +isModified(): boolean
+  +isImmutable(): boolean
+  +addListener(AttributeListener<T>)
+}
+
+interface "AttributeListener<T>" as AL {
+  +attributeChanged(attribute, oldValue)
+}
+
+AD --> A : creates
+A --> "*" AL : notifies
+@enduml
+....
+
+Each attribute is created from an `AttributeDefinition` that declares its properties:
+
+Name and type::
+The attribute's identifier and Java type.
+
+Default value::
+The value used when no explicit value is set.
+For mutable types (e.g., lists, maps), an `AttributeInitializer` provides a fresh instance for each attribute to avoid shared state.
+
+Immutability::
+An immutable attribute cannot be modified after the configuration is protected (built).
+By default, attributes are mutable, allowing runtime changes even after the cache is started.
+
+Global flag::
+A _global_ attribute must have the same value across all nodes in the cluster.
+During topology changes, global attributes are checked for consistency — mismatches cause an error.
+_Local_ attributes can differ per node and are skipped during cluster-wide comparison.
+
+Auto-persist::
+Controls whether the attribute is included when serializing the configuration to XML, JSON, or YAML.
+
+Validator::
+An `AttributeValidator` that checks new values before they are accepted.
+
+Copier::
+An `AttributeCopier` for deep-copying complex values when reading configuration from a template.
+
+=== Attribute listeners
+
+Attributes support change listeners that are notified whenever the value changes.
+This is the mechanism {brandname} uses to react to runtime configuration changes without restarting the cache.
+
+[source,java]
+----
+attribute.addListener((attr, oldValue) -> {
+    // React to configuration change
+});
+----
+
+When `set()` is called on a mutable attribute — even on a protected configuration — listeners fire with the old value, allowing components to adapt dynamically.
+
+== Attribute sets and configuration elements
+
+Attributes are grouped into an `AttributeSet`, which is the backing store for a `ConfigurationElement`.
+
+[plantuml, target=architecture-config-elements, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+class "ConfigurationElement<T>" as CE {
+  -element: String
+  -attributes: AttributeSet
+  -children: ConfigurationElement[]
+  +elementName(): String
+  +attributes(): AttributeSet
+  +children(): ConfigurationElement[]
+  +matches(T other): boolean
+  +update(parentName, T other)
+}
+
+class AttributeSet {
+  -name: String
+  -attributes: Map<String, Attribute>
+  -protect: boolean
+  +attribute(name): Attribute
+  +protect(): AttributeSet
+  +isModified(): boolean
+  +matches(other): boolean
+  +write(ConfigurationWriter)
+  +validate()
+  +read(other, Combine)
+}
+
+CE *--> AttributeSet : backed by
+CE *--> "*" CE : children
+
+class Configuration extends CE {
+  ClusteringConfiguration
+  MemoryConfiguration
+  PersistenceConfiguration
+  ...
+}
+
+class ClusteringConfiguration extends CE {
+  HashConfiguration
+  L1Configuration
+  StateTransferConfiguration
+  PartitionHandlingConfiguration
+}
+@enduml
+....
+
+`AttributeSet`::
+Aggregates attributes under a common name.
+The `protect()` method freezes immutable attributes, returning a new protected set.
+Mutable attributes remain changeable even in a protected set.
+
+`ConfigurationElement`::
+The base class for all configuration nodes.
+Each element has an `AttributeSet` and an array of child elements, forming the configuration tree.
+Methods like `matches()`, `update()`, and `validateUpdate()` operate recursively over the tree for cluster-wide configuration comparison.
+
+== Builder pattern
+
+Configurations are constructed using a builder API that mirrors the configuration hierarchy.
+
+[plantuml, target=architecture-config-builder, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "Application" as App
+participant "ConfigurationBuilder" as CB
+participant "ClusteringConfiguration\nBuilder" as CCB
+participant "AttributeSet" as AS
+participant "Configuration" as Cfg
+
+App -> CB: new ConfigurationBuilder()
+App -> CB: clustering()
+CB --> App: ClusteringConfigurationBuilder
+
+App -> CCB: cacheMode(DIST_SYNC)
+CCB -> AS: attribute(CACHE_MODE)\n.set(DIST_SYNC)
+
+App -> CCB: hash().numOwners(3)
+App -> CB: memory().maxCount(1000)
+
+App -> CB: build()
+activate CB
+CB -> CB: validate()
+note right: Check all constraints\nacross all builders
+CB -> AS: protect()
+note right
+  Freeze immutable
+  attributes; mutable
+  ones stay changeable
+end note
+
+CB -> CCB: create()
+CCB --> CB: ClusteringConfiguration
+
+CB --> App: Configuration\n(protected)
+deactivate CB
+@enduml
+....
+
+The build process follows three steps:
+
+. *Set values* — The application uses fluent methods that set attributes on the underlying `AttributeSet`.
++
+[source,java]
+----
+Configuration config = new ConfigurationBuilder()
+    .clustering()
+        .cacheMode(CacheMode.DIST_SYNC)
+        .hash().numOwners(3)
+    .memory()
+        .maxCount(1000)
+    .build();
+----
+
+. *Validate* — `validate()` is called on every builder in the tree, checking attribute validators and cross-attribute constraints.
+
+. *Create and protect* — `create()` calls `attributes.protect()` on each attribute set to freeze immutable attributes, then constructs the configuration element tree.
+The resulting configuration object is safe to share across threads.
+
+=== Template inheritance
+
+Builders can inherit from an existing configuration using the `read()` method with a `Combine` strategy:
+
+[cols="2,4"]
+|===
+|Strategy |Behavior
+
+|`Attributes.MERGE` (default)
+|Overlay attributes override the template only if explicitly modified.
+
+|`Attributes.OVERRIDE`
+|Overlay attributes always replace the template values.
+
+|`RepeatedAttributes.MERGE`
+|Repeated elements (e.g., store configurations) are combined.
+
+|`RepeatedAttributes.OVERRIDE` (default)
+|Repeated elements from the overlay replace those from the template.
+|===
+
+Named cache configurations can extend a parent configuration defined in the same file or use the built-in default configuration as a base.
+
+== Declarative configuration: parsing
+
+{brandname} supports XML, JSON, and YAML configuration formats, all parsed through the `ParserRegistry`.
+
+[plantuml, target=architecture-config-parsing, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "Application /\nServer" as App
+participant "ParserRegistry" as PR
+participant "ConfigurationReader" as CR
+participant "ConfigurationParser" as CP
+participant "ConfigurationBuilder\nHolder" as CBH
+participant "ConfigurationBuilder" as CB
+
+App -> PR: parse(inputStream, mediaType)
+activate PR
+PR -> CR: Create reader for\nXML / JSON / YAML
+
+PR -> CR: Read root element\nand namespace
+CR --> PR: namespace URI\n+ root element
+
+PR -> PR: Look up parser\nby namespace
+
+PR -> CP: readElement(reader, holder)
+activate CP
+CP -> CBH: global()
+CBH --> CP: GlobalConfigurationBuilder
+
+loop for each cache element
+  CP -> CBH: newConfigurationBuilder(name)
+  CBH --> CP: ConfigurationBuilder
+  CP -> CB: Set attributes from\nparsed values
+end
+
+CP --> PR
+deactivate CP
+
+PR -> CBH: validate()
+PR --> App: ConfigurationBuilderHolder
+deactivate PR
+@enduml
+....
+
+Parsers are discovered via `ServiceLoader`.
+Each parser declares the namespace URIs it handles using `@Namespace` annotations:
+
+[source,java]
+----
+@Namespace(root = "cache-container",
+           uri = "urn:infinispan:config:16.2")
+public class CacheParser implements ConfigurationParser { ... }
+----
+
+The `ParserRegistry` matches the document's namespace to the correct parser, which populates builders in a `ConfigurationBuilderHolder`.
+This holder collects the global configuration builder and a map of named cache configuration builders, then resolves template inheritance and validates the result.
+
+== Declarative configuration: serialization
+
+Configurations can be serialized back to XML, JSON, or YAML for persistence or export.
+Serialization is driven by the attribute metadata.
+
+[plantuml, target=architecture-config-serialization, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+participant "Configuration" as Cfg
+participant "ConfigurationElement" as CE
+participant "AttributeSet" as AS
+participant "Attribute" as A
+participant "AttributeSerializer" as Ser
+participant "ConfigurationWriter" as CW
+
+Cfg -> CE: write(writer)
+activate CE
+CE -> AS: write(writer)
+activate AS
+
+loop for each attribute
+  AS -> A: write(writer)
+  activate A
+  alt modified && autoPersist
+    A -> Ser: serialize(writer,\nname, value)
+    Ser -> CW: writeAttribute(name, value)
+  else not modified or not autoPersist
+    note right: skip
+  end
+  deactivate A
+end
+
+deactivate AS
+
+loop for each child element
+  CE -> CE: child.write(writer)
+end
+deactivate CE
+@enduml
+....
+
+An attribute is serialized only if it is modified (differs from the default) and has `autoPersist` enabled.
+Each `AttributeDefinition` can specify a custom `AttributeSerializer` for complex types:
+
+[cols="2,4"]
+|===
+|Serializer |Usage
+
+|`DEFAULT`
+|Boolean and toString()-based serialization.
+
+|`SECRET`
+|Masks sensitive values unless clear-text output is enabled.
+
+|`CLASS_NAME`
+|Writes the fully-qualified class name of an instance.
+
+|`STRING_COLLECTION`
+|Writes collections as space-separated strings.
+
+|`PropertiesAttributeSerializer`
+|Writes `Map` entries as nested property elements (deferred serialization).
+|===
+
+The `ConfigurationWriter` abstraction handles format-specific output (XML elements and attributes, JSON objects, or YAML mappings).
+
+== Runtime configuration changes
+
+After a cache is started, mutable attributes can still be modified.
+Immutable attributes are frozen by `protect()` and reject changes with an exception.
+
+[plantuml, target=architecture-config-runtime, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+start
+
+:Application calls\nconfiguration setter;
+:Attribute.set(newValue);
+
+if (attribute.isImmutable()\n&& attribute.isProtected()?) then (yes)
+  :throw\nUnsupportedOperationException;
+  stop
+else (no)
+  :Store new value;
+  :Mark as modified;
+  :Fire AttributeListeners\nwith old value;
+  :Component reacts\nto change;
+  stop
+endif
+
+@enduml
+....
+
+For example, changing the remote timeout on a running clustered cache:
+
+[source,java]
+----
+cache.getCacheConfiguration()
+     .clustering()
+     .remoteTimeout(30000);
+----
+
+The `remoteTimeout` attribute is defined as mutable, so this call succeeds even on a running cache.
+The `RpcManager` listens for changes on this attribute and updates its timeout dynamically.
+
+Global attributes that are both immutable and global cannot be changed at runtime and must match across the cluster.
+Local, mutable attributes can differ per node and be adjusted independently.
+
+== Global state
+
+{brandname} can persist cluster-wide configuration state to disk so that runtime-created caches, templates, and configuration changes survive restarts.
+This is controlled by the `ConfigurationStorage` mode in the global configuration.
+
+=== Volatile vs persistent state
+
+[plantuml, target=architecture-config-storage-modes, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam packageStyle frame
+
+package "Static Configuration\n(infinispan.xml / programmatic)" {
+  [Cache A] as StaticA
+  [Cache B] as StaticB
+}
+note bottom of StaticA
+  Defined at startup.
+  Always recreated
+  from config file.
+end note
+
+package "Runtime-Created\n(via Admin API)" {
+
+  package "Persistent (default)" {
+    [Cache C] as PersistC
+    [Cache D] as PersistD
+  }
+  note bottom of PersistC
+    Stored in CONFIG cache
+    AND on disk (caches.xml).
+    Survives restart.
+  end note
+
+  package "Volatile (AdminFlag.VOLATILE)" {
+    [Cache E] as VolatileE
+  }
+  note bottom of VolatileE
+    Stored in CONFIG cache only.
+    Lost on restart.
+  end note
+}
+
+database "Disk\n(global state directory)" as Disk {
+  [caches.xml] as CX
+  [templates.xml] as TX
+  [___global.state] as GS
+}
+
+PersistC --> CX : persisted to
+PersistD --> CX : persisted to
+
+@enduml
+....
+
+{brandname} distinguishes three categories of cache configurations:
+
+Static configurations::
+Defined in the configuration file or programmatically before the cache manager starts.
+These are always recreated from the configuration source on startup.
+They are not part of the global state system.
+
+Persistent runtime configurations::
+Created via the admin API without the `VOLATILE` flag.
+These are stored in an internal replicated cache (`org.infinispan.CONFIG`) for cluster-wide distribution, and persisted to disk (`caches.xml` / `templates.xml`) so they survive restarts.
+
+Volatile runtime configurations::
+Created via the admin API with the `AdminFlag.VOLATILE` flag.
+These exist only in the internal CONFIG cache for the lifetime of the cluster.
+They are not persisted to disk and are lost when all nodes shut down.
+
+=== Configuration storage modes
+
+The `ConfigurationStorage` setting controls how the node handles runtime configuration changes:
+
+[cols="2,4"]
+|===
+|Mode |Behavior
+
+|`IMMUTABLE`
+|Runtime cache creation and removal is disabled. Configuration can only come from the static configuration file.
+
+|`VOLATILE`
+|Runtime caches can be created but are never persisted to disk. All runtime caches are lost on restart.
+
+|`OVERLAY`
+|Runtime caches are persisted to `caches.xml` and `templates.xml` in the global state directory. This is the default for server deployments.
+
+|`MANAGED`
+|Configuration storage is managed by the server runtime (e.g., for container-managed deployments).
+
+|`CUSTOM`
+|A user-provided `LocalConfigurationStorage` implementation handles persistence.
+|===
+
+=== Runtime cache creation and removal
+
+When a cache is created or removed at runtime, the change is replicated across the cluster using the internal CONFIG cache.
+
+[plantuml, target=architecture-config-runtime-cache, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "Application" as App
+participant "CacheContainer\nAdmin" as Admin
+participant "GlobalConfiguration\nManager" as GCM
+participant "CONFIG Cache\n(internal, replicated)" as CC
+participant "LocalConfiguration\nStorage" as LCS
+participant "Other Nodes" as Other
+
+== Cache Creation ==
+
+App -> Admin: createCache("myCache",\nconfiguration)
+activate Admin
+
+Admin -> GCM: createCache("myCache",\nconfig, flags)
+activate GCM
+
+GCM -> GCM: Serialize configuration\nto XML string
+GCM -> GCM: Create CacheState(\nconfig, flags)
+
+GCM -> CC: put(ScopedState("cache",\n"myCache"), cacheState)
+note right
+  Replicated to all
+  nodes in the cluster
+end note
+
+CC -> Other: Replication
+activate Other
+Other -> Other: CacheListener:\ncreate cache locally
+Other -> LCS: createCache()
+deactivate Other
+
+GCM -> LCS: createCache()
+activate LCS
+LCS -> LCS: Define configuration\nin ConfigurationManager
+LCS -> LCS: Start cache
+
+alt OVERLAY mode && !VOLATILE flag
+  LCS -> LCS: Add to persistentCaches
+  LCS -> LCS: Write caches.xml
+end
+
+LCS --> GCM
+deactivate LCS
+
+GCM --> Admin: Cache
+deactivate GCM
+deactivate Admin
+
+== Cache Removal ==
+
+App -> Admin: removeCache("myCache")
+Admin -> GCM: removeCache("myCache", flags)
+GCM -> CC: remove(ScopedState(\n"cache", "myCache"))
+
+CC -> Other: Replication
+Other -> Other: CacheListener:\nremove cache locally
+
+GCM -> LCS: removeCache()
+LCS -> LCS: Stop and undefine cache
+
+alt OVERLAY mode
+  LCS -> LCS: Remove from\npersistentCaches
+  LCS -> LCS: Rewrite caches.xml
+end
+@enduml
+....
+
+The `GlobalConfigurationManager` orchestrates this flow:
+
+. The application calls `cacheManager.administration().createCache(...)`.
+. The configuration is serialized to XML and wrapped in a `CacheState` along with any admin flags.
+. The `CacheState` is put into the internal CONFIG cache, keyed by a `ScopedState("cache", cacheName)`.
+. The CONFIG cache is replicated, so all nodes receive the entry.
+. On each node, a `GlobalConfigurationStateListener` reacts to the cache event and calls `LocalConfigurationStorage.createCache()` to define and start the cache locally.
+. In `OVERLAY` mode, the `OverlayLocalConfigurationStorage` also persists the configuration to `caches.xml`.
+
+The same pattern applies to template creation and removal.
+
+=== Cluster-wide configuration updates
+
+Mutable configuration attributes can be updated at runtime across the entire cluster using the admin API with the `UPDATE` flag.
+
+[plantuml, target=architecture-config-cluster-update, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "Application" as App
+participant "CacheContainer\nAdmin" as Admin
+participant "GlobalConfiguration\nManager" as GCM
+participant "CONFIG Cache" as CC
+participant "Node A\n(originator)" as NA
+participant "Node B" as NB
+
+App -> Admin: updateConfigurationAttribute(\n"myCache",\n"clustering.remoteTimeout",\n"30s")
+activate Admin
+
+Admin -> Admin: Parse attribute path
+Admin -> Admin: Update attribute\nin local Configuration
+
+Admin -> GCM: getOrCreateCache(\n"myCache", updatedConfig,\n{UPDATE})
+activate GCM
+
+GCM -> CC: put(ScopedState("cache",\n"myCache"), updatedCacheState)
+
+== Pre-phase: Validate ==
+
+CC -> NA: CacheEntryModified (pre)
+activate NA
+NA -> NA: Configuration\n.validateUpdate()
+note right
+  Check: attribute must
+  be mutable and
+  non-global
+end note
+NA --> CC: OK
+deactivate NA
+
+CC -> NB: CacheEntryModified (pre)
+activate NB
+NB -> NB: Configuration\n.validateUpdate()
+NB --> CC: OK
+deactivate NB
+
+== Post-phase: Apply ==
+
+CC -> NA: CacheEntryModified (post)
+activate NA
+NA -> NA: Configuration.update()
+NA -> NA: AttributeListeners fire
+NA -> NA: Components adapt
+deactivate NA
+
+CC -> NB: CacheEntryModified (post)
+activate NB
+NB -> NB: Configuration.update()
+NB -> NB: AttributeListeners fire
+NB -> NB: Components adapt
+deactivate NB
+
+alt OVERLAY mode
+  NA -> NA: Rewrite caches.xml
+  NB -> NB: Rewrite caches.xml
+end
+
+GCM --> Admin
+deactivate GCM
+deactivate Admin
+
+@enduml
+....
+
+The update follows a two-phase approach using CONFIG cache listeners:
+
+. *Pre-phase (validate)* — Each node receives a `CacheEntryModified` pre-event and calls `Configuration.validateUpdate()`, which walks the configuration tree recursively.
+Only mutable, non-global attributes are allowed to change.
+Immutable or global attribute changes are rejected with an exception, aborting the update.
+
+. *Post-phase (apply)* — If validation passes on all nodes, the post-event triggers `Configuration.update()`, which applies the new attribute values.
+`AttributeListener` callbacks fire on each node, allowing components (e.g., `RpcManager` for timeout changes) to react immediately.
+
+This mechanism ensures that mutable attribute changes are validated for compatibility before being applied atomically across the cluster.
+
+=== Global state directory
+
+When global state persistence is enabled, {brandname} maintains a state directory on disk:
+
+....
+{persistentLocation}/
+├── ___global.state        Global metadata (version, timestamp)
+├── caches.xml             Persisted cache configurations
+├── caches.xml.lck         Lock file for atomic writes
+├── templates.xml          Persisted cache templates
+├── templates.xml.lck      Lock file for atomic writes
+└── {scope}.state          Per-component state files
+....
+
+The `___global.state` file records the {brandname} version and a timestamp, used to detect unclean shutdowns.
+On startup, if the global state indicates an unclean shutdown, {brandname} takes a configurable action: fail startup, purge stale state, or ignore the inconsistency.
+
+=== Startup restoration
+
+On startup, the `GlobalConfigurationManager` restores runtime-created caches:
+
+. The `LocalConfigurationStorage` loads persisted configurations from `caches.xml` and `templates.xml`.
+. If the node joins an existing cluster, it also receives CONFIG cache entries replicated from other nodes.
+. Each persisted configuration is validated for compatibility with any cluster-wide version already in the CONFIG cache.
+. Caches and templates are created locally, matching the state of the rest of the cluster.
