@@ -245,6 +245,14 @@
             <type>pom</type>
             <scope>import</scope>
          </dependency>
+
+         <dependency>
+            <groupId>io.prometheus</groupId>
+            <artifactId>prometheus-metrics-bom</artifactId>
+            <version>${version.io.prometheus.server}</version>
+            <type>pom</type>
+            <scope>import</scope>
+         </dependency>
          <dependency>
             <groupId>ant-contrib</groupId>
             <artifactId>ant-contrib</artifactId>
