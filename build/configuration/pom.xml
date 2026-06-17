@@ -75,7 +75,7 @@
       <version.awaitility>4.3.0</version.awaitility>
       <version.blockhound>1.0.17.RELEASE</version.blockhound>
       <version.bouncycastle>1.84</version.bouncycastle>
-      <version.byteman>4.0.26</version.byteman>
+      <version.byteman>4.0.27</version.byteman>
       <version.caffeine>3.2.4</version.caffeine>
       <version.checker-qual>3.55.1</version.checker-qual>
       <version.commons.compress>1.28.0</version.commons.compress>
