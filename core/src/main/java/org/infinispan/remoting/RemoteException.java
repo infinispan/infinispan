@@ -14,4 +14,8 @@ public class RemoteException extends CacheException {
       super(msg, cause);
    }
 
+   public RemoteException(String msg, Throwable cause, boolean writableStackTrace) {
+      super(msg, cause, true, writableStackTrace);
+   }
+
 }

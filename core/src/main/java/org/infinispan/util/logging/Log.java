@@ -820,7 +820,7 @@ public interface Log extends BasicLogger {
    void entriesMigrated(long count, String name, String prettyTime);
 
    @Message(value = "Received exception from %s, see cause for remote stack trace", id = 217)
-   RemoteException remoteException(Object sender, @Cause Throwable t);
+   RemoteException remoteException(Object sender, @Cause Throwable t, @Param boolean writableStackTrace);
 
 //   @LogMessage(level = INFO)
 //   @Message(value = "Timeout while waiting for the transaction validation. The command will not be processed. " +
