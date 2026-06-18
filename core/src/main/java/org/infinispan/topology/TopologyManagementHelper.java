@@ -136,7 +136,7 @@ public class TopologyManagementHelper {
       Response localResponse;
       if (t != null) {
          localResponse = new ExceptionResponse(
-               CLUSTER.remoteException(localAddress, CompletableFutures.extractException(t)));
+               CLUSTER.remoteException(localAddress, CompletableFutures.extractException(t), true));
       } else {
          if (v instanceof Response) {
             localResponse = ((Response) v);

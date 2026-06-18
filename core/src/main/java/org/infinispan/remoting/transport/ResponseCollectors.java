@@ -23,7 +23,7 @@ public class ResponseCollectors {
          e = (CacheException) exception;
       } else {
          // if we have any application-level exceptions make sure we throw them!!
-         e = CLUSTER.remoteException(sender, exception);
+         e = CLUSTER.remoteException(sender, exception, false);
       }
       return e;
    }
