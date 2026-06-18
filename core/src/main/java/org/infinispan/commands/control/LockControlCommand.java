@@ -9,6 +9,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -122,6 +123,16 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
          return CompletableFutures.completedNull();
       }
       return registry.getInterceptorChain().running().invokeAsync(ctx, this);
+   }
+
+   @Override
+   public boolean logThrowable(Throwable t) {
+      Throwable cause = t;
+      do {
+         if (cause instanceof TimeoutException)
+            return false;
+      } while ((cause = t.getCause()) != null);
+      return true;
    }
 
    @Override

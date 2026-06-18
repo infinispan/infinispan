@@ -322,7 +322,7 @@ public class DefaultLockManager implements LockManager {
       @Override
       public TimeoutException get() {
          return log.unableToAcquireLock(Util.prettyPrintTime(timeoutMillis), toStr(key), lockPromise.getRequestor(),
-               lockPromise.getOwner());
+               lockPromise.getOwner(), false);
       }
 
       KeyAwareExtendedLockPromise scheduleLockTimeoutTask(ScheduledExecutorService executorService) {
