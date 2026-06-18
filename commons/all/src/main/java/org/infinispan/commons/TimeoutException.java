@@ -23,6 +23,10 @@ public class TimeoutException extends CacheException {
       super(msg);
    }
 
+   public TimeoutException(String msg, boolean writableStackTrace) {
+      super(msg, null, true, writableStackTrace);
+   }
+
    public TimeoutException(String msg, Throwable cause) {
       super(msg, cause);
    }
