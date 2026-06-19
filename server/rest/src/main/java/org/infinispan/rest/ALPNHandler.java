@@ -9,6 +9,7 @@ import java.util.Map;
 import org.infinispan.rest.configuration.RestServerConfiguration;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.transport.AccessControlFilter;
+import org.infinispan.server.core.transport.ConnectionMetadata;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -106,6 +107,8 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
       Http2MultiplexHandler multiplexCodec = new Http2MultiplexHandler(new ChannelInitializer<>() {
          @Override
          protected void initChannel(Channel channel) {
+            ConnectionMetadata metadata = ConnectionMetadata.getInstance(channel);
+            metadata.protocolVersion("HTTP/2.0");
             // Creates the HTTP/2 pipeline, where each stream is handled by a sub-channel.
             ChannelPipeline p = channel.pipeline();
             p.addLast(new Http2StreamFrameToHttpObjectCodec(true));

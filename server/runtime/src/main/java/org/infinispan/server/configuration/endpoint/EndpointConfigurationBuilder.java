@@ -260,6 +260,12 @@ public class EndpointConfigurationBuilder implements Builder<EndpointConfigurati
                Server.log.debug("Enabled BASIC for HTTP");
             }
          }
+         if (securityRealm.hasFeature(ServerSecurityRealm.Feature.LOCAL)) {
+            authentication
+                  .enable()
+                  .addMechanisms("LOCALUSER");
+            Server.log.debug("Enabled LOCALUSER for HTTP");
+         }
          authentication.authenticator(new ElytronHTTPAuthenticator(authentication.securityRealm(), serverPrincipal, authentication.mechanisms()));
       }
    }
