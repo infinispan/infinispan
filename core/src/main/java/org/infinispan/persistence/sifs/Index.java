@@ -906,6 +906,15 @@ class Index {
 
          IndexEntry existing = tree.get(indexKey);
          if (existing != null) {
+            // Entry was updated concurrently - possible is compactor running on a logFile while that entry is updated
+            // Note that Compactor only does updates for a log file, otherwise it is a move
+            if (request.getPrevFile() != -1
+                  && (existing.file != request.getPrevFile()
+                        || existing.offset != request.getPrevOffset())) {
+               index.compactor.free(file, request.getSize());
+               index.nonBlockingManager.complete(request, true);
+               return;
+            }
             int numRecords = existing.numRecords + 1;
             int oldTotalLength = loadTotalLength(existing);
             index.compactor.free(existing.file, oldTotalLength);

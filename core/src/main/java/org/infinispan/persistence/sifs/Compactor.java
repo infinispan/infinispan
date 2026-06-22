@@ -725,9 +725,10 @@ class Compactor {
                IndexRequest indexRequest;
                ByteBuffer keyBuffer = ByteBufferImpl.create(serializedKey);
                if (isLogFile) {
-                  // When it is a log file we are still keeping the original entry, we are just updating it to say
-                  // it was expired
-                  indexRequest = IndexRequest.update(segment, key, keyBuffer, logFile.fileId, entryOffset, writtenLength);
+                  // Log file compaction: the original entry still exists, so numRecords must be incremented.
+                  // Pass prevFile/prevOffset for staleness checking to avoid overwriting a concurrent write.
+                  indexRequest = IndexRequest.update(segment, key, keyBuffer, logFile.fileId, entryOffset, writtenLength,
+                        scheduledFile, indexedOffset);
                } else {
                   // entryFile cannot be used as we have to report the file due to free space statistics
                   indexRequest = IndexRequest.moved(segment, key, keyBuffer, logFile.fileId, entryOffset, writtenLength,
