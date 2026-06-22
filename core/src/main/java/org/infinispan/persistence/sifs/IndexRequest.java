@@ -48,6 +48,10 @@ class IndexRequest extends CompletableFuture<Object> {
       return new IndexRequest(Type.UPDATE, segment, Objects.requireNonNull(key), serializedKey, file, offset, size, -1, -1);
    }
 
+   public static IndexRequest update(int segment, Object key, ByteBuffer serializedKey, int file, int offset, int size, int prevFile, int prevOffset) {
+      return new IndexRequest(Type.UPDATE, segment, Objects.requireNonNull(key), serializedKey, file, offset, size, prevFile, prevOffset);
+   }
+
    public static IndexRequest moved(int segment, Object key, ByteBuffer serializedKey, int file, int offset, int size, int prevFile, int prevOffset) {
       return new IndexRequest(Type.MOVED, segment, Objects.requireNonNull(key), serializedKey, file, offset, size, prevFile, prevOffset);
    }
