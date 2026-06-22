@@ -294,6 +294,72 @@ public class SoftIndexFileStoreTest extends BaseNonBlockingStoreTest {
       assertThat(expired.get()).isEqualTo(1);
    }
 
+   public void testConcurrentWriteDuringLogFileExpiration() throws Exception {
+      Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
+      CheckPoint checkPoint = new CheckPoint();
+
+      // Block replaceOrLock in the compactor's temporaryTable - this pauses compaction
+      // after the tombstone is written to disk but before the IndexRequest is created
+      Mocks.blockingFieldMock(checkPoint, TemporaryTable.class, compactor, Compactor.class, "temporaryTable",
+            (stubber, table) -> stubber.when(table).replaceOrLock(anyInt(), any(), anyInt(), anyInt(), anyInt(), anyInt()));
+
+      store.write(marshalledEntry(internalCacheEntry("key", "value", 10)));
+
+      AtomicInteger expired = new AtomicInteger(0);
+      TestSubscriber<Object> testSubscriber = TestSubscriber.create();
+      testSubscriber.onSubscribe(new AsyncSubscription());
+      Compactor.CompactionExpirationSubscriber sub = new Compactor.CompactionExpirationSubscriber() {
+         @Override
+         public void onEntryPosition(EntryPosition entryPosition) {
+         }
+
+         @Override
+         public void onEntryEntryRecord(EntryRecord entryRecord) {
+            expired.incrementAndGet();
+         }
+
+         @Override
+         public void onComplete() {
+            testSubscriber.onComplete();
+         }
+
+         @Override
+         public void onError(Throwable t) {
+            testSubscriber.onError(t);
+         }
+      };
+
+      timeService.advance(11);
+
+      Future<Void> compaction = fork(() -> compactor.performExpirationCompaction(sub));
+
+      // Compaction has written the tombstone for the expired entry but is blocked
+      // before submitting the IndexRequest
+      checkPoint.awaitStrict(Mocks.BEFORE_INVOCATION, 10, TimeUnit.SECONDS);
+
+      // Simulate concurrent activation/write for the same key while compaction is paused
+      store.write(marshalledEntry(internalCacheEntry("key", "newvalue", -1)));
+
+      // Release compaction - the staleness check should discard the compactor's
+      // stale tombstone since the index was updated by the concurrent write
+      checkPoint.trigger(Mocks.BEFORE_RELEASE);
+
+      checkPoint.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS);
+      checkPoint.triggerForever(Mocks.AFTER_RELEASE);
+
+      eventually(compaction::isDone);
+      compaction.get(10, TimeUnit.SECONDS);
+      testSubscriber.awaitDone(10, TimeUnit.SECONDS)
+            .assertComplete().assertNoErrors();
+
+      assertThat(expired.get()).isEqualTo(1);
+
+      // The entry must still be loadable - the compactor's stale tombstone was discarded
+      MarshallableEntry<?, ?> entry = store.loadEntry("key");
+      assertNotNull(entry, "Entry was lost due to compaction race condition");
+      assertEquals("newvalue", entry.getValue());
+   }
+
    public void testRemoveSegmentsCleansUpProperly() throws ExecutionException, InterruptedException, TimeoutException {
       Compactor compactor = TestingUtil.extractField(store.delegate(), "compactor");
       var fileStats = compactor.getFileStats();
