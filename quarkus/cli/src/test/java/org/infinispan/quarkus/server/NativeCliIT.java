@@ -39,7 +39,7 @@ public class NativeCliIT {
       assertEquals(200, restResponse.status());
       assertEquals("HEALTHY", restResponse.body());
 
-      String cliPath = Paths.get(System.getProperty("user.dir"), "..", "..", "cli", "target", "infinispan-cli").toString();
+      String cliPath = Paths.get(System.getProperty("infinispan.cli.bin")).toString();
       String batchFile = resource("batch.file");
       String hostname = SERVERS.getTestServer().getDriver().getServerAddress(0).getHostAddress() + ":11222";
 

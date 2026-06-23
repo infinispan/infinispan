@@ -144,6 +144,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
+               <skipTests>true</skipTests>
                <parallel>none</parallel>
                <groups combine.self="override">${defaultJUnitGroups}</groups>
                <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
@@ -170,6 +171,13 @@
          <build>
             <plugins>
                <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <configuration>
+                     <skipTests>false</skipTests>
+                  </configuration>
+               </plugin>
+               <plugin>
                   <groupId>org.graalvm.buildtools</groupId>
                   <artifactId>native-maven-plugin</artifactId>
                   <extensions>true</extensions>
@@ -182,7 +190,7 @@
                         <phase>integration-test</phase>
                         <configuration>
                            <buildArgs>
-                              <buildArg>-J-Xmx5g</buildArg>
+                              <buildArg>-J-Xmx${native.build.xmx}</buildArg>
                               <buildArg>-H:+UnlockExperimentalVMOptions</buildArg>
                               <buildArg>-J-Djava.util.logging.manager=java.util.logging.LogManager</buildArg>
                               <buildArg>-H:+AllowDeprecatedBuilderClassesOnImageClasspath</buildArg>

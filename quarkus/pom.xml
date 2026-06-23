@@ -18,11 +18,9 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.compiler.release>17</maven.compiler.release>
-        <!-- GraalVM "quick build mode for development". Disable on release. Must end with a comma -->
-        <native-dev-args>-Ob,</native-dev-args>
-        <!-- Additional native build args that are required for distribution and development should be added to the property below directly -->
-        <quarkus.native.additional-build-args>${native-dev-args}</quarkus.native.additional-build-args>
-        <quarkus.native.native-image-xmx>5g</quarkus.native.native-image-xmx>
+        <!-- Additional native build args that are required for distribution and development should be added to the property below directly. The comma is important -->
+        <quarkus.native.additional-build-args>${native.build.args},</quarkus.native.additional-build-args>
+        <quarkus.native.native-image-xmx>${native.build.xmx}</quarkus.native.native-image-xmx>
         <exe.suffix/>
     </properties>
 
@@ -69,12 +67,6 @@
     </dependencyManagement>
 
     <profiles>
-        <profile>
-            <id>native</id>
-            <modules>
-                <module>integration-tests/cli</module>
-            </modules>
-        </profile>
         <profile>
             <id>distribution</id>
             <properties>

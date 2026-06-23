@@ -175,6 +175,8 @@
       <testNGListeners>org.infinispan.testing.testng.TestNGTestListener,org.infinispan.testing.junit.PolarionJUnitXMLReporter</testNGListeners>
       <log4j.configurationFile>${infinispan.root}/etc/log4j2.xml</log4j.configurationFile>
       <uberjar.deps.optional>true</uberjar.deps.optional>
+      <native.build.args>-Ob</native.build.args>
+      <native.build.xmx>6g</native.build.xmx>
 
       <!-- dependencies version -->
       <versionx.org.infinispan.memcached-client>1.2.3</versionx.org.infinispan.memcached-client>
@@ -1859,6 +1861,12 @@
                <groupId>io.fabric8</groupId>
                <artifactId>docker-maven-plugin</artifactId>
                <version>${version.fabric8.docker-maven-plugin}</version>
+            </plugin>
+            <plugin>
+               <groupId>io.quarkus</groupId>
+               <artifactId>quarkus-maven-plugin</artifactId>
+               <version>${version.quarkus}</version>
+               <extensions>true</extensions>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>

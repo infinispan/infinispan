@@ -198,9 +198,11 @@ jobs:
           - os: macos-latest
             asset_name: osx-aarch_64
             gu_binary: gu
+            native_extra_args: -Dquarkus.native.native-image-xmx=5500m
           - os: macos-15-intel
             asset_name: osx-x86_64
             gu_binary: gu
+            native_extra_args: -Dquarkus.native.native-image-xmx=5500m
           - os: windows-2022
             asset_name: windows-x86_64
             gu_binary: gu.cmd
