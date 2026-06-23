@@ -155,7 +155,7 @@ public class TransactionFactory {
    public void start() {
       boolean xa = !configuration.transaction().useSynchronization();
       boolean recoveryEnabled = configuration.transaction().recovery().enabled();
-      boolean batchingEnabled = configuration.invocationBatching().enabled();
+      boolean batchingEnabled = configuration.transaction().invocationBatching();
       init(false, recoveryEnabled, xa, batchingEnabled);
       isClustered = configuration.clustering().cacheMode().isClustered();
    }

@@ -5,7 +5,6 @@ import static org.infinispan.configuration.parsing.Attribute.DEFAULT_STACK;
 import static org.infinispan.configuration.parsing.Attribute.EXTENDS;
 import static org.infinispan.configuration.parsing.Attribute.NAME;
 import static org.infinispan.configuration.parsing.Attribute.PATH;
-import static org.infinispan.configuration.parsing.Attribute.RAFT_MEMBERS;
 import static org.infinispan.configuration.parsing.Attribute.STACK;
 import static org.infinispan.configuration.serializing.SerializeUtils.writeOptional;
 import static org.infinispan.util.logging.Log.CONFIG;
@@ -40,8 +39,6 @@ import org.infinispan.configuration.cache.IndexMergeConfiguration;
 import org.infinispan.configuration.cache.IndexReaderConfiguration;
 import org.infinispan.configuration.cache.IndexWriterConfiguration;
 import org.infinispan.configuration.cache.IndexingConfiguration;
-import org.infinispan.configuration.cache.MemoryConfiguration;
-import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfiguration;
 import org.infinispan.configuration.cache.QueryConfiguration;
 import org.infinispan.configuration.cache.RecoveryConfiguration;
@@ -49,34 +46,27 @@ import org.infinispan.configuration.cache.SitesConfiguration;
 import org.infinispan.configuration.cache.StatisticsConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.cache.TransactionConfiguration;
-import org.infinispan.configuration.global.AllowListConfiguration;
+import org.infinispan.configuration.cache.TransactionMode;
 import org.infinispan.configuration.global.GlobalAuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalJmxConfiguration;
-import org.infinispan.configuration.global.GlobalMetricsConfiguration;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.configuration.global.GlobalStatePathConfiguration;
-import org.infinispan.configuration.global.SerializationConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.StackConfiguration;
 import org.infinispan.configuration.global.StackFileConfiguration;
 import org.infinispan.configuration.global.TemporaryGlobalStatePathConfiguration;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
-import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.parsing.Attribute;
-import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.Element;
 import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.ParserScope;
-import org.infinispan.conflict.EntryMergePolicy;
-import org.infinispan.conflict.MergePolicy;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.factories.threads.EnhancedQueueExecutorFactory;
 import org.infinispan.factories.threads.NonBlockingThreadPoolExecutorFactory;
 import org.infinispan.persistence.sifs.configuration.DataConfiguration;
 import org.infinispan.persistence.sifs.configuration.IndexConfiguration;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration;
-import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
@@ -513,89 +503,23 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
    }
 
    private void writeTransport(ConfigurationWriter writer, GlobalConfiguration globalConfiguration) {
-      TransportConfiguration transport = globalConfiguration.transport();
-      AttributeSet attributes = transport.attributes();
-      if (attributes.isModified()) {
-         writer.writeStartElement(Element.TRANSPORT);
-         attributes.write(writer, TransportConfiguration.CLUSTER_NAME, Attribute.CLUSTER);
-         attributes.write(writer, TransportConfiguration.MACHINE_ID, Attribute.MACHINE_ID);
-         attributes.write(writer, TransportConfiguration.RACK_ID, Attribute.RACK_ID);
-         if (transport.siteId() != null) {
-            attributes.write(writer, TransportConfiguration.SITE_ID, Attribute.SITE);
-         }
-         attributes.write(writer, TransportConfiguration.NODE_NAME, Attribute.NODE_NAME);
-         attributes.write(writer, TransportConfiguration.STACK);
-         attributes.write(writer, TransportConfiguration.DISTRIBUTED_SYNC_TIMEOUT, Attribute.LOCK_TIMEOUT);
-         attributes.write(writer, TransportConfiguration.INITIAL_CLUSTER_SIZE, Attribute.INITIAL_CLUSTER_SIZE);
-         attributes.write(writer, TransportConfiguration.INITIAL_CLUSTER_TIMEOUT, Attribute.INITIAL_CLUSTER_TIMEOUT);
-         if (!transport.raftMembers().isEmpty()) {
-            attributes.write(writer, TransportConfiguration.RAFT_MEMBERS, RAFT_MEMBERS);
-         }
-         writer.writeEndElement();
-      }
+      globalConfiguration.transport().write(writer);
    }
 
    private void writeSerialization(ConfigurationWriter writer, GlobalConfiguration globalConfiguration) {
-      SerializationConfiguration serialization = globalConfiguration.serialization();
-      AttributeSet attributes = serialization.attributes();
-      if (attributes.isModified()) {
-         writer.writeStartElement(Element.SERIALIZATION);
-         attributes.write(writer, SerializationConfiguration.MARSHALLER, Attribute.MARSHALLER);
-         attributes.write(writer, SerializationConfiguration.SCHEMA_COMPATIBILITY, Attribute.SCHEMA_COMPATIBILITY);
-         SerializationConfiguration config = globalConfiguration.serialization();
-         writeSerializationContextInitializers(writer, config);
-         writeClassAllowList(writer, config.allowList());
-         writer.writeEndElement();
-      }
-   }
-
-   private void writeSerializationContextInitializers(ConfigurationWriter writer, SerializationConfiguration config) {
-      List<SerializationContextInitializer> scis = config.contextInitializers();
-      if (scis != null && !scis.isEmpty()) {
-         List<String> classes = scis.stream().map(s -> s.getClass().getName()).collect(Collectors.toList());
-         writer.writeArrayElement(Element.SERIALIZATION_CONTEXT_INITIALIZERS, Element.SERIALIZATION_CONTEXT_INITIALIZER, Attribute.CLASS, classes);
-      }
-   }
-
-   private void writeClassAllowList(ConfigurationWriter writer, AllowListConfiguration config) {
-      if (!config.getClasses().isEmpty() || !config.getRegexps().isEmpty()) {
-         writer.writeStartElement(Element.ALLOW_LIST);
-         writer.writeArrayElement(Element.CLASS, Element.CLASS, null, config.getClasses());
-         writer.writeArrayElement(Element.REGEX, Element.REGEX, null, config.getRegexps());
-         writer.writeEndElement();
-      }
+      globalConfiguration.serialization().write(writer);
    }
 
    private void writeMetrics(ConfigurationWriter writer, GlobalConfiguration globalConfiguration) {
-      GlobalMetricsConfiguration metrics = globalConfiguration.metrics();
-      AttributeSet attributes = metrics.attributes();
-      if (attributes.isModified()) {
-         writer.writeStartElement(Element.METRICS);
-         attributes.write(writer, GlobalMetricsConfiguration.GAUGES, Attribute.GAUGES);
-         attributes.write(writer, GlobalMetricsConfiguration.HISTOGRAMS, Attribute.HISTOGRAMS);
-         attributes.write(writer, GlobalMetricsConfiguration.PREFIX, Attribute.PREFIX);
-         attributes.write(writer, GlobalMetricsConfiguration.NAMES_AS_TAGS, Attribute.NAMES_AS_TAGS);
-         attributes.write(writer, GlobalMetricsConfiguration.JVM, Attribute.JVM);
-         attributes.write(writer, GlobalMetricsConfiguration.LEGACY, Attribute.LEGACY);
-         writer.writeEndElement();
-      }
+      globalConfiguration.metrics().write(writer);
    }
 
    private void writeTracing(ConfigurationWriter writer, GlobalConfiguration globalConfiguration) {
-      globalConfiguration.tracing().attributes().write(writer, Element.TRACING);
+      globalConfiguration.tracing().write(writer);
    }
 
    private void writeJMX(ConfigurationWriter writer, GlobalConfiguration globalConfiguration) {
-      GlobalJmxConfiguration jmx = globalConfiguration.jmx();
-      AttributeSet attributes = jmx.attributes();
-      if (attributes.isModified()) {
-         writer.writeStartElement(Element.JMX);
-         attributes.write(writer, GlobalJmxConfiguration.ENABLED, Attribute.ENABLED);
-         attributes.write(writer, GlobalJmxConfiguration.DOMAIN, Attribute.DOMAIN);
-         attributes.write(writer, GlobalJmxConfiguration.MBEAN_SERVER_LOOKUP, Attribute.MBEAN_SERVER_LOOKUP);
-         attributes.write(writer, GlobalJmxConfiguration.PROPERTIES);
-         writer.writeEndElement();
-      }
+      globalConfiguration.jmx().write(writer);
    }
 
    private void writeTransaction(ConfigurationWriter writer, Configuration configuration) {
@@ -603,13 +527,12 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       AttributeSet attributes = transaction.attributes();
       if (attributes.isModified()) {
          writer.writeStartElement(Element.TRANSACTION);
-         CacheParser.TransactionMode mode = CacheParser.TransactionMode.fromConfiguration(transaction, configuration.invocationBatching().enabled());
-         writer.writeAttribute(Attribute.MODE, mode.toString());
          attributes.write(writer);
-         if (mode != CacheParser.TransactionMode.NONE) {
+         TransactionMode mode = transaction.mode();
+         if (mode != TransactionMode.NONE) {
             attributes.write(writer, TransactionConfiguration.TRANSACTION_MANAGER_LOOKUP);
          }
-         if (transaction.recovery().enabled())
+         if (mode.isRecoveryEnabled())
             transaction.recovery().attributes().write(writer, RecoveryConfiguration.RECOVERY_INFO_CACHE_NAME, Attribute.RECOVERY_INFO_CACHE_NAME);
          writer.writeEndElement();
       }
@@ -662,34 +585,11 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
    }
 
    private void writePartitionHandling(ConfigurationWriter writer, Configuration configuration) {
-      PartitionHandlingConfiguration partitionHandling = configuration.clustering().partitionHandling();
-      AttributeSet attributes = partitionHandling.attributes();
-      if (attributes.isModified()) {
-         writer.writeStartElement(Element.PARTITION_HANDLING);
-         attributes.write(writer, PartitionHandlingConfiguration.WHEN_SPLIT, Attribute.WHEN_SPLIT);
-         EntryMergePolicy policyImpl = partitionHandling.mergePolicy();
-         MergePolicy policy = MergePolicy.fromConfiguration(policyImpl);
-         String output = policy == MergePolicy.CUSTOM ? policyImpl.getClass().getName() : policy.toString();
-         writer.writeAttribute(Attribute.MERGE_POLICY, output);
-         writer.writeEndElement();
-      }
+      configuration.clustering().partitionHandling().write(writer);
    }
 
    private void writeMemory(ConfigurationWriter writer, Configuration configuration) {
-      MemoryConfiguration memory = configuration.memory();
-      AttributeSet attributes = memory.attributes();
-      if (attributes.isModified()) {
-         writer.writeStartElement(Element.MEMORY);
-         attributes.write(writer, MemoryConfiguration.STORAGE, Attribute.STORAGE);
-         if (attributes.attribute(MemoryConfiguration.MAX_COUNT).get() > 0) {
-            attributes.write(writer, MemoryConfiguration.MAX_COUNT, Attribute.MAX_COUNT);
-         } else if (attributes.attribute(MemoryConfiguration.MAX_SIZE).get() != null) {
-            attributes.write(writer, MemoryConfiguration.MAX_SIZE, Attribute.MAX_SIZE);
-         }
-         attributes.write(writer, MemoryConfiguration.WHEN_FULL, Attribute.WHEN_FULL);
-         attributes.write(writer, MemoryConfiguration.EVICTION_CONTAINER, Attribute.EVICTION_CONTAINER);
-         writer.writeEndElement();
-      }
+      configuration.memory().write(writer);
    }
 
    private void writeQuery(ConfigurationWriter writer, Configuration configuration) {

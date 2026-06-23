@@ -18,6 +18,7 @@ import javax.transaction.xa.XAResource;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.TransactionMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
 import org.infinispan.server.hotrod.HotRodVersion;
@@ -26,7 +27,6 @@ import org.infinispan.server.hotrod.test.RemoteTransaction;
 import org.infinispan.server.hotrod.tx.table.GlobalTxTable;
 import org.infinispan.server.hotrod.tx.table.PerCacheTxTable;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.testng.annotations.Test;
 
@@ -43,8 +43,8 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
 
    @Override
    public Object[] factory() {
-      return Arrays.stream(org.infinispan.configuration.cache.TransactionMode.values())
-            .filter(tMode -> tMode != org.infinispan.configuration.cache.TransactionMode.NONE)
+      return Arrays.stream(TransactionMode.values())
+            .filter(tMode -> tMode != TransactionMode.NONE)
             .flatMap(txMode -> Arrays.stream(LockingMode.values())
                   .map(lockingMode -> new TxFunctionalTest()
                         .transactionMode(txMode)
@@ -539,24 +539,10 @@ public class TxFunctionalTest extends HotRodMultiNodeTest {
    @Override
    protected ConfigurationBuilder createCacheConfig() {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
-      builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      builder.transaction().lockingMode(lockingMode);
-      builder.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
-      switch (transactionMode) {
-         case NON_XA:
-            builder.transaction().useSynchronization(true);
-            break;
-         case NON_DURABLE_XA:
-            builder.transaction().useSynchronization(false);
-            builder.transaction().recovery().disable();
-            break;
-         case FULL_XA:
-            builder.transaction().useSynchronization(false);
-            builder.transaction().recovery().enable();
-            break;
-         default:
-            throw new IllegalStateException();
-      }
+      builder.transaction()
+            .mode(transactionMode)
+            .lockingMode(lockingMode)
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
       builder.clustering().hash().numOwners(2);
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       return builder;

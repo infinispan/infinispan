@@ -197,7 +197,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
       config.expiration().attributes().attribute(ExpirationConfiguration.LIFESPAN).addListener((attribute, oldValue) -> updateDefaultMetadata());
       config.expiration().attributes().attribute(ExpirationConfiguration.MAX_IDLE).addListener((attribute, oldValue) -> updateDefaultMetadata());
       transactional = config.transaction().transactionMode().isTransactional();
-      batchingEnabled = config.invocationBatching().enabled();
+      batchingEnabled = config.transaction().invocationBatching();
    }
 
    private void updateDefaultMetadata() {

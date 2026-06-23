@@ -105,7 +105,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       AsyncInterceptorChain interceptorChain = new AsyncInterceptorChainImpl();
 
-      boolean invocationBatching = configuration.invocationBatching().enabled();
+      boolean invocationBatching = configuration.transaction().invocationBatching();
       CacheMode cacheMode = configuration.clustering().cacheMode();
 
       // load the icInterceptor first

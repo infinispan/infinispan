@@ -42,7 +42,7 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SecurityConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
-import org.infinispan.configuration.cache.TransactionConfiguration;
+import org.infinispan.configuration.cache.TransactionMode;
 import org.infinispan.conflict.EntryMergePolicy;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.eviction.EvictionStrategy;
@@ -526,31 +526,6 @@ public class CacheParser implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseCompatibility(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
-      EncodingConfigurationBuilder encoding = builder.encoding();
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case ENABLED:
-               if (ParseUtils.parseBoolean(reader, i, value)) {
-                  encoding.key().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
-                  encoding.value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
-               }
-               break;
-            case MARSHALLER:
-               CONFIG.marshallersNotSupported();
-               break;
-            default:
-               throw ParseUtils.unexpectedAttribute(reader, i);
-         }
-      }
-
-      ParseUtils.requireNoContent(reader);
-   }
-
    private void parseLocking(ConfigurationReader reader, ConfigurationBuilder builder) {
       ParseUtils.parseAttributes(reader, builder.locking());
       ParseUtils.requireNoContent(reader);
@@ -566,12 +541,8 @@ public class CacheParser implements ConfigurationParser {
                break;
             }
             case MODE: {
-               // This should reflect what happens in the transaction builders, e.g., InvocationBatchingConfigurationBuilder.
                TransactionMode txMode = ParseUtils.parseEnum(reader, i, TransactionMode.class, value);
-               builder.transaction().transactionMode(txMode.getMode());
-               builder.transaction().useSynchronization(!txMode.isXAEnabled() && txMode.getMode().isTransactional());
-               builder.transaction().recovery().enabled(txMode.isRecoveryEnabled());
-               builder.invocationBatching().enable(txMode.isBatchingEnabled());
+               builder.transaction().mode(txMode);
                break;
             }
             case LOCKING: {
@@ -1278,32 +1249,8 @@ public class CacheParser implements ConfigurationParser {
    }
 
    private void parseQuery(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case DEFAULT_MAX_RESULTS:
-               builder.query().defaultMaxResults(ParseUtils.parseInt(reader, i, value));
-               break;
-            case HIT_COUNT_ACCURACY:
-               builder.query().hitCountAccuracy(ParseUtils.parseInt(reader, i, value));
-               break;
-            default:
-               throw ParseUtils.unexpectedAttribute(reader, i);
-         }
-      }
-
-      // no nested properties at the moment
-      while (reader.inTag()) {
-         Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            default: {
-               throw ParseUtils.unexpectedElement(reader);
-            }
-         }
-      }
+      ParseUtils.parseAttributes(reader, holder.getCurrentConfigurationBuilder().query());
+      ParseUtils.requireNoContent(reader);
    }
 
    private void parseIndexing(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
@@ -1564,57 +1511,6 @@ public class CacheParser implements ConfigurationParser {
          }
       }
       return properties;
-   }
-
-   public enum TransactionMode {
-      NONE(org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL, false, false, false),
-      BATCH(org.infinispan.transaction.TransactionMode.TRANSACTIONAL, false, false, true),
-      NON_XA(org.infinispan.transaction.TransactionMode.TRANSACTIONAL, false, false, false),
-      NON_DURABLE_XA(org.infinispan.transaction.TransactionMode.TRANSACTIONAL, true, false, false),
-      FULL_XA(org.infinispan.transaction.TransactionMode.TRANSACTIONAL, true, true, false),
-      ;
-      private final org.infinispan.transaction.TransactionMode mode;
-      private final boolean xaEnabled;
-      private final boolean recoveryEnabled;
-      private final boolean batchingEnabled;
-
-      TransactionMode(org.infinispan.transaction.TransactionMode mode, boolean xaEnabled, boolean recoveryEnabled, boolean batchingEnabled) {
-         this.mode = mode;
-         this.xaEnabled = xaEnabled;
-         this.recoveryEnabled = recoveryEnabled;
-         this.batchingEnabled = batchingEnabled;
-      }
-
-      public static TransactionMode fromConfiguration(TransactionConfiguration transactionConfiguration, boolean batchingEnabled) {
-         org.infinispan.transaction.TransactionMode mode = transactionConfiguration.transactionMode();
-         boolean recoveryEnabled = transactionConfiguration.recovery().enabled();
-         boolean xaEnabled = !batchingEnabled && !transactionConfiguration.useSynchronization();
-
-         if (mode == org.infinispan.transaction.TransactionMode.NON_TRANSACTIONAL) {
-            return NONE;
-         }
-         for (TransactionMode txMode : TransactionMode.values()) {
-            if (txMode.mode == mode && txMode.xaEnabled == xaEnabled && txMode.recoveryEnabled == recoveryEnabled && txMode.batchingEnabled == batchingEnabled)
-               return txMode;
-         }
-         throw CONFIG.unknownTransactionConfiguration(mode, xaEnabled, recoveryEnabled, batchingEnabled);
-      }
-
-      public org.infinispan.transaction.TransactionMode getMode() {
-         return this.mode;
-      }
-
-      public boolean isXAEnabled() {
-         return this.xaEnabled;
-      }
-
-      public boolean isRecoveryEnabled() {
-         return this.recoveryEnabled;
-      }
-
-      public boolean isBatchingEnabled() {
-         return batchingEnabled;
-      }
    }
 
    public enum Mode {

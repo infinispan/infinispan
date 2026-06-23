@@ -44,7 +44,6 @@ import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolBuilderAdapter;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.ThreadsConfigurationBuilder;
-import org.infinispan.configuration.global.TracingExporterProtocol;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.globalstate.ConfigurationStorage;
@@ -1110,117 +1109,17 @@ public class Parser extends CacheParser {
    }
 
    private void parseMemoryMonitor(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case ENABLED: {
-               builder.memoryMonitor().enabled(ParseUtils.parseBoolean(reader, i, value));
-               break;
-            }
-            case MEMORY_THRESHOLD: {
-               builder.memoryMonitor().memoryThreshold(Double.parseDouble(value));
-               break;
-            }
-            case GC_DURATION_THRESHOLD: {
-               builder.memoryMonitor().gcDurationThreshold(Long.parseLong(value));
-               break;
-            }
-            case GC_PRESSURE_THRESHOLD: {
-               builder.memoryMonitor().gcPressureThreshold(Double.parseDouble(value));
-               break;
-            }
-            case GC_PRESSURE_WINDOW: {
-               builder.memoryMonitor().gcPressureWindow(Long.parseLong(value));
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
-         }
-      }
+      ParseUtils.parseAttributes(reader, holder.getGlobalConfigurationBuilder().memoryMonitor());
       ParseUtils.requireNoContent(reader);
    }
 
    private void parseMetrics(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case GAUGES: {
-               builder.metrics().gauges(ParseUtils.parseBoolean(reader, i, value));
-               break;
-            }
-            case HISTOGRAMS: {
-               builder.metrics().histograms(ParseUtils.parseBoolean(reader, i, value));
-               break;
-            }
-            case PREFIX: {
-               builder.metrics().prefix(value);
-               break;
-            }
-            case NAMES_AS_TAGS: {
-               builder.metrics().namesAsTags(ParseUtils.parseBoolean(reader, i, value));
-               break;
-            }
-            case ACCURATE_SIZE: {
-               builder.metrics().accurateSize(ParseUtils.parseBoolean(reader, i, value));
-               break;
-            }
-            case JVM: {
-               builder.metrics().jvm(ParseUtils.parseBoolean(reader, i, value));
-               break;
-            }
-            case LEGACY: {
-               builder.metrics().legacy(ParseUtils.parseBoolean(reader, i, value));
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
-         }
-      }
-
+      ParseUtils.parseAttributes(reader, holder.getGlobalConfigurationBuilder().metrics());
       ParseUtils.requireNoContent(reader);
    }
 
    private void parseTracing(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
-      GlobalConfigurationBuilder builder = holder.getGlobalConfigurationBuilder();
-      for (int i = 0; i < reader.getAttributeCount(); i++) {
-         ParseUtils.requireNoNamespaceAttribute(reader, i);
-         String value = reader.getAttributeValue(i);
-         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-         switch (attribute) {
-            case COLLECTOR_ENDPOINT: {
-               builder.tracing().collectorEndpoint(value);
-               break;
-            }
-            case ENABLED: {
-               builder.tracing().enabled(ParseUtils.parseBoolean(reader, i, value));
-               break;
-            }
-            case EXPORTER_PROTOCOL: {
-               builder.tracing().exporterProtocol(ParseUtils.parseEnum(reader, i, TracingExporterProtocol.class, value));
-               break;
-            }
-            case SERVICE_NAME: {
-               builder.tracing().serviceName(value);
-               break;
-            }
-            case SECURITY: {
-               boolean security = ParseUtils.parseBoolean(reader, i, value);
-               builder.tracing().traceSecurity(security);
-               break;
-            }
-            default: {
-               throw ParseUtils.unexpectedAttribute(reader, i);
-            }
-         }
-      }
+      ParseUtils.parseAttributes(reader, holder.getGlobalConfigurationBuilder().tracing());
    }
 
    private void parseJmx(ConfigurationReader reader, ConfigurationBuilderHolder holder) {

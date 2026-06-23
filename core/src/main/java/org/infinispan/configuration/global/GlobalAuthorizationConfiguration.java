@@ -4,7 +4,6 @@ import static org.infinispan.commons.configuration.attributes.IdentityAttributeC
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.Attribute;
@@ -12,6 +11,8 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.PrincipalRoleMapper;
@@ -27,7 +28,7 @@ import org.infinispan.util.logging.events.Messages;
  * @since 7.0
  */
 @BuiltBy(GlobalAuthorizationConfigurationBuilder.class)
-public class GlobalAuthorizationConfiguration {
+public class GlobalAuthorizationConfiguration extends ConfigurationElement<GlobalAuthorizationConfiguration> {
    public static final Map<String, Role> DEFAULT_ROLES;
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, false).immutable().build();
    public static final AttributeDefinition<AuditLogger> AUDIT_LOGGER = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AUDIT_LOGGER, (AuditLogger) new NullAuditLogger())
@@ -88,19 +89,15 @@ public class GlobalAuthorizationConfiguration {
    }
 
    private final Attribute<Boolean> enabled;
-   private final Attribute<AuditLogger> auditLogger;
    private final Map<String, Role> roles;
    private final PrincipalRoleMapperConfiguration roleMapperConfiguration;
    private final RolePermissionMapperConfiguration permissionMapperConfiguration;
    private final RolePermissionMapper rolePermissionMapper;
    private final boolean groupOnlyMapping;
 
-   private final AttributeSet attributes;
-
    public GlobalAuthorizationConfiguration(AttributeSet attributes, PrincipalRoleMapperConfiguration roleMapperConfiguration, RolePermissionMapperConfiguration permissionMapperConfiguration) {
-      this.attributes = attributes.checkProtection();
+      super(Element.AUTHORIZATION, attributes, roleMapperConfiguration, permissionMapperConfiguration);
       this.enabled = attributes.attribute(ENABLED);
-      this.auditLogger = attributes.attribute(AUDIT_LOGGER);
       this.roles = attributes.attribute(ROLES).get();
       this.roleMapperConfiguration = roleMapperConfiguration;
       this.permissionMapperConfiguration = permissionMapperConfiguration;
@@ -113,7 +110,7 @@ public class GlobalAuthorizationConfiguration {
    }
 
    public AuditLogger auditLogger() {
-      return auditLogger.get();
+      return attributes.attribute(AUDIT_LOGGER).get();
    }
 
    public PrincipalRoleMapper principalRoleMapper() {
@@ -167,31 +164,4 @@ public class GlobalAuthorizationConfiguration {
       }
    }
 
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      GlobalAuthorizationConfiguration that = (GlobalAuthorizationConfiguration) o;
-      return Objects.equals(roleMapperConfiguration, that.roleMapperConfiguration) &&
-            Objects.equals(permissionMapperConfiguration, that.permissionMapperConfiguration) &&
-            Objects.equals(attributes, that.attributes);
-   }
-
-   @Override
-   public int hashCode() {
-      return Objects.hash(roleMapperConfiguration, permissionMapperConfiguration, attributes);
-   }
-
-   @Override
-   public String toString() {
-      return "GlobalAuthorizationConfiguration{" +
-            "roleMapperConfiguration=" + roleMapperConfiguration +
-            "permissionMapperConfiguration=" + permissionMapperConfiguration +
-            ", attributes=" + attributes +
-            '}';
-   }
 }

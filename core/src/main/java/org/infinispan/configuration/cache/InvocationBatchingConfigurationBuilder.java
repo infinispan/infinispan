@@ -1,17 +1,14 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.InvocationBatchingConfiguration.ENABLED;
-import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_MODE;
-import static org.infinispan.transaction.TransactionMode.TRANSACTIONAL;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.transaction.TransactionMode;
 
+@Deprecated(since = "16.3", forRemoval = true)
 public class InvocationBatchingConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<InvocationBatchingConfiguration> {
 
    private final AttributeSet attributes;
@@ -46,13 +43,10 @@ public class InvocationBatchingConfigurationBuilder extends AbstractConfiguratio
    }
 
    private void enableTransactions() {
-      Attribute<TransactionMode> transactionModeAttribute =
-            getBuilder().transaction().attributes.attribute(TRANSACTION_MODE);
-      if (!transactionModeAttribute.isModified()) {
-         // This update should reflect what is happening in CacheParser
-         getBuilder().transaction().transactionMode(TRANSACTIONAL);
-         getBuilder().transaction().useSynchronization(true);
-         getBuilder().transaction().recovery().enabled(false);
+      TransactionConfigurationBuilder txBuilder = getBuilder().transaction();
+      if (!txBuilder.attributes.attribute(TransactionConfiguration.MODE).isModified()
+            && txBuilder.transactionModeOverride == null) {
+         txBuilder.transactionModeOverride = org.infinispan.transaction.TransactionMode.TRANSACTIONAL;
       }
    }
 
@@ -62,11 +56,13 @@ public class InvocationBatchingConfigurationBuilder extends AbstractConfiguratio
 
    @Override
    public void validate() {
-      if (isEnabled() && !getBuilder().transaction().transactionMode().isTransactional())
-         throw CONFIG.invocationBatchingNeedsTransactionalCache();
-      if (isEnabled() && getBuilder().transaction().recovery().isEnabled() &&
-          !getBuilder().transaction().useSynchronization())
-         throw CONFIG.invocationBatchingCannotBeRecoverable();
+      if (isEnabled()) {
+         org.infinispan.configuration.cache.TransactionMode mode = getBuilder().transaction().resolveMode();
+         if (!mode.isTransactional())
+            throw CONFIG.invocationBatchingNeedsTransactionalCache();
+         if (mode.isRecoveryEnabled() || getBuilder().transaction().recovery().isEnabled())
+            throw CONFIG.invocationBatchingCannotBeRecoverable();
+      }
    }
 
    @Override

@@ -30,21 +30,24 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
          .serializer(AttributeSerializer.INSTANCE_CLASS_NAME)
          .autoPersist(false).global(false).immutable().build();
 
+   public static final AttributeDefinition<org.infinispan.configuration.cache.TransactionMode> MODE =AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MODE, org.infinispan.configuration.cache.TransactionMode.NONE, org.infinispan.configuration.cache.TransactionMode.class)
+         .immutable().build();
    public static final AttributeDefinition<TransactionSynchronizationRegistryLookup> TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP = AttributeDefinition.builder("transaction-synchronization-registry-lookup", null, TransactionSynchronizationRegistryLookup.class)
          .copier(identityCopier()).autoPersist(false).immutable().build();
-   public static final AttributeDefinition<TransactionMode> TRANSACTION_MODE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MODE, TransactionMode.NON_TRANSACTIONAL).immutable()
-         .autoPersist(false).build();
+   @Deprecated(forRemoval = true, since = "16.3")
    public static final AttributeDefinition<Boolean> USE_SYNCHRONIZATION = AttributeDefinition.builder("synchronization", false).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Boolean> USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS = AttributeDefinition.builder("single-phase-auto-commit", false).build();
    public static final AttributeDefinition<TimeQuantity> REAPER_WAKE_UP_INTERVAL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.REAPER_WAKE_UP_INTERVAL, TimeQuantity.valueOf("30s")).parser(TimeQuantity.PARSER).immutable().build();
    public static final AttributeDefinition<TimeQuantity> COMPLETED_TX_TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.COMPLETED_TX_TIMEOUT, TimeQuantity.valueOf("1m")).parser(TimeQuantity.PARSER).immutable().build();
+   @Deprecated(forRemoval = true, since = "16.3")
+   public static final AttributeDefinition<Boolean> INVOCATION_BATCHING = AttributeDefinition.builder("invocation-batching", false).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Boolean> NOTIFICATIONS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.NOTIFICATIONS, true).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(TransactionConfiguration.class, Element.TRANSACTION.toString(), null,
             new AttributeDefinition[]{
-                  AUTO_COMMIT, CACHE_STOP_TIMEOUT, LOCKING_MODE,
-                  TRANSACTION_MANAGER_LOOKUP, TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP, TRANSACTION_MODE, USE_SYNCHRONIZATION, USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS,
+                  AUTO_COMMIT, CACHE_STOP_TIMEOUT, LOCKING_MODE, MODE,
+                  TRANSACTION_MANAGER_LOOKUP, TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP, USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS,
                   REAPER_WAKE_UP_INTERVAL, COMPLETED_TX_TIMEOUT, NOTIFICATIONS
             },
             new AttributeSet.RemovedAttribute[]{new AttributeSet.RemovedAttribute(org.infinispan.configuration.parsing.Attribute.TRANSACTION_PROTOCOL, 11, 0)});
@@ -55,23 +58,21 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
    private final Attribute<LockingMode> lockingMode;
    private final Attribute<TransactionManagerLookup> transactionManagerLookup;
    private final Attribute<TransactionSynchronizationRegistryLookup> transactionSynchronizationRegistryLookup;
-   private final Attribute<TransactionMode> transactionMode;
-   private final Attribute<Boolean> useSynchronization;
+   private final Attribute<org.infinispan.configuration.cache.TransactionMode> mode;
    private final Attribute<Boolean> use1PcForAutoCommitTransactions;
    private final Attribute<TimeQuantity> reaperWakeUpInterval;
    private final Attribute<TimeQuantity> completedTxTimeout;
    private final Attribute<Boolean> notifications;
    private final RecoveryConfiguration recovery;
 
-   TransactionConfiguration(AttributeSet attributes, RecoveryConfiguration recovery, boolean invocationBatching) {
+   TransactionConfiguration(AttributeSet attributes, RecoveryConfiguration recovery) {
       super(Element.TRANSACTION, attributes, recovery);
       autoCommit = attributes.attribute(AUTO_COMMIT);
       cacheStopTimeout = attributes.attribute(CACHE_STOP_TIMEOUT);
       lockingMode = attributes.attribute(LOCKING_MODE);
       transactionManagerLookup = attributes.attribute(TRANSACTION_MANAGER_LOOKUP);
       transactionSynchronizationRegistryLookup = attributes.attribute(TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP);
-      transactionMode = attributes.attribute(TRANSACTION_MODE);
-      useSynchronization = attributes.attribute(USE_SYNCHRONIZATION);
+      mode = attributes.attribute(MODE);
       use1PcForAutoCommitTransactions = attributes.attribute(USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS);
       reaperWakeUpInterval = attributes.attribute(REAPER_WAKE_UP_INTERVAL);
       completedTxTimeout = attributes.attribute(COMPLETED_TX_TIMEOUT);
@@ -155,12 +156,17 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
       return transactionSynchronizationRegistryLookup.get();
    }
 
+   public org.infinispan.configuration.cache.TransactionMode mode() {
+      return mode.get();
+   }
+
+   @Deprecated(forRemoval = true, since = "16.3")
    public TransactionMode transactionMode() {
-      return transactionMode.get();
+      return mode.get().getMode();
    }
 
    public boolean useSynchronization() {
-      return useSynchronization.get();
+      return !mode.get().isXAEnabled() && mode.get().isTransactional();
    }
 
    /**
@@ -209,5 +215,12 @@ public class TransactionConfiguration extends ConfigurationElement<TransactionCo
     */
    public boolean notifications() {
       return notifications.get();
+   }
+
+   /**
+    * Whether invocation batching is enabled.
+    */
+   public boolean invocationBatching() {
+      return mode.get().isBatchingEnabled();
    }
 }

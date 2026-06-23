@@ -2,6 +2,7 @@ package org.infinispan.configuration.global;
 
 import static org.infinispan.commons.configuration.attributes.IdentityAttributeCopier.identityCopier;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -9,6 +10,8 @@ import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsChannelConfigurator;
 import org.infinispan.util.logging.Log;
@@ -17,7 +20,7 @@ import org.infinispan.util.logging.Log;
  * @since 10.0
  */
 @BuiltBy(JGroupsConfigurationBuilder.class)
-public class JGroupsConfiguration {
+public class JGroupsConfiguration extends ConfigurationElement<JGroupsConfiguration> {
 
    static final AttributeDefinition<Transport> TRANSPORT = AttributeDefinition
          .builder("transport", null, Transport.class)
@@ -30,18 +33,20 @@ public class JGroupsConfiguration {
    private final Attribute<Transport> transport;
    private final List<StackFileConfiguration> stackFileConfigurations;
    private final List<StackConfiguration> stackConfigurations;
-   private final AttributeSet attributes;
+
+   private static ConfigurationElement<?>[] stackChildren(List<StackFileConfiguration> stackFiles, List<StackConfiguration> stacks) {
+      List<ConfigurationElement<?>> all = new ArrayList<>(stackFiles.size() + stacks.size());
+      all.addAll(stackFiles);
+      all.addAll(stacks);
+      return all.toArray(CHILDLESS);
+   }
 
    JGroupsConfiguration(AttributeSet attributes, List<StackFileConfiguration> stackFileConfigurations, List<StackConfiguration> stackConfigurations) {
-      this.attributes = attributes.checkProtection();
+      super(Element.JGROUPS, attributes, stackChildren(stackFileConfigurations, stackConfigurations));
       this.transport = attributes.attribute(TRANSPORT);
       this.stackFileConfigurations = stackFileConfigurations;
       this.stackConfigurations = stackConfigurations;
       this.stackConfigurations.forEach(c -> c.configurator().setConfiguration(this));
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    public Transport transport() {
@@ -70,14 +75,4 @@ public class JGroupsConfiguration {
             .findFirst()
             .orElseThrow(() -> Log.CONFIG.missingJGroupsStack(name));
    }
-
-   @Override
-   public String toString() {
-      return "JGroupsConfiguration{" +
-            "transport=" + transport +
-            ", stackFileConfigurations=" + stackFileConfigurations +
-            ", stackConfigurations=" + stackConfigurations +
-            '}';
-   }
-
 }

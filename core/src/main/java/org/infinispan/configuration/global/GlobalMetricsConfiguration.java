@@ -1,56 +1,44 @@
 package org.infinispan.configuration.global;
 
-import java.util.Objects;
-
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.configuration.parsing.Element;
 
 /**
  * Configuration for metrics. See {@link GlobalMetricsConfigurationBuilder}.
  */
-public class GlobalMetricsConfiguration {
+public class GlobalMetricsConfiguration extends ConfigurationElement<GlobalMetricsConfiguration> {
 
    public static final AttributeDefinition<Boolean> GAUGES = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.GAUGES, true).immutable().build();
    public static final AttributeDefinition<Boolean> HISTOGRAMS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.HISTOGRAMS, false).immutable().build();
    @Deprecated(forRemoval = true, since = "16.0")
-   public static final AttributeDefinition<String> PREFIX = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PREFIX, "").immutable().build();
+   public static final AttributeDefinition<String> PREFIX = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.PREFIX, "").immutable().deprecated(16, 0).build();
    @Deprecated(forRemoval = true, since = "16.0")
-   public static final AttributeDefinition<Boolean> NAMES_AS_TAGS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.NAMES_AS_TAGS, true).immutable().build();
+   public static final AttributeDefinition<Boolean> NAMES_AS_TAGS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.NAMES_AS_TAGS, true).immutable().deprecated(16, 0).build();
    public static final AttributeDefinition<Boolean> ACCURATE_SIZE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ACCURATE_SIZE, false).build();
    @Deprecated(forRemoval = true, since = "16.0")
-   public static final AttributeDefinition<Boolean> JVM = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.JVM, false).build();
+   public static final AttributeDefinition<Boolean> JVM = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.JVM, false).deprecated(16, 0).build();
    @Deprecated(forRemoval = true, since = "16.0")
-   public static final AttributeDefinition<Boolean> LEGACY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.LEGACY, false).build();
+   public static final AttributeDefinition<Boolean> LEGACY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.LEGACY, false).deprecated(16, 0).build();
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(GlobalMetricsConfiguration.class, GAUGES, HISTOGRAMS, PREFIX, NAMES_AS_TAGS, ACCURATE_SIZE, JVM, LEGACY);
    }
 
-   private final AttributeSet attributes;
    private final Attribute<Boolean> gauges;
    private final Attribute<Boolean> histograms;
    @Deprecated(forRemoval = true, since = "16.0")
-   private final Attribute<String> prefix;
-   @Deprecated(forRemoval = true, since = "16.0")
    private final Attribute<Boolean> namesAsTags;
    private final Attribute<Boolean> accurateSize;
-   private final Attribute<Boolean> jvm;
-   private final Attribute<Boolean> legacy;
 
    GlobalMetricsConfiguration(AttributeSet attributes) {
-      this.attributes = attributes.checkProtection();
+      super(Element.METRICS, attributes);
       this.gauges = attributes.attribute(GAUGES);
       this.histograms = attributes.attribute(HISTOGRAMS);
-      this.prefix = attributes.attribute(PREFIX);
       this.namesAsTags = attributes.attribute(NAMES_AS_TAGS);
       this.accurateSize = attributes.attribute(ACCURATE_SIZE);
-      this.jvm = attributes.attribute(JVM);
-      this.legacy = attributes.attribute(LEGACY);
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
    }
 
    /**
@@ -79,7 +67,7 @@ public class GlobalMetricsConfiguration {
     */
    @Deprecated(forRemoval = true, since = "16.0")
    public String prefix() {
-      return prefix.get();
+      return attributes.attribute(PREFIX).get();
    }
 
    /**
@@ -103,7 +91,7 @@ public class GlobalMetricsConfiguration {
     */
    @Deprecated(forRemoval = true, since = "16.0")
    public boolean jvm() {
-      return jvm.get();
+      return attributes.attribute(JVM).get();
    }
 
    /**
@@ -111,24 +99,6 @@ public class GlobalMetricsConfiguration {
     * @return {@code true} if legacy metrics should be reported, {@code false} otherwise
     */
    public boolean legacy() {
-      return legacy.get();
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      GlobalMetricsConfiguration that = (GlobalMetricsConfiguration) o;
-      return Objects.equals(attributes, that.attributes);
-   }
-
-   @Override
-   public int hashCode() {
-      return attributes != null ? attributes.hashCode() : 0;
-   }
-
-   @Override
-   public String toString() {
-      return "GlobalMetricsConfiguration{attributes=" + attributes + '}';
+      return attributes.attribute(LEGACY).get();
    }
 }

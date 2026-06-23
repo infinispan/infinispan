@@ -53,7 +53,7 @@ abstract class AbstractFunctionalMap<K, V> implements FunctionalMap<K, V> {
       transactional = config.transaction().transactionMode().isTransactional();
       autoCommit = config.transaction().autoCommit();
       transactionManager = transactional ? fmap.cache.getTransactionManager() : null;
-      batchContainer = transactional && config.invocationBatching().enabled() ? fmap.cache.getBatchContainer() : null;
+      batchContainer = transactional && config.transaction().invocationBatching() ? fmap.cache.getBatchContainer() : null;
       this.params = params;
       this.keyDataConversion = fmap.cache.getKeyDataConversion();
       this.valueDataConversion = fmap.cache.getValueDataConversion();

@@ -8,8 +8,6 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.transaction.TransactionMode;
-
 /**
  * Defines recovery configuration for the cache.
  *
@@ -71,10 +69,11 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
       if (!attributes.attribute(ENABLED).get()) {
          return; //nothing to validate
       }
-      if (transaction().transactionMode() == TransactionMode.NON_TRANSACTIONAL) {
+      TransactionMode mode = transaction().resolveMode();
+      if (!mode.isTransactional()) {
          throw CONFIG.recoveryNotSupportedWithNonTxCache();
       }
-      if (transaction().useSynchronization()) {
+      if (!mode.isXAEnabled() && !mode.isBatchingEnabled()) {
          throw CONFIG.recoveryNotSupportedWithSynchronization();
       }
    }

@@ -7,10 +7,8 @@ import static org.infinispan.configuration.cache.TransactionConfiguration.LOCKIN
 import static org.infinispan.configuration.cache.TransactionConfiguration.NOTIFICATIONS;
 import static org.infinispan.configuration.cache.TransactionConfiguration.REAPER_WAKE_UP_INTERVAL;
 import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_MANAGER_LOOKUP;
-import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_MODE;
 import static org.infinispan.configuration.cache.TransactionConfiguration.TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP;
 import static org.infinispan.configuration.cache.TransactionConfiguration.USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS;
-import static org.infinispan.configuration.cache.TransactionConfiguration.USE_SYNCHRONIZATION;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.concurrent.TimeUnit;
@@ -40,6 +38,8 @@ import jakarta.transaction.TransactionManager;
 public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TransactionConfiguration> {
    final AttributeSet attributes;
    private final RecoveryConfigurationBuilder recovery;
+   TransactionMode transactionModeOverride;
+   Boolean useSynchronizationOverride;
 
    TransactionConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -113,7 +113,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    public TransactionConfigurationBuilder transactionManagerLookup(TransactionManagerLookup tml) {
       attributes.attribute(TRANSACTION_MANAGER_LOOKUP).set(tml);
       if (tml != null) {
-         this.transactionMode(TransactionMode.TRANSACTIONAL);
+         this.transactionModeOverride = TransactionMode.TRANSACTIONAL;
       }
       return this;
    }
@@ -131,13 +131,33 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       return this;
    }
 
-   public TransactionConfigurationBuilder transactionMode(TransactionMode transactionMode) {
-      attributes.attribute(TRANSACTION_MODE).set(transactionMode);
+   public TransactionConfigurationBuilder mode(org.infinispan.configuration.cache.TransactionMode mode) {
+      attributes.attribute(TransactionConfiguration.MODE).set(mode);
       return this;
    }
 
+   public org.infinispan.configuration.cache.TransactionMode mode() {
+      return attributes.attribute(TransactionConfiguration.MODE).get();
+   }
+
+   /**
+    * @deprecated Use {@link #mode(org.infinispan.configuration.cache.TransactionMode)}
+    */
+   @Deprecated(forRemoval = true, since = "16.3")
+   public TransactionConfigurationBuilder transactionMode(TransactionMode transactionMode) {
+      this.transactionModeOverride = transactionMode;
+      return this;
+   }
+
+   /**
+    * @deprecated Use {@link #mode()}
+    */
+   @Deprecated(forRemoval = true, since = "16.3")
    public TransactionMode transactionMode() {
-      return attributes.attribute(TRANSACTION_MODE).get();
+      if (transactionModeOverride != null) {
+         return transactionModeOverride;
+      }
+      return resolveMode().getMode();
    }
 
    /**
@@ -145,9 +165,11 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * XA resource. It is often unnecessary to register as a full XA resource unless you intend to make use of recovery
     * as well, and registering a synchronization is significantly more efficient.
     * @param b if true, {@link Synchronization}s are used rather than {@link XAResource}s when communicating with a {@link TransactionManager}.
+    * @deprecated Use {@link #mode(org.infinispan.configuration.cache.TransactionMode)} with the appropriate mode instead.
     */
+   @Deprecated(forRemoval = true, since = "16.3")
    public TransactionConfigurationBuilder useSynchronization(boolean b) {
-      attributes.attribute(USE_SYNCHRONIZATION).set(b);
+      this.useSynchronizationOverride = b;
       return this;
    }
 
@@ -157,7 +179,10 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * @return {@code true} if synchronization enlistment is enabled
     */
    boolean useSynchronization() {
-      return attributes.attribute(USE_SYNCHRONIZATION).get();
+      if (useSynchronizationOverride != null) {
+         return useSynchronizationOverride;
+      }
+      return resolveMode().isTransactional() && !resolveMode().isXAEnabled();
    }
 
    /**
@@ -231,6 +256,30 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       return attributes;
    }
 
+   org.infinispan.configuration.cache.TransactionMode resolveMode() {
+      if (attributes.attribute(TransactionConfiguration.MODE).isModified()) {
+         return attributes.attribute(TransactionConfiguration.MODE).get();
+      }
+      if (transactionModeOverride != null || useSynchronizationOverride != null) {
+         boolean transactional = transactionModeOverride != null && transactionModeOverride.isTransactional();
+         if (!transactional) {
+            return org.infinispan.configuration.cache.TransactionMode.NONE;
+         } else if (builder.invocationBatching().isEnabled()) {
+            return org.infinispan.configuration.cache.TransactionMode.BATCH;
+         } else {
+            boolean sync = useSynchronizationOverride != null ? useSynchronizationOverride : false;
+            if (sync) {
+               return org.infinispan.configuration.cache.TransactionMode.NON_XA;
+            } else if (recovery.isEnabled()) {
+               return org.infinispan.configuration.cache.TransactionMode.FULL_XA;
+            } else {
+               return org.infinispan.configuration.cache.TransactionMode.NON_DURABLE_XA;
+            }
+         }
+      }
+      return attributes.attribute(TransactionConfiguration.MODE).get();
+   }
+
    @Override
    public void validate() {
       Attribute<TimeQuantity> reaperWakeUpInterval = attributes.attribute(REAPER_WAKE_UP_INTERVAL);
@@ -243,7 +292,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       if (!attributes.attribute(NOTIFICATIONS).get() && !getBuilder().template()) {
          CONFIG.transactionNotificationsDisabled();
       }
-      if (attributes.attribute(TRANSACTION_MODE).get().isTransactional() && !cacheMode.isSynchronous()) {
+      if (resolveMode().isTransactional() && !cacheMode.isSynchronous()) {
          throw CONFIG.unsupportedAsyncCacheMode(cacheMode);
       }
       recovery.validate();
@@ -256,8 +305,18 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
 
    @Override
    public TransactionConfiguration create() {
-      boolean invocationBatching = builder.invocationBatching().isEnabled();
-      return new TransactionConfiguration(attributes.protect(), recovery.create(), invocationBatching);
+      org.infinispan.configuration.cache.TransactionMode mode = resolveMode();
+      recovery.enabled(mode.isRecoveryEnabled());
+      Attribute<org.infinispan.configuration.cache.TransactionMode> modeAttr = attributes.attribute(TransactionConfiguration.MODE);
+      boolean modeWasModified = modeAttr.isModified();
+      if (!modeWasModified && mode != modeAttr.get()) {
+         modeAttr.set(mode);
+      }
+      TransactionConfiguration result = new TransactionConfiguration(attributes.protect(), recovery.create());
+      if (!modeWasModified) {
+         modeAttr.reset();
+      }
+      return result;
    }
 
    @Override

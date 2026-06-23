@@ -1,2 +1,9 @@
 == Upgrading from 16.2 to 16.3
 
+=== Deprecations
+
+==== InvocationBatchingConfiguration
+
+The `InvocationBatchingConfiguration` class has been deprecated.
+The invocation batching `enabled` attribute has been moved to `TransactionConfiguration#invocationBatching()`.
+Use `configuration.transaction().invocationBatching()` instead of `configuration.invocationBatching().enabled()`.

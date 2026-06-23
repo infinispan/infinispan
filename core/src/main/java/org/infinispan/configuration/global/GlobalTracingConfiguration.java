@@ -1,14 +1,14 @@
 package org.infinispan.configuration.global;
 
-import java.util.Objects;
-
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.configuration.parsing.Element;
 
 /**
  * Configuration for tracing. See {@link GlobalTracingConfigurationBuilder}.
  */
-public class GlobalTracingConfiguration {
+public class GlobalTracingConfiguration extends ConfigurationElement<GlobalTracingConfiguration> {
 
    public static final AttributeDefinition<String> COLLECTOR_ENDPOINT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.COLLECTOR_ENDPOINT, null, String.class).immutable().build();
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, true, Boolean.class).immutable().build();
@@ -20,14 +20,8 @@ public class GlobalTracingConfiguration {
       return new AttributeSet(GlobalTracingConfiguration.class, COLLECTOR_ENDPOINT, ENABLED, EXPORTER_PROTOCOL, SERVICE_NAME, SECURITY);
    }
 
-   private final AttributeSet attributes;
-
    GlobalTracingConfiguration(AttributeSet attributes) {
-      this.attributes = attributes.checkProtection();
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
+      super(Element.TRACING, attributes);
    }
 
    /**
@@ -77,23 +71,5 @@ public class GlobalTracingConfiguration {
     */
    public boolean security() {
       return enabled() && attributes.attribute(SECURITY).get();
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      GlobalTracingConfiguration that = (GlobalTracingConfiguration) o;
-      return Objects.equals(attributes, that.attributes);
-   }
-
-   @Override
-   public int hashCode() {
-      return attributes != null ? attributes.hashCode() : 0;
-   }
-
-   @Override
-   public String toString() {
-      return "GlobalTracingConfiguration{attributes=" + attributes + '}';
    }
 }

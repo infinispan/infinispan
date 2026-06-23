@@ -288,6 +288,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       if (validate) {
          validate();
       }
+      org.infinispan.configuration.cache.TransactionMode txMode = transaction.resolveMode();
+      invocationBatching.attributes().attribute(InvocationBatchingConfiguration.ENABLED).set(txMode.isBatchingEnabled());
       List<Object> modulesConfig = new LinkedList<>();
       for (Builder<?> module : modules)
          modulesConfig.add(module.create());
