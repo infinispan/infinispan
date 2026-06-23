@@ -1,0 +1,165 @@
+== Upgrading from 8.x to 9.0
+
+=== Default transaction mode changed
+
+The default configuration for transactional caches changed from `READ_COMMITTED` and `OPTIMISTIC` locking to `REPEATABLE_READ` and `OPTIMISTIC` locking with `write-skew` enabled.
+
+Also, using the `REPEATABLE_READ` isolation level and `OPTIMISTIC` locking without `write-skew` enabled is no longer allowed.
+To help with the upgrade, `write-skew` will be automatically enabled in this case.
+
+The following configuration has been deprecated:
+
+* `write-skew`: as said, it is automatically enabled.
+* `<versioning>` and its attributes. It is automatically enabled and configured when needed.
+
+=== Removed eagerLocking and eagerLockingSingleNode configuration settings
+Both were deprecated since version 5.1.
+`eagerLocking(true)` can be replaced with `lockingMode(LockingMode.PESSIMISTIC)`,
+and `eagerLockingSingleNode()` does not need a replacement because it was a no-op.
+
+=== Removed async transaction support
+
+Asynchronous mode is no longer supported in transactional caches and it will automatically use the synchronous cache mode.
+In addition, the second phase of a transaction commit is done synchronously.
+The following methods (and related) are deprecated:
+
+* `TransactionConfigurationBuilder.syncCommitPhase(boolean)`
+* `TransactionConfigurationBuilder.syncRollbackPhase(boolean)`
+
+=== Deprecated all the dummy related transaction classes.
+The following classes have been deprecated and they will be removed in the future:
+
+* `DummyBaseTransactionManager`: replaced by `EmbeddedBasedTransactionManager`;
+* `DummyNoXaXid` and `DummyXid`: replaced by `EmbeddedXid`;
+* `DummyTransaction`: replaced by `EmbeddedTransaction`;
+* `DummyTransactionManager`: replaced by `EmbeddedTransactionManager`;
+* `DummyTransactionManagerLookup` and `RecoveryDummyTransactionManagerLookup`: replaced by `EmbeddedTransactionManagerLookup`;
+* `DummyUserTransaction`: replaced by `EmbeddedUserTransaction`;
+
+=== Clustering configuration changes
+The `mode` attribute in the XML declaration of clustered caches is no longer mandatory. It defaults to SYNC.
+
+=== Default Cache changes
+Up to Infinispan 8.x, the default cache always implicitly existed, even if not declared in the XML configuration.
+Additionally, the default cache configuration affected all other cache configurations, acting as some kind of base template.
+Since 9.0, the default cache only exists if it has been explicitly configured. Additionally, even if it has been specified,
+it will never act as base template for other caches.
+
+=== Marshalling Enhancements and Store Compatibility
+Internally Infinispan 9.x has introduced many improvements to its marshalling codebase in order to improve performance
+and allow for greater flexibility. Consequently, data marshalled and persisted by Infinispan 8.x is no longer compatible with Infinispan 9.0.
+To aid in migrating existing stores to 9.0, a Store Migrator has been provided, however at present this only allows the migration of JDBC stores.
+
+=== New Cloud module for library mode
+In Infinispan 8.x, cloud related configuration were added to `infinispan-core` module. Since 9.0 they were moved to `infinispan-cloud` module.
+
+=== Entry Retriever is now removed
+The entry retriever feature has been removed.  Please update to use the new Streams feature detailed in the User Guide.
+The `org.infinispan.filter.CacheFilters` class can be used to convert `KeyValueFilter` and `Converter` instances
+into proper Stream operations that can be marshalled.
+
+=== Map / Reduce is now removed
+Map reduce has been removed in favor of the new Streams feature which should provide more features and performance.
+There are no bridge classes to convert to the new streams and all references must be rewritten.
+
+=== Spring 4 support is now removed
+Spring 4 is no longer supported.
+
+=== Function classes have moved packages
+The class `SerializableSupplier` has moved from the `org.infinispan.stream`
+package to the `org.infinispan.util.function` package.
+
+The class `CloseableSupplier` has moved from the `org.infinispan.util`
+package to the `org.infinispan.util.function` package.
+
+The classes `TriConsumer`, `CloseableSupplier`, `SerializableRunnable`,
+`SerializableFunction` & `SerializableCallable` have all been moved from
+the `org.infinispan.util` package to the `org.infinispan.util.function` package.
+
+=== SegmentCompletionListener interface has moved
+The interface `SegmentCompletionListener` has moved from the interface
+`org.infinispan.CacheStream` to the new `org.infinispan.BaseCacheStream`.
+
+=== Spring module dependency changes
+All Infinispan, Spring and Logger dependencies are now in the `provided` scope. One can decide whether to use small jars or uber jars, but they need to be added to the classpath of the application.
+It also gives one freedom in choosing Spring (or Spring Boot) version.
+
+Here is an example:
+[source,xml]
+----
+<dependencies>
+   <dependency>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-embedded</artifactId>
+   </dependency>
+   <dependency>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-spring5-embedded</artifactId>
+   </dependency>
+   <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+   </dependency>
+   <dependency>
+      <groupId>org.springframework.session</groupId>
+      <artifactId>spring-session</artifactId>
+   </dependency>
+</dependencies>
+----
+
+Additionally, there is no `Logger` implementation specified (since this may vary depending on use case).
+
+=== Total order executor is now removed
+The total order protocol now uses the `remote-command-executor`. The attribute `total-order-executor` in `<container>` tag is removed.
+
+=== HikariCP is now the default implementation for JDBC PooledConnectionFactory
+link:https://github.com/brettwooldridge/HikariCP[HikariCP] offers superior performance to c3p0 and is now the default implementation.
+Additional properties for HikariCP can be provided by placing a `hikari.properties` file on the classpath or by specifying
+the path to the file via `PooledConnectionFactoryConfiguration.propertyFile` or `properties-file` in the connection pool's
+xml config. N.B. a properties file specified explicitly in the configuration is loaded instead of the `hikari.properties`
+file on the class path and Connection pool characteristics which are explicitly set in PooledConnectionFactoryConfiguration
+always override the values loaded from a properties file.
+
+Support for c3p0 has been deprecated and will be removed in a future release. Users can force c3p0 to be utilised as before
+by providing the system property `-Dinfinispan.jdbc.c3p0.force=true`.
+
+=== RocksDB in place of LevelDB
+The LevelDB cache store was replaced with a link:https://rocksdb.org[RocksDB]. RocksDB is a fork of LevelDB which provides
+superior performance in high concurrency scenarios. The new cache store can parse old LevelDB configurations but will always use
+the RocksDB implementation.
+
+=== JDBC Mixed and Binary stores removed
+The JDBC Mixed and Binary stores have been removed due to the poor performance associated with storing entries in buckets.
+Storing entries in buckets is non-optimal as each read/write to the store requires an existing bucket for a given hash to be retrieved,
+deserialised, updated, serialised and then re-inserted back into the db.  If you were previously using one of the removed
+stores, a migrator tool has been provided to assist in migrating data from an existing binary table to a JDBC string based
+store.
+
+=== @Store Annotation Introduced
+A new annotation, `@Store`, has been added for persistence stores. This allows a store's properties to be
+explicitly defined and validated against the provided store configuration.  Existing stores should be updated to use this
+annotation and the store's configuration class should also declare the `@ConfigurationFor` annotation.  If neither of these
+annotations are present on the store or configuration class, then a your store will continue to function as before, albeit
+with a warning that additional store validation cannot be completed.
+
+=== Server authentication changes
+The no-anonymous policy is now automatically enabled for Hot Rod authentication unless explicitly specified.
+
+=== Package org.infinispan.util.concurrent.jdk8backported has been removed
+==== Moved classes
+Classes regarding EntrySizeCalculator have now been moved down to the org.infinispan.util package.
+
+==== Removed classes
+The `ConcurrentHashMapV8` classes and their supporting classes have all been removed. The
+`CollectionFactory#makeBoundedConcurrentMap` method should be used if you desire to have a
+bounded `ConcurrentMap`.
+
+=== Store as Binary is deprecated
+Store as Binary configuration is now deprecated and will be removed in a future release. This is replaced by
+the new memory configuration.
+
+=== DataContainer collection methods are deprecated
+The `keySet`, `entrySet` and `values` methods on `DataContainer` have been deprecated. These behavior of these methods
+are very inconsistent and will be removed later. It is recommended to update references to use `iterator` or
+`iteratorIncludingExpired` methods instead.
+

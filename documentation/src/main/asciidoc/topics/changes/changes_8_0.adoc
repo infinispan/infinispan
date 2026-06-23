@@ -1,0 +1,17 @@
+== Upgrading from 7.x to 8.0
+=== Configuration changes
+==== Removal of Async Marshalling
+Async marshalling has been entirely dropped since it was never reliable enough. The "async-marshalling" attribute has been removed from the 8.0 XML schema and will be ignored when parsing 7.x configuration files. The programmatic configuration methods related to asyncMarshalling/syncMarshalling are now deprecated and have no effect aside from producing a WARN message in the logs.
+
+==== Re-enabling of isolation level configurations in server
+Because of the inability to configure write skew in the server, the isolation level attribute was ignored and defaulted to READ_COMMITTED. Now, when enabling REPEATABLE_READ together with optimistic locking, write skew is enabled by default in local and synchronous configurations.
+
+==== Subsystem renaming in server
+In order to avoid conflict and confusion with the similar subsystems in WildFly, the following subsystems in server have been renamed:
+* `infinispan` -> `datagrid-infinispan`
+* `jgroups` -> `datagrid-jgroups`
+* `endpoint` -> `datagrid-infinispan-endpoint`
+
+==== Server domain mode
+Standalone mode is no longer supported for running clusters of servers. Domain mode (bin/domain.sh) should be used instead.
+

@@ -1,0 +1,11 @@
+==  Upgrading from 5.2 to 5.3
+=== Declarative configuration
+In order to use all the latest features, make sure you change the namespace declaration at the top of your XML configuration files as follows:
+
+[source,xml]
+----
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:infinispan:config:5.2 https://infinispan.org/schemas/infinispan-config-5.2.xsd" xmlns="urn:infinispan:config:5.3">
+   ...
+</infinispan>
+----
+

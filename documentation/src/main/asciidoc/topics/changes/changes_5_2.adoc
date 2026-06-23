@@ -1,0 +1,41 @@
+== Upgrading from 5.1 to 5.2
+=== Declarative configuration
+In order to use all the latest features, make sure you change the namespace declaration at the top of your XML configuration files as follows:
+
+[source,xml]
+----
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:infinispan:config:5.2 https://infinispan.org/schemas/infinispan-config-5.2.xsd" xmlns="urn:infinispan:config:5.2">
+   ...
+</infinispan>
+----
+
+=== Transaction
+
+The default transaction enlistment model has changed ( link:https://issues.jboss.org/browse/ISPN-1284[ISPN-1284] ) from link:{jdkdocroot}/javax/transaction/xa/XAResource.html[`XAResource`] to link:{jdkdocroot}/javax/transaction/Synchronization.html[`Synchronization`].
+Also now, if the `XAResource` enlistment is used, then recovery is enabled by default.
+
+In practical terms, if you were using the default values, this should not cause any backward compatibility issues but an increase in performance of about 5-7%. However in order to use the old configuration defaults, you need to configure the following:
+
+[source,xml]
+----
+<transaction useSynchronization="false">
+   <recovery enabled="false"/>
+</transaction>
+----
+
+or the programmatic configuration equivalent:
+
+[source,java]
+----
+ConfigurationBuilder builder = new ConfigurationBuilder().
+   transaction().useSynchronization(false).recovery().enabled(false);
+----
+
+=== Cache Loader and Store configuration
+
+Cache Loader and Store configuration has changed greatly in Infinispan 5.2.
+
+=== Virtual Nodes and Segments
+
+The concept of Virtual Nodes does not exist anymore in Infinispan 5.2 and has been replaced by Segments.
+

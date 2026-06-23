@@ -1,0 +1,122 @@
+== Upgrading from 15.2 to 16.0
+
+=== Marshalling Changes
+
+In order to support zero-downtime upgrades, the Infinispan internal marshaller has been completely rewritten to be based
+upon ProtoStream. As a consequence, it is no longer possible to define `AdvancedExternalizer` instances as part of the global
+configuration or add `@SerializeWith` annotations to your classes.
+
+==== User Key/Values
+
+Users of the `jboss-marshalling` library, which depended on `AdvancedExternalizer` to marshall classes stored in their caches,
+should either:
+
+. [*Recommended*] Migrate to using ProtoStream based marshalling
+. Replace `AdvancedExternalizer` with `org.jboss.marshalling.Externalizer` implementations and add the
+`org.jboss.marshalling.Externalize` annotation to their classes in order to configure this.
+
+All `AdvancedExternalizer` defined declaratively for an older schema version are ignored.
+
+==== Custom Commands
+
+All commands, user-defined and internal, are now marshalled using ProtoStream. Consequently, the
+`ModuleCommandFactory` and `ModuleCommandExtensions` interfaces are redundant and have been removed. All custom commands
+should be marshalled using ProtoStream. Custom commands can be registered by providing a
+`org.infinispan.protostream.SerializationContextInitializer` in the Global `SerializationConfiguration`.
+
+==== Legacy Stores
+
+The tools module now contains the `Externalizer` and `AdvancedExternalizer` interfaces removed from infinispan-commons,
+to facilitate migrating legacy stores to 16.0. In order to use the `StoreMigrator` all existing `Externalizer`
+implementations need to be updated to reference the new package `org.infinispan.tools.store.migrator.marshaller.common`.
+
+=== Query changes
+
+The query modules have been refactored significantly:
+
+* The `query-dsl` module has been removed. Queries should use Ickle query language
+* The `query-core`, `object-filter` modules have been merged into the `query` module
+* The `remote-query-server` module has been merged into the `server-core` module
+* The `remote-query-client` module has been merged into the `commons` module
+
+=== Transport Changes
+It is no longer possible to provide custom `org.infinispan.remoting.transport.Transport` implementations via the `GlobalConfiguration`.
+This was removed with no replacement as in reality Infinispan is tightly coupled to the underlying `JGroupsTransport` implementation.
+
+=== Expiration configuration validation
+
+{brandname} now prevents a cache from being started if it has a max-idle setting that is greater than or
+equal to its lifespan expiration. This configuration meant that max-idle was enabled with no benefit
+as lifespan would always remove the entry first.
+
+=== Metrics
+
+The format for metrics have changed.
+
+The prefix `base_` for JVM and system metrics has been removed. A setting `jvm` can be used to disable export of JVM and
+system metrics, for example when embedded in a service where these metrics are already exported (for example, by Spring Boot).
+
+The prefix `vendor_` for Infinispan metrics has been changed to `infinispan_` and the cache manager and cache name appear
+as tags. The previous settings `names-as-tags` and `prefix` are deprecated and have no effect on the new metrics format.
+
+As an example, metrics for cache manager `Foo` and cache `Bar` previously had the format:
+[source]
+----
+vendor_cache_manager_Foo_cache_Bar_statistics_approximate_entries
+vendor_cache_manager_Foo_cache_Bar_statistics_hits
+----
+
+And will now instead have the format:
+[source]
+----
+infinispan_statistics_approximate_entries{cache_manager="Foo",cache="Bar"}
+infinispan_statistics_hits{cache_manager="Foo",cache="Bar"}
+----
+
+[NOTE]
+====
+For backwards compatibility, metrics are currently exported in the previous format. The setting `legacy` should be set to
+`false` to export metrics in the new format.
+====
+
+==== Removals
+
+The metric for persisted entries was removed.
+Users should utilize the metrics of approximate size and in-memory entries instead.
+
+=== Virtual threads enabled by default (JDK 21+)
+
+This release now enables virtual thread pools by default.
+This change can lead to improved application responsiveness and scalability under high concurrency.
+
+However, a potential issue has been identified on systems with very low CPU counts (2 or fewer cores).
+In these specific environments, virtual threads might, in rare cases, lead to system freezes due to thread pinning.
+
+If you encounter this, you have a couple of straightforward solutions:
+
+* **Disable virtual threads:** You can revert to the previous behavior by adding the following Java option: `-Dorg.infinispan.threads.virtual=false`
+* **Increase scheduler parallelism:** Alternatively, you can try increasing the parallelism of the virtual thread scheduler using this Java option: `-Djdk.virtualThreadScheduler.parallelism=4`
+
+Monitor your application's performance after the upgrade, especially if you are running on a system with a low CPU count.
+
+=== FileStore supports not being segmented
+
+When the file store changed to a new implementation in 13.0 it lost the ability to disable segmentation.
+This has been added back in.
+Note that disabling segmentation for the file store should only be done for smaller sized caches.
+
+=== Removed legacy Hot Rod client
+
+The legacy Hot Rod client (`org.infinispan:infinispan-hotrod-client-legacy`) has been removed. If, for some reason,
+you still need to use it, please use one from previous versions which are still maintained.
+
+=== Hibernate 2LC support updates
+
+{brandname} now supports Hibernate 7.1 and 6.6 as a second level cache provider.
+
+Hibernate 6.2, 6.4 & 6.5 are no longer supported, but may work. Please upgrade to 6.6.
+
+=== Deprecation removals
+
+Everything that was deprecated in 10.x, 11.0 has been removed.
+

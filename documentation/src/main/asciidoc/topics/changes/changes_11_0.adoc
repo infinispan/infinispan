@@ -1,0 +1,187 @@
+== Upgrading from 10.1 to 11.0
+
+=== HotRod Client
+The `GenericJBossMarshaller` is no longer automatically configured if the `infinispan-jboss-marshalling` module is on the
+classpath. If jboss-marshalling is required, it is necessary for the aforementioned jar to be on the classpath and for
+the `org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller` to be explicitly configured when creating the
+RemoteCacheManager.
+
+=== Wildfly modules
+
+The Wildfly modules are now deprecated. The `jgroups`, `infinispan` and `endpoint` extensions have been removed and
+all the components are now in a single `org.infinispan` module.
+
+=== Cross Site Replication
+
+* The `org.infinispan.xsite.CustomFailurePolicy` interface has been deprecated and it will be replaced by
+`org.infinispan.configuration.cache.CustomFailurePolicy`.
+
+* Cross Site Replication was disabled for local caches. They are unable to send or receive updates.
+
+=== Total Order transaction protocol removed
+
+Total Order transaction protocol was deprecated in 10.0 and now it is removed.
+
+=== JGroups configuration system property changes
+
+The default stacks now now use system property `jgroups.bind.address` to configure the bind address.
+System properties `jgroups.tcp.address` and `jgroups.udp.address` still work, but they are considered deprecated and will be removed.
+
+=== OSGi
+
+OSGi support has been deprecated and will be removed in a future release.
+
+=== Search
+
+==== Indexing
+
+* The Infinispan Lucene Directory, the `InfinispanIndexManager` and `AffinityIndexManager` index managers, and the Infinispan Directory provider for Hibernate Search were deprecated and are now removed.
+
+* The `auto-config` attribute is deprecated and will be removed in a future version.
+
+*  The index mode configuration ```index()``` is no longer necessary. The system will automatically choose the best
+way to manage indexing once it is enabled and several previously supported values are no longer supported and will
+result in a fatal configuration error when used.
+The following substitutions should be done:
+** `.indexing().index(Index.NONE)` -> `indexing().enabled(false)`
+** All the other enum values -> `indexing().enabled(true)`
+
+In the XML configuration it is possible to omit `enabled="true"` if the configuration contains others sub-elements. Programmatic and JSON configurations must use it.
+
+It is forbidden to use both the `.indexing().enabled( )` and the deprecated `.indexing().index( )` configuration.
+
+* Indexed types required: starting with version 11 it is mandatory to declare all indexed types in the indexing configuration or else warnings will be logged when the undeclared type is firstly used.
+This requirement exists solely for indexed caches and applies to both Java classes and protobuf types.
+Please consider updating your cache configurations in order to avoid these warnings now.
+Starting with version 12 such incomplete configurations will be considered invalid and will result in a fatal error at cache startup time.
+
+==== Querying
+
+* The `SearchManager` has been deprecated and no longer supports Lucene and Hibernate Search native objects:
+** `.getQuery()` methods that take a Lucene Query have been removed. The alternative methods that take an Ickle query from the `org.infinispan.query.Search` entry point should be used instead.
+** `.buildQueryBuilderForClass()`, that allows to build Hibernate Search queries directly has been removed. Ickle queries should be used instead.
+** It is not possible anymore to specify multiple target entity(ies) class(es) when calling `.getQuery()`. The entity will come from the Ickle query string, so multi-entity queries are not supported anymore.
+
+* `CacheQuery` has been deprecated and `org.infinispan.query.dsl.Query` obtained from `Search.getQueryFactory()` should be used instead.
+
+* Instances of `org.infinispan.query.dsl.Query` do not cache query results anymore and allow queries to be re-executed when
+calling methods such as `list()`.
+
+===== Entity Mappings
+
+* It is now required to annotate a field that requires sorting with `@SortableField`, both for embedded and remote queries.
+
+* Several features have been deprecated:
+
+** Custom bridges, declared with  `@FieldBridge` and `@ClassBridge`
+** Analyzer definitions, declared with `@AnalyzerDef` and `@NormalizerDef`
+** Dynamic selection of analyzers based on a discriminator, declared with `@AnalyzerDiscriminator`
+** Index time boosting, declared as an attribute of the `@Field` annotation
+** Definition of a default analyzer, either using the configuration property `hibernate.search.analyzer` or using the `@Analyzer` annotation
+** `indexNullAs`, used as an attribute in the `@Field` declaration
+** The configuration `hibernate.search.index_uninverting_allowed`, that allows regular `@Field` to be sortable by un-inverting them at runtime
+
+=== ThreadFactoryConfiguration changes
+
+The ThreadGroup configuration setting has been removed and only thread group name is allowed now.
+This configuration was inconsistent between programmatic and declarative configuration and is now
+consistent.
+
+=== Persistence
+
+==== Single File Store
+The `<file-store relative-to=""">` attribute has been removed. This attribute will be ignored in pre 11.0 schemas with
+only the `path` attribute being taking into account when configuring the stores location.
+
+==== ClusterLoader
+The `ClusterLoader` has been deprecated and will be removed in a future release with no direct replacement.
+
+=== HotRod
+The `LAZY_RETRIEVAL` option utilises the now deprecated `ClusterLoader` and consequently has also been deprecated. It will be removed in a
+future release with no direct replacement.
+
+=== Memory configuration changes
+
+* The `BINARY` storage has been deprecated, and will no longer store primitives and String mixed with `byte[]`, but only `byte[]`.
+* The child elements `<object>`, `<binary>` and `<off-heap>` are also deprecated. The following config changes should be done:
+
+** On heap storage:
+
+[source,xml]
+----
+<!--  10.1 -->
+<memory>
+   <object size="1000000" strategy="REMOVE"/>
+</memory>
+----
+
+[source,xml]
+----
+<!--  11.0 -->
+<memory max-count="1000000" when-full="REMOVE"/>
+----
+
+** Binary, on heap storage:
+
+[source,xml]
+----
+<!--  10.1 -->
+<cache>
+   <memory>
+      <binary size="500000000" strategy="EXCEPTION" eviction="MEMORY"/>
+   </memory>
+</cache>
+----
+
+[source,xml]
+----
+<!--  11.0 -->
+<cache>
+   <!-- Or any other binary format -->
+   <encoding media-type="application/x-protostream"/>
+   <!-- Sizes are human-readable, for example: "1 GB", "0.5TB" -->
+   <memory max-size="500 MB" when-full="EXCEPTION"/>
+</cache>
+----
+
+** Off-heap:
+
+[source,xml]
+----
+<!--  10.1 -->
+<cache>
+   <memory>
+      <off-heap size="10000000" eviction="COUNT"/>
+   </memory>
+</cache>
+----
+
+[source,xml]
+----
+<!--  11.0 -->
+<memory storage="OFF_HEAP" max-count="10000000"/>
+----
+
+* Due to the changes above, cache configurations serialized to XML or JSON (for example, when using REST) will always be in the new format.
+
+=== Encoding in Server Caches
+
+* Server caches should configure the MediaType for keys and values, or else a WARN will be logged.
+Usage of operations that require data conversion or indexing will not be supported for caches without encoding
+configuration in a future version. These operations include search, task execution, remote filters/converter/listeners,
+REST/Hot Rod reading/writing in different data formats
+
+=== Security
+
+==== Server security
+The server is now secure by default. Use the `user-tool` to add users or remove the security realm attribute from the endpoint to allow anonymous connections.
+
+==== Cache authorization roles
+If you do not explicitly specify roles when enabling cache authorization, all roles declared in the global configuration apply.
+
+=== REST
+
+* REST API calls that have the extra URL parameter `?action` to perform operations with side effects now also
+support the POST method (returning 200 when the response has content or 204 otherwise).
+Support for using `GET` method on those calls will be removed in a future version.
+
