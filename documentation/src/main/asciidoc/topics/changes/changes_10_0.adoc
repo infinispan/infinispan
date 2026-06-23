@@ -1,0 +1,201 @@
+== Upgrading from 9.4 to 10.0
+
+=== Marshalling
+The internal marshalling capabilities of {brandname} have undergone a significant refactoring in 10.0. The marshalling of
+internal {brandname} objects and user objects are now truly isolated. This means that it is now possible to configure
+link:../../apidocs/org/infinispan/commons/marshall/Marshaller.html[Marshaller] implementations in embedded mode or on the
+server, without having to handle the marshalling of {brandname} internal classes. Consequently, it is possible to
+change the marshaller implementation, in a similar manner to how users of the HotRod client are accustomed.
+
+As a consequence of the above changes, the default marshaller used for marshalling user types is no longer based upon JBoss Marshalling. Instead
+{brandname} now utilises the ProtoStream library to store user types in the language agnostic link:https://developers.google.com/protocol-buffers[Protocol Buffers]
+format. It is still possible to utilise the old default, link:../../apidocs/org/infinispan/jboss/marshalling/core/JBossUserMarshaller.html[JBossUserMarshaller],
+however it is necessary to add the `org.infinispan:infinispan-jboss-marshalling` artifact to your application's classpath.
+
+==== Externalizer Deprecations
+The following interfaces/annotations have been deprecated as a consequence of the marshalling refactoring:
+
+* link:../../apidocs/org/infinispan/commons/marshall/Externalizer.html[Externalizer],
+* link:../../apidocs/org/infinispan/commons/marshall/AdvancedExternalizer.html[AdvancedExternalizer]
+* link:../../apidocs/org/infinispan/commons/marshall/SerializeWith.html[SerializeWith]
+
+For cluster communication any configured link:../../apidocs/org/infinispan/commons/marshall/Externalizer.html[Externalizer]'s
+are still utilised to marshall objects, however they are ignored when persisting data to cache stores unless the
+link:../../apidocs/org/infinispan/jboss/marshalling/core/JBossUserMarshaller.html[JBossUserMarshaller] is explicitly configured
+via the global link:../../apidocs/org/infinispan/configuration/global/SerializationConfiguration.html[SerializationConfiguration].
+
+It is highly recommended to migrate from the old Externalizer and JBoss marshalling approach to the new ProtoStream based
+marshalling, as the interfaces listed above and the JBossUserMarshaller implementation will be removed in future versions.
+
+==== Store Migration
+Unfortunately, the extensive marshalling changes mean that the binary format used by Infinispan stores in `9.4.x` is no
+longer compatible with `10.0.x`. Therefore, it is necessary for any existing stores to be migrated to the new format via
+the StoreMigrator tool.
+
+NOTE: Whilst it is unfortunate that 9.4.x stores are no longer binary compatible, these extensive changes should ensure binary
+compatibility across future major versions.
+
+==== Store Defaults
+
+Stores now default to being segmented if the property is not configured. Some stores do not support
+being segmented, which will result in a configuration exception being thrown at startup. The moving forward
+position is to use segmented stores when possible to increase cache wide performance and reduce memory
+requirements for various operations including state transfer.
+
+The file based stores (SingleFileStore and SoftIndexFileStore) both support being segmented, but their
+current implementation requires opening file descriptors based on how many segments there are. This may
+cause issues in some configurations and users should be aware. Infinispan will print a single WARN message
+when such a configuration is found.
+
+=== CacheContainterAdmin
+
+Caches created through the CacheContainerAdmin API will now be `PERMANENT` by default. Use the `VOLATILE` flag to obtain the previous behaviour.
+
+=== Hot Rod 3.0
+
+Older versions of the Hot Rod protocol treated expiration values greater than the number of milliseconds in 30 days as Unix time. Starting with Hot Rod 3.0 this adjustment no longer happens and expiration is taken literally.
+
+=== Total Order transaction protocol is deprecated
+
+Total Order transaction protocol is going to be removed in a future release.
+Use the default protocol (2PC).
+
+=== Removed the infinispan.server.hotrod.workerThreads system property
+
+The `infinispan.server.hotrod.workerThreads` property was introduced as a hack to work around the fact that the configuration did not expose it.
+The property has been removed and endpoint worker threads must now be exclusively configured using the `worker-threads` attribute.
+
+=== Removed AtomicMap and FineGrainedAtomicMap
+
+AtomicMapLookup, AtomicMap and FineGrainedAtomicMap have been removed. Please see FunctionalMaps or Cache#Merge for
+similar functionality.
+
+=== Removed Delta and DeltaAware
+
+The previously deprecated Delta and DeltaAware interfaces have been removed.
+
+=== Removed compatibility mode
+
+The previously deprecated Compatibility Mode has been removed.
+
+=== Removed the implicit default cache
+
+The default cache must now be named explicitly via the link:../../apidocs/org/infinispan/configuration/global/GlobalConfigurationBuilder.html#defaultCacheName(java.lang.String)[GlobalConfigurationBuilder#defaultCacheName()] method.
+
+=== Removed DistributedExecutor
+
+The previously deprecated DistributedExecutor is now removed. References should be updated to use ClusterExecutor.
+
+=== Removed the Tree module
+
+TreeCache has been unsupported for a long time and was only intended as a quick stopgap for JBossCache users. The module has now been removed
+completely.
+
+=== The JDBC PooledConnectionFactory now utilises Agroal
+Previously the JDBC PooledConnectionFactory provided c3p0 and HikariCP based connection pools.
+From 10.0, only a PooledConnectionFactory based upon the link:https://agroal.github.io/[Agroal project] is provided.
+This means that it is no longer possible to utilise `c3p0.properties` and `hikari.properties` files to configure the pool,
+instead an agroal compatiblet properties file can be provided.
+
+=== XML configuration changes
+Several configuration elements and attributes that were deprecated since 9.0 have been removed:
+
+* `<eviction>` - replaced with `memory`
+* `<versioning>` - automatically enabled
+* `<data-container>` - no longer customizable
+* `deadlock-detection-spin` - always disabled
+* `write-skew` - enabled automatically
+
+The xsite state transfer chunk size (`<backup><state-transfer chunk-size="X"/></backup>`) can no longer be `&gt;= 0`,
+same as the regular state transfer chunk size.
+Previously a value &lt;= 0 would transfer the entire cache in a single batch, which is almost always a bad idea.
+
+=== RemoteCache Changes
+
+==== Marshalling Changes
+The default marshaller is no longer GenericJbossMarshaller. {brandname} now utilises the link:https://github.com/infinispan/protostream[ProtoStream]
+library as the default. If Java Serialization is required by clients, it is strongly recommended to utilise the
+link:link:../../apidocs/org/infinispan/commons/marshall/JavaSerializationMarshaller[JavaSerializationMarshaller] instead.
+However if the GenericJbossMarshaller must be used, it is necessary to add the `org.infinispan:infinispan-jboss-marshalling`
+artifact to your client's classpath and for the `GenericJbossMarshaller` to be configured as the marshaller.
+
+==== The getBulk methods have been removed
+The getBulk method is an expensive method as it requires holding all keys in memory at once and requires a possibly very single result
+to populate it. The new retrieveEntries, entrySet, keySet and values methods handle this in a much more efficient way. Therefore the
+getBulk methods have been removed in favor of them.
+
+=== Persistence changes
+
+* File-based cache stores (SingleFileStore, SoftIndexFileStore, RocksDBStore) filesystem layout has been normalized so that they will use the `GlobalStateConfiguration` persistent location as a default location. Additionally, all stores will now use the cache name as part of the data file/directory naming allowing multiple stores to avoid conflicts and ambiguity.
+* The CLI loader (`infinispan-persistence-cli`) has been removed.
+* The LevelDB store (`infinispan-cachestore-leveldb`) has been removed. Use the RocksDB store instead, as it is fully backwards compatible.
+* The deprecated `singleton` store configuration option and the wrapper class `SingletonCacheWriter` have been removed.
++
+Using `shared=true` is enough, as only the primary owner of each key will write to a shared store.
+
+=== Client/Server changes
+
+* The Hot Rod client and server only support protocol versions 2.0 and higher. Support for Hot Rod versions 1.0 to 1.3 has been dropped.
+
+=== SKIP_LISTENER_NOTIFICATION flag
+
+`SKIP_LISTENER_NOTIFICATION` notification flag has been added in the hotrod client.
+This flag only works when the client and the server version is 9.4.15 or higher.
+Spring Session integration uses this flag when a session id has changed.
+If you are using Spring Session with Infinispan 9.4, consider upgrading the client and the server.
+
+=== performAsync header removed from REST
+
+The `performAsync` header was removed from the REST server. Clients that want to perform async operations with
+the REST server should manage the request and response on their side to avoid blocking.
+
+=== REST status code change
+
+REST operations that do not return resources and are used with `PUT`, `POST` and `DELETE` methods now return status `204` (No content) instead of `200`.
+
+=== Default JGroups stacks in the XML configuration
+
+With the introduction of inline XML JGroups stacks in the configuration, two default stacks are always enabled: `udp` and `tcp`.
+If you are declaring your own stacks with the same names, an exception reporting the conflict will be thrown.
+Rename your own configurations to avoid the conflict.
+
+=== JGroups legacy S3_PING replaced with aws.S3_PING
+
+Because of changes in AWS's access policy regarding signatures, legacy S3_PING will not work in newer regions and will stop working in older regions too.
+For this reason, you should migrate to using aws.S3_PING instead.
+
+=== Cache and Cache Manager Listeners can now be configured to be non blocking
+Listeners in the past that were sync, always ran in the thread that caused the event. A Listener method can now be
+non-blocking in that it will still fire in the original thread, under the assumption that it will return immediately.
+Please read the Listener Javadoc for information and examples on this.
+
+=== Distributed Streams operations no longer support null values
+Distributed Streams has parts rewritten to utilize non blocking reactive streams based operations. As such null values
+are not supported as values from operations as per the reactive streams spec. Please utilize other means to denote
+a null value.
+
+=== Removed the infinispan-cloud module
+The infinispan-cloud module has been removed and the `kubernetes`, `ec2`, `google` and `azure` default configurations have been included in `infinispan-core` and can be
+referenced as default named JGroups configurations.
+
+=== Removed experimental flag GUARANTEED_DELIVERY
+Almost as soon as `GUARANTEED_DELIVERY` was added, `UNICAST3` and `NAKACK2.resend_last_seqno` removed the need for it.
+It was always documented as experimental, so it was removed without deprecation and the `RSVP` protocol was also removed
+from the default JGroups stacks.
+
+=== Cache Health
+The possible statuses of the cache health are now `HEALTHY`, `HEALTHY_REBALANCING` and `DEGRADED` to better
+reflect the fact that `rebalancing` does not mean a cluster is unhealthy.
+
+=== Multi-tenancy
+
+When using multi-tenancy in the WildFly based server, it is necessary to specify the `content-path` for each of the REST connectors, to match the `prefix` element under `multi-tenancy\rest\prefix`.
+
+=== OffHeap Automatic Resizing
+Off Heap memory containers now will dynamically resize based on number of entries in the container. Due to this the
+address count configuration value  is now deprecated for APIs and has been removed from the xml parser.
+
+
+=== Deprecated methods from DataContainer removed
+The deprecated methods keySet, values, entrySet and executeTask has been removed.
+

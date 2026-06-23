@@ -1,0 +1,165 @@
+==  Upgrading from 5.0 to 5.1
+=== API
+
+The cache and Cache Manager hierarchies have changed slightly in 5.1 with the introduction of
+link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/api/BasicCache.html[`BasicCache`]
+and
+link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/api/BasicCacheContainer.html[`BasicCacheContainer`]
+, which are parent classes of existing
+link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/Cache.html[`Cache`]
+and
+link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/manager/CacheContainer.html[`CacheContainer`]
+classes respectively. The important thing is that Hot Rod clients must now code
+against `BasicCache` and `BasicCacheContainer` rather than `Cache` and `CacheContainer`.
+So previous code that was written like this will no longer compile.
+
+[source,java]
+.WontCompile.java
+----
+import org.infinispan.Cache;
+import org.infinispan.manager.CacheContainer;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+// ...
+CacheContainer cacheContainer = new RemoteCacheManager();
+Cache cache = cacheContainer.getCache();
+----
+
+Instead, if Hot Rod clients want to continue using interfaces higher up the hierarchy from the remote cache/container classes, they have to write:
+
+[source,java]
+.Correct.java
+----
+import org.infinispan.BasicCache;
+import org.infinispan.manager.BasicCacheContainer;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+// ...
+BasicCacheContainer cacheContainer = new RemoteCacheManager();
+BasicCache cache = cacheContainer.getCache();
+----
+
+However, previous code that interacted against the `RemoteCache` and `RemoteCacheManager` will work as it used to:
+
+[source,java]
+.AlsoCorrect.java
+----
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+...
+RemoteCacheManager cacheContainer = new RemoteCacheManager();
+RemoteCache cache = cacheContainer.getCache();
+----
+
+=== Eviction and Expiration
+
+* The eviction XML element no longer defines the `wakeUpInterval` attribute. This is now configured via the `expiration` element:
+
+[source,xml]
+----
+<expiration wakeUpInterval="60000" />
+----
+
+Eviction's `maxEntries` is used as guide for the entire cache, but eviction happens on a per cache segment, so when the segment is full, the segment is evicted.
+That is why `maxEntries` is a theoretical limit but in practical terms, it will be a bit less than that.
+This is done for performance reasons.
+
+=== Transactions
+
+* A cache marked as `TRANSACTIONAL` cannot be accessed outside a transaction, and a `NON_TRANSACTIONAL` cache cannot be accessed within a transaction. In 5.0, a transactional cache would support non-transactional calls as well.  This change was done to be in-line with expectations set out in link:https://github.com/jsr107[JSR-107] as well as to provide more consistent behavior.
+
+* In 5.0, commit and rollback phases were asynchronous by default. Starting with 5.1, these are now synchronous by default, to provide the guarantees required by a single lock-owner model.
+
+=== State transfer
+One of the big changes in 5.1 was to use the same push-based state transfer introduced in 5.0 both for rehashing in distributed mode and for state retrieval in replicated mode. The consistent hash concept is even borrowed in replicated mode to transfer state from all previous cache members at once in order to speed up transfer.
+
+As a consequence the state transfer configuration has been unified as well, there is now a `stateTransfer` element containing a simplified state transfer configuration. The corresponding attributes in the `stateRetrieval` and `hash` elements have been deprecated, as have been some attributes that are no longer used.
+
+=== Configuration
+If you use XML to configure Infinispan, you should not notice any change, except a much faster startup, courtesy of the link:http://en.wikipedia.org/wiki/StAX[StAX] based parser.
+However, if you use programmatic configuration, read on for the important differences.
+
+Configuration is now packaged in `org.infinispan.configuration`, and you must use a fluent, builder style:
+
+[source,java]
+----
+
+Configuration c1 = new ConfigurationBuilder()
+   // Adjust any configuration defaults you want
+   .clustering()
+      .l1()
+         .disable()
+      .mode(DIST_SYNC)
+      .hash()
+         .numOwners(5)
+   .build();
+
+----
+
+* The old javabean style configuration is now deprecated and will be removed in a later version.
+* Configuration properties which can be safely changed at runtime are mutable, and all others are immutable.
+* To copy a configuration, use the `read()` method on the builder, for example:
+
+[source,java]
+----
+
+Configuration c2 = new ConfigurationBuilder()
+   // Read in C1 to provide defaults
+   .read(c1)
+   .clustering()
+      .l1()
+         .enable()
+   // This cache is DIST_SYNC, will have 5 owners, with L1 cache enabled
+   .build();
+
+----
+
+This completely replaces the old system of defining a set of overrides on bean properties. Note that this means the behaviour of Infinispan configuration is somewhat different when used programmatically. Whilst before, you could define a default configuration, and any overrides would be applied on top of _your_ defaults when defined, now you must explicitly read in your defaults to the builder. This allows for much greater flexibility in your code (you can have a as many "default" configurations as you want), and makes your code more explicit and type safe (finding references works).
+
+The schema is unchanged from before. Infinispan 4.0 configurations are currently not being parsed. To upgrade, change the schema definition from:
+
+[source,xml]
+----
+
+<infinispan
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="urn:infinispan:config:4.1 https://infinispan.org/schemas/infinispan-config-4.1.xsd"
+     xmlns="urn:infinispan:config:4.1">
+
+----
+
+to
+
+[source,xml]
+----
+
+<infinispan
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="urn:infinispan:config:5.1 https://infinispan.org/schemas/infinispan-config-5.1.xsd"
+     xmlns="urn:infinispan:config:5.1">
+
+----
+
+The schema documentation has changed format, as it is now produced using the standard tool `xsddoc`. This should be a significant improvement, as better navigation is offered. Some elements and attributes are missing docs right now, and these are being added. As an added benefit, your IDE should now show documentation when an xsd referenced (as above)
+
+Support for this configuration style for modules (such as cache stores) is being added. In the meantime, please use the old configuration or XML if you require support for cache store module configuration.
+
+=== Flags and ClassLoaders
+
+The `Flags` and `ClassLoader` API has changed. In the past, the following would work:
+
+[source,java]
+----
+ cache.withFlags(f1, f2); cache.withClassLoader(cl); cache.put(k, v);
+----
+
+In 5.1.0, these `withX()` methods return a new instance and not the cache itself, so thread locals are avoided and the code above will not work. If used in a fluent manner however, things still work:
+
+[source,java]
+----
+cache.withFlags(f1, f2).withClassLoader(cl).put(k, v);
+----
+
+The above pattern has always been the intention of this API anyway.
+
+=== JGroups Bind Address
+
+Since upgrading to JGroups 3.x, `-Dbind.address` is ignored. This should be replaced with `-Djgroups.bind_addr`.

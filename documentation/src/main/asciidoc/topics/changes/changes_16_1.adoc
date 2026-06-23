@@ -1,0 +1,60 @@
+== Upgrading from 16.0 to 16.1
+
+=== Require JDK 25 for Infinispan Server
+
+Infinispan Server now requires JDK 25. This only affects the server distribution and the container image.
+It does not affect the individual server modules (aside from `infinispan-server-runtime`) nor the Hot Rod client
+applications.
+
+=== Metrics
+
+==== JVM metrics no longer registered by default
+
+The default value of the `infinispan/cache-container/metrics/jvm` attribute has changed from `true` to `false`.
+Previously, this attribute registered metrics related to the JVM internals.
+As Infinispan is a library, the user application, rather than Infinispan, should be responsible for registering JVM metrics.
+This change does not affect the Infinispan server.
+
+==== Metrics attribute `names-as-tags` default value changed
+
+By default, when `infinispan/cache-container/metrics/names-as-tags=false`, the cache name appears in the metric's name, which complicates the construction of Prometheus queries and/or Grafana dashboards.
+For simplification, the default value changed to `true`.
+It is strongly recommended to update your queries and/or dashboards to the new metric's name format, as this option will be removed in a future version.
+
+==== Legacy metrics
+
+Legacy metrics names have been disabled. To restore this behavior, set `infinispan/cache-container/metrics/legacy`
+attribute to `true`.
+
+=== Eviction Containers
+
+Infinispan 16.1 introduces the ability to configure *eviction containers* at the cache-container level.
+This simplifies eviction configuration for individual nodes by allowing multiple caches to share a single, node-wide eviction policy.
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<cache-container>
+   <eviction-containers>
+      <max-size-container name="my-node-eviction" size="1GB"/>
+   </eviction-containers>
+   ...
+   <distributed-cache name="distributed-shared-eviction">
+      <memory eviction-container="my-node-eviction"/>
+   </distributed-cache>
+
+   <replicated-cache name="replicated-shared-eviction">
+      <memory eviction-container="my-node-eviction"/>
+   </replicated-cache>
+</cache-container>
+----
+
+This approach means that all caches utilizing the shared container will share the same eviction limit.
+If a particular cache requires more granular control over its memory usage, it should be configured with its own dedicated eviction policy.
+
+=== Security mechanisms
+
+Removed all references to `DIGEST-MD5`, `DIGEST-SHA`, `SCRAM-SHA-1` and `CRAM-MD5` authentication mechanisms as they
+should not be used because of their vulnerabilities.
+Additionally, the CLI `user create` and `user password` commands will no longer create hashes in user properties files
+using those algorithms. Use at least `SCRAM-SHA-256` and `DIGEST-SHA-256` or stronger alternatives.
+

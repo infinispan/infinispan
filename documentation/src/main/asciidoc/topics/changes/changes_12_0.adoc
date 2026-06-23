@@ -1,0 +1,245 @@
+== Upgrading from 11.0 to 12.0
+
+=== Encoding
+
+Conversions of cache data between `application/x-java-object` and `application/json` are deprecated and will be removed
+in a future version. For JSON support, it is recommend to configure the cache with `application/x-protostream` encoding.
+
+=== OSGi
+
+Support for OSGi was deprecated and has been removed.
+
+=== REST
+
+Some operations that previously supported both `GET` and `POST` now support only `POST`:
+
+* ```/v2/caches/{cacheName}?action=clear```
+* ```/v2/caches/{cacheName}?action=sync-data```
+* ```/v2/caches/{cacheName}?action=disconnect-source```
+* ```/v2/cluster?action=stop```
+* ```/v2/counters/{counterName}?action=reset```
+* ```/v2/counters/{counterName}?action=increment```
+* ```/v2/counters/{counterName}?action=decrement```
+* ```/v2/counters/{counterName}?action=add```
+
+* ```/v2/counters/{counterName}?action=compareAndSet```
+* ```/v2/counters/{counterName}?action=compareAndSwap```
+
+* ```/v2/caches/{cacheName}/search/indexes?action=mass-index```
+* ```/v2/caches/{cacheName}/search/indexes?action=clear```
+* ```/v2/caches/{cacheName}/search/query/stats?action=clear```
+
+* ```/v2/server/?action=stop```
+
+* ```/v2/tasks/{taskName}?action=exec```
+
+* ```/v2/caches/{cacheName}/x-site/local/?action=clear-push-state-status```
+
+* ```/v2/caches/{cacheName}/x-site/backups/{site}?action=take-offline```
+* ```/v2/caches/{cacheName}/x-site/backups/{site}?action=bring-online```
+* ```/v2/caches/{cacheName}/x-site/backups/{site}?action=start-push-state```
+* ```/v2/caches/{cacheName}/x-site/backups/{site}?action=cancel-push-state```
+* ```/v2/caches/{cacheName}/x-site/backups/{site}?action=cancel-receive-state```
+
+* ```/v2/cache-managers/{name}/x-site/backups/{site}?action=bring-online```
+* ```/v2/cache-managers/{name}/x-site/backups/{site}?action=take-offline```
+* ```/v2/cache-managers/{name}/x-site/backups/{site}?action=start-push-state```
+* ```/v2/cache-managers/{name}/x-site/backups/{site}?action=cancel-push-state```
+
+* The following query statistics operation:
+
+** ```/v2/caches/{cacheName}/search/query/stats```
+** ```/v2/caches/{cacheName}/search/indexes/stats```
+
+have been deprecated and will be removed in a future version.
+
+Users should migrate to the ```/v2/caches/{cacheName}/search/stats``` endpoint. Please consult the REST API docs for more details.
+
+=== Search
+
+* It is not possible anymore to enable or disable search statistics via JMX. Query and Index statistics are only exposed when the cache "statistics" configuration is enabled.
+
+* `MassIndexer`, `CacheQuery`, and `SearchManager` were deprecated and are now removed.
+
+* Indexed type names must be declared for all indexed caches, regardless of their storage format.
+  This requirement was introduced in 11 in a more lenient form and failing to comply logged a warning.
+  Starting with version 12 this results in a fatal error preventing the cache to start.
+  Please update your configurations accordingly.
+
+==== Indexing configuration
+
+Configuring indexing using the `property` element is deprecated and will be removed in a future version.
+Use the `<index-reader>` and `<index-writer>` configuration elements to define indexing behaviour.
+For the programmatic configuration, use `builder.indexing().reader()` and `builder.indexing().writer()`.
+
+To migrate your configuration, please refer to the sections below:
+
+===== Storage
+
+.Memory Storage
+
+[source,xml]
+----
+<!-- 11.0 -->
+<indexing>
+ <property name="default.directory_provider">local-heap</property>
+</indexing>
+----
+
+[source,xml]
+----
+<!-- 12.0 -->
+<indexing storage="local-heap">
+</indexing>
+----
+
+.Filesystem storage
+
+[source,xml]
+----
+<!-- 11.0 -->
+<indexing>
+  <property name="default.directory_provider">filesystem</property>
+  <property name="default.indexBase">${java.io.tmpdir}/baseDir</property>
+</indexing>
+----
+
+[source,xml]
+----
+<!-- 12.0 -->
+<indexing storage="filesystem" path="${java.io.tmpdir}/baseDir"/>
+----
+
+===== Reader refresh
+[source,xml]
+----
+<!-- 11.0 -->
+<indexing>
+  <property name="default.reader.async_refresh_period_ms">1000</property>
+</indexing>
+----
+
+[source,xml]
+----
+<!-- 12.0 -->
+<indexing>
+  <index-reader refresh-interval="1000"/>
+</indexing>
+----
+
+===== IndexManager
+
+From 12.0, `near-real-time` is the default index manager and no configuration is needed:
+
+[source,xml]
+----
+<!-- 11.0 -->
+<indexing>
+  <property name="default.indexmanager">near-real-time</property>
+</indexing>
+----
+
+[source,xml]
+----
+<!-- 12.0 -->
+<indexing enabled="true"/>
+----
+
+===== Worker sync/async
+
+The `default.worker.execution` is redundant as the indexing process is async by default:
+
+[source,xml]
+----
+<!-- 11.0 -->
+<indexing>
+   <property name="default.worker.execution">async</property>
+   <property name="default.index_flush_interval">500</property>
+</indexing>
+----
+
+[source,xml]
+----
+<!-- 12.0 -->
+<indexing>
+   <index-writer commit-interval="500"/>
+</indexing>
+----
+
+===== Low level Lucene options
+
+The properties used previously to tune the Lucene index directly are now
+available under the `<index-writer>` element.
+
+[source,xml]
+----
+<!-- 11.0 -->
+<indexing>
+   <property name="default.indexwriter.merge_factor">30</property>
+   <property name="default.indexwriter.merge_max_size">1024</property>
+   <property name="default.indexwriter.ram_buffer_size">256</property>
+</indexing>
+----
+
+[source,xml]
+----
+<!-- 12.0 -->
+<indexing>
+   <index-writer ram-buffer-size="256">
+       <index-merge factor="30" max-size="1024"/>
+   </index-writer>
+</indexing>
+----
+
+===== Supporting older indexes
+
+The property `lucene_version` is deprecated and will not be supported in a future version. It is recommended to re-index when migrating from older Infinispan versions instead of reusing the underlying indexes on disk created
+in an older Lucene version.
+
+===== Sharding
+
+Configuration of sharding through the property `default.sharding_strategy.nbr_of_shards` is deprecated and will be removed in a future version.
+
+===== Maximum boolean clauses
+
+The property `infinispan.query.lucene.max-boolean-clauses` is now only supported when used via JVM property. Support for using
+it inside the `<property>` element of the index configuration was removed.
+
+
+=== Cache Health
+A new status `FAILED` has been added to the cache health, to indicate that a cache failed to start with the
+provided configuration. The possible statuses of the cache health are now HEALTHY, HEALTHY_REBALANCING, DEGRADED and FAILED.
+
+=== Marshalling
+
+==== Kryo and Protostuff marshaller deprecation
+
+The Kryo and Protostuff marshallers have been deprecated and will be removed in Infinispan 15.0
+
+==== {brandname} includes an upgraded version of the ProtoStream API that can
+affect upgrade from previous {brandname} versions.
+
+In previous versions, the ProtoStream API did not correctly nest message types
+with the result that the messages were generated as top-level only. For this
+reason, if you have Protobuf messages in a persistent cache store and upgrade
+to {brandname} 12, then you should modify Java classes so that Protobuf
+annotations are at top-level. This ensures that the nesting in your persisted
+messages matches the nesting in your Java classes, otherwise data
+incompatibility issues can occur.
+
+==== Allow lists
+
+All occurrences of "white list" have been renamed to "allow list".
+
+=== Persistence
+
+==== JdbcStringBasedStore
+The JDBC string based store now creates an additional `_META` to ensure that any database content is compatible with
+the current {brandname} version and configuration.
+
+==== Rest Store
+The rest-store has been removed. Users should utilise the HotRod based remote-store for reading/writing to Infinispan clusters.
+
+==== Hot Rod client
+The `trust_store_path` property has been deprecated. Use `trust_store_filename` instead and specify `pem` in `trust_store_type`.
+

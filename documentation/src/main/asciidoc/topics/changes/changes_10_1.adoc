@@ -1,0 +1,81 @@
+== Upgrading from 10.0 to 10.1 and 10.0 to 11.0
+
+=== Maximum Idle Timeouts with Clustered Cache Modes
+Maximum idle expiration has been changed to improve data consistency with clustered cache modes when Infinispan nodes fail.
+
+[NOTE]
+=====
+* `Cache.get()` calls do not return until the touch commands complete. This
+synchronous behavior increases latency of client requests and reduces
+performance.
+
+* Maximum idle expiration, `max-idle`, does not currently work with entries
+stored in off-heap memory.
+
+* Likewise, `max-idle` does not work if caches use cache stores as a persistence
+layer.
+=====
+
+See link:{../configuring/configuring.html#expiration_maxidle}[Maximum Idle Expiration] for complete details.
+
+== Upgrading from 10.0 to 10.1
+
+=== REST Store
+
+The following configurations were removed from the REST store: ```append-cache-name-to-path``` and ```path```.
+
+To specify the remote server endpoint path, a single configuration ```cache-name``` should be used.
+
+=== Infinispan Lucene Directory is deprecated
+
+The Infinispan Lucene directory is now deprecated and will be removed in a future release.
+Consequently, the Infinispan Directory provider for Hibernate Search will also be discontinued, with no replacement.
+
+Both IndexManagers that rely on the Lucene Directory are also deprecated, the InfinispanIndexManager and the AffinityIndexManager.
+Users are encouraged to reconfigure their indexes as non-shared, using the Near Real Time IndexManager, with file system storage:
+
+[source,xml]
+----
+<distributed-cache name="default">
+    <indexing index="PRIMARY_OWNER">
+        <property name="default.indexmanager">near-real-time</property>
+        <property name="default.indexBase">/opt/infinispan/server/data/indexes</property>
+    </indexing>
+</distributed-cache>
+----
+
+Queries need to be adjusted to use the ```BROADCAST``` runtime option.
+
+=== Security role mappers and audit loggers
+
+The security role mapper implementations have been moved from the `org.infinispan.security.impl` package to the
+`org.infinispan.security.mappers` package:
+
+* `org.infinispan.security.impl.CommonNameRoleMapper` => `org.infinispan.security.mappers.CommonNameRoleMapper`
+* `org.infinispan.security.impl.ClusterRoleMapper` => `org.infinispan.security.mappers.ClusterRoleMapper`
+* `org.infinispan.security.impl.IdentityRoleMapper` => `org.infinispan.security.mappers.IdentityRoleMapper`
+
+The security audit logger implementations have been moved from the `org.infinispan.security.impl` package to the
+`org.infinispan.security.audit` package:
+
+* `org.infinispan.security.impl.LoggingAuditLogger` => `org.infinispan.security.audit.LoggingAuditLogger`
+* `org.infinispan.security.impl.NullAuditLogger` => `org.infinispan.security.audit.NullAuditLogger`
+
+=== Memcached protocol server is deprecated
+
+The Memcached protocol server is now deprecated and will be removed in a future release.
+This is being done because Infinispan only implements the very dated text-only protocol instead of the binary protocol
+which means no security (authentication / encryption), no support for some new Memcached features and no integration
+with Infinispan features like single-port. If someone in the community wishes to implement the binary protocol, this
+decision would be reverted.
+
+=== Hot Rod client default mechanism changed to SCRAM-SHA-512
+
+The default Hot Rod client authentication mechanism has been changed from `DIGEST-MD5` to `SCRAM-SHA-512`.
+If you are using `property` user realms, you must make sure you are using `plain-text` storage.
+
+=== Transactions
+The Map implementation `EntryVersionsMap` has been removed and replaced with a `Map<Object, IncrementalEntryVersion>`.
+If the old `EntryVersionsMap#merge` logic is required, it can be replaced with `org.infinispan.transaction.impl.WriteSkewHelper#mergeEntryVersions`,
+however users should not rely on this code as it could be removed in the future without notice,
+

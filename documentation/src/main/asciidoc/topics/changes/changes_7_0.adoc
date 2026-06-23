@@ -1,0 +1,23 @@
+== Upgrading from 6.0 to 7.0
+=== API Changes
+
+==== Cache Loader
+To be more inline with JCache and `java.util.collections` interfaces, the first argument type for the `CacheLoader.load` and `CacheLoader.contains` methods has been changed to `Object` from the generic type `K`.
+
+==== Cache Writer
+To be more inline with JCache and java.util.collections interfaces, the first argument type for the `CacheWriter.delete` method has been changed to Object from type K.
+
+==== Filters
+
+Over time Infinispan added 2 interfaces with identical names and almost identical methods.  The org.infinispan.notifications.KeyFilter and org.infinispan.persistence.spi.AdvancedCacheLoader$KeyFilter interfaces.
+
+Both of these interfaces are used for the sole purpose of filtering an entry by its given key.  Infinispan 7.0 has also introduced the `KeyValueFilter` which is similar to both but also can filter on the entries value and/or metadata.
+
+As such all of these classes have been moved into a new package `org.infinispan.filter` and all of their related helper classes.
+
+The new `org.infinispan.filter.KeyFilter` interface has replaced both of the previous interfaces and all previous references use the new interface.
+
+=== Declarative configuration
+
+The XML schema for the embedded configuration has changed to more closely follow the server configuration. Use the `config-converter.sh` or `config-converter.bat` scripts to convert an Infinispan 6.0 to the current format.
+
