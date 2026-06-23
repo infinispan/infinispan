@@ -40,7 +40,7 @@ public class TransactionManagerFactory extends AbstractNamedCacheComponentFactor
          log.couldNotInstantiateTransactionManager(e);
       }
 
-      if (transactionManager == null && configuration.invocationBatching().enabled()) {
+      if (transactionManager == null && configuration.transaction().invocationBatching()) {
          log.usingBatchModeTransactionManager();
          transactionManager = BatchModeTransactionManager.getInstance();
       }

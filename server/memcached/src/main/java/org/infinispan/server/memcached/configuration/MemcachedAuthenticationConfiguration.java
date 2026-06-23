@@ -13,7 +13,7 @@ import org.infinispan.server.core.configuration.SaslConfiguration;
  */
 public class MemcachedAuthenticationConfiguration extends ConfigurationElement<MemcachedAuthenticationConfiguration> implements AuthenticationConfiguration {
    static final AttributeDefinition<String> SECURITY_REALM = AttributeDefinition.builder("security-realm", null, String.class).build();
-   static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).build();
+   static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).autoPersist(false).build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(MemcachedAuthenticationConfiguration.class, SECURITY_REALM, ENABLED);

@@ -19,6 +19,7 @@ import javax.transaction.xa.XAResource;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.TransactionMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodMultiNodeTest;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -35,7 +36,6 @@ import org.infinispan.server.hotrod.tx.table.functions.TxFunction;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.testing.skip.SkipTestNG;
 import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.util.ByteString;
@@ -51,12 +51,12 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "server.hotrod.tx.TopologyChangeFunctionalTest")
 public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
 
-   private org.infinispan.configuration.cache.TransactionMode transactionMode;
+   private TransactionMode transactionMode;
 
    @Override
    public Object[] factory() {
-      return Arrays.stream(org.infinispan.configuration.cache.TransactionMode.values())
-            .filter(tMode -> tMode != org.infinispan.configuration.cache.TransactionMode.NONE)
+      return Arrays.stream(TransactionMode.values())
+            .filter(tMode -> tMode != TransactionMode.NONE)
             .flatMap(txMode -> Arrays.stream(LockingMode.values())
                   .map(lockingMode -> new TopologyChangeFunctionalTest()
                         .transactionMode(txMode)
@@ -64,8 +64,7 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
             .toArray();
    }
 
-   public TopologyChangeFunctionalTest transactionMode(
-         org.infinispan.configuration.cache.TransactionMode transactionMode) {
+   public TopologyChangeFunctionalTest transactionMode(TransactionMode transactionMode) {
       this.transactionMode = transactionMode;
       return this;
    }
@@ -119,7 +118,7 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
    }
 
    public void testOriginatorLeft(Method method) {
-      //optimistic mode is not official supported and we don't store any versioning
+      //optimistic mode is not officially supported, and we don't store any versioning
       //this test is failing without the versions
       SkipTestNG.skipIf(lockingMode == LockingMode.OPTIMISTIC, "Optimistic transactions not supported");
       byte[] k1 = k(method, "k1");
@@ -199,24 +198,11 @@ public class TopologyChangeFunctionalTest extends HotRodMultiNodeTest {
    @Override
    protected ConfigurationBuilder createCacheConfig() {
       ConfigurationBuilder builder = hotRodCacheConfiguration();
-      builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
-      builder.transaction().transactionManagerLookup(new EmbeddedTransactionManagerLookup());
+      builder.transaction()
+            .mode(transactionMode)
+            .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
+            .lockingMode(lockingMode);
       builder.transaction().lockingMode(lockingMode);
-      switch (transactionMode) {
-         case NON_XA:
-            builder.transaction().useSynchronization(true);
-            break;
-         case NON_DURABLE_XA:
-            builder.transaction().useSynchronization(false);
-            builder.transaction().recovery().disable();
-            break;
-         case FULL_XA:
-            builder.transaction().useSynchronization(false);
-            builder.transaction().recovery().enable();
-            break;
-         default:
-            throw new IllegalStateException();
-      }
       builder.clustering().hash().numOwners(2);
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       return builder;

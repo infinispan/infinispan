@@ -146,6 +146,10 @@ public class Configuration extends ConfigurationElement<Configuration> implement
       return tracingConfiguration;
    }
 
+   /**
+    * @deprecated Since 17.0, use {@link TransactionConfiguration#invocationBatching()} via {@link #transaction()}.
+    */
+   @Deprecated(since = "17.0")
    public InvocationBatchingConfiguration invocationBatching() {
       return invocationBatchingConfiguration;
    }
@@ -205,7 +209,6 @@ public class Configuration extends ConfigurationElement<Configuration> implement
             ", query=" + queryConfiguration +
             ", indexing=" + indexingConfiguration +
             ", tracing=" + tracingConfiguration +
-            ", invocationBatching=" + invocationBatchingConfiguration +
             ", locking=" + lockingConfiguration +
             ", memory=" + memoryConfiguration +
             ", modules=" + moduleConfiguration +
@@ -231,7 +234,6 @@ public class Configuration extends ConfigurationElement<Configuration> implement
             && Objects.equals(encodingConfiguration, that.encodingConfiguration)
             && Objects.equals(expirationConfiguration, that.expirationConfiguration)
             && Objects.equals(indexingConfiguration, that.indexingConfiguration)
-            && Objects.equals(invocationBatchingConfiguration, that.invocationBatchingConfiguration)
             && Objects.equals(lockingConfiguration, that.lockingConfiguration)
             && Objects.equals(memoryConfiguration, that.memoryConfiguration)
             && Objects.equals(moduleConfiguration, that.moduleConfiguration)
@@ -252,7 +254,6 @@ public class Configuration extends ConfigurationElement<Configuration> implement
             encodingConfiguration,
             expirationConfiguration,
             indexingConfiguration,
-            invocationBatchingConfiguration,
             lockingConfiguration,
             memoryConfiguration,
             moduleConfiguration,
@@ -277,8 +278,6 @@ public class Configuration extends ConfigurationElement<Configuration> implement
       if (!expirationConfiguration.matches(other.expirationConfiguration))
          return false;
       if (!indexingConfiguration.matches(other.indexingConfiguration))
-         return false;
-      if (!invocationBatchingConfiguration.matches(other.invocationBatchingConfiguration))
          return false;
       if (!lockingConfiguration.matches(other.lockingConfiguration))
          return false;

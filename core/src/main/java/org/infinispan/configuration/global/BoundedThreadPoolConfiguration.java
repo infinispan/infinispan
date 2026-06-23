@@ -1,29 +1,21 @@
 package org.infinispan.configuration.global;
 
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.configuration.parsing.Element;
 
 /**
  * @since 10.0
  */
-class BoundedThreadPoolConfiguration {
+class BoundedThreadPoolConfiguration extends ConfigurationElement<BoundedThreadPoolConfiguration> {
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder("name", null, String.class).build();
    static final AttributeDefinition<String> THREAD_FACTORY = AttributeDefinition.builder("threadFactory", null, String.class).build();
    static final AttributeDefinition<Integer> MAX_THREADS = AttributeDefinition.builder("maxThreads", null, Integer.class).build();
    static final AttributeDefinition<Integer> CORE_THREADS = AttributeDefinition.builder("coreThreads", null, Integer.class).build();
    static final AttributeDefinition<Long> KEEP_ALIVE_TIME = AttributeDefinition.builder("keepAliveTime", null, Long.class).build();
    static final AttributeDefinition<Integer> QUEUE_LENGTH = AttributeDefinition.builder("queue-length", null, Integer.class).build();
-   static final AttributeDefinition<Boolean> NON_BLOCKING = AttributeDefinition.builder("non-blocking", null, Boolean.class).build();
-
-   private final AttributeSet attributes;
-   private final Attribute<String> name;
-   private final Attribute<String> threadFactory;
-   private final Attribute<Integer> maxThreads;
-   private final Attribute<Integer> coreThreads;
-   private final Attribute<Long> keepAliveTime;
-   private final Attribute<Integer> queueLength;
-   private final Attribute<Boolean> nonBlocking;
+   static final AttributeDefinition<Boolean> NON_BLOCKING = AttributeDefinition.builder("non-blocking", false, Boolean.class).build();
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(BoundedThreadPoolConfiguration.class, NAME, THREAD_FACTORY, MAX_THREADS, CORE_THREADS,
@@ -31,53 +23,34 @@ class BoundedThreadPoolConfiguration {
    }
 
    BoundedThreadPoolConfiguration(AttributeSet attributes) {
-      this.attributes = attributes.checkProtection();
-      this.name = attributes.attribute(NAME);
-      this.threadFactory = attributes.attribute(THREAD_FACTORY);
-      this.maxThreads = attributes.attribute(MAX_THREADS);
-      this.coreThreads = attributes.attribute(CORE_THREADS);
-      this.keepAliveTime = attributes.attribute(KEEP_ALIVE_TIME);
-      this.queueLength = attributes.attribute(QUEUE_LENGTH);
-      this.nonBlocking = attributes.attribute(NON_BLOCKING);
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
+      super(attributes.attribute(NON_BLOCKING).get() ? Element.NON_BLOCKING_BOUNDED_QUEUE_THREAD_POOL : Element.BLOCKING_BOUNDED_QUEUE_THREAD_POOL, attributes);
    }
 
    public String name() {
-      return name.get();
+      return attributes.attribute(NAME).get();
    }
 
    public String threadFactory() {
-      return threadFactory.get();
+      return attributes.attribute(THREAD_FACTORY).get();
    }
 
    public Integer getMaxThreads() {
-      return maxThreads.get();
+      return attributes.attribute(MAX_THREADS).get();
    }
 
    public Integer getCoreThreads() {
-      return coreThreads.get();
+      return attributes.attribute(CORE_THREADS).get();
    }
 
    public Long getKeepAliveTime() {
-      return keepAliveTime.get();
+      return attributes.attribute(KEEP_ALIVE_TIME).get();
    }
 
    public Integer getQueueLength() {
-      return queueLength.get();
+      return attributes.attribute(QUEUE_LENGTH).get();
    }
 
    public Boolean isNonBlocking() {
-      return nonBlocking.get();
+      return attributes.attribute(NON_BLOCKING).get();
    }
-
-   @Override
-   public String toString() {
-      return "BoundedThreadPoolConfiguration{" +
-            "attributes=" + attributes +
-            '}';
-   }
-
 }

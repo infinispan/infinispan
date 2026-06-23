@@ -190,7 +190,7 @@ public class InvocationHelper implements TransactionResourceConverter {
          Transaction transaction = null;
          if (transactionManager != null) {
             transaction = transactionManager.getTransaction();
-            if (transaction == null && config.invocationBatching().enabled()) {
+            if (transaction == null && config.transaction().invocationBatching()) {
                transaction = batchContainer.getBatchTransaction();
             }
          }

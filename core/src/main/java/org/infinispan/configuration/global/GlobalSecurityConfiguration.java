@@ -1,11 +1,12 @@
 package org.infinispan.configuration.global;
 
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
+import org.infinispan.configuration.parsing.Element;
 
 /**
  * GlobalSecurityConfiguration.
@@ -14,7 +15,7 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  * @since 7.0
  */
 @BuiltBy(GlobalSecurityConfigurationBuilder.class)
-public class GlobalSecurityConfiguration {
+public class GlobalSecurityConfiguration extends ConfigurationElement<GlobalSecurityConfiguration> {
    private final GlobalAuthorizationConfiguration authorization;
    public static final AttributeDefinition<Integer> CACHE_SIZE = AttributeDefinition.builder("securityCacheSize", 1000).build();
    public static final AttributeDefinition<Long> CACHE_TIMEOUT = AttributeDefinition.builder("securityCacheTimeout", TimeUnit.MINUTES.toMillis(5)).build();
@@ -24,11 +25,9 @@ public class GlobalSecurityConfiguration {
       return new AttributeSet(GlobalSecurityConfiguration.class, CACHE_SIZE, CACHE_TIMEOUT);
    }
 
-   private final AttributeSet attributes;
-
    public GlobalSecurityConfiguration(GlobalAuthorizationConfiguration authorization, AttributeSet attributes) {
+      super(Element.SECURITY, attributes, authorization);
       this.authorization = authorization;
-      this.attributes = attributes;
    }
 
    public GlobalAuthorizationConfiguration authorization() {
@@ -41,30 +40,5 @@ public class GlobalSecurityConfiguration {
 
    public long securityCacheTimeout() {
       return attributes.attribute(CACHE_TIMEOUT).get();
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      GlobalSecurityConfiguration that = (GlobalSecurityConfiguration) o;
-      return Objects.equals(authorization, that.authorization) && Objects.equals(attributes, that.attributes);
-   }
-
-   @Override
-   public int hashCode() {
-      return Objects.hash(authorization, attributes);
-   }
-
-   @Override
-   public String toString() {
-      return "GlobalSecurityConfiguration{" +
-            "authorization=" + authorization +
-            ", attributes=" + attributes +
-            '}';
    }
 }

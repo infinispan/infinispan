@@ -3,10 +3,10 @@ package org.infinispan.configuration.global;
 import static org.infinispan.configuration.global.BoundedThreadPoolConfiguration.CORE_THREADS;
 import static org.infinispan.configuration.global.BoundedThreadPoolConfiguration.KEEP_ALIVE_TIME;
 import static org.infinispan.configuration.global.BoundedThreadPoolConfiguration.MAX_THREADS;
+import static org.infinispan.configuration.global.BoundedThreadPoolConfiguration.NAME;
 import static org.infinispan.configuration.global.BoundedThreadPoolConfiguration.NON_BLOCKING;
 import static org.infinispan.configuration.global.BoundedThreadPoolConfiguration.QUEUE_LENGTH;
-import static org.infinispan.configuration.global.CachedThreadPoolConfiguration.NAME;
-import static org.infinispan.configuration.global.CachedThreadPoolConfiguration.THREAD_FACTORY;
+import static org.infinispan.configuration.global.BoundedThreadPoolConfiguration.THREAD_FACTORY;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;

@@ -25,7 +25,7 @@ public class TransactionTableFactory extends AbstractNamedCacheComponentFactory 
       if (!configuration.transaction().transactionMode().isTransactional())
          return null;
 
-      if (configuration.invocationBatching().enabled())
+      if (configuration.transaction().invocationBatching())
          return new TransactionTable();
 
       if (!configuration.transaction().useSynchronization()) {

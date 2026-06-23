@@ -20,7 +20,10 @@ public class PartitionHandlingConfiguration extends ConfigurationElement<Partiti
    public static final AttributeDefinition<PartitionHandling> WHEN_SPLIT = AttributeDefinition.builder(Attribute.WHEN_SPLIT, PartitionHandling.ALLOW_READ_WRITES)
          .immutable().build();
    public static final AttributeDefinition<EntryMergePolicy> MERGE_POLICY = AttributeDefinition.builder(Attribute.MERGE_POLICY, MergePolicy.NONE, EntryMergePolicy.class)
-         .immutable().build();
+         .immutable().serializer((writer, name, value) -> {
+            MergePolicy policy = MergePolicy.fromConfiguration(value);
+            writer.writeAttribute(name, policy == MergePolicy.CUSTOM ? value.getClass().getName() : policy.toString());
+         }).build();
 
 
    static AttributeSet attributeDefinitionSet() {

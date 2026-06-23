@@ -32,7 +32,7 @@ public class TransactionalInvocationContextFactory extends AbstractInvocationCon
 
    @Start
    public void start() {
-      this.batchingEnabled = config.invocationBatching().enabled();
+      this.batchingEnabled = config.transaction().invocationBatching();
    }
 
    @Override

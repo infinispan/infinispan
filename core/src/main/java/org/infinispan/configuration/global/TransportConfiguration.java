@@ -6,35 +6,39 @@ import java.util.Set;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.configuration.parsing.Element;
 import org.infinispan.remoting.transport.Transport;
 
-public class TransportConfiguration {
-   public static final AttributeDefinition<String> CLUSTER_NAME = AttributeDefinition.builder("cluster", "ISPN")
+public class TransportConfiguration extends ConfigurationElement<TransportConfiguration> {
+   public static final AttributeDefinition<String> CLUSTER_NAME = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CLUSTER, "ISPN")
          .immutable().build();
-   public static final AttributeDefinition<String> MACHINE_ID = AttributeDefinition.builder("machine", null, String.class)
+   public static final AttributeDefinition<String> MACHINE_ID = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MACHINE_ID, null, String.class)
          .immutable().build();
-   public static final AttributeDefinition<String> RACK_ID = AttributeDefinition.builder("rack", null, String.class)
+   public static final AttributeDefinition<String> RACK_ID = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.RACK_ID, null, String.class)
          .immutable().build();
-   public static final AttributeDefinition<String> SITE_ID = AttributeDefinition.builder("site", null, String.class)
+   public static final AttributeDefinition<String> SITE_ID = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SITE, null, String.class)
          .immutable().build();
-   public static final AttributeDefinition<String> NODE_NAME = AttributeDefinition.builder("nodeName", null, String.class)
+   public static final AttributeDefinition<String> NODE_NAME = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.NODE_NAME, null, String.class)
          .immutable().build();
    public static final AttributeDefinition<TimeQuantity> DISTRIBUTED_SYNC_TIMEOUT = AttributeDefinition.builder(
-         "lockTimeout", TimeQuantity.valueOf("4m")).build();
-   public static final AttributeDefinition<Integer> INITIAL_CLUSTER_SIZE = AttributeDefinition.builder("initialClusterSize", -1)
+         org.infinispan.configuration.parsing.Attribute.LOCK_TIMEOUT, TimeQuantity.valueOf("4m")).build();
+   public static final AttributeDefinition<Integer> INITIAL_CLUSTER_SIZE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.INITIAL_CLUSTER_SIZE, -1)
          .immutable().build();
    public static final AttributeDefinition<TimeQuantity> INITIAL_CLUSTER_TIMEOUT = AttributeDefinition.builder(
-           "initialClusterTimeout", TimeQuantity.valueOf("1m")).parser(TimeQuantity.PARSER).build();
-   public static final AttributeDefinition<String> STACK = AttributeDefinition.builder("stack", null, String.class).build();
-   public static final AttributeDefinition<String> TRANSPORT_EXECUTOR = AttributeDefinition.builder("executor", "transport-pool", String.class).build();
-   public static final AttributeDefinition<String> REMOTE_EXECUTOR = AttributeDefinition.builder("remoteCommandExecutor", "remote-command-pool", String.class).build();
+         org.infinispan.configuration.parsing.Attribute.INITIAL_CLUSTER_TIMEOUT, TimeQuantity.valueOf("1m")).parser(TimeQuantity.PARSER).build();
+   public static final AttributeDefinition<String> STACK = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STACK, null, String.class).build();
+   public static final AttributeDefinition<String> TRANSPORT_EXECUTOR = AttributeDefinition.builder("executor", "transport-pool", String.class).autoPersist(false).build();
+   public static final AttributeDefinition<String> REMOTE_EXECUTOR = AttributeDefinition.builder("remoteCommandExecutor", "remote-command-pool", String.class).autoPersist(false).build();
    @SuppressWarnings("unchecked")
    public static final AttributeDefinition<Set<String>> RAFT_MEMBERS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.RAFT_MEMBERS, null, (Class<Set<String>>) (Class<?>) Set.class)
          .initializer(Collections::emptySet)
          // unable to use AttributeSerializer.STRING_COLLECTION because it breaks the parser for JSON and YAML
-         .serializer((writer, name, value) -> writer.writeAttribute(name, String.join(" ", value)))
+         .serializer((writer, name, value) -> {
+         if (!value.isEmpty()) writer.writeAttribute(name, String.join(" ", value));
+      })
          .immutable()
          .build();
 
@@ -45,32 +49,19 @@ public class TransportConfiguration {
    }
 
    private final Attribute<String> clusterName;
-   private final Attribute<String> stack;
-   private final Attribute<String> machineId;
-   private final Attribute<String> rackId;
-   private final Attribute<String> siteId;
    private final Attribute<String> nodeName;
    private final Attribute<TimeQuantity> distributedSyncTimeout;
-   private final Attribute<Integer> initialClusterSize;
-   private final Attribute<TimeQuantity> initialClusterTimeout;
-   private final AttributeSet attributes;
    private final JGroupsConfiguration jgroupsConfiguration;
    private final TypedProperties properties;
 
    TransportConfiguration(AttributeSet attributes,
                           JGroupsConfiguration jgroupsConfiguration,
                           TypedProperties properties) {
-      this.attributes = attributes.checkProtection();
+      super(Element.TRANSPORT, attributes);
       this.jgroupsConfiguration = jgroupsConfiguration;
       this.properties = properties;
       clusterName = attributes.attribute(CLUSTER_NAME);
-      stack = attributes.attribute(STACK);
-      machineId = attributes.attribute(MACHINE_ID);
-      rackId = attributes.attribute(RACK_ID);
-      siteId = attributes.attribute(SITE_ID);
       distributedSyncTimeout = attributes.attribute(DISTRIBUTED_SYNC_TIMEOUT);
-      initialClusterSize = attributes.attribute(INITIAL_CLUSTER_SIZE);
-      initialClusterTimeout = attributes.attribute(INITIAL_CLUSTER_TIMEOUT);
       nodeName = attributes.attribute(NODE_NAME);
    }
 
@@ -79,19 +70,19 @@ public class TransportConfiguration {
    }
 
    public String stack() {
-      return stack.get();
+      return attributes.attribute(STACK).get();
    }
 
    public String machineId() {
-      return machineId.get();
+      return attributes.attribute(MACHINE_ID).get();
    }
 
    public String rackId() {
-      return rackId.get();
+      return attributes.attribute(RACK_ID).get();
    }
 
    public String siteId() {
-      return siteId.get();
+      return attributes.attribute(SITE_ID).get();
    }
 
    public long distributedSyncTimeout() {
@@ -107,11 +98,11 @@ public class TransportConfiguration {
    }
 
    public int initialClusterSize() {
-      return initialClusterSize.get();
+      return attributes.attribute(INITIAL_CLUSTER_SIZE).get();
    }
 
    public long initialClusterTimeout() {
-      return initialClusterTimeout.get().longValue();
+      return attributes.attribute(INITIAL_CLUSTER_TIMEOUT).get().longValue();
    }
 
    public Transport transport() {
@@ -136,9 +127,5 @@ public class TransportConfiguration {
 
    public Set<String> raftMembers() {
       return attributes.attribute(RAFT_MEMBERS).get();
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
    }
 }

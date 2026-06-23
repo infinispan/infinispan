@@ -19,30 +19,23 @@ import org.infinispan.server.core.logging.Log;
 public class SslEngineConfigurationBuilder implements SslConfigurationChildBuilder {
    private static final Log log = Log.getLog(SslEngineConfigurationBuilder.class);
    private final SslConfigurationBuilder parentSslConfigurationBuilder;
-   private String keyStoreFileName;
-   private char[] keyStorePassword;
-   private String keyAlias;
-   private String protocol;
-   private Supplier<SSLContext> sslContextSupplier;
-   private String trustStoreFileName;
-   private char[] trustStorePassword;
-   private String keyStoreType;
-   private String trustStoreType;
+   private final AttributeSet attributes;
 
    SslEngineConfigurationBuilder(SslConfigurationBuilder parentSslConfigurationBuilder) {
       this.parentSslConfigurationBuilder = parentSslConfigurationBuilder;
+      this.attributes = SslEngineConfiguration.attributeDefinitionSet();
    }
 
    @Override
    public AttributeSet attributes() {
-      return AttributeSet.EMPTY;
+      return attributes;
    }
 
    /**
     * Sets the {@link SSLContext} to use for setting up SSL connections.
     */
    public SslEngineConfigurationBuilder sslContext(SSLContext sslContext) {
-      this.sslContextSupplier = new InstanceSupplier<>(sslContext);
+      attributes.attribute(SslEngineConfiguration.SSL_CONTEXT).set(new InstanceSupplier<>(sslContext));
       return this;
    }
 
@@ -50,7 +43,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
     * Sets the {@link SSLContext} to use for setting up SSL connections.
     */
    public SslEngineConfigurationBuilder sslContext(Supplier<SSLContext> sslContext) {
-      this.sslContextSupplier = sslContext;
+      attributes.attribute(SslEngineConfiguration.SSL_CONTEXT).set(sslContext);
       return this;
    }
 
@@ -59,7 +52,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
     * specify a {@link #keyStorePassword(char[])}. Alternatively specify an initialized {@link #sslContext(SSLContext)}.
     */
    public SslEngineConfigurationBuilder keyStoreFileName(String keyStoreFileName) {
-      this.keyStoreFileName = keyStoreFileName;
+      attributes.attribute(SslEngineConfiguration.KEY_STORE_FILE_NAME).set(keyStoreFileName);
       return this;
    }
 
@@ -67,7 +60,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
     * Specifies the type of the keystore, such as JKS or JCEKS. Defaults to JKS
     */
    public SslEngineConfigurationBuilder keyStoreType(String keyStoreType) {
-      this.keyStoreType = keyStoreType;
+      attributes.attribute(SslEngineConfiguration.KEY_STORE_TYPE).set(keyStoreType);
       return this;
    }
 
@@ -76,7 +69,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
     * {@link #keyStoreFileName(String)}. Alternatively specify an initialized {@link #sslContext(SSLContext)}.
     */
    public SslEngineConfigurationBuilder keyStorePassword(char[] keyStorePassword) {
-      this.keyStorePassword = keyStorePassword;
+      attributes.attribute(SslEngineConfiguration.KEY_STORE_PASSWORD).set(keyStorePassword);
       return this;
    }
 
@@ -85,7 +78,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
     * to specify a {@link #trustStorePassword(char[])}. Alternatively specify an initialized {@link #sslContext(SSLContext)}.
     */
    public SslEngineConfigurationBuilder trustStoreFileName(String trustStoreFileName) {
-      this.trustStoreFileName = trustStoreFileName;
+      attributes.attribute(SslEngineConfiguration.TRUST_STORE_FILE_NAME).set(trustStoreFileName);
       return this;
    }
 
@@ -93,7 +86,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
     * Specifies the type of the truststore, such as JKS or JCEKS. Defaults to JKS
     */
    public SslEngineConfigurationBuilder trustStoreType(String trustStoreType) {
-      this.trustStoreType = trustStoreType;
+      attributes.attribute(SslEngineConfiguration.TRUST_STORE_TYPE).set(trustStoreType);
       return this;
    }
 
@@ -102,7 +95,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
     * {@link #trustStoreFileName(String)}. Alternatively specify an initialized {@link #sslContext(SSLContext)}.
     */
    public SslEngineConfigurationBuilder trustStorePassword(char[] trustStorePassword) {
-      this.trustStorePassword = trustStorePassword;
+      attributes.attribute(SslEngineConfiguration.TRUST_STORE_PASSWORD).set(trustStorePassword);
       return this;
    }
 
@@ -110,7 +103,7 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
     * Selects a specific key to choose from the keystore
     */
    public SslEngineConfigurationBuilder keyAlias(String keyAlias) {
-      this.keyAlias = keyAlias;
+      attributes.attribute(SslEngineConfiguration.KEY_ALIAS).set(keyAlias);
       return this;
    }
 
@@ -121,24 +114,28 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
     * @param protocol The standard name of the requested protocol, e.g TLSv1.2
     */
    public SslEngineConfigurationBuilder protocol(String protocol) {
-      this.protocol = protocol;
+      attributes.attribute(SslEngineConfiguration.PROTOCOL).set(protocol);
       return this;
    }
 
    @Override
    public void validate() {
+      Supplier<SSLContext> sslContextSupplier = attributes.attribute(SslEngineConfiguration.SSL_CONTEXT).get();
       if (sslContextSupplier == null || sslContextSupplier.get() == null) {
+         String keyStoreFileName = attributes.attribute(SslEngineConfiguration.KEY_STORE_FILE_NAME).get();
          if (keyStoreFileName == null) {
             throw log.noSSLKeyManagerConfiguration();
          }
-         if (keyStorePassword == null) {
+         if (attributes.attribute(SslEngineConfiguration.KEY_STORE_PASSWORD).get() == null) {
             throw log.missingKeyStorePassword(keyStoreFileName);
          }
-         if (trustStoreFileName != null && trustStorePassword == null) {
+         String trustStoreFileName = attributes.attribute(SslEngineConfiguration.TRUST_STORE_FILE_NAME).get();
+         if (trustStoreFileName != null && attributes.attribute(SslEngineConfiguration.TRUST_STORE_PASSWORD).get() == null) {
             throw log.missingTrustStorePassword(trustStoreFileName);
          }
       } else {
-         if (keyStoreFileName != null || trustStoreFileName != null) {
+         if (attributes.attribute(SslEngineConfiguration.KEY_STORE_FILE_NAME).get() != null
+               || attributes.attribute(SslEngineConfiguration.TRUST_STORE_FILE_NAME).get() != null) {
             throw log.xorSSLContext();
          }
       }
@@ -146,20 +143,12 @@ public class SslEngineConfigurationBuilder implements SslConfigurationChildBuild
 
    @Override
    public SslEngineConfiguration create() {
-      return new SslEngineConfiguration(keyStoreFileName, keyStoreType, keyStorePassword, keyAlias, sslContextSupplier, trustStoreFileName, trustStoreType, trustStorePassword, protocol);
+      return new SslEngineConfiguration(attributes.protect());
    }
 
    @Override
    public SslEngineConfigurationBuilder read(SslEngineConfiguration template, Combine combine) {
-      this.keyStoreFileName = template.keyStoreFileName();
-      this.keyStoreType = template.keyStoreType();
-      this.keyStorePassword = template.keyStorePassword();
-      this.keyAlias = template.keyAlias();
-      this.sslContextSupplier = template.sslContextSupplier();
-      this.trustStoreFileName = template.trustStoreFileName();
-      this.trustStoreType  = template.trustStoreType();
-      this.trustStorePassword = template.trustStorePassword();
-      this.protocol = template.protocol();
+      this.attributes.read(template.attributes(), combine);
       return this;
    }
 

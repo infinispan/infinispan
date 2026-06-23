@@ -2,13 +2,12 @@ package org.infinispan.configuration.global;
 
 import static org.infinispan.commons.configuration.attributes.IdentityAttributeCopier.identityCopier;
 
-import java.util.Objects;
-
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSerializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.configuration.attributes.PropertiesAttributeSerializer;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.util.TypedProperties;
@@ -18,7 +17,7 @@ import org.infinispan.configuration.parsing.Element;
  * @since 10.1.3
  */
 @BuiltBy(GlobalJmxConfigurationBuilder.class)
-public class GlobalJmxConfiguration {
+public class GlobalJmxConfiguration extends ConfigurationElement<GlobalJmxConfiguration> {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, false).immutable().build();
    public static final AttributeDefinition<String> DOMAIN = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.DOMAIN, "org.infinispan").immutable().build();
    public static final AttributeDefinition<MBeanServerLookup> MBEAN_SERVER_LOOKUP = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MBEAN_SERVER_LOOKUP, null, MBeanServerLookup.class)
@@ -32,17 +31,13 @@ public class GlobalJmxConfiguration {
 
    private final Attribute<Boolean> enabled;
    private final Attribute<String> domain;
-   private final Attribute<MBeanServerLookup> mBeanServerLookup;
    private final Attribute<TypedProperties> properties;
    private final String cacheManagerName;
 
-   private final AttributeSet attributes;
-
    GlobalJmxConfiguration(AttributeSet attributes, String cacheManagerName) {
-      this.attributes = attributes.checkProtection();
+      super(Element.JMX, attributes);
       this.enabled = attributes.attribute(ENABLED);
       this.domain = attributes.attribute(DOMAIN);
-      this.mBeanServerLookup = attributes.attribute(MBEAN_SERVER_LOOKUP);
       this.properties = attributes.attribute(PROPERTIES);
       this.cacheManagerName = cacheManagerName;
    }
@@ -63,29 +58,7 @@ public class GlobalJmxConfiguration {
    }
 
    public MBeanServerLookup mbeanServerLookup() {
-      return mBeanServerLookup.get();
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      GlobalJmxConfiguration that = (GlobalJmxConfiguration) o;
-      if (!Objects.equals(cacheManagerName, that.cacheManagerName))
-         return false;
-      return Objects.equals(attributes, that.attributes);
-   }
-
-   @Override
-   public int hashCode() {
-      int result = cacheManagerName != null ? cacheManagerName.hashCode() : 0;
-      result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
-      return result;
+      return attributes.attribute(MBEAN_SERVER_LOOKUP).get();
    }
 
    @Override

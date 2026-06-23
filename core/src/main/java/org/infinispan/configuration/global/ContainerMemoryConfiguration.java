@@ -4,10 +4,12 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.util.ByteQuantity;
 import org.infinispan.configuration.parsing.Attribute;
+import org.infinispan.configuration.parsing.Element;
 
-public class ContainerMemoryConfiguration {
+public class ContainerMemoryConfiguration extends ConfigurationElement<ContainerMemoryConfiguration> {
    public static final AttributeDefinition<String> MAX_SIZE = AttributeDefinition.builder(Attribute.MAX_SIZE, null, String.class).matcher((a1, a2) -> maxSizeToBytes(a1.get()) == maxSizeToBytes(a2.get())).build();
    public static final AttributeDefinition<Long> MAX_COUNT = AttributeDefinition.builder(Attribute.MAX_COUNT, -1L).build();
    public static final AttributeDefinition<Boolean> DYNAMIC_RESIZE = AttributeDefinition.builder(Attribute.DYNAMIC_RESIZE, false).build();
@@ -20,14 +22,8 @@ public class ContainerMemoryConfiguration {
       return maxSizeStr != null ? ByteQuantity.parse(maxSizeStr) : -1;
    }
 
-   private final AttributeSet attributes;
-
    ContainerMemoryConfiguration(AttributeSet attributes) {
-      this.attributes = attributes.checkProtection();
-   }
-
-   public AttributeSet attributes() {
-      return attributes;
+      super(Element.MEMORY, attributes);
    }
 
    /**
