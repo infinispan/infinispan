@@ -151,7 +151,9 @@ public class DefaultIterationManager implements IterationManager {
       Function<Object, Object> unmarshaller = p -> encoderRegistry.convert(p, requestValueType, APPLICATION_OBJECT);
 
       // The iterator converts from the request type to the storage type. The filter will receive the data already converted.
-      MediaType storageMediaType = valueDataConversion.getRequestMediaType() != null && valueDataConversion.getRequestMediaType() != MediaType.APPLICATION_UNKNOWN
+      MediaType storageMediaType = valueDataConversion.getRequestMediaType() != null
+            && valueDataConversion.getRequestMediaType() != MediaType.APPLICATION_UNKNOWN
+            && valueDataConversion.getRequestMediaType() != MediaType.APPLICATION_OCTET_STREAM
             ? valueDataConversion.getRequestMediaType()
             : valueDataConversion.getStorageMediaType();
 

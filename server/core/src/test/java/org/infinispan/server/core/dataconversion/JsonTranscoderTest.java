@@ -114,6 +114,20 @@ public class JsonTranscoderTest extends AbstractTranscoderTest {
       assertTextToJsonConversion("\"test\"");
    }
 
+   @Test
+   public void testJsonToOctetStream() {
+      byte[] json = "{\"key\":\"value\"}".getBytes(UTF_8);
+      byte[] result = (byte[]) transcoder.transcode(json, APPLICATION_JSON, APPLICATION_OCTET_STREAM);
+      assertArrayEquals(json, result);
+   }
+
+   @Test
+   public void testJsonToUnknown() {
+      byte[] json = "{\"key\":\"value\"}".getBytes(UTF_8);
+      byte[] result = (byte[]) transcoder.transcode(json, APPLICATION_JSON, APPLICATION_UNKNOWN);
+      assertArrayEquals(json, result);
+   }
+
    @Test(expectedExceptions = EncodingException.class)
    public void testPreventInvalidJson() {
       byte[] invalidContent = "\"field\" : value".getBytes(UTF_8);
