@@ -93,6 +93,10 @@ public class XMLTranscoder extends OneToManyTranscoder {
             return xmlString.getBytes(destinationType.getCharset());
          }
       }
+      if (destinationType.match(APPLICATION_OCTET_STREAM) || destinationType.match(APPLICATION_UNKNOWN)) {
+         if (content instanceof byte[]) return content;
+         return content.toString().getBytes(contentType.getCharset());
+      }
       if (destinationType.match(TEXT_PLAIN)) {
          return StandardConversions.convertCharset(content, contentType.getCharset(), destinationType.getCharset());
       }

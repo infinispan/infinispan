@@ -45,7 +45,8 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
       StorageConfigurationManager storageConfigurationManager = cr.getComponent(StorageConfigurationManager.class);
       this.storageType = storageConfigurationManager.getValueStorageMediaType();
       this.cacheQueryable = storageConfigurationManager.isQueryable();
-      this.unknownMediaType = storageType.match(MediaType.APPLICATION_UNKNOWN);
+      this.unknownMediaType = storageType.match(MediaType.APPLICATION_UNKNOWN)
+            || storageType.match(MediaType.APPLICATION_OCTET_STREAM);
    }
 
    @Override
