@@ -209,21 +209,31 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
    @Override
    public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
          throws Throwable {
-      return visitDataReadCommand(ctx, command);
+      final Object key = command.getKey();
+      CompletionStage<Void> stage = entryFactory.wrapEntryForReading(ctx, key, command.getSegment(),
+            ignoreOwnership(command) || canRead(command), command.hasAnyFlag(FlagBitSets.ALREADY_HAS_LOCK)
+                  || (isPessimistic && command.hasAnyFlag(FlagBitSets.FORCE_WRITE_LOCK)), CompletableFutures.completedNull());
+
+      Object rv = asyncInvokeNextGet(ctx, command, stage);
+      if ((ctx.isInTxScope() && useRepeatableRead) || notifier.hasVisitedListener()) {
+         return makeStage(rv).thenApply(ctx, command, dataReadReturnHandler);
+      }
+      return rv;
    }
 
    @Override
    public final Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
          throws Throwable {
-      return visitDataReadCommand(ctx, command);
-   }
-
-   private Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) {
       final Object key = command.getKey();
       CompletionStage<Void> stage = entryFactory.wrapEntryForReading(ctx, key, command.getSegment(),
             ignoreOwnership(command) || canRead(command), command.hasAnyFlag(FlagBitSets.ALREADY_HAS_LOCK)
                   || (isPessimistic && command.hasAnyFlag(FlagBitSets.FORCE_WRITE_LOCK)), CompletableFutures.completedNull());
-      return makeStage(asyncInvokeNext(ctx, command, stage)).thenApply(ctx, command, dataReadReturnHandler);
+
+      Object rv = asyncInvokeNextGetCacheEntry(ctx, command, stage);
+      if ((ctx.isInTxScope() && useRepeatableRead) || notifier.hasVisitedListener()) {
+         return makeStage(rv).thenApply(ctx, command, dataReadReturnHandler);
+      }
+      return rv;
    }
 
    @Override

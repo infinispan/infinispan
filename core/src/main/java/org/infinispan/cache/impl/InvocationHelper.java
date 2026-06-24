@@ -9,6 +9,8 @@ import javax.transaction.xa.XAResource;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.tx.AsyncSynchronization;
 import org.infinispan.commons.tx.AsyncXaResource;
@@ -155,6 +157,26 @@ public class InvocationHelper implements TransactionResourceConverter {
       return isTxInjected(context) ?
             executeCommandAsyncWithInjectedTx(context, command) :
             doInvokeAsync(context, command);
+   }
+
+   @SuppressWarnings("unchecked")
+   public <T> T invokeGet(InvocationContext context, GetKeyValueCommand command) {
+      return (T) invoker.invokeGet(context, command);
+   }
+
+   @SuppressWarnings("unchecked")
+   public <T> CompletableFuture<T> invokeGetAsync(InvocationContext context, GetKeyValueCommand command) {
+      return (CompletableFuture<T>) invoker.invokeGetAsync(context, command);
+   }
+
+   @SuppressWarnings("unchecked")
+   public <T> T invokeGetCacheEntry(InvocationContext context, GetCacheEntryCommand command) {
+      return (T) invoker.invokeGetCacheEntry(context, command);
+   }
+
+   @SuppressWarnings("unchecked")
+   public <T> CompletableFuture<T> invokeGetCacheEntryAsync(InvocationContext context, GetCacheEntryCommand command) {
+      return (CompletableFuture<T>) invoker.invokeGetCacheEntryAsync(context, command);
    }
 
    /**

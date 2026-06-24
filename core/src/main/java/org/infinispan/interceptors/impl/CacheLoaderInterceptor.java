@@ -136,13 +136,23 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
-      return visitDataCommand(ctx, command);
+      Object key;
+      CompletionStage<?> stage = null;
+      if ((key = command.getKey()) != null) {
+         stage = loadIfNeeded(ctx, key, command);
+      }
+      return asyncInvokeNextGet(ctx, command, stage);
    }
 
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx,
                                            GetCacheEntryCommand command) {
-      return visitDataCommand(ctx, command);
+      Object key;
+      CompletionStage<?> stage = null;
+      if ((key = command.getKey()) != null) {
+         stage = loadIfNeeded(ctx, key, command);
+      }
+      return asyncInvokeNextGetCacheEntry(ctx, command, stage);
    }
 
 

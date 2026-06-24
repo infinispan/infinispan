@@ -7,6 +7,8 @@ import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -52,12 +54,49 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
-   protected final Object visitDataReadCommand(InvocationContext ctx, DataCommand command)
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
          throws Throwable {
       if (!readNeedsLock(ctx, command)) {
-         return invokeNext(ctx, command);
+         return invokeNextGet(ctx, command);
       }
 
+      Object key = command.getKey();
+      if (!needRemoteLocks(ctx, key, command)) {
+         return asyncInvokeNextGet(ctx, command, acquireLocalLock(ctx, command).toCompletableFuture());
+      }
+
+      TxInvocationContext txContext = (TxInvocationContext) ctx;
+      LockControlCommand lcc = cf.buildLockControlCommand(key, command.getFlagsBitSet(),
+            txContext.getGlobalTransaction());
+      lcc.setTopologyId(command.getTopologyId());
+      return invokeNextThenApply(ctx, lcc,
+            (rCtx, rCommand, rv) -> asyncInvokeNextGet(rCtx, command, acquireLocalLock(rCtx, command).toCompletableFuture()));
+   }
+
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
+         throws Throwable {
+      if (!readNeedsLock(ctx, command)) {
+         return invokeNextGetCacheEntry(ctx, command);
+      }
+
+      Object key = command.getKey();
+      if (!needRemoteLocks(ctx, key, command)) {
+         return asyncInvokeNextGetCacheEntry(ctx, command, acquireLocalLock(ctx, command).toCompletableFuture());
+      }
+
+      TxInvocationContext txContext = (TxInvocationContext) ctx;
+      LockControlCommand lcc = cf.buildLockControlCommand(key, command.getFlagsBitSet(),
+            txContext.getGlobalTransaction());
+      lcc.setTopologyId(command.getTopologyId());
+      return invokeNextThenApply(ctx, lcc,
+            (rCtx, rCommand, rv) -> asyncInvokeNextGetCacheEntry(rCtx, command, acquireLocalLock(rCtx, command).toCompletableFuture()));
+   }
+
+   // This method is only used by visitReadOnlyKeyCommand now
+   @Override
+   protected final Object visitDataReadCommand(InvocationContext ctx, DataCommand command)
+         throws Throwable {
       if (!readNeedsLock(ctx, command)) {
          return invokeNext(ctx, command);
       }
@@ -71,8 +110,6 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       LockControlCommand lcc = cf.buildLockControlCommand(key, command.getFlagsBitSet(),
             txContext.getGlobalTransaction());
       lcc.setTopologyId(command.getTopologyId());
-      // This invokes the chain down using the lock control command and then after it is acquired invokes
-      // the chain again with the actual command
       return invokeNextThenApply(ctx, lcc, (rCtx, rCommand, rv) -> acquireLocalLockAndInvokeNext(rCtx, command));
    }
 

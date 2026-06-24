@@ -19,7 +19,6 @@ import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
-import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -603,9 +602,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return responseValue instanceof Object[] ? (Object[]) responseValue : null;
    }
 
-   private Object visitGetCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
+   @Override
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
+         throws Throwable {
       if (ctx.lookupEntry(command.getKey()) != null) {
-         return invokeNext(ctx, command);
+         return invokeNextGet(ctx, command);
       }
 
       if (!ctx.isOriginLocal())
@@ -614,19 +615,23 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       if (!readNeedsRemoteValue(command))
          return null;
 
-      return asyncInvokeNext(ctx, command, remoteGetSingleKey(ctx, command, command.getKey(), false));
-   }
-
-   @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
-         throws Throwable {
-      return visitGetCommand(ctx, command);
+      return asyncInvokeNextGet(ctx, command, remoteGetSingleKey(ctx, command, command.getKey(), false));
    }
 
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx,
                                            GetCacheEntryCommand command) throws Throwable {
-      return visitGetCommand(ctx, command);
+      if (ctx.lookupEntry(command.getKey()) != null) {
+         return invokeNextGetCacheEntry(ctx, command);
+      }
+
+      if (!ctx.isOriginLocal())
+         return UnsureResponse.INSTANCE;
+
+      if (!readNeedsRemoteValue(command))
+         return null;
+
+      return asyncInvokeNextGetCacheEntry(ctx, command, remoteGetSingleKey(ctx, command, command.getKey(), false));
    }
 
    @Override

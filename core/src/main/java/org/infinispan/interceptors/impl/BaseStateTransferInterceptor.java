@@ -51,6 +51,8 @@ import org.infinispan.util.logging.LogFactory;
  */
 public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    private final InvocationFinallyFunction<VisitableCommand> handleReadCommandReturn = this::handleReadCommandReturn;
+   private final InvocationFinallyFunction<GetKeyValueCommand> handleGetKeyValueReturn = this::handleGetKeyValueReturn;
+   private final InvocationFinallyFunction<GetCacheEntryCommand> handleGetCacheEntryReturn = this::handleGetCacheEntryReturn;
 
    @Inject Configuration configuration;
    @Inject protected StateTransferLock stateTransferLock;
@@ -117,13 +119,15 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      return handleReadCommand(ctx, command);
+      updateTopologyId(command);
+      return invokeNextGetAndHandle(ctx, command, handleGetKeyValueReturn);
    }
 
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
          throws Throwable {
-      return handleReadCommand(ctx, command);
+      updateTopologyId(command);
+      return invokeNextGetCacheEntryAndHandle(ctx, command, handleGetCacheEntryReturn);
    }
 
    @Override
@@ -138,46 +142,12 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    }
 
    private Object handleExceptionOnReadCommandReturn(InvocationContext rCtx, VisitableCommand rCommand, Throwable t) throws Throwable {
-      Throwable ce = t;
-      while (ce instanceof RemoteException) {
-         ce = ce.getCause();
-      }
-      TopologyAffectedCommand cmd = (TopologyAffectedCommand) rCommand;
-      final CacheTopology cacheTopology = distributionManager.getCacheTopology();
-      int currentTopologyId = cacheTopology.getTopologyId();
-      int requestedTopologyId;
-      if (ce instanceof SuspectException) {
-         // Read commands must ignore CacheNotFoundResponses
-         throw new IllegalStateException("Read commands must ignore leavers");
-      } else if (ce instanceof OutdatedTopologyException) {
-         logRetry(currentTopologyId, cmd);
-
-         // We can get OTE for dist reads even if current topology information is sufficient:
-         // 1. A has topology in phase READ_ALL_WRITE_ALL, sends message to both old owner B and new C
-         // 2. C has old topology with READ_OLD_WRITE_ALL, so it responds with UnsureResponse
-         // 3. C updates topology to READ_ALL_WRITE_ALL, B updates to READ_NEW_WRITE_ALL
-         // 4. B receives the read, but it already can't read: responds with UnsureResponse
-         // 5. A receives two unsure responses and throws OTE
-         // However, now we are sure that we can immediately retry the request, because C must have updated its topology
-         OutdatedTopologyException ote = (OutdatedTopologyException) ce;
-         requestedTopologyId = cmd.getTopologyId() + ote.topologyIdDelta;
-      } else if (ce instanceof AllOwnersLostException) {
-         if (getLog().isTraceEnabled())
-            getLog().tracef("All owners for command %s have been lost.", cmd);
-         // During partition the exception is already handled in PartitionHandlingInterceptor,
-         // and if the handling is not enabled, we can't but return null.
-         requestedTopologyId = cmd.getTopologyId() + 1;
-      } else {
-         throw t;
-      }
-      // Only retry once if currentTopologyId > cmdTopologyId + 1
-      int retryTopologyId = Math.max(currentTopologyId, requestedTopologyId);
-      cmd.setTopologyId(retryTopologyId);
-      ((FlagAffectedCommand) cmd).addFlags(FlagBitSets.COMMAND_RETRY);
-      if (retryTopologyId == currentTopologyId) {
+      RetryInfo retry = getReadRetryInfo(rCommand, t);
+      if (retry == null) throw t;
+      if (retry.retryTopologyId == retry.currentTopologyId) {
          return invokeNextAndHandle(rCtx, rCommand, handleReadCommandReturn);
       } else {
-         return makeStage(asyncInvokeNext(rCtx, rCommand, stateTransferLock.transactionDataFuture(retryTopologyId)))
+         return makeStage(asyncInvokeNext(rCtx, rCommand, stateTransferLock.transactionDataFuture(retry.retryTopologyId)))
                .andHandle(rCtx, rCommand, handleReadCommandReturn);
       }
    }
@@ -190,6 +160,74 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       // Separate method to allow for inlining of this method since exception should rarely occur
       return handleExceptionOnReadCommandReturn(rCtx, rCommand, t);
    }
+
+   private Object handleGetKeyValueReturn(InvocationContext rCtx, GetKeyValueCommand rCommand, Object rv, Throwable t)
+         throws Throwable {
+      if (t == null)
+         return rv;
+
+      return handleExceptionOnGetKeyValueReturn(rCtx, rCommand, t);
+   }
+
+   private Object handleExceptionOnGetKeyValueReturn(InvocationContext rCtx, GetKeyValueCommand rCommand, Throwable t) throws Throwable {
+      RetryInfo retry = getReadRetryInfo(rCommand, t);
+      if (retry == null) throw t;
+      if (retry.retryTopologyId == retry.currentTopologyId) {
+         return invokeNextGetAndHandle(rCtx, rCommand, handleGetKeyValueReturn);
+      } else {
+         return makeStage(asyncInvokeNextGet(rCtx, rCommand, stateTransferLock.transactionDataFuture(retry.retryTopologyId)))
+               .andHandle(rCtx, rCommand, handleGetKeyValueReturn);
+      }
+   }
+
+   private Object handleGetCacheEntryReturn(InvocationContext rCtx, GetCacheEntryCommand rCommand, Object rv, Throwable t)
+         throws Throwable {
+      if (t == null)
+         return rv;
+
+      return handleExceptionOnGetCacheEntryReturn(rCtx, rCommand, t);
+   }
+
+   private Object handleExceptionOnGetCacheEntryReturn(InvocationContext rCtx, GetCacheEntryCommand rCommand, Throwable t) throws Throwable {
+      RetryInfo retry = getReadRetryInfo(rCommand, t);
+      if (retry == null) throw t;
+      if (retry.retryTopologyId == retry.currentTopologyId) {
+         return invokeNextGetCacheEntryAndHandle(rCtx, rCommand, handleGetCacheEntryReturn);
+      } else {
+         return makeStage(asyncInvokeNextGetCacheEntry(rCtx, rCommand, stateTransferLock.transactionDataFuture(retry.retryTopologyId)))
+               .andHandle(rCtx, rCommand, handleGetCacheEntryReturn);
+      }
+   }
+
+   private RetryInfo getReadRetryInfo(VisitableCommand rCommand, Throwable t) throws Throwable {
+      Throwable ce = t;
+      while (ce instanceof RemoteException) {
+         ce = ce.getCause();
+      }
+      TopologyAffectedCommand cmd = (TopologyAffectedCommand) rCommand;
+      final CacheTopology cacheTopology = distributionManager.getCacheTopology();
+      int currentTopologyId = cacheTopology.getTopologyId();
+      int requestedTopologyId;
+      if (ce instanceof SuspectException) {
+         throw new IllegalStateException("Read commands must ignore leavers");
+      } else if (ce instanceof OutdatedTopologyException) {
+         logRetry(currentTopologyId, cmd);
+         OutdatedTopologyException ote = (OutdatedTopologyException) ce;
+         requestedTopologyId = cmd.getTopologyId() + ote.topologyIdDelta;
+      } else if (ce instanceof AllOwnersLostException) {
+         if (getLog().isTraceEnabled())
+            getLog().tracef("All owners for command %s have been lost.", cmd);
+         requestedTopologyId = cmd.getTopologyId() + 1;
+      } else {
+         return null;
+      }
+      int retryTopologyId = Math.max(currentTopologyId, requestedTopologyId);
+      cmd.setTopologyId(retryTopologyId);
+      ((FlagAffectedCommand) cmd).addFlags(FlagBitSets.COMMAND_RETRY);
+      return new RetryInfo(retryTopologyId, currentTopologyId);
+   }
+
+   private record RetryInfo(int retryTopologyId, int currentTopologyId) {}
 
    protected int getNewTopologyId(Throwable ce, int currentTopologyId, TopologyAffectedCommand command) {
       int requestedDelta;

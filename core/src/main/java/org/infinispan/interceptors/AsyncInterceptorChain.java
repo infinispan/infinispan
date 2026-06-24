@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.context.InvocationContext;
 
@@ -102,6 +104,28 @@ public interface AsyncInterceptorChain {
     * thread-safe.</p>
     */
    InvocationStage invokeStage(InvocationContext ctx, VisitableCommand command);
+
+   /**
+    * Invokes a {@link GetKeyValueCommand} directly on the first interceptor that handles get commands,
+    * skipping interceptors that don't override {@code visitGetKeyValueCommand}.
+    */
+   Object invokeGet(InvocationContext ctx, GetKeyValueCommand command);
+
+   /**
+    * Async variant of {@link #invokeGet(InvocationContext, GetKeyValueCommand)}.
+    */
+   CompletableFuture<Object> invokeGetAsync(InvocationContext ctx, GetKeyValueCommand command);
+
+   /**
+    * Invokes a {@link GetCacheEntryCommand} using the same optimized interceptor chain as
+    * {@link #invokeGet(InvocationContext, GetKeyValueCommand)}.
+    */
+   Object invokeGetCacheEntry(InvocationContext ctx, GetCacheEntryCommand command);
+
+   /**
+    * Async variant of {@link #invokeGetCacheEntry(InvocationContext, GetCacheEntryCommand)}.
+    */
+   CompletableFuture<Object> invokeGetCacheEntryAsync(InvocationContext ctx, GetCacheEntryCommand command);
 
    /**
     * Returns the first interceptor extending the given class, or {@code null} if there is none.

@@ -7,6 +7,8 @@ import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -54,6 +56,16 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       } else {
          return asyncInvokeNext(ctx, command, lockStage);
       }
+   }
+
+   @Override
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      return invokeNextGet(ctx, command);
+   }
+
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      return invokeNextGetCacheEntry(ctx, command);
    }
 
    @Override

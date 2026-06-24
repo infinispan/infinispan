@@ -117,12 +117,24 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
-      return visitDataReadCommand(ctx, command);
+      boolean statisticsEnabled = collectStatisticsForCommand(command);
+      if (!statisticsEnabled || !ctx.isOriginLocal())
+         return invokeNextGet(ctx, command);
+
+      long start = timeService.time();
+      return invokeNextGetAndFinally(ctx, command,
+            (rCtx, rCommand, rv, t) -> addDataRead(rv != null, start, getReadOwnership(rCommand.getSegment())));
    }
 
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
-      return visitDataReadCommand(ctx, command);
+      boolean statisticsEnabled = collectStatisticsForCommand(command);
+      if (!statisticsEnabled || !ctx.isOriginLocal())
+         return invokeNextGetCacheEntry(ctx, command);
+
+      long start = timeService.time();
+      return invokeNextGetCacheEntryAndFinally(ctx, command,
+            (rCtx, rCommand, rv, t) -> addDataRead(rv != null, start, getReadOwnership(rCommand.getSegment())));
    }
 
    public void addDataRead(boolean foundValue, long timeNanoSeconds, Ownership ownership) {
@@ -131,16 +143,6 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       } else {
          trackMiss(timeNanoSeconds, ownership);
       }
-   }
-
-   private Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) {
-      boolean statisticsEnabled = collectStatisticsForCommand(command);
-      if (!statisticsEnabled || !ctx.isOriginLocal())
-         return invokeNext(ctx, command);
-
-      long start = timeService.time();
-      return invokeNextAndFinally(ctx, command,
-            (rCtx, rCommand, rv, t) -> addDataRead(rv != null, start, getReadOwnership(rCommand.getSegment())));
    }
 
    @Override

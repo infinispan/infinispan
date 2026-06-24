@@ -108,13 +108,13 @@ public abstract class DDAsyncInterceptor extends BaseAsyncInterceptor implements
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
          throws Throwable {
-      return handleDefault(ctx, command);
+      return invokeNextGet(ctx, command);
    }
 
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
          throws Throwable {
-      return handleDefault(ctx, command);
+      return invokeNextGetCacheEntry(ctx, command);
    }
 
    @Override

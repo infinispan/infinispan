@@ -4,12 +4,13 @@ import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
@@ -39,9 +40,14 @@ public class ExceptionDuringGetTest extends MultipleCacheManagersTest {
       fail();
    }
 
-   static class ExceptionInterceptor extends BaseAsyncInterceptor {
+   static class ExceptionInterceptor extends DDAsyncInterceptor {
       @Override
-      public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+         throw new RuntimeException("Induced!");
+      }
+
+      @Override
+      public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
          throw new RuntimeException("Induced!");
       }
    }

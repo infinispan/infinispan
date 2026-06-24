@@ -96,6 +96,10 @@
             <!--<property name="message" value="Stop using the AssertionFailure from commons-annotations." />-->
         <!--</module>-->
 
+        <module name="org.infinispan.checkstyle.checks.interceptors.InterceptorGetPairCheck">
+            <property name="severity" value="error"/>
+        </module>
+
         <!-- The severity of following rules should be eventually set to error -->
         <module name="org.infinispan.checkstyle.checks.interceptors.InterceptorDefinesAllReadsCheck">
             <property name="severity" value="${checkstyle.interceptors.reads.severity}" default="warning"/>

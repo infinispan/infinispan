@@ -312,14 +312,14 @@ public class TxInterceptor extends DDAsyncInterceptor implements JmxStatisticsEx
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
          throws Throwable {
       enlistIfNeeded(ctx);
-      return invokeNext(ctx, command);
+      return invokeNextGet(ctx, command);
    }
 
    @Override
    public final Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
          throws Throwable {
       enlistIfNeeded(ctx);
-      return invokeNext(ctx, command);
+      return invokeNextGetCacheEntry(ctx, command);
    }
 
    @Override

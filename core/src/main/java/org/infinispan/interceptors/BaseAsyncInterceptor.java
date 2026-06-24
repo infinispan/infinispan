@@ -5,6 +5,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
@@ -24,10 +26,13 @@ import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
 @Scope(Scopes.NAMED_CACHE)
 public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
    private final InvocationSuccessFunction<VisitableCommand> invokeNextFunction = (rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand);
+   private final InvocationSuccessFunction<GetKeyValueCommand> invokeNextGetFunction = (rCtx, rCommand, rv) -> invokeNextGet(rCtx, rCommand);
+   private final InvocationSuccessFunction<GetCacheEntryCommand> invokeNextGetCacheEntryFunction = (rCtx, rCommand, rv) -> invokeNextGetCacheEntry(rCtx, rCommand);
 
    @Inject protected Configuration cacheConfiguration;
    private AsyncInterceptor nextInterceptor;
    private DDAsyncInterceptor nextDDInterceptor;
+   protected DDAsyncInterceptor nextGetKeyValueInterceptor;
 
    /**
     * Used internally to set up the interceptor.
@@ -37,6 +42,14 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
       this.nextInterceptor = nextInterceptor;
       this.nextDDInterceptor =
             nextInterceptor instanceof DDAsyncInterceptor ? (DDAsyncInterceptor) nextInterceptor : null;
+   }
+
+   public final void setNextGetKeyValueInterceptor(DDAsyncInterceptor next) {
+      this.nextGetKeyValueInterceptor = next;
+   }
+
+   public final DDAsyncInterceptor getNextGetKeyValueInterceptor() {
+      return nextGetKeyValueInterceptor;
    }
 
    /**
@@ -59,6 +72,180 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
          } else {
             return nextInterceptor.visitCommand(ctx, command);
          }
+      } catch (Throwable throwable) {
+         return new ExceptionSyncInvocationStage(throwable);
+      }
+   }
+
+   public final Object invokeNextGet(InvocationContext ctx, GetKeyValueCommand command) {
+      try {
+         return nextGetKeyValueInterceptor.visitGetKeyValueCommand(ctx, command);
+      } catch (Throwable throwable) {
+         return new ExceptionSyncInvocationStage(throwable);
+      }
+   }
+
+   public final Object invokeNextGetAndExceptionally(InvocationContext ctx, GetKeyValueCommand command,
+                                                     InvocationExceptionFunction<? super GetKeyValueCommand> function) {
+      try {
+         Object rv = nextGetKeyValueInterceptor.visitGetKeyValueCommand(ctx, command);
+         if (rv instanceof InvocationStage) {
+            return ((InvocationStage) rv).andExceptionally(ctx, command, function);
+         }
+         return rv;
+      } catch (Throwable throwable) {
+         return new ExceptionSyncInvocationStage(throwable);
+      }
+   }
+
+   public final Object invokeNextGetAndFinally(InvocationContext ctx, GetKeyValueCommand command,
+                                               InvocationFinallyAction<? super GetKeyValueCommand> action) {
+      try {
+         Object rv;
+         Throwable throwable;
+         try {
+            rv = nextGetKeyValueInterceptor.visitGetKeyValueCommand(ctx, command);
+            throwable = null;
+
+            if (rv instanceof InvocationStage) {
+               return ((InvocationStage) rv).andFinally(ctx, command, action);
+            }
+         } catch (Throwable t) {
+            rv = null;
+            throwable = t;
+         }
+         action.accept(ctx, command, rv, throwable);
+         return throwable == null ? rv : new ExceptionSyncInvocationStage(throwable);
+      } catch (Throwable t) {
+         return new ExceptionSyncInvocationStage(t);
+      }
+   }
+
+   public final Object asyncInvokeNextGet(InvocationContext ctx, GetKeyValueCommand command,
+                                           CompletionStage<?> delay) {
+      if (delay == null || CompletionStages.isCompletedSuccessfully(delay)) {
+         return invokeNextGet(ctx, command);
+      }
+      return asyncValue(delay).thenApply(ctx, command, invokeNextGetFunction);
+   }
+
+   public final Object invokeNextGetCacheEntry(InvocationContext ctx, GetCacheEntryCommand command) {
+      try {
+         return nextGetKeyValueInterceptor.visitGetCacheEntryCommand(ctx, command);
+      } catch (Throwable throwable) {
+         return new ExceptionSyncInvocationStage(throwable);
+      }
+   }
+
+   public final Object invokeNextGetCacheEntryAndExceptionally(InvocationContext ctx, GetCacheEntryCommand command,
+                                                     InvocationExceptionFunction<? super GetCacheEntryCommand> function) {
+      try {
+         Object rv = nextGetKeyValueInterceptor.visitGetCacheEntryCommand(ctx, command);
+         if (rv instanceof InvocationStage) {
+            return ((InvocationStage) rv).andExceptionally(ctx, command, function);
+         }
+         return rv;
+      } catch (Throwable throwable) {
+         return new ExceptionSyncInvocationStage(throwable);
+      }
+   }
+
+   public final Object invokeNextGetCacheEntryAndFinally(InvocationContext ctx, GetCacheEntryCommand command,
+                                               InvocationFinallyAction<? super GetCacheEntryCommand> action) {
+      try {
+         Object rv;
+         Throwable throwable;
+         try {
+            rv = nextGetKeyValueInterceptor.visitGetCacheEntryCommand(ctx, command);
+            throwable = null;
+
+            if (rv instanceof InvocationStage) {
+               return ((InvocationStage) rv).andFinally(ctx, command, action);
+            }
+         } catch (Throwable t) {
+            rv = null;
+            throwable = t;
+         }
+         action.accept(ctx, command, rv, throwable);
+         return throwable == null ? rv : new ExceptionSyncInvocationStage(throwable);
+      } catch (Throwable t) {
+         return new ExceptionSyncInvocationStage(t);
+      }
+   }
+
+   public final Object asyncInvokeNextGetCacheEntry(InvocationContext ctx, GetCacheEntryCommand command,
+                                           CompletionStage<?> delay) {
+      if (delay == null || CompletionStages.isCompletedSuccessfully(delay)) {
+         return invokeNextGetCacheEntry(ctx, command);
+      }
+      return asyncValue(delay).thenApply(ctx, command, invokeNextGetCacheEntryFunction);
+   }
+
+   public final Object invokeNextGetAndHandle(InvocationContext ctx, GetKeyValueCommand command,
+                                              InvocationFinallyFunction<GetKeyValueCommand> function) {
+      try {
+         Object rv;
+         Throwable throwable;
+         try {
+            rv = nextGetKeyValueInterceptor.visitGetKeyValueCommand(ctx, command);
+            throwable = null;
+
+            if (rv instanceof InvocationStage) {
+               return ((InvocationStage) rv).andHandle(ctx, command, function);
+            }
+         } catch (Throwable t) {
+            rv = null;
+            throwable = t;
+         }
+         return function.apply(ctx, command, rv, throwable);
+      } catch (Throwable throwable) {
+         return new ExceptionSyncInvocationStage(throwable);
+      }
+   }
+
+   public final Object invokeNextGetCacheEntryAndHandle(InvocationContext ctx, GetCacheEntryCommand command,
+                                                        InvocationFinallyFunction<GetCacheEntryCommand> function) {
+      try {
+         Object rv;
+         Throwable throwable;
+         try {
+            rv = nextGetKeyValueInterceptor.visitGetCacheEntryCommand(ctx, command);
+            throwable = null;
+
+            if (rv instanceof InvocationStage) {
+               return ((InvocationStage) rv).andHandle(ctx, command, function);
+            }
+         } catch (Throwable t) {
+            rv = null;
+            throwable = t;
+         }
+         return function.apply(ctx, command, rv, throwable);
+      } catch (Throwable throwable) {
+         return new ExceptionSyncInvocationStage(throwable);
+      }
+   }
+
+   public final Object invokeNextGetThenApply(InvocationContext ctx, GetKeyValueCommand command,
+                                              InvocationSuccessFunction<GetKeyValueCommand> function) {
+      try {
+         Object rv = nextGetKeyValueInterceptor.visitGetKeyValueCommand(ctx, command);
+         if (rv instanceof InvocationStage) {
+            return ((InvocationStage) rv).thenApply(ctx, command, function);
+         }
+         return function.apply(ctx, command, rv);
+      } catch (Throwable throwable) {
+         return new ExceptionSyncInvocationStage(throwable);
+      }
+   }
+
+   public final Object invokeNextGetCacheEntryThenApply(InvocationContext ctx, GetCacheEntryCommand command,
+                                                        InvocationSuccessFunction<GetCacheEntryCommand> function) {
+      try {
+         Object rv = nextGetKeyValueInterceptor.visitGetCacheEntryCommand(ctx, command);
+         if (rv instanceof InvocationStage) {
+            return ((InvocationStage) rv).thenApply(ctx, command, function);
+         }
+         return function.apply(ctx, command, rv);
       } catch (Throwable throwable) {
          return new ExceptionSyncInvocationStage(throwable);
       }
