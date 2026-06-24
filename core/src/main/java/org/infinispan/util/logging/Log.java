@@ -2477,4 +2477,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "'awaitLeaveTransfer' can be enabled only if cache mode is distributed.", id = 726)
    CacheConfigurationException awaitLeaveTransferOnlyForDist();
+
+   @LogMessage(level = WARN)
+   @Message(value = "The 'remote-site' configuration format at %s has been deprecated. Use the map-based format instead, e.g. 'NYC: { remoteSite: ~ }'", id = 727)
+   void deprecatedRemoteSiteFormat(Location location);
 }

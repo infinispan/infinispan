@@ -75,6 +75,7 @@
          <relay.RELAY2 site="LON" xmlns="urn:org:jgroups" max_site_masters="1000"/>
          <remote-sites default-stack="tcpgossip">
             <remote-site name="NYC" stack="tcp"/>
+            <remote-site name="SFO" stack="tcp"/>
          </remote-sites>
       </stack>
    </jgroups>

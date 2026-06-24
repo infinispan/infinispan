@@ -141,18 +141,17 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
                }
                EmbeddedJGroupsChannelConfigurator.RemoteSites remoteSites = stack.configurator().getUncombinedRemoteSites();
                if (remoteSites != null) {
-                  writer.writeStartElement(Element.REMOTE_SITES);
+                  writer.writeStartMap(Element.REMOTE_SITES);
                   writer.writeAttribute(DEFAULT_STACK, remoteSites.getDefaultStack());
                   writeOptional(writer, CLUSTER, remoteSites.getDefaultCluster());
                   Map<String, EmbeddedJGroupsChannelConfigurator.RemoteSite> sites = remoteSites.getRemoteSites();
                   for (Entry<String, EmbeddedJGroupsChannelConfigurator.RemoteSite> remote : sites.entrySet()) {
-                     writer.writeStartElement(Element.REMOTE_SITE);
-                     writer.writeAttribute(NAME, remote.getKey());
+                     writer.writeMapItem(Element.REMOTE_SITE, NAME, remote.getKey());
                      writeOptional(writer, CLUSTER, remote.getValue().getCluster());
                      writer.writeAttribute(STACK, remote.getValue().getStack());
-                     writer.writeEndElement(); // REMOTE_SITE
+                     writer.writeEndMapItem();
                   }
-                  writer.writeEndElement(); // REMOTE_SITES
+                  writer.writeEndMap();
                }
                writer.writeEndMapItem(); // STACK
             }
