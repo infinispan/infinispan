@@ -6,10 +6,12 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
+import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
 import org.testng.annotations.Test;
 
 @Test(testName = "configuration.serializer.ConfigurationSerializerTest", groups = "functional")
@@ -63,6 +65,26 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
       cb.invocationBatching().enable(true);
 
       assertConfigurationMatch(name, cb.build());
+   }
+
+   @Override
+   protected void compareExtraGlobalConfiguration(GlobalConfiguration before, GlobalConfiguration after) {
+      for (var stackBefore : before.transport().jgroups().stacks()) {
+         EmbeddedJGroupsChannelConfigurator.RemoteSites sitesBefore = stackBefore.configurator().getUncombinedRemoteSites();
+         if (sitesBefore != null) {
+            var stackAfter = after.transport().jgroups().stacks().stream()
+                  .filter(s -> s.name().equals(stackBefore.name())).findFirst().orElse(null);
+            assertThat(stackAfter).as("Stack %s missing after roundtrip", stackBefore.name()).isNotNull();
+            EmbeddedJGroupsChannelConfigurator.RemoteSites sitesAfter = stackAfter.configurator().getUncombinedRemoteSites();
+            assertThat(sitesAfter).as("Remote sites for stack %s missing after roundtrip", stackBefore.name()).isNotNull();
+            assertThat(sitesAfter.getDefaultStack()).isEqualTo(sitesBefore.getDefaultStack());
+            assertThat(sitesAfter.getRemoteSites().keySet()).isEqualTo(sitesBefore.getRemoteSites().keySet());
+            for (var entry : sitesBefore.getRemoteSites().entrySet()) {
+               assertThat(sitesAfter.getRemoteSites().get(entry.getKey()).getStack())
+                     .isEqualTo(entry.getValue().getStack());
+            }
+         }
+      }
    }
 
    private static void assertConfigurationMatch(String name, Configuration before) {

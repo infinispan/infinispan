@@ -18,8 +18,8 @@ infinispan:
             maxSiteMasters: "1000"
           remoteSites:
             defaultStack: "bridge"
-            remoteSite:
-              name: "LON"
+            LON:
+              remoteSite: ~
   cacheContainer:
     transport:
       stack: "xsite"
