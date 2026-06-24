@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.test.Mocks;
@@ -63,6 +65,17 @@ public class CheckPointInterceptor<T extends VisitableCommand> extends DDAsyncIn
 
    private boolean canHandle(InvocationContext ctx, VisitableCommand command) {
       return (!originLocalOnly || ctx.isOriginLocal()) && acceptCommand.test(command);
+   }
+
+   // Need to implement these so the get command interceptor stack registers them
+   @Override
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      return handleDefault(ctx, command);
+   }
+
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      return handleDefault(ctx, command);
    }
 
    @Override

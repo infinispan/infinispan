@@ -24,7 +24,6 @@ import java.util.stream.Stream;
 import org.infinispan.InternalCacheSet;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.Visitor;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.Mutation;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
@@ -91,7 +90,7 @@ import org.infinispan.functional.EntryView;
 import org.infinispan.functional.Param;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.functional.impl.StatsEnvelope;
-import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
@@ -120,8 +119,9 @@ import io.reactivex.rxjava3.core.Flowable;
  * @author Dan Berindei
  * @since 9.0
  */
-public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
+public class CallInterceptor extends DDAsyncInterceptor {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+   private static final boolean trace = log.isTraceEnabled();
 
    // The amount in milliseconds of a buffer we allow the system clock to be off, but still allow expiration removal
    private static final int CLOCK_BUFFER = 100;
@@ -144,11 +144,11 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
    }
 
    @Override
-   public Object visitCommand(InvocationContext ctx, VisitableCommand command)
+   protected Object handleDefault(InvocationContext ctx, VisitableCommand command)
          throws Throwable {
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Invoking: %s", command.getClass().getSimpleName());
-      return command.acceptVisitor(ctx, this);
+      return null;
    }
 
    @Override

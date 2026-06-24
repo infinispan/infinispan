@@ -3,6 +3,7 @@ package org.infinispan.interceptors.impl;
 import static org.infinispan.commons.util.Immutables.immutableListAdd;
 import static org.infinispan.commons.util.Immutables.immutableListRemove;
 import static org.infinispan.commons.util.Immutables.immutableListReplace;
+import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.util.List;
 import java.util.ListIterator;
@@ -10,19 +11,28 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.util.ImmutableListCopy;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
+import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.ExceptionSyncInvocationStage;
 import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.Skip;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -42,9 +52,13 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
 
    private final ReentrantLock lock = new ReentrantLock();
 
+   @Inject ComponentRegistry componentRegistry;
+
    // Modifications are guarded with "lock", but reads do not need synchronization
    private volatile List<AsyncInterceptor> interceptors = EMPTY_INTERCEPTORS_LIST;
    private volatile AsyncInterceptor firstInterceptor = null;
+   // Holds the first interceptor that actually does something for visitGetKeyValueCommand
+   private volatile DDAsyncInterceptor firstGetKeyValueInterceptor = null;
 
    @Start
    void printChainInfo() {
@@ -224,6 +238,112 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
    }
 
    @Override
+   public Object invokeGet(InvocationContext ctx, GetKeyValueCommand command) {
+      try {
+         checkComponentStatus();
+         Object result = firstGetKeyValueInterceptor.visitGetKeyValueCommand(ctx, command);
+         if (result instanceof InvocationStage) {
+            return ((InvocationStage) result).get();
+         } else {
+            return result;
+         }
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new CacheException(e);
+      } catch (TimeoutException e) {
+         throw new TimeoutException(e.getMessage(), e);
+      } catch (RuntimeException e) {
+         if (ctx.isOriginLocal() && !(e instanceof CacheException)) {
+            throw new CacheException(e);
+         }
+         throw e;
+      } catch (Throwable throwable) {
+         throw new CacheException(throwable);
+      }
+   }
+
+   @Override
+   public CompletableFuture<Object> invokeGetAsync(InvocationContext ctx, GetKeyValueCommand command) {
+      try {
+         checkComponentStatus();
+         Object result = firstGetKeyValueInterceptor.visitGetKeyValueCommand(ctx, command);
+         if (result instanceof InvocationStage) {
+            return ((InvocationStage) result).toCompletableFuture();
+         } else {
+            if (result == null) {
+               return CompletableFutures.completedNull();
+            }
+            return CompletableFuture.completedFuture(result);
+         }
+      } catch (Throwable t) {
+         return CompletableFuture.failedFuture(t);
+      }
+   }
+
+   @Override
+   public Object invokeGetCacheEntry(InvocationContext ctx, GetCacheEntryCommand command) {
+      try {
+         checkComponentStatus();
+         Object result = firstGetKeyValueInterceptor.visitGetCacheEntryCommand(ctx, command);
+         if (result instanceof InvocationStage) {
+            return ((InvocationStage) result).get();
+         } else {
+            return result;
+         }
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new CacheException(e);
+      } catch (TimeoutException e) {
+         throw new TimeoutException(e.getMessage(), e);
+      } catch (RuntimeException e) {
+         if (ctx.isOriginLocal() && !(e instanceof CacheException)) {
+            throw new CacheException(e);
+         }
+         throw e;
+      } catch (Throwable throwable) {
+         throw new CacheException(throwable);
+      }
+   }
+
+   @Override
+   public CompletableFuture<Object> invokeGetCacheEntryAsync(InvocationContext ctx, GetCacheEntryCommand command) {
+      try {
+         checkComponentStatus();
+         Object result = firstGetKeyValueInterceptor.visitGetCacheEntryCommand(ctx, command);
+         if (result instanceof InvocationStage) {
+            return ((InvocationStage) result).toCompletableFuture();
+         } else {
+            if (result == null) {
+               return CompletableFutures.completedNull();
+            }
+            return CompletableFuture.completedFuture(result);
+         }
+      } catch (Throwable t) {
+         return CompletableFuture.failedFuture(t);
+      }
+   }
+
+   private void checkComponentStatus() {
+      ComponentStatus status = componentRegistry.getStatus();
+      if (!status.allowInvocations()) {
+         String prefix = "Cache '" + componentRegistry.getCacheName() + "'";
+         switch (status) {
+            case FAILED:
+            case TERMINATED:
+               throw CONTAINER.cacheIsTerminated(prefix, status.toString());
+            case STOPPING:
+               throw CONTAINER.cacheIsStopping(prefix);
+            case INITIALIZING:
+               LocalTopologyManager ltm = componentRegistry.getComponent(LocalTopologyManager.class);
+               if (ltm != null) ltm.assertTopologyStable(componentRegistry.getCacheName());
+               break;
+            default:
+               break;
+         }
+      }
+   }
+
+   @Override
    public InvocationStage invokeStage(InvocationContext ctx, VisitableCommand command) {
       try {
          return InvocationStage.makeStage(firstInterceptor.visitCommand(ctx, command));
@@ -331,11 +451,44 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
       ListIterator<AsyncInterceptor> it = interceptors.listIterator(interceptors.size());
       // The CallInterceptor
       AsyncInterceptor nextInterceptor = it.previous();
+      DDAsyncInterceptor nextGetKeyValue = null;
+
+      ((BaseAsyncInterceptor) nextInterceptor).setNextGetKeyValueInterceptor(null);
+      if (overridesGetCommand(nextInterceptor.getClass())) {
+         nextGetKeyValue = (DDAsyncInterceptor) nextInterceptor;
+      }
+
       while (it.hasPrevious()) {
          AsyncInterceptor interceptor = it.previous();
          interceptor.setNextInterceptor(nextInterceptor);
+         ((BaseAsyncInterceptor) interceptor).setNextGetKeyValueInterceptor(nextGetKeyValue);
+         if (overridesGetCommand(interceptor.getClass())) {
+            nextGetKeyValue = (DDAsyncInterceptor) interceptor;
+         }
          nextInterceptor = interceptor;
       }
       this.firstInterceptor = nextInterceptor;
+      this.firstGetKeyValueInterceptor = nextGetKeyValue;
+
+   }
+
+   private static boolean overridesGetCommand(Class<?> clazz) {
+      boolean overridesGetKeyValue = overridesVisitMethod(clazz, "visitGetKeyValueCommand", GetKeyValueCommand.class);
+      boolean overridesGetCacheEntry = overridesVisitMethod(clazz, "visitGetCacheEntryCommand", GetCacheEntryCommand.class);
+      if (overridesGetKeyValue != overridesGetCacheEntry) {
+         throw new IllegalStateException(clazz.getName() + " must override both visitGetKeyValueCommand and " +
+               "visitGetCacheEntryCommand, or neither. Found: visitGetKeyValueCommand=" + overridesGetKeyValue +
+               ", visitGetCacheEntryCommand=" + overridesGetCacheEntry);
+      }
+      return overridesGetKeyValue;
+   }
+
+   private static boolean overridesVisitMethod(Class<?> clazz, String methodName, Class<?> commandClass) {
+      try {
+         java.lang.reflect.Method method = clazz.getMethod(methodName, InvocationContext.class, commandClass);
+         return method.getDeclaringClass() != DDAsyncInterceptor.class && !method.isAnnotationPresent(Skip.class);
+      } catch (NoSuchMethodException e) {
+         return false;
+      }
    }
 }
