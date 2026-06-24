@@ -345,6 +345,27 @@ public class EndpointInteroperabilityTest extends AbstractInfinispanTest {
    }
 
    @Test
+   public void testJsonValueInDefaultCache() {
+      // Write JSON via REST to the default cache (no explicit encoding)
+      String key = "json-1";
+      String jsonValue = "{\"name\":\"test\",\"value\":42}";
+
+      new RestRequest().cache(DEFAULT_CACHE_NAME)
+            .key(key).value(jsonValue, APPLICATION_JSON)
+            .write();
+
+      // Read back via REST as JSON
+      RestResponse response = new RestRequest().cache(DEFAULT_CACHE_NAME)
+            .key(key).accept(APPLICATION_OCTET_STREAM)
+            .read();
+      assertEquals(jsonValue, response.body());
+
+      // Read via Hot Rod (raw bytes)
+      byte[] hrValue = defaultRemoteCache.get(key.getBytes(UTF_8));
+      assertEquals(jsonValue, new String(hrValue, UTF_8));
+   }
+
+   @Test
    public void testCustomKeysAndByteValues() throws Exception {
       CustomKey objectKey = new CustomKey("a", 1.0d, 1.0f, true);
       ProtoStreamMarshaller marshaller = new ProtoStreamMarshaller();

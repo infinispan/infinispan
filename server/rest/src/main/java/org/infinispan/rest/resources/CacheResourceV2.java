@@ -806,7 +806,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
    private MediaType negotiateEntryMediaType(MediaType storage, boolean protoStreamEncoding) {
       EncoderRegistry encoderRegistry = invocationHelper.getEncoderRegistry();
-      boolean encodingDefined = !MediaType.APPLICATION_UNKNOWN.equals(storage);
+      boolean encodingDefined = !MediaType.APPLICATION_UNKNOWN.equals(storage)
+            && !MediaType.APPLICATION_OCTET_STREAM.equals(storage);
       boolean jsonSupported = encodingDefined && encoderRegistry.isConversionSupported(storage, APPLICATION_JSON);
       boolean textSupported = encodingDefined && encoderRegistry.isConversionSupported(storage, TEXT_PLAIN);
 
