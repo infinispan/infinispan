@@ -1,7 +1,5 @@
 package org.infinispan.encoding.impl;
 
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
-
 import org.infinispan.commons.dataconversion.ByteArrayWrapper;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Wrapper;
@@ -82,7 +80,7 @@ public class StorageConfigurationManager {
       this.valueStorageMediaType = getStorageMediaType(configuration, embeddedMode, internalCache, userMarshaller,
                                                      false);
 
-      if(keyStorageMediaType.equals(APPLICATION_UNKNOWN) || valueStorageMediaType.equals(APPLICATION_UNKNOWN)) {
+      if(keyStorageMediaType.equals(MediaType.APPLICATION_UNKNOWN) || valueStorageMediaType.equals(MediaType.APPLICATION_UNKNOWN)) {
          LOG.unknownEncoding(cacheName);
       }
    }
@@ -107,7 +105,7 @@ public class StorageConfigurationManager {
          return canStoreReferences ? MediaType.APPLICATION_OBJECT : mediaType;
       }
 
-      return APPLICATION_UNKNOWN;
+      return MediaType.APPLICATION_UNKNOWN;
    }
 
    /**
