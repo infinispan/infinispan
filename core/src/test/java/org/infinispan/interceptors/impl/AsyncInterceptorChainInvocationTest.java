@@ -4,6 +4,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.testing.Exceptions.expectExecutionException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -15,15 +17,19 @@ import java.util.regex.Pattern;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.SingleKeyNonTxInvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptor;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
 import org.infinispan.interceptors.InvocationSuccessFunction;
+import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestException;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.ByteString;
 import org.testng.annotations.Test;
 
@@ -271,7 +277,7 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
 
    private void assertExceptionHandlers(CompletableFuture<Object> invokeFuture) {
       String expectedMessage = "|whenComplete|handle|exceptionally";
-      expectExecutionException(TestException.class, Pattern.quote(expectedMessage), invokeFuture);
+      expectExecutionException(CacheException.class, Pattern.quote(expectedMessage), invokeFuture);
       assertEquals("|whenComplete|handle|exceptionally", sideEffects.get());
    }
 
@@ -380,7 +386,12 @@ public class AsyncInterceptorChainInvocationTest extends AbstractInfinispanTest 
    }
 
    private AsyncInterceptorChain newInterceptorChain(AsyncInterceptor... interceptors) {
+      ComponentRegistry registry = mock(ComponentRegistry.class);
+      when(registry.getStatus()).thenReturn(ComponentStatus.RUNNING);
+      when(registry.getCacheName()).thenReturn("test-cache");
+
       AsyncInterceptorChainImpl chain = new AsyncInterceptorChainImpl();
+      TestingUtil.inject(chain, registry);
       for (AsyncInterceptor i : interceptors) {
          chain.appendInterceptor(i, false);
       }

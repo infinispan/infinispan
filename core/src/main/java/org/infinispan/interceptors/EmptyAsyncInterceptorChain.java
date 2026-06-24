@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 
 /**
@@ -71,6 +73,26 @@ public class EmptyAsyncInterceptorChain implements AsyncInterceptorChain {
 
    @Override
    public CompletableFuture<Object> invokeAsync(InvocationContext ctx, VisitableCommand command) {
+      throw CONTAINER.interceptorStackNotSupported();
+   }
+
+   @Override
+   public Object invokeGet(InvocationContext ctx, GetKeyValueCommand command) {
+      throw CONTAINER.interceptorStackNotSupported();
+   }
+
+   @Override
+   public CompletableFuture<Object> invokeGetAsync(InvocationContext ctx, GetKeyValueCommand command) {
+      throw CONTAINER.interceptorStackNotSupported();
+   }
+
+   @Override
+   public Object invokeGetCacheEntry(InvocationContext ctx, GetCacheEntryCommand command) {
+      throw CONTAINER.interceptorStackNotSupported();
+   }
+
+   @Override
+   public CompletableFuture<Object> invokeGetCacheEntryAsync(InvocationContext ctx, GetCacheEntryCommand command) {
       throw CONTAINER.interceptorStackNotSupported();
    }
 

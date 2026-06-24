@@ -11,6 +11,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -20,6 +22,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.AsyncInterceptorChain;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
+import org.infinispan.interceptors.Skip;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -153,6 +156,18 @@ public class TransactionTrackInterceptor extends BaseCustomAsyncInterceptor {
       localTransactionsSeen.clear();
       remoteTransactionsSeen.clear();
       localTransactionsOperation.clear();
+   }
+
+   @Skip
+   @Override
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
+      throw new UnsupportedOperationException("Get commands should not reach TransactionTrackInterceptor");
+   }
+
+   @Skip
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
+      throw new UnsupportedOperationException("Get commands should not reach TransactionTrackInterceptor");
    }
 
    @Override

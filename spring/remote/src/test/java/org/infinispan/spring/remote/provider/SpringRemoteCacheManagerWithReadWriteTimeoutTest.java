@@ -11,6 +11,7 @@ import java.util.concurrent.TimeoutException;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
@@ -102,6 +103,12 @@ public class SpringRemoteCacheManagerWithReadWriteTimeoutTest extends SingleCach
          this.latch = latch;
          this.readDelay = readDelay;
          this.writeDelay = writeDelay;
+      }
+
+      @Override
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+         latch.await(readDelay, TimeUnit.MILLISECONDS);
+         return super.visitGetKeyValueCommand(ctx, command);
       }
 
       @Override

@@ -24,12 +24,15 @@ import java.util.stream.Stream;
 import org.infinispan.Cache;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.Skip;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -260,6 +263,18 @@ public class ReplListener {
    }
 
    protected class ReplListenerInterceptor extends DDAsyncInterceptor {
+      @Skip
+      @Override
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
+         throw new UnsupportedOperationException("Get commands should not reach ReplListenerInterceptor");
+      }
+
+      @Skip
+      @Override
+      public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
+         throw new UnsupportedOperationException("Get commands should not reach ReplListenerInterceptor");
+      }
+
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
          if (!ctx.isOriginLocal() || (watchLocal && isPrimaryOwner(cmd))) {

@@ -266,6 +266,11 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
 
    static class FailingInterceptor extends DDAsyncInterceptor {
       @Override
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+         throw new CacheException("Injected");
+      }
+
+      @Override
       public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
          throw new CacheException("Injected");
       }
@@ -281,9 +286,15 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       }
 
       @Override
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+         if (arrival != null) arrival.countDown();
+         release.await(30, TimeUnit.SECONDS);
+         return super.visitGetKeyValueCommand(ctx, command);
+      }
+
+      @Override
       public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
          if (arrival != null) arrival.countDown();
-         // the timeout has to be longer than remoteTimeout!
          release.await(30, TimeUnit.SECONDS);
          return super.visitGetCacheEntryCommand(ctx, command);
       }
@@ -300,6 +311,17 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
 
       @Override
       public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+         if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
+            retried.incrementAndGet();
+         }
+         return invokeNextAndExceptionally(ctx, command, (rCtx, rCommand, t) -> {
+            thrown.incrementAndGet();
+            throw t;
+         });
+      }
+
+      @Override
+      public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
          if (command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
             retried.incrementAndGet();
          }

@@ -8,11 +8,14 @@ import java.util.List;
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.interceptors.Skip;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -27,6 +30,18 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    @Override
    protected Log getLog() {
       return log;
+   }
+
+   @Skip
+   @Override
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      throw new UnsupportedOperationException("This should never be reached!");
+   }
+
+   @Skip
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      throw new UnsupportedOperationException("This should never be reached!");
    }
 
    @Override

@@ -39,6 +39,7 @@ import org.infinispan.util.logging.LogFactory;
 public class EntryFactoryImpl implements EntryFactory {
 
    private static final Log log = LogFactory.getLog(EntryFactoryImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    @Inject InternalDataContainer container;
    @Inject Configuration configuration;
@@ -117,7 +118,7 @@ public class EntryFactoryImpl implements EntryFactory {
          mvccEntry.setRead();
          cacheEntry = mvccEntry;
       }
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Wrap %s for read. Entry=%s", toStr(key), cacheEntry);
       }
       ctx.putLookedUpEntry(key, cacheEntry);
@@ -272,7 +273,7 @@ public class EntryFactoryImpl implements EntryFactory {
 
    private CacheEntry<?, ?> getFromContext(InvocationContext ctx, Object key) {
       final CacheEntry<?, ?> cacheEntry = ctx.lookupEntry(key);
-      if (log.isTraceEnabled()) log.tracef("Exists in context? %s ", cacheEntry);
+      if (trace) log.tracef("Exists in context? %s ", cacheEntry);
       return cacheEntry;
    }
 
@@ -283,7 +284,7 @@ public class EntryFactoryImpl implements EntryFactory {
 
    private InternalCacheEntry getFromContainer(Object key, int segment) {
       InternalCacheEntry ice = container.get(segment, key);
-      if (log.isTraceEnabled()) {
+      if (trace) {
          log.tracef("Retrieved from container %s", ice);
       }
       return ice;
