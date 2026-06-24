@@ -1,7 +1,10 @@
 package org.infinispan.util.concurrent.locks;
 
 
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commons.TimeoutException;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.interceptors.InvocationStage;
 
 /**
@@ -43,6 +46,11 @@ public interface PendingLockPromise {
       }
 
       @Override
+      public CompletionStage<Void> toCompletionStage() {
+         return CompletableFutures.completedNull();
+      }
+
+      @Override
       public String toString() {
          return "NO_OP";
       }
@@ -81,4 +89,11 @@ public interface PendingLockPromise {
     * @return an {@link InvocationStage} for this lock.
     */
    InvocationStage toInvocationStage();
+
+   /**
+    * Transforms this promise into a {@link CompletionStage}.
+    *
+    * @return the transformed promise into a {@link CompletionStage}, never <code>null</code>.
+    */
+   CompletionStage<Void> toCompletionStage();
 }
