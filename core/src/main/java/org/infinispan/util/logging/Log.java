@@ -2474,4 +2474,8 @@ public interface Log extends BasicLogger {
          "When the container shrinks under memory pressure, evicted entries must be persisted to the " +
          "store, which may increase memory churn and reduce the effectiveness of the resize.", id = 725)
    void dynamicResizeWithPassivation(String containerName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "The 'remote-site' configuration format at %s has been deprecated. Use the map-based format instead, e.g. 'NYC: { remoteSite: ~ }'", id = 726)
+   void deprecatedRemoteSiteFormat(Location location);
 }
