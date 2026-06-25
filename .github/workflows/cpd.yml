@@ -28,23 +28,54 @@ jobs:
       - name: Setup Java
         uses: ./.github/actions/setup-java
 
-      - name: Detect Java changes
+      - name: Detect changed Java files and owning modules
         id: changed
+        env:
+          BASE_REF: origin/${{ github.event.pull_request.base.ref }}
         run: |
-          chmod +x .github/scripts/changed-classes.sh
-          CLASSES=$(.github/scripts/changed-classes.sh origin/${{ github.event.pull_request.base.ref }} HEAD)
-          echo "classes=$CLASSES" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          FILES=$(git diff --name-only "$BASE_REF"...HEAD \
+            | grep -E '.*/src/(main|test)/java/.*\.java$' || true)
+          if [[ -z "$FILES" ]]; then
+            echo "any=false" >> "$GITHUB_OUTPUT"
+            echo "No Java sources changed; CPD will be skipped."
+            exit 0
+          fi
+          printf '%s\n' "$FILES" > changed-java-files.txt
+          # Map each changed file to its closest ancestor pom.xml directory
+          # (the owning Maven module) and de-duplicate so we can pass them
+          # to `mvn -pl` rather than scanning the whole reactor.
+          MODULES=$(while read -r f; do
+            d=$(dirname "$f")
+            while [[ "$d" != "." && ! -f "$d/pom.xml" ]]; do
+              d=$(dirname "$d")
+            done
+            if [[ -f "$d/pom.xml" ]]; then
+              echo "$d"
+            fi
+          done < changed-java-files.txt | sort -u | paste -sd, -)
+          echo "any=true" >> "$GITHUB_OUTPUT"
+          echo "modules=$MODULES" >> "$GITHUB_OUTPUT"
+          echo "Modules to scan: $MODULES"
 
       - name: Skip if no Java changes
-        if: steps.changed.outputs.classes == 'NO_CHANGES'
+        if: steps.changed.outputs.any != 'true'
         run: echo "No Java sources changed. Skipping CPD."
 
-      - name: Run PMD Copy/Paste Detector
-        if: steps.changed.outputs.classes != 'NO_CHANGES'
-        run: mvn -B -DskipTests=true org.apache.maven.plugins:maven-pmd-plugin:cpd
+      - name: Run PMD Copy/Paste Detector on changed modules
+        if: steps.changed.outputs.any == 'true'
+        env:
+          CHANGED_MODULES: ${{ steps.changed.outputs.modules }}
+        run: |
+          mvn -B -DskipTests=true -pl "$CHANGED_MODULES" \
+            org.apache.maven.plugins:maven-pmd-plugin:cpd
+
+      - name: Filter CPD reports to PR-changed files
+        if: steps.changed.outputs.any == 'true'
+        run: python3 .github/scripts/filter-cpd-by-changed-files.py changed-java-files.txt
 
       - name: Upload CPD reports
-        if: always() && steps.changed.outputs.classes != 'NO_CHANGES'
+        if: always() && steps.changed.outputs.any == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: cpd-reports
