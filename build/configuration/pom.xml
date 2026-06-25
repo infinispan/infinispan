@@ -129,7 +129,7 @@
       <version.lucene9>9.12.3</version.lucene9>
       <version.lucene10>10.4.0</version.lucene10>
       <version.metainf-services>1.11</version.metainf-services>
-      <version.micrometer>1.16.5</version.micrometer>
+      <version.micrometer>1.16.6</version.micrometer>
       <version.mockito>5.23.0</version.mockito>
       <version.nashorn>15.7</version.nashorn>
       <version.netty>4.1.135.Final</version.netty>
@@ -156,7 +156,7 @@
       <version.graalvm>25.0.3</version.graalvm>
       <version.jandex>3.5.3</version.jandex>
 
-      <version.opentelemetry>1.60.1</version.opentelemetry>
+      <version.opentelemetry>1.62.0</version.opentelemetry>
 
       <version.smallrye-mutiny>2.9.5</version.smallrye-mutiny>
 
