@@ -17,6 +17,17 @@ import sys
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
+# PMD 7 emits cpd-report XML in this default namespace. Older PMD versions
+# (and some custom configurations) write it without a namespace. Register
+# the prefix-less namespace so ElementTree round-trips the output without
+# inventing a "ns0:" prefix.
+CPD_NS = "https://pmd-code.org/schema/cpd-report"
+ET.register_namespace("", CPD_NS)
+
+
+def local_name(tag: str) -> str:
+    return tag.rsplit("}", 1)[-1] if "}" in tag else tag
+
 
 def main(argv: list[str]) -> int:
     if len(argv) != 2:
@@ -47,13 +58,12 @@ def main(argv: list[str]) -> int:
             print(f"{report}: parse error ({exc}); leaving file untouched")
             continue
         root = tree.getroot()
+        duplications = [el for el in list(root) if local_name(el.tag) == "duplication"]
         kept = 0
         dropped = 0
-        for dup in list(root.findall("duplication")):
-            paths = {
-                str(Path(f.get("path", "")).resolve())
-                for f in dup.findall("file")
-            }
+        for dup in duplications:
+            files = [el for el in dup if local_name(el.tag) == "file"]
+            paths = {str(Path(f.get("path", "")).resolve()) for f in files}
             if paths & changed:
                 kept += 1
             else:
