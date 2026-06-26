@@ -154,6 +154,8 @@
       <version.jandex>3.5.2</version.jandex>
 
       <version.opentelemetry>1.62.0</version.opentelemetry>
+      <!-- used by the opentelemetry autoconfigure module as incubator runtime dependency -->
+      <version.opentelemetry.alpha>1.62.0-alpha</version.opentelemetry.alpha>
 
       <version.smallrye-mutiny>2.9.5</version.smallrye-mutiny>
 
