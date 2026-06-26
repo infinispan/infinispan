@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   cpd:
@@ -73,6 +74,35 @@ jobs:
       - name: Filter CPD reports to PR-changed files
         if: steps.changed.outputs.any == 'true'
         run: python3 .github/scripts/filter-cpd-by-changed-files.py changed-java-files.txt
+
+      - name: Comment CPD findings on PR
+        # Render the filtered cpd.xml reports as a single Markdown body and
+        # upsert it as a sticky pull-request comment (identified by the
+        # `<!-- cpd-comment -->` marker the script prepends). continue-on-error
+        # lets the workflow stay green if GITHUB_TOKEN is read-only for a fork
+        # PR (a 403 from the comments API); the cpd-reports artifact below is
+        # still uploaded as the fallback view.
+        if: steps.changed.outputs.any == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/format-cpd-comment.py > cpd-comment.md
+          EXISTING_ID=$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" \
+            --paginate \
+            --jq '.[] | select(.body | startswith("<!-- cpd-comment -->")) | .id' \
+            | head -1 || true)
+          if [[ -n "$EXISTING_ID" ]]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$EXISTING_ID" \
+              -F body=@cpd-comment.md > /dev/null
+            echo "Updated existing CPD comment (id=$EXISTING_ID)."
+          else
+            gh pr comment "$PR_NUMBER" --repo "$REPO" --body-file cpd-comment.md
+            echo "Posted new CPD comment."
+          fi
 
       - name: Upload CPD reports
         if: always() && steps.changed.outputs.any == 'true'
