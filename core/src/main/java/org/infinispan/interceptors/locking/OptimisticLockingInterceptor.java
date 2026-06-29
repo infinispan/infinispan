@@ -60,12 +60,12 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      return invokeNextGet(ctx, command);
+      return invokeNext(ctx, command);
    }
 
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
-      return invokeNextGetCacheEntry(ctx, command);
+      return invokeNext(ctx, command);
    }
 
    @Override

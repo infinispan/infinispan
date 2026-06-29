@@ -120,14 +120,14 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       updateTopologyId(command);
-      return invokeNextGetAndHandle(ctx, command, handleGetKeyValueReturn);
+      return invokeNextAndHandle(ctx, command, handleGetKeyValueReturn);
    }
 
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
          throws Throwable {
       updateTopologyId(command);
-      return invokeNextGetCacheEntryAndHandle(ctx, command, handleGetCacheEntryReturn);
+      return invokeNextAndHandle(ctx, command, handleGetCacheEntryReturn);
    }
 
    @Override
@@ -173,9 +173,9 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       RetryInfo retry = getReadRetryInfo(rCommand, t);
       if (retry == null) throw t;
       if (retry.retryTopologyId == retry.currentTopologyId) {
-         return invokeNextGetAndHandle(rCtx, rCommand, handleGetKeyValueReturn);
+         return invokeNextAndHandle(rCtx, rCommand, handleGetKeyValueReturn);
       } else {
-         return makeStage(asyncInvokeNextGet(rCtx, rCommand, stateTransferLock.transactionDataFuture(retry.retryTopologyId)))
+         return makeStage(asyncInvokeNext(rCtx, rCommand, stateTransferLock.transactionDataFuture(retry.retryTopologyId)))
                .andHandle(rCtx, rCommand, handleGetKeyValueReturn);
       }
    }
@@ -192,9 +192,9 @@ public abstract class BaseStateTransferInterceptor extends DDAsyncInterceptor {
       RetryInfo retry = getReadRetryInfo(rCommand, t);
       if (retry == null) throw t;
       if (retry.retryTopologyId == retry.currentTopologyId) {
-         return invokeNextGetCacheEntryAndHandle(rCtx, rCommand, handleGetCacheEntryReturn);
+         return invokeNextAndHandle(rCtx, rCommand, handleGetCacheEntryReturn);
       } else {
-         return makeStage(asyncInvokeNextGetCacheEntry(rCtx, rCommand, stateTransferLock.transactionDataFuture(retry.retryTopologyId)))
+         return makeStage(asyncInvokeNext(rCtx, rCommand, stateTransferLock.transactionDataFuture(retry.retryTopologyId)))
                .andHandle(rCtx, rCommand, handleGetCacheEntryReturn);
       }
    }

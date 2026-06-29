@@ -119,10 +119,10 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
       boolean statisticsEnabled = collectStatisticsForCommand(command);
       if (!statisticsEnabled || !ctx.isOriginLocal())
-         return invokeNextGet(ctx, command);
+         return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return invokeNextGetAndFinally(ctx, command,
+      return invokeNextAndFinally(ctx, command,
             (rCtx, rCommand, rv, t) -> addDataRead(rv != null, start, getReadOwnership(rCommand.getSegment())));
    }
 
@@ -130,10 +130,10 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
    public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
       boolean statisticsEnabled = collectStatisticsForCommand(command);
       if (!statisticsEnabled || !ctx.isOriginLocal())
-         return invokeNextGetCacheEntry(ctx, command);
+         return invokeNext(ctx, command);
 
       long start = timeService.time();
-      return invokeNextGetCacheEntryAndFinally(ctx, command,
+      return invokeNextAndFinally(ctx, command,
             (rCtx, rCommand, rv, t) -> addDataRead(rv != null, start, getReadOwnership(rCommand.getSegment())));
    }
 

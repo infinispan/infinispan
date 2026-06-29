@@ -606,7 +606,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
          throws Throwable {
       if (ctx.lookupEntry(command.getKey()) != null) {
-         return invokeNextGet(ctx, command);
+         return invokeNext(ctx, command);
       }
 
       if (!ctx.isOriginLocal())
@@ -615,14 +615,14 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       if (!readNeedsRemoteValue(command))
          return null;
 
-      return asyncInvokeNextGet(ctx, command, remoteGetSingleKey(ctx, command, command.getKey(), false));
+      return asyncInvokeNext(ctx, command, remoteGetSingleKey(ctx, command, command.getKey(), false));
    }
 
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx,
                                            GetCacheEntryCommand command) throws Throwable {
       if (ctx.lookupEntry(command.getKey()) != null) {
-         return invokeNextGetCacheEntry(ctx, command);
+         return invokeNext(ctx, command);
       }
 
       if (!ctx.isOriginLocal())
@@ -631,7 +631,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       if (!readNeedsRemoteValue(command))
          return null;
 
-      return asyncInvokeNextGetCacheEntry(ctx, command, remoteGetSingleKey(ctx, command, command.getKey(), false));
+      return asyncInvokeNext(ctx, command, remoteGetSingleKey(ctx, command, command.getKey(), false));
    }
 
    @Override

@@ -467,7 +467,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
                throw new TimeoutException();
             }
          }
-         return invokeNextGet(ctx, cmd);
+         return invokeNext(ctx, cmd);
       }
 
       @Override
@@ -481,7 +481,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
                throw new TimeoutException();
             }
          }
-         return invokeNextGetCacheEntry(ctx, cmd);
+         return invokeNext(ctx, cmd);
       }
    }
 }

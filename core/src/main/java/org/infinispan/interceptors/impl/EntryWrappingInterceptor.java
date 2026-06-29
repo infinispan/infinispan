@@ -214,7 +214,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             ignoreOwnership(command) || canRead(command), command.hasAnyFlag(FlagBitSets.ALREADY_HAS_LOCK)
                   || (isPessimistic && command.hasAnyFlag(FlagBitSets.FORCE_WRITE_LOCK)), CompletableFutures.completedNull());
 
-      Object rv = asyncInvokeNextGet(ctx, command, stage);
+      Object rv = asyncInvokeNext(ctx, command, stage);
       if ((ctx.isInTxScope() && useRepeatableRead) || notifier.hasVisitedListener()) {
          return makeStage(rv).thenApply(ctx, command, dataReadReturnHandler);
       }
@@ -229,7 +229,7 @@ public class EntryWrappingInterceptor extends DDAsyncInterceptor {
             ignoreOwnership(command) || canRead(command), command.hasAnyFlag(FlagBitSets.ALREADY_HAS_LOCK)
                   || (isPessimistic && command.hasAnyFlag(FlagBitSets.FORCE_WRITE_LOCK)), CompletableFutures.completedNull());
 
-      Object rv = asyncInvokeNextGetCacheEntry(ctx, command, stage);
+      Object rv = asyncInvokeNext(ctx, command, stage);
       if ((ctx.isInTxScope() && useRepeatableRead) || notifier.hasVisitedListener()) {
          return makeStage(rv).thenApply(ctx, command, dataReadReturnHandler);
       }

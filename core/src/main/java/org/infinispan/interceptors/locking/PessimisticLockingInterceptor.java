@@ -57,12 +57,12 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
          throws Throwable {
       if (!readNeedsLock(ctx, command)) {
-         return invokeNextGet(ctx, command);
+         return invokeNext(ctx, command);
       }
 
       Object key = command.getKey();
       if (!needRemoteLocks(ctx, key, command)) {
-         return asyncInvokeNextGet(ctx, command, acquireLocalLock(ctx, command).toCompletableFuture());
+         return asyncInvokeNext(ctx, command, acquireLocalLock(ctx, command).toCompletableFuture());
       }
 
       TxInvocationContext txContext = (TxInvocationContext) ctx;
@@ -70,19 +70,19 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             txContext.getGlobalTransaction());
       lcc.setTopologyId(command.getTopologyId());
       return invokeNextThenApply(ctx, lcc,
-            (rCtx, rCommand, rv) -> asyncInvokeNextGet(rCtx, command, acquireLocalLock(rCtx, command).toCompletableFuture()));
+            (rCtx, rCommand, rv) -> asyncInvokeNext(rCtx, command, acquireLocalLock(rCtx, command).toCompletableFuture()));
    }
 
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command)
          throws Throwable {
       if (!readNeedsLock(ctx, command)) {
-         return invokeNextGetCacheEntry(ctx, command);
+         return invokeNext(ctx, command);
       }
 
       Object key = command.getKey();
       if (!needRemoteLocks(ctx, key, command)) {
-         return asyncInvokeNextGetCacheEntry(ctx, command, acquireLocalLock(ctx, command).toCompletableFuture());
+         return asyncInvokeNext(ctx, command, acquireLocalLock(ctx, command).toCompletableFuture());
       }
 
       TxInvocationContext txContext = (TxInvocationContext) ctx;
@@ -90,7 +90,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             txContext.getGlobalTransaction());
       lcc.setTopologyId(command.getTopologyId());
       return invokeNextThenApply(ctx, lcc,
-            (rCtx, rCommand, rv) -> asyncInvokeNextGetCacheEntry(rCtx, command, acquireLocalLock(rCtx, command).toCompletableFuture()));
+            (rCtx, rCommand, rv) -> asyncInvokeNext(rCtx, command, acquireLocalLock(rCtx, command).toCompletableFuture()));
    }
 
    // This method is only used by visitReadOnlyKeyCommand now

@@ -26,8 +26,8 @@ import org.infinispan.interceptors.impl.SimpleAsyncInvocationStage;
 @Scope(Scopes.NAMED_CACHE)
 public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
    private final InvocationSuccessFunction<VisitableCommand> invokeNextFunction = (rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand);
-   private final InvocationSuccessFunction<GetKeyValueCommand> invokeNextGetFunction = (rCtx, rCommand, rv) -> invokeNextGet(rCtx, rCommand);
-   private final InvocationSuccessFunction<GetCacheEntryCommand> invokeNextGetCacheEntryFunction = (rCtx, rCommand, rv) -> invokeNextGetCacheEntry(rCtx, rCommand);
+   private final InvocationSuccessFunction<GetKeyValueCommand> invokeNextGetFunction = (rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand);
+   private final InvocationSuccessFunction<GetCacheEntryCommand> invokeNextGetCacheEntryFunction = (rCtx, rCommand, rv) -> invokeNext(rCtx, rCommand);
 
    @Inject protected Configuration cacheConfiguration;
    private AsyncInterceptor nextInterceptor;
@@ -77,7 +77,7 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
       }
    }
 
-   public final Object invokeNextGet(InvocationContext ctx, GetKeyValueCommand command) {
+   public final Object invokeNext(InvocationContext ctx, GetKeyValueCommand command) {
       try {
          return nextGetKeyValueInterceptor.visitGetKeyValueCommand(ctx, command);
       } catch (Throwable throwable) {
@@ -85,8 +85,8 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
       }
    }
 
-   public final Object invokeNextGetAndExceptionally(InvocationContext ctx, GetKeyValueCommand command,
-                                                     InvocationExceptionFunction<? super GetKeyValueCommand> function) {
+   public final Object invokeNextAndExceptionally(InvocationContext ctx, GetKeyValueCommand command,
+                                                  InvocationExceptionFunction<GetKeyValueCommand> function) {
       try {
          Object rv = nextGetKeyValueInterceptor.visitGetKeyValueCommand(ctx, command);
          if (rv instanceof InvocationStage) {
@@ -98,8 +98,8 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
       }
    }
 
-   public final Object invokeNextGetAndFinally(InvocationContext ctx, GetKeyValueCommand command,
-                                               InvocationFinallyAction<? super GetKeyValueCommand> action) {
+   public final Object invokeNextAndFinally(InvocationContext ctx, GetKeyValueCommand command,
+                                            InvocationFinallyAction<GetKeyValueCommand> action) {
       try {
          Object rv;
          Throwable throwable;
@@ -121,15 +121,15 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
       }
    }
 
-   public final Object asyncInvokeNextGet(InvocationContext ctx, GetKeyValueCommand command,
+   public final Object asyncInvokeNext(InvocationContext ctx, GetKeyValueCommand command,
                                            CompletionStage<?> delay) {
       if (delay == null || CompletionStages.isCompletedSuccessfully(delay)) {
-         return invokeNextGet(ctx, command);
+         return invokeNext(ctx, command);
       }
       return asyncValue(delay).thenApply(ctx, command, invokeNextGetFunction);
    }
 
-   public final Object invokeNextGetCacheEntry(InvocationContext ctx, GetCacheEntryCommand command) {
+   public final Object invokeNext(InvocationContext ctx, GetCacheEntryCommand command) {
       try {
          return nextGetKeyValueInterceptor.visitGetCacheEntryCommand(ctx, command);
       } catch (Throwable throwable) {
@@ -137,8 +137,8 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
       }
    }
 
-   public final Object invokeNextGetCacheEntryAndExceptionally(InvocationContext ctx, GetCacheEntryCommand command,
-                                                     InvocationExceptionFunction<? super GetCacheEntryCommand> function) {
+   public final Object invokeNextAndExceptionally(InvocationContext ctx, GetCacheEntryCommand command,
+                                                  InvocationExceptionFunction<GetCacheEntryCommand> function) {
       try {
          Object rv = nextGetKeyValueInterceptor.visitGetCacheEntryCommand(ctx, command);
          if (rv instanceof InvocationStage) {
@@ -150,8 +150,8 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
       }
    }
 
-   public final Object invokeNextGetCacheEntryAndFinally(InvocationContext ctx, GetCacheEntryCommand command,
-                                               InvocationFinallyAction<? super GetCacheEntryCommand> action) {
+   public final Object invokeNextAndFinally(InvocationContext ctx, GetCacheEntryCommand command,
+                                            InvocationFinallyAction<GetCacheEntryCommand> action) {
       try {
          Object rv;
          Throwable throwable;
@@ -173,16 +173,16 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
       }
    }
 
-   public final Object asyncInvokeNextGetCacheEntry(InvocationContext ctx, GetCacheEntryCommand command,
+   public final Object asyncInvokeNext(InvocationContext ctx, GetCacheEntryCommand command,
                                            CompletionStage<?> delay) {
       if (delay == null || CompletionStages.isCompletedSuccessfully(delay)) {
-         return invokeNextGetCacheEntry(ctx, command);
+         return invokeNext(ctx, command);
       }
       return asyncValue(delay).thenApply(ctx, command, invokeNextGetCacheEntryFunction);
    }
 
-   public final Object invokeNextGetAndHandle(InvocationContext ctx, GetKeyValueCommand command,
-                                              InvocationFinallyFunction<GetKeyValueCommand> function) {
+   public final Object invokeNextAndHandle(InvocationContext ctx, GetKeyValueCommand command,
+                                           InvocationFinallyFunction<GetKeyValueCommand> function) {
       try {
          Object rv;
          Throwable throwable;
@@ -203,8 +203,8 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
       }
    }
 
-   public final Object invokeNextGetCacheEntryAndHandle(InvocationContext ctx, GetCacheEntryCommand command,
-                                                        InvocationFinallyFunction<GetCacheEntryCommand> function) {
+   public final Object invokeNextAndHandle(InvocationContext ctx, GetCacheEntryCommand command,
+                                           InvocationFinallyFunction<GetCacheEntryCommand> function) {
       try {
          Object rv;
          Throwable throwable;
@@ -225,8 +225,8 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
       }
    }
 
-   public final Object invokeNextGetThenApply(InvocationContext ctx, GetKeyValueCommand command,
-                                              InvocationSuccessFunction<GetKeyValueCommand> function) {
+   public final Object invokeNextThenApply(InvocationContext ctx, GetKeyValueCommand command,
+                                           InvocationSuccessFunction<GetKeyValueCommand> function) {
       try {
          Object rv = nextGetKeyValueInterceptor.visitGetKeyValueCommand(ctx, command);
          if (rv instanceof InvocationStage) {
@@ -238,8 +238,8 @@ public abstract class BaseAsyncInterceptor implements AsyncInterceptor {
       }
    }
 
-   public final Object invokeNextGetCacheEntryThenApply(InvocationContext ctx, GetCacheEntryCommand command,
-                                                        InvocationSuccessFunction<GetCacheEntryCommand> function) {
+   public final Object invokeNextThenApply(InvocationContext ctx, GetCacheEntryCommand command,
+                                           InvocationSuccessFunction<GetCacheEntryCommand> function) {
       try {
          Object rv = nextGetKeyValueInterceptor.visitGetCacheEntryCommand(ctx, command);
          if (rv instanceof InvocationStage) {

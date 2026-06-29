@@ -80,12 +80,12 @@ public class AnchoredFetchInterceptor<K, V> extends BaseRpcInterceptor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
-      return asyncInvokeNextGet(ctx, command, fetchSingleContextValue(ctx, command, false));
+      return asyncInvokeNext(ctx, command, fetchSingleContextValue(ctx, command, false));
    }
 
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
-      return asyncInvokeNextGetCacheEntry(ctx, command, fetchSingleContextValue(ctx, command, false));
+      return asyncInvokeNext(ctx, command, fetchSingleContextValue(ctx, command, false));
    }
 
    @Override

@@ -141,7 +141,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
       if ((key = command.getKey()) != null) {
          stage = loadIfNeeded(ctx, key, command);
       }
-      return asyncInvokeNextGet(ctx, command, stage);
+      return asyncInvokeNext(ctx, command, stage);
    }
 
    @Override
@@ -152,7 +152,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
       if ((key = command.getKey()) != null) {
          stage = loadIfNeeded(ctx, key, command);
       }
-      return asyncInvokeNextGetCacheEntry(ctx, command, stage);
+      return asyncInvokeNext(ctx, command, stage);
    }
 
 
