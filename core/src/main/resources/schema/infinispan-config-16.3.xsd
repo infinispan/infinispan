@@ -2311,6 +2311,11 @@
         <xs:documentation>If enabled, this will cause the cache to wait for initial state transfer to complete before responding to requests.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
+   <xs:attribute name="await-leave-transfer" type="xs:boolean" default="${StateTransfer.await-leave-transfer}">
+      <xs:annotation>
+         <xs:documentation>If enabled, this will cause the cache to wait for the state transfer during leave to complete before exiting.</xs:documentation>
+      </xs:annotation>
+   </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="groups">
