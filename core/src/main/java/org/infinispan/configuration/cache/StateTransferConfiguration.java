@@ -21,7 +21,8 @@ public class StateTransferConfiguration extends ConfigurationElement<StateTransf
    public static final AttributeDefinition<Integer> CHUNK_SIZE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CHUNK_SIZE, 512).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(StateTransferConfiguration.class, FETCH_IN_MEMORY_STATE, TIMEOUT, CHUNK_SIZE, AWAIT_INITIAL_TRANSFER);
+      return new AttributeSet(StateTransferConfiguration.class, FETCH_IN_MEMORY_STATE, TIMEOUT, CHUNK_SIZE, AWAIT_INITIAL_TRANSFER,
+            AWAIT_LEAVE_TRANSFER);
    }
 
    private final Attribute<Boolean> awaitInitialTransfer;
