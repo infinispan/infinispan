@@ -75,11 +75,10 @@ jobs:
 
   tests:
     needs: image
-    uses: infinispan/infinispan-operator/.github/workflows/ci.yml@1440ba6a16218701d3e06aafc6cd7c0743c5c78f # main
+    uses: infinispan/infinispan-operator/.github/workflows/ci.yml@6290ed50115cb1253c73cc83901d79842329736b # main
     with:
       operand: ${{ needs.image.outputs.image }}
       operandArtifact: operand-image
       operandVersion: ${{ needs.image.outputs.version }}
       ref: main
       repository: infinispan/infinispan-operator
-      skipList: '15.1.0,15.1.1'
