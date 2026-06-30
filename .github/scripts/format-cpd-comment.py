@@ -10,6 +10,10 @@ leading HTML marker (``<!-- cpd-comment -->``) so the workflow's
 sticky-comment logic can find and update the existing comment instead
 of appending a new one on every push.
 
+On a clean run (no PR-relevant duplications) the script writes nothing
+to stdout — the workflow uses an empty body as the signal to skip
+posting and to drop any pre-existing sticky comment.
+
 A hard cap (``MAX_BODY_CHARS``) prevents the body from approaching
 GitHub's 65 535-character comment limit; codefragments are also
 individually capped (``MAX_FRAGMENT_LINES`` / ``MAX_FRAGMENT_CHARS``)
@@ -97,17 +101,7 @@ def render_report(report: Path) -> tuple[int, str]:
 def main() -> int:
     reports = sorted(Path(".").rglob("target/cpd.xml"))
 
-    header = [
-        MARKER,
-        "## PMD CPD findings",
-        "",
-        "_Filtered to duplications that involve at least one file changed by this PR._",
-        "",
-    ]
-
     if not reports:
-        body = "\n".join(header + ["**No PR-relevant CPD findings.**"])
-        sys.stdout.write(body)
         return 0
 
     sections: list[str] = []
@@ -119,10 +113,15 @@ def main() -> int:
             total += count
 
     if not sections:
-        body = "\n".join(header + ["**No PR-relevant CPD findings.**"])
-        sys.stdout.write(body)
         return 0
 
+    header = [
+        MARKER,
+        "## PMD CPD findings",
+        "",
+        "_Filtered to duplications that involve at least one file changed by this PR._",
+        "",
+    ]
     header.append(f"**Total:** {total} duplication(s) across {len(sections)} module(s).")
     header.append("")
     parts = header + sections
