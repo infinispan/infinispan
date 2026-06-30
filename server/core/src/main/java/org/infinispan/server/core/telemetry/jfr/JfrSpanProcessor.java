@@ -17,7 +17,7 @@ import io.opentelemetry.sdk.trace.SpanProcessor;
 import io.opentelemetry.sdk.trace.data.EventData;
 import io.opentelemetry.sdk.trace.data.SpanData;
 import io.opentelemetry.sdk.trace.data.StatusData;
-import io.opentelemetry.sdk.trace.internal.data.ExceptionEventData;
+import io.opentelemetry.sdk.trace.data.ExceptionEventData;
 import jdk.jfr.Category;
 import jdk.jfr.Description;
 import jdk.jfr.Event;
