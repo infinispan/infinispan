@@ -88,6 +88,10 @@ public class JsonTranscoder extends OneToManyTranscoder {
 
    @Override
    public Object doTranscode(Object content, MediaType contentType, MediaType destinationType) {
+      if (destinationType.match(APPLICATION_OCTET_STREAM) || destinationType.match(APPLICATION_UNKNOWN)) {
+         if (content instanceof byte[]) return content;
+         return content.toString().getBytes(contentType.getCharset());
+      }
       boolean outputString = destinationType.hasStringType();
       Charset contentCharset = contentType.getCharset();
       Charset destinationCharset = destinationType.getCharset();
