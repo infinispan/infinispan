@@ -1,0 +1,42 @@
+[id='runbook-template_{context}']
+= Runbook template
+Use this template when writing new runbooks for {brandname}.
+
+Each runbook follows a consistent structure so that operators can quickly find the information they need during an incident, and so that tooling such as MCP servers can index and search runbooks effectively.
+
+== Naming convention
+
+Runbook files are named `ref_runbook_<component>_<number>_<short_description>.adoc` where:
+
+* `<component>` is a short identifier for the affected area, for example `jgrp` for JGroups, `resp` for RESP, `rest` for REST, `hotrod` for Hot Rod, `cache` for cache operations, `xsite` for cross-site, `persist` for persistence.
+* `<number>` is a zero-padded sequential number within the component, for example `001`.
+* `<short_description>` is a lowercase, underscore-separated summary, for example `multicast_not_working`.
+
+== Structure
+
+Every runbook must contain the following sections in this order:
+
+=== Summary
+One or two sentences describing the problem.
+Include the {brandname} version range and any environment prerequisites that are relevant.
+
+=== Symptoms
+A bulleted list of observable indicators.
+Include log messages with their message codes (for example `ISPN000094`, `JGRP000032`) so that operators can search for them.
+
+=== Diagnosis
+Numbered steps to confirm the root cause.
+Each step should include the exact command to run and what output to look for.
+
+=== Root cause
+A short explanation of why the problem occurs.
+
+=== Resolution
+Numbered steps to fix the problem.
+If there are multiple approaches (for example a quick workaround and a permanent fix), present them as separate subsections.
+
+=== Verification
+Steps to confirm that the fix was applied correctly.
+
+=== Related
+Links to other runbooks, {brandname} documentation sections, or external resources that are relevant.
