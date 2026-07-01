@@ -82,7 +82,7 @@
       <version.console>16.2.3</version.console>
       <version.ehcache.sizeof>0.3.0</version.ehcache.sizeof>
       <version.fabric8.docker-maven-plugin>0.48.1</version.fabric8.docker-maven-plugin>
-      <version.fabric8.kubernetes-client>7.7.0</version.fabric8.kubernetes-client>
+      <version.fabric8.kubernetes-client>7.8.0</version.fabric8.kubernetes-client>
       <version.gdx-jnigen-loader>2.5.2</version.gdx-jnigen-loader>
       <version.glassfish.jaxb>4.0.9</version.glassfish.jaxb>
       <version.hamcrest>2.2</version.hamcrest>
