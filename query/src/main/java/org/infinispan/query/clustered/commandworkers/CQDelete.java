@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.query.clustered.QueryResponse;
-import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
+import org.infinispan.query.impl.SearchQueryBuilder;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 
 import io.reactivex.rxjava3.schedulers.Schedulers;

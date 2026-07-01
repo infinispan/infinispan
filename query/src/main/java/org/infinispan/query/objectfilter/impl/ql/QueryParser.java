@@ -15,7 +15,6 @@
  */
 package org.infinispan.query.objectfilter.impl.ql;
 
-import static java.util.stream.Collectors.toList;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -104,7 +103,7 @@ public final class QueryParser {
          if (hql.isEmpty()) {
             errorText += "'*' (empty query string)";
          } else {
-            String lineText = hql.lines().collect(toList()).get(line - 1);
+            String lineText = hql.lines().toList().get(line - 1);
             String text = lineText.substring(0, charPositionInLine) + "*" + lineText.substring(charPositionInLine);
             errorText += "'" + text + "'";
          }

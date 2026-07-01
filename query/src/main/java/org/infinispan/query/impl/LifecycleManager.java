@@ -61,8 +61,6 @@ import org.infinispan.query.core.stats.impl.IndexStatisticsSnapshotImpl;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.core.stats.impl.PersistenceContextInitializerImpl;
 import org.infinispan.query.core.stats.impl.SearchStatsRetriever;
-import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
-import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
 import org.infinispan.query.mapper.mapping.ProgrammaticSearchMappingProvider;
 import org.infinispan.query.mapper.mapping.SearchMapping;
@@ -107,12 +105,8 @@ public class LifecycleManager implements ModuleLifecycle {
          cr.registerComponent(new IndexStatisticsSnapshotImpl(), IndexStatistics.class);
          cr.registerComponent(new LocalQueryStatistics(), LocalQueryStatistics.class);
          cr.registerComponent(new SearchStatsRetriever(), SearchStatsRetriever.class);
-         AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
 
          cr.registerComponent(new ReflectionMatcher(aggregatedClassLoader), ReflectionMatcher.class);
-         org.infinispan.query.core.impl.QueryEngine<Object> engine = new org.infinispan.query.core.impl.QueryEngine<>(cache);
-         cr.registerComponent(engine, org.infinispan.query.core.impl.QueryEngine.class);
-         cr.registerComponent(new QueryProducerImpl(engine), QueryProducer.class);
       }
 
       StorageConfigurationManager scm = cr.getComponent(StorageConfigurationManager.class);
@@ -160,14 +154,7 @@ public class LifecycleManager implements ModuleLifecycle {
                ObjectReflectionMatcher.class);
          QueryEngine<Object> engine = new QueryEngine<>(cache, isIndexed);
          cr.registerComponent(engine, QueryEngine.class);
-
-         // the cast ithis is the only implementation we have
-         QueryProducerImpl queryProducer = (QueryProducerImpl) cr.getComponent(QueryProducer.class);
-         if (queryProducer != null) {
-            queryProducer.upgrade(engine);
-         } else {
-            cr.registerComponent(new QueryProducerImpl(engine), QueryProducer.class);
-         }
+         cr.registerComponent(new QueryProducerImpl(engine), QueryProducer.class);
       }
    }
 

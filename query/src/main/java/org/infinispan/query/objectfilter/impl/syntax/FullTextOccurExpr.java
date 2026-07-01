@@ -37,7 +37,7 @@ public final class FullTextOccurExpr implements BooleanExpr {
 
    @Override
    public void appendQueryString(StringBuilder sb) {
-      sb.append(((VirtualExpressionBuilder.Occur) occur).getOperator());
+      sb.append(occur.getOperator());
       child.appendQueryString(sb);
    }
 }

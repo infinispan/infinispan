@@ -1,6 +1,6 @@
 package org.infinispan.query.clustered.commandworkers;
 
-import static org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder.INFINISPAN_AGGREGATION_KEY_NAME;
+import static org.infinispan.query.impl.SearchQueryBuilder.INFINISPAN_AGGREGATION_KEY_NAME;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -13,7 +13,7 @@ import org.hibernate.search.engine.search.aggregation.AggregationKey;
 import org.hibernate.search.engine.search.query.SearchResultTotal;
 import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryResponse;
-import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
+import org.infinispan.query.impl.SearchQueryBuilder;
 
 /**
  * Returns the results of a node to create an eager distributed iterator.
@@ -94,8 +94,7 @@ final class CQCreateEagerQuery extends CQWorker {
                int hitCount = Math.toIntExact(total.hitCountLowerBound());
                boolean countIsExact = total.isHitCountExact();
 
-               Object[] keys = queryResult.hits().stream()
-                     .toArray(Object[]::new);
+               Object[] keys = queryResult.hits().toArray();
                return new NodeTopDocs(cache.getRpcManager().getAddress(), queryResult.topDocs(), hitCount, countIsExact,
                      keys, null);
             });
