@@ -1,4 +1,4 @@
-package org.infinispan.query.dsl.embedded.impl;
+package org.infinispan.query.impl;
 
 import java.util.List;
 import java.util.Map;
@@ -13,8 +13,6 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.core.impl.MappingIterator;
 import org.infinispan.query.core.impl.QueryResultImpl;
 import org.infinispan.query.dsl.QueryResult;
-import org.infinispan.query.impl.EntityLoaded;
-import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 
 

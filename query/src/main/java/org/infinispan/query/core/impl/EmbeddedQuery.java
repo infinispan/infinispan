@@ -26,6 +26,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryResult;
+import org.infinispan.query.impl.QueryEngine;
 import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 

@@ -2,11 +2,10 @@ package org.infinispan.query.objectfilter.impl.syntax.parser;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.infinispan.query.grammar.IckleLexer;
@@ -46,8 +45,8 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
 
    private VirtualExpressionBuilder.Phase phase;
    private boolean filtering;
-   private VirtualExpressionBuilder<TypeMetadata> expressionBuilder;
-   private Map<String, PropertyPath<TypeDescriptor<TypeMetadata>>> aliasToPropertyPath = new HashMap<>();
+   private final VirtualExpressionBuilder<TypeMetadata> expressionBuilder;
+   private final Map<String, PropertyPath<TypeDescriptor<TypeMetadata>>> aliasToPropertyPath = new HashMap<>();
    private String targetTypeName;
    private TypeMetadata targetEntityMetadata;
    private IndexedFieldProvider.FieldIndexingMetadata fieldIndexingMetadata;
@@ -103,8 +102,7 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
                } else if (path instanceof AggregationFunctionPropertyPath) {
                   resolvedPath = path;
                   type = Double.class;
-               } else if (path instanceof AggregationPropertyPath) {
-                  AggregationPropertyPath<TypeMetadata> aggPath = (AggregationPropertyPath<TypeMetadata>) path;
+               } else if (path instanceof AggregationPropertyPath<TypeMetadata> aggPath) {
                   // count(*) or count(alias) like count(s)
                   if (isEntityAggregation(aggPath)) {
                      resolvedPath = new CacheValueAggregationPropertyPath<>();
@@ -221,7 +219,7 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
 
       // Set parameter names
       if (!namedParameters.isEmpty()) {
-         resultBuilder.setParameterNames(Collections.unmodifiableSet(new HashSet<>(namedParameters.keySet())));
+         resultBuilder.setParameterNames(Set.copyOf(namedParameters.keySet()));
       }
 
       phase = null;
@@ -581,8 +579,7 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
          String occur = ctx.ftOccurrence().getText();
          VirtualExpressionBuilder.Occur occurType = switch (occur) {
             case "+" -> VirtualExpressionBuilder.Occur.MUST;
-            case "-" -> VirtualExpressionBuilder.Occur.MUST_NOT;
-            case "!" -> VirtualExpressionBuilder.Occur.MUST_NOT;
+            case "-", "!" -> VirtualExpressionBuilder.Occur.MUST_NOT;
             case "#" -> VirtualExpressionBuilder.Occur.FILTER;
             default -> VirtualExpressionBuilder.Occur.SHOULD;
          };

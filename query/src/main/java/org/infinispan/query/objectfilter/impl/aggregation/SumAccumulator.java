@@ -4,11 +4,11 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 /**
- * Computes the sum of {@link Number}s. Returns {@link Long} when applied to fields of integral types (other than
- * BigInteger); Double when applied to state-fields of floating point types; BigInteger when applied to state-fields of
- * type BigInteger; and BigDecimal when applied to state-fields of type BigDecimal. Nulls are excluded from the
- * computation. If there are no remaining non-null values to which the aggregate function can be applied, the result of
- * the aggregate function is {@code null}.
+ * Computes the sum of {@link Number}s. The result type matches the field type: Integer for integer fields (accumulated
+ * internally as long to avoid overflow), Long for long fields, Double for floating point fields, BigInteger for
+ * BigInteger fields, and BigDecimal for BigDecimal fields. Nulls are excluded from the computation. If there are no
+ * remaining non-null values to which the aggregate function can be applied, the result of the aggregate function is
+ * {@code null}.
  *
  * @author anistor@redhat.com
  * @since 8.0
@@ -38,22 +38,18 @@ final class SumAccumulator extends FieldAccumulator {
          Number value = (Number) val;
          if (fieldType == Double.class || fieldType == Float.class) {
             ((DoubleStat) accRow[outPos]).update(value.doubleValue());
-         } else if (fieldType == Long.class || fieldType == Integer.class || fieldType == Byte.class || fieldType == Short.class) {
-            value = value.longValue();
+         } else if (fieldType == Long.class) {
             Number sum = (Number) accRow[outPos];
-            if (sum != null) {
-               if (fieldType == Long.class) {
-                  value = sum.longValue() + value.longValue();
-               } else if (fieldType == BigInteger.class) {
-                  value = ((BigInteger) sum).add((BigInteger) value);
-               } else if (fieldType == BigDecimal.class) {
-                  value = ((BigDecimal) sum).add((BigDecimal) value);
-               } else {
-                  // byte, short, int
-                  value = sum.intValue() + value.intValue();
-               }
-            }
-            accRow[outPos] = value;
+            accRow[outPos] = sum != null ? sum.longValue() + value.longValue() : value.longValue();
+         } else if (fieldType == Integer.class || fieldType == Byte.class || fieldType == Short.class) {
+            Number sum = (Number) accRow[outPos];
+            accRow[outPos] = sum != null ? sum.longValue() + value.longValue() : value.longValue();
+         } else if (fieldType == BigInteger.class) {
+            BigInteger sum = (BigInteger) accRow[outPos];
+            accRow[outPos] = sum != null ? sum.add((BigInteger) value) : value;
+         } else if (fieldType == BigDecimal.class) {
+            BigDecimal sum = (BigDecimal) accRow[outPos];
+            accRow[outPos] = sum != null ? sum.add((BigDecimal) value) : value;
          }
       }
    }
@@ -72,6 +68,10 @@ final class SumAccumulator extends FieldAccumulator {
    protected void finish(Object[] accRow) {
       if (fieldType == Double.class || fieldType == Float.class) {
          accRow[outPos] = ((DoubleStat) accRow[outPos]).getSum();
+      } else if (fieldType == Integer.class || fieldType == Byte.class || fieldType == Short.class) {
+         if (accRow[outPos] != null) {
+            accRow[outPos] = ((Number) accRow[outPos]).intValue();
+         }
       }
    }
 
@@ -84,9 +84,6 @@ final class SumAccumulator extends FieldAccumulator {
       }
       if (fieldType == Double.class || fieldType == Float.class) {
          return Double.class;
-      }
-      if (fieldType == Long.class || fieldType == Integer.class || fieldType == Byte.class || fieldType == Short.class) {
-         return Long.class;
       }
       return fieldType;
    }

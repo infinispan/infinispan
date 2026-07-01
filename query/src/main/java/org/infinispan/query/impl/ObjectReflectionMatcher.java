@@ -1,4 +1,4 @@
-package org.infinispan.query.dsl.embedded.impl;
+package org.infinispan.query.impl;
 
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.query.objectfilter.impl.MetadataAdapter;
