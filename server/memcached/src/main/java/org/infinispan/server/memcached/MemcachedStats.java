@@ -5,6 +5,8 @@ import static java.util.concurrent.atomic.AtomicLongFieldUpdater.newUpdater;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
+import org.infinispan.commons.marshall.WrappedByteArray;
+
 /**
  * @since 15.0
  **/
@@ -27,40 +29,40 @@ public class MemcachedStats {
 
    public static class MemcachedStatsKeys {
 
-      public static final byte[] PID = "pid".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] UPTIME = "uptime".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] TIME = "time".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] VERSION = "version".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] POINTER_SIZE = "pointer_size".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] RUSAGE_USER = "rusage_user".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] RUSAGE_SYSTEM = "rusage_system".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] CURR_ITEMS = "curr_items".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] TOTAL_ITEMS = "total_items".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] BYTES = "bytes".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] CMD_GET = "cmd_get".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] CMD_SET = "cmd_set".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] GET_HITS = "get_hits".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] GET_MISSES = "get_misses".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] DELETE_MISSES = "delete_misses".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] DELETE_HITS = "delete_hits".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] INCR_MISSES = "incr_misses".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] INCR_HITS = "incr_hits".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] DECR_MISSES = "decr_misses".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] DECR_HITS = "decr_hits".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] CAS_MISSES = "cas_misses".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] CAS_HITS = "cas_hits".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] CAS_BADVAL = "cas_badval".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] AUTH_CMDS = "auth_cmds".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] AUTH_ERRORS = "auth_errors".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] EVICTIONS = "evictions".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] BYTES_READ = "bytes_read".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] BYTES_WRITTEN = "bytes_written".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] CURR_CONNECTIONS = "curr_connections".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] TOTAL_CONNECTIONS = "total_connections".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] THREADS = "threads".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] CONNECTION_STRUCTURES = "connection_structures".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] LIMIT_MAXBYTES = "limit_maxbytes".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] CONN_YIELDS = "conn_yields".getBytes(StandardCharsets.US_ASCII);
-      public static final byte[] RECLAIMED = "reclaimed".getBytes(StandardCharsets.US_ASCII);
+      public static final WrappedByteArray PID = new WrappedByteArray("pid".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray UPTIME = new WrappedByteArray("uptime".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray TIME = new WrappedByteArray("time".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray VERSION = new WrappedByteArray("version".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray POINTER_SIZE = new WrappedByteArray("pointer_size".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray RUSAGE_USER = new WrappedByteArray("rusage_user".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray RUSAGE_SYSTEM = new WrappedByteArray("rusage_system".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray CURR_ITEMS = new WrappedByteArray("curr_items".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray TOTAL_ITEMS = new WrappedByteArray("total_items".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray BYTES = new WrappedByteArray("bytes".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray CMD_GET = new WrappedByteArray("cmd_get".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray CMD_SET = new WrappedByteArray("cmd_set".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray GET_HITS = new WrappedByteArray("get_hits".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray GET_MISSES = new WrappedByteArray("get_misses".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray DELETE_MISSES = new WrappedByteArray("delete_misses".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray DELETE_HITS = new WrappedByteArray("delete_hits".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray INCR_MISSES = new WrappedByteArray("incr_misses".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray INCR_HITS = new WrappedByteArray("incr_hits".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray DECR_MISSES = new WrappedByteArray("decr_misses".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray DECR_HITS = new WrappedByteArray("decr_hits".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray CAS_MISSES = new WrappedByteArray("cas_misses".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray CAS_HITS = new WrappedByteArray("cas_hits".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray CAS_BADVAL = new WrappedByteArray("cas_badval".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray AUTH_CMDS = new WrappedByteArray("auth_cmds".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray AUTH_ERRORS = new WrappedByteArray("auth_errors".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray EVICTIONS = new WrappedByteArray("evictions".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray BYTES_READ = new WrappedByteArray("bytes_read".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray BYTES_WRITTEN = new WrappedByteArray("bytes_written".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray CURR_CONNECTIONS = new WrappedByteArray("curr_connections".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray TOTAL_CONNECTIONS = new WrappedByteArray("total_connections".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray THREADS = new WrappedByteArray("threads".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray CONNECTION_STRUCTURES = new WrappedByteArray("connection_structures".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray LIMIT_MAXBYTES = new WrappedByteArray("limit_maxbytes".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray CONN_YIELDS = new WrappedByteArray("conn_yields".getBytes(StandardCharsets.US_ASCII));
+      public static final WrappedByteArray RECLAIMED = new WrappedByteArray("reclaimed".getBytes(StandardCharsets.US_ASCII));
    }
 }

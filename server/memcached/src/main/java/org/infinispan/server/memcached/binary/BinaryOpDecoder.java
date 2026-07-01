@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.Subject;
 
-import org.infinispan.commons.util.SimpleImmutableEntry;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.Version;
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -139,7 +139,7 @@ abstract class BinaryOpDecoder extends BinaryDecoder {
                response(header, KEY_NOT_FOUND);
                return CompletableFutures.completedNull();
             } else {
-               long version = ((NumericVersion) metadata.version()).getVersion();
+               long version = ((NumericVersion) e.getMetadata().version()).getVersion();
                if (header.getCas() == version) {
                   return cache.replaceAsync(key, e.getValue(), value, metadata).thenAccept(ignore -> {
                      CAS_HITS.incrementAndGet(statistics);
@@ -316,16 +316,17 @@ abstract class BinaryOpDecoder extends BinaryDecoder {
 
    protected MemcachedResponse stat(BinaryHeader header, byte[] key) {
       CompletionStage<Void> s = server.getBlockingManager().supplyBlocking(() -> {
-         Map<byte[], byte[]> map = statsMap();
-         if (key != null) {
-            if (!map.containsKey(key)) {
+         Map<WrappedByteArray, byte[]> map = statsMap();
+         if (key != null && key.length > 0) {
+            byte[] value = map.get(new WrappedByteArray(key));
+            if (value == null) {
                response(header, KEY_NOT_FOUND);
             } else {
-               singleStat(header, new SimpleImmutableEntry<>(key, map.get(key)));
+               singleStat(header, key, value);
             }
          } else {
-            for (Map.Entry<byte[], byte[]> e : map.entrySet()) {
-               singleStat(header, e);
+            for (Map.Entry<WrappedByteArray, byte[]> e : map.entrySet()) {
+               singleStat(header, e.getKey().getBytes(), e.getValue());
             }
             response(header, NO_ERROR);
          }
@@ -334,8 +335,8 @@ abstract class BinaryOpDecoder extends BinaryDecoder {
       return send(header, s);
    }
 
-   private void singleStat(BinaryHeader header, Map.Entry<byte[], byte[]> e) {
-      response(header, NO_ERROR, e.getKey(), e.getValue());
+   private void singleStat(BinaryHeader header, byte[] key, byte[] value) {
+      response(header, NO_ERROR, key, value);
    }
 
    protected MemcachedResponse flush(BinaryHeader header, int expiration, boolean quiet) {

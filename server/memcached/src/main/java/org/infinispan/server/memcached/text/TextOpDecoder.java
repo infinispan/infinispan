@@ -45,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.Version;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -326,22 +327,22 @@ public abstract class TextOpDecoder extends TextDecoder {
 
    protected MemcachedResponse stats(TextHeader header, List<byte[]> names) {
       return send(header, server.getBlockingManager().runBlocking(() -> {
-         Map<byte[], byte[]> stats = statsMap();
+         Map<WrappedByteArray, byte[]> stats = statsMap();
          ByteBuf buf = MemcachedInboundAdapter.getAllocator(ctx).acquire(1024);
          if (names.isEmpty()) {
-            for (Map.Entry<byte[], byte[]> stat : stats.entrySet()) {
-               stat(buf, stat.getKey(), stat.getValue());
+            for (Map.Entry<WrappedByteArray, byte[]> stat : stats.entrySet()) {
+               stat(buf, stat.getKey().getBytes(), stat.getValue());
             }
          } else {
             for (byte[] name : names) {
-               if (!stats.containsKey(name)) {
+               if (!stats.containsKey(new WrappedByteArray(name))) {
                   buf.writeCharSequence("CLIENT_ERROR\r\n", StandardCharsets.US_ASCII);
                   return;
                }
             }
 
             for (byte[] name : names) {
-               stat(buf, name, stats.get(name));
+               stat(buf, name, stats.get(new WrappedByteArray(name)));
             }
          }
          buf.writeBytes(END);
