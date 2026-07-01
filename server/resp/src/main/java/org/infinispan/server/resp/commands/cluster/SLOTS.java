@@ -111,7 +111,7 @@ public class SLOTS extends RespCommand implements Resp3Command {
                for (int i = 0; i < totalSegmentCount; ++i) {
                   List<Address> currentOwners = hash.locateOwnersForSegment(i);
 
-                  if (!currentOwners.equals(ownersForSegment) || i == (totalSegmentCount - 1)) {
+                  if (!currentOwners.equals(ownersForSegment)) {
                      if (ownersForSegment != null) {
                         int start = previousOwnedSegment * slotWidth;
                         int end = (i * slotWidth) - 1;
@@ -124,6 +124,16 @@ public class SLOTS extends RespCommand implements Resp3Command {
                      ownersForSegment = currentOwners;
                      previousOwnedSegment = i;
                   }
+               }
+
+               if (ownersForSegment != null) {
+                  int start = previousOwnedSegment * slotWidth;
+                  int end = (totalSegmentCount * slotWidth) - 1;
+                  List<NodeInformation> nodes = new ArrayList<>();
+                  for (Address owner : ownersForSegment) {
+                     nodes.add(NodeInformation.create(information.get(owner)));
+                  }
+                  response.add(new SlotInformation(start, end, nodes));
                }
                return response;
             });
