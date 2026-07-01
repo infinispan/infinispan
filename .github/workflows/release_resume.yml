@@ -72,21 +72,31 @@ jobs:
         with:
           ref: ${{ github.event.inputs.version }}
 
+      - name: Detect CLI module path
+        id: detect-cli
+        shell: bash
+        run: |
+          if [ -f graalvm/cli/pom.xml ]; then
+            echo "module=graalvm/cli" >> $GITHUB_OUTPUT
+          else
+            echo "module=quarkus/cli" >> $GITHUB_OUTPUT
+          fi
+
       - if: ${{ matrix.os == 'windows-2022' }}
         name: Build native executable
         run: |
           call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
-          mvnw.cmd package -Pdistribution -Pwindows -Pnative -am -pl quarkus/cli
+          mvnw.cmd package -Pdistribution -Pwindows -Pnative -am -pl ${{ steps.detect-cli.outputs.module }}
         shell: cmd
 
       - if: ${{ matrix.os != 'windows-2022' }}
         name: Build native executable
-        run: ./mvnw package -Pdistribution -Pnative -am -pl quarkus/cli
+        run: ./mvnw package -Pdistribution -Pnative -am -pl ${{ steps.detect-cli.outputs.module }}
 
       - name: Upload CLI native executable
         id: upload-cli-native-executable
         run: |
-          gh release upload ${{ github.event.inputs.version }} quarkus/cli/target/infinispan-cli-${{ github.event.inputs.version }}-${{ matrix.asset_name }}.zip
+          gh release upload ${{ github.event.inputs.version }} ${{ steps.detect-cli.outputs.module }}/target/infinispan-cli-${{ github.event.inputs.version }}-${{ matrix.asset_name }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 

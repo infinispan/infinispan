@@ -4,7 +4,6 @@ import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
@@ -15,7 +14,7 @@ import org.infinispan.client.rest.RestResponse;
 /**
  * @since 15.0
  **/
-@GroupCommandDefinition(name = Principals.CMD, description = "Performs operations on principals", activator = ConnectionActivator.class, groupCommands = {Principals.Ls.class})
+@CommandDefinition(name = Principals.CMD, description = "Performs operations on principals", activator = ConnectionActivator.class, groupCommands = {Principals.Ls.class})
 public class Principals extends CliCommand {
 
    public static final String CMD = "principals";

@@ -3,7 +3,7 @@ package org.infinispan.cli.commands.rest;
 import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.Command;
-import org.aesh.command.GroupCommandDefinition;
+import org.aesh.command.CommandDefinition;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
@@ -23,7 +23,7 @@ import org.kohsuke.MetaInfServices;
  * @since 13.0
  */
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "availability", description = "Manage availability of clustered caches in network partitions.", activator = ConnectionActivator.class)
+@CommandDefinition(name = "availability", description = "Manage availability of clustered caches in network partitions.", activator = ConnectionActivator.class)
 public class Availability extends RestCliCommand {
 
    @Argument(completer = CacheCompleter.class)

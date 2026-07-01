@@ -5,7 +5,6 @@ import java.util.concurrent.CompletionStage;
 
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.aesh.command.option.OptionList;
@@ -22,7 +21,7 @@ import org.infinispan.client.rest.RestResponse;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.1
  **/
-@GroupCommandDefinition(name = "roles", description = "Manages user roles for security authorization", activator = ConnectionActivator.class, groupCommands = {Roles.Ls.class, Roles.Grant.class, Roles.Deny.class, Roles.Create.class, Roles.Update.class, Roles.Remove.class, Roles.Describe.class})
+@CommandDefinition(name = "roles", description = "Manages user roles for security authorization", activator = ConnectionActivator.class, groupCommands = {Roles.Ls.class, Roles.Grant.class, Roles.Deny.class, Roles.Create.class, Roles.Update.class, Roles.Remove.class, Roles.Describe.class})
 public class Roles extends CliCommand {
 
 

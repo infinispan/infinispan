@@ -16,7 +16,6 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Arguments;
@@ -45,7 +44,7 @@ import org.kohsuke.MetaInfServices;
  * @since 11.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "config", description = "Configuration operations", groupCommands = {Config.Set.class, Config.Get.class, Config.Reset.class, Config.Convert.class})
+@CommandDefinition(name = "config", description = "Configuration operations", groupCommands = {Config.Set.class, Config.Get.class, Config.Reset.class, Config.Convert.class})
 public class Config extends CliCommand {
 
 

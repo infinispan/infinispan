@@ -8,7 +8,6 @@ import java.util.concurrent.CompletionStage;
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
@@ -26,7 +25,7 @@ import org.kohsuke.MetaInfServices;
  * @since 13.0
  */
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "rebalance", description = "Manage rebalance behaviour", activator = ConnectionActivator.class, groupCommands = {Rebalance.Enable.class, Rebalance.Disable.class})
+@CommandDefinition(name = "rebalance", description = "Manage rebalance behaviour", activator = ConnectionActivator.class, groupCommands = {Rebalance.Enable.class, Rebalance.Disable.class})
 public class Rebalance extends CliCommand {
 
 

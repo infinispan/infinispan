@@ -1,0 +1,46 @@
+[
+  {
+    "name": "org.aesh.command.export.ExportCommand",
+    "methods": [{"name": "<init>", "parameterTypes": ["org.aesh.command.export.ExportManager"]}],
+    "fields": [
+      {"name": "manager", "allowWrite": true},
+      {"name": "arguments", "allowWrite": true}
+    ]
+  },
+  {
+    "name": "org.aesh.command.alias.AliasCommand",
+    "methods": [{"name": "<init>", "parameterTypes": ["org.aesh.readline.alias.AliasManager"]}],
+    "fields": [
+      {"name": "print", "allowWrite": true},
+      {"name": "arguments", "allowWrite": true},
+      {"name": "manager", "allowWrite": true}
+    ]
+  },
+  {
+    "name": "org.aesh.command.alias.UnAliasCommand",
+    "methods": [{"name": "<init>", "parameterTypes": ["org.aesh.readline.alias.AliasManager"]}],
+    "fields": [
+      {"name": "arguments", "allowWrite": true},
+      {"name": "manager", "allowWrite": true}
+    ]
+  },
+  {
+    "name": "org.infinispan.cli.impl.ExitCodeResultHandler",
+    "methods": [{"name": "<init>", "parameterTypes": []}]
+  },
+  {
+    "name": "org.infinispan.cli.logging.Messages_$bundle",
+    "methods": [{"name": "<init>", "parameterTypes": []}],
+    "fields": [
+      {"name": "INSTANCE", "allowWrite": true}
+    ]
+  },
+  {
+    "name": "org.infinispan.commons.logging.Log_$logger",
+    "methods": [{"name": "<init>", "parameterTypes": ["org.jboss.logging.Logger"]}]
+  },
+  {
+    "name": "org.wildfly.security.password.impl.PasswordFactorySpiImpl",
+    "methods": [{"name": "<init>", "parameterTypes": []}]
+  }
+]

@@ -29,9 +29,9 @@ import javax.net.ssl.TrustManagerFactory;
 
 import org.aesh.command.AeshCommandRuntimeBuilder;
 import org.aesh.command.Command;
+import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.CommandRuntime;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.impl.completer.CommandSuggestionProvider;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.impl.registry.AeshCommandRegistryBuilder;
@@ -47,7 +47,7 @@ import org.aesh.complete.AeshCompleteOperation;
 import org.aesh.console.ReadlineConsole;
 import org.aesh.io.FileResource;
 import org.aesh.io.Resource;
-import org.aesh.readline.CompositeSuggestionProvider;
+import org.aesh.readline.suggestion.CompositeSuggestionProvider;
 import org.infinispan.cli.Context;
 import org.infinispan.cli.activators.ContextAwareCommandActivatorProvider;
 import org.infinispan.cli.commands.kubernetes.Kube;
@@ -108,7 +108,7 @@ import org.wildfly.security.keystore.KeyStoreUtil;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 11.0
  **/
-@GroupCommandDefinition(
+@CommandDefinition(
       name = "cli",
       description = "",
       groupCommands = {
@@ -402,7 +402,7 @@ public class CLI extends CliCommand {
          for (Class<? extends Command<CommandInvocation>> command : commands) {
             registryBuilder.command(command);
          }
-         for (Command command : ServiceFinder.load(Command.class, this.getClass().getClassLoader())) {
+         for (Command<?> command : ServiceFinder.load(Command.class, this.getClass().getClassLoader())) {
             registryBuilder.command(command);
          }
          return registryBuilder.create();

@@ -12,7 +12,6 @@ import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
@@ -33,7 +32,7 @@ import org.wildfly.security.util.PasswordBasedEncryptionUtil;
  * @since 12.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "credentials", description = "Credential store operations", groupCommands = {Credentials.Add.class, Credentials.Remove.class, Credentials.Ls.class, Credentials.Mask.class})
+@CommandDefinition(name = "credentials", description = "Credential store operations", groupCommands = {Credentials.Add.class, Credentials.Remove.class, Credentials.Ls.class, Credentials.Mask.class})
 public class Credentials extends CliCommand {
 
    public static final String STORE_TYPE = "pkcs12";

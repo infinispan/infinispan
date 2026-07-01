@@ -7,7 +7,6 @@ import java.util.concurrent.CompletionStage;
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
@@ -28,7 +27,7 @@ import org.kohsuke.MetaInfServices;
  * @since 10.0
  **/
 @MetaInfServices(Command.class)
-@GroupCommandDefinition(name = "schema", description = "Manipulates Protobuf schemas", activator = ConnectionActivator.class, groupCommands = {Schema.Upload.class, Schema.Remove.class, Schema.Ls.class, Schema.Get.class})
+@CommandDefinition(name = "schema", description = "Manipulates Protobuf schemas", activator = ConnectionActivator.class, groupCommands = {Schema.Upload.class, Schema.Remove.class, Schema.Ls.class, Schema.Get.class})
 public class Schema extends CliCommand {
 
    @Override
