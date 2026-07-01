@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
@@ -162,6 +163,11 @@ public class CustomLoaderNonNullWithExpirationTest extends SingleCacheManagerTes
             timeService.advance(TimeUnit.SECONDS.toMillis(2));
             return super.visitGetKeyValueCommand(ctx, command);
          }
+         @Override
+         public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+            timeService.advance(TimeUnit.SECONDS.toMillis(2));
+            return super.visitGetCacheEntryCommand(ctx, command);
+         }
       }, EntryWrappingInterceptor.class);
 
       String key = "some-key";
@@ -190,6 +196,15 @@ public class CustomLoaderNonNullWithExpirationTest extends SingleCacheManagerTes
                barrier.await(10, TimeUnit.SECONDS);
             }
             return super.visitGetKeyValueCommand(ctx, command);
+         }
+         @Override
+         public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+            if (blockFirst.getAndSet(false)) {
+               assertEquals(NullCacheEntry.getInstance(), ctx.lookupEntry(key));
+               barrier.await(10, TimeUnit.SECONDS);
+               barrier.await(10, TimeUnit.SECONDS);
+            }
+            return super.visitGetCacheEntryCommand(ctx, command);
          }
       }, EntryWrappingInterceptor.class);
 

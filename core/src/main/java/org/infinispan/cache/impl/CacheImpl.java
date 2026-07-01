@@ -551,14 +551,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
    final V get(Object key, long explicitFlags, InvocationContext ctx) {
       assertKeyNotNull(key);
       GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, keyPartitioner.getSegment(key), explicitFlags);
-      return invocationHelper.invoke(ctx, command);
+      return invocationHelper.invokeGet(ctx, command);
    }
 
    final CacheEntry<K, V> getCacheEntry(Object key, long explicitFlags, InvocationContext ctx) {
       assertKeyNotNull(key);
       GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, keyPartitioner.getSegment(key),
             explicitFlags);
-      return invocationHelper.invoke(ctx, command);
+      return invocationHelper.invokeGetCacheEntry(ctx, command);
    }
 
    @Override
@@ -575,7 +575,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
       assertKeyNotNull(key);
       GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, keyPartitioner.getSegment(key),
             explicitFlags);
-      return invocationHelper.invokeAsync(ctx, command);
+      return invocationHelper.invokeGetCacheEntryAsync(ctx, command);
    }
 
    @Override
@@ -1593,7 +1593,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V>, InternalCache<K, V>
    CompletableFuture<V> getAsync(final K key, final long explicitFlags, InvocationContext ctx) {
       assertKeyNotNull(key);
       GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, keyPartitioner.getSegment(key), explicitFlags);
-      return invocationHelper.invokeAsync(ctx, command);
+      return invocationHelper.invokeGetAsync(ctx, command);
    }
 
    @Override

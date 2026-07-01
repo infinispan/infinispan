@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -446,7 +447,7 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       }
    }
 
-   static class GetLatchInterceptor extends BaseAsyncInterceptor {
+   static class GetLatchInterceptor extends DDAsyncInterceptor {
       private final CountDownLatch getKeyStartedLatch;
       private final CountDownLatch getKeyProceedLatch;
 
@@ -456,16 +457,28 @@ public class OperationsDuringStateTransferTest extends MultipleCacheManagersTest
       }
 
       @Override
-      public Object visitCommand(InvocationContext ctx, VisitableCommand cmd) throws Throwable {
-         if (cmd instanceof GetKeyValueCommand) {
-            // Only block the first get to come here - they are not concurrent so this check is fine
-            if (getKeyStartedLatch.getCount() != 0) {
-               // signal we encounter a GET
-               getKeyStartedLatch.countDown();
-               // wait until it is ok to continue with GET
-               if (!getKeyProceedLatch.await(10, TimeUnit.SECONDS)) {
-                  throw new TimeoutException();
-               }
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand cmd) throws Throwable {
+         // Only block the first get to come here - they are not concurrent so this check is fine
+         if (getKeyStartedLatch.getCount() != 0) {
+            // signal we encounter a GET
+            getKeyStartedLatch.countDown();
+            // wait until it is ok to continue with GET
+            if (!getKeyProceedLatch.await(10, TimeUnit.SECONDS)) {
+               throw new TimeoutException();
+            }
+         }
+         return invokeNext(ctx, cmd);
+      }
+
+      @Override
+      public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand cmd) throws Throwable {
+         // Only block the first get to come here - they are not concurrent so this check is fine
+         if (getKeyStartedLatch.getCount() != 0) {
+            // signal we encounter a GET
+            getKeyStartedLatch.countDown();
+            // wait until it is ok to continue with GET
+            if (!getKeyProceedLatch.await(10, TimeUnit.SECONDS)) {
+               throw new TimeoutException();
             }
          }
          return invokeNext(ctx, cmd);

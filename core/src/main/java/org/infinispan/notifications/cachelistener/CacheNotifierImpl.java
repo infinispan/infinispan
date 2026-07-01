@@ -1014,6 +1014,11 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
    }
 
    @Override
+   public boolean hasVisitedListener() {
+      return !cacheEntryVisitedListeners.isEmpty();
+   }
+
+   @Override
    public CompletionStage<Void> addListenerAsync(Object listener) {
       return addListenerAsync(listener, null, null, null);
    }
