@@ -415,6 +415,9 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
          operation = null;
          dispatcher.handleResponse(op, receivedMessageId, ctx.channel(), null, cause);
       } else {
+         if (operation != null) {
+            HOTROD.delayedServerError(operation, ctx.channel().remoteAddress(), cause);
+         }
          TransportException transportException = log.errorFromUnknownOperation(ctx.channel(), cause, ctx.channel().remoteAddress());
          if (log.isTraceEnabled()) {
             log.tracef(transportException, "Requesting %s close due to exception", ctx.channel());
