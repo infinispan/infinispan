@@ -191,4 +191,16 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Argument '%s' is required", id = 12051)
    IllegalArgumentException argumentMissing(String name);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error updating marshalling schema", id = 12052)
+   void errorUpdatingMarshallingSchema(@Cause Throwable e);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Update schema started", id = 12053)
+   void updateSchemaStarted();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Update schema finished", id = 12054)
+   void updateSchemaFinished();
 }

@@ -341,6 +341,26 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       client(0).administration().removeCache(cacheName);
    }
 
+   public void cacheReindexWithTimeoutTest(Method m) {
+      String cacheName = m.getName();
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");
+      RemoteCache<String, Transaction> cache = client(0).getCache(cacheName);
+      verifyQuery(cache, 0);
+      Transaction tx = new TransactionPB();
+      tx.setId(1);
+      tx.setAccountId(777);
+      tx.setAmount(500);
+      tx.setDate(new Date(1));
+      tx.setDescription("February rent");
+      tx.setLongDescription("February rent");
+      tx.setNotes("card was not present");
+      cache.withFlags(Flag.SKIP_INDEXING).put("tx", tx);
+      verifyQuery(cache, 0);
+      client(0).administration().reindexCache(cacheName, 5, TimeUnit.MINUTES);
+      verifyQuery(cache, 1);
+      client(0).administration().removeCache(cacheName);
+   }
+
    public void updateIndexSchemaTest(Method m) {
       String cacheName = m.getName();
       // Create the cache
@@ -358,6 +378,26 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       cache.put("tx", tx);
       verifyQuery(cache, 1);
       client(0).administration().updateIndexSchema(cacheName);
+      verifyQuery(cache, 1);
+      client(0).administration().removeCache(cacheName);
+   }
+
+   public void updateIndexSchemaWithTimeoutTest(Method m) {
+      String cacheName = m.getName();
+      client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");
+      RemoteCache<String, Transaction> cache = client(0).getCache(cacheName);
+      verifyQuery(cache, 0);
+      Transaction tx = new TransactionPB();
+      tx.setId(1);
+      tx.setAccountId(777);
+      tx.setAmount(500);
+      tx.setDate(new Date(1));
+      tx.setDescription("February rent");
+      tx.setLongDescription("February rent");
+      tx.setNotes("card was not present");
+      cache.put("tx", tx);
+      verifyQuery(cache, 1);
+      client(0).administration().updateIndexSchema(cacheName, 5, TimeUnit.MINUTES);
       verifyQuery(cache, 1);
       client(0).administration().removeCache(cacheName);
    }

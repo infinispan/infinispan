@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.api.Experimental;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.commons.api.CacheContainerAdmin;
@@ -110,6 +112,17 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
    void reindexCache(String name) throws HotRodClientException;
 
    /**
+    * Performs a mass reindexing of the specified cache with a custom timeout.
+    * Use this overload for large caches where reindexing may exceed the default socket timeout.
+    *
+    * @param name the name of the cache to reindex
+    * @param timeout the timeout value
+    * @param timeUnit the time unit
+    * @throws HotRodClientException
+    */
+   void reindexCache(String name, long timeout, TimeUnit timeUnit) throws HotRodClientException;
+
+   /**
     * Updates the index schema state for the given cache,
     * the cache engine is hot restarted so that index persisted or not persisted state will be preserved.
     *
@@ -117,6 +130,17 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
     * @throws HotRodClientException
     */
    void updateIndexSchema(String cacheName) throws HotRodClientException;
+
+   /**
+    * Updates the index schema state for the given cache with a custom timeout.
+    * Use this overload for large caches where the schema update may exceed the default socket timeout.
+    *
+    * @param cacheName the name of the cache on which the index schema will be updated
+    * @param timeout the timeout value
+    * @param timeUnit the time unit
+    * @throws HotRodClientException
+    */
+   void updateIndexSchema(String cacheName, long timeout, TimeUnit timeUnit) throws HotRodClientException;
 
    /**
     * Updates a mutable configuration attribute for the given cache.

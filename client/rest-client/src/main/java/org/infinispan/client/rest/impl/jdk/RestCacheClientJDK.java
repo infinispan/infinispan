@@ -403,6 +403,11 @@ public class RestCacheClientJDK implements RestCacheClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> startReindex() {
+      return client.post(String.format("%s/search/indexes?action=%s&local=%s&mode=async", path, "reindex", false));
+   }
+
+   @Override
    public CompletionStage<RestResponse> reindexLocal() {
       return executeIndexOperation("reindex", true);
    }
@@ -415,6 +420,11 @@ public class RestCacheClientJDK implements RestCacheClient {
    @Override
    public CompletionStage<RestResponse> updateIndexSchema() {
       return executeIndexOperation("updateSchema", false);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> startUpdateIndexSchema() {
+      return client.post(String.format("%s/search/indexes?action=%s&local=%s&mode=async", path, "updateSchema", false));
    }
 
    @Override
