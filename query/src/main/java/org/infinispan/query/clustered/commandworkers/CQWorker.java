@@ -8,9 +8,9 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.clustered.QueryResponse;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
-import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.QueryDefinition;
+import org.infinispan.query.impl.SearchQueryBuilder;
 import org.infinispan.util.concurrent.BlockingManager;
 
 /**

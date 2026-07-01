@@ -1,4 +1,4 @@
-package org.infinispan.query.dsl.embedded.impl;
+package org.infinispan.query.impl;
 
 import static org.infinispan.query.core.impl.Log.CONTAINER;
 
@@ -21,14 +21,16 @@ import org.infinispan.query.core.impl.EmptyResultQuery;
 import org.infinispan.query.core.impl.HybridQuery;
 import org.infinispan.query.core.impl.Log;
 import org.infinispan.query.core.impl.MetadataHybridQuery;
+import org.infinispan.query.core.impl.QueryCache;
+import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
+import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.impl.ComponentRegistryUtils;
-import org.infinispan.query.impl.IndexedQuery;
-import org.infinispan.query.impl.IndexedQueryImpl;
-import org.infinispan.query.impl.QueryDefinition;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.query.objectfilter.Matcher;
+import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.query.objectfilter.SortField;
+import org.infinispan.query.objectfilter.impl.BaseMatcher;
+import org.infinispan.query.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.query.objectfilter.impl.RowMatcher;
 import org.infinispan.query.objectfilter.impl.aggregation.FieldAccumulator;
 import org.infinispan.query.objectfilter.impl.ql.AggregationFunction;
@@ -37,6 +39,7 @@ import org.infinispan.query.objectfilter.impl.syntax.AggregationExpr;
 import org.infinispan.query.objectfilter.impl.syntax.AndExpr;
 import org.infinispan.query.objectfilter.impl.syntax.BooleShannonExpansion;
 import org.infinispan.query.objectfilter.impl.syntax.BooleanExpr;
+import org.infinispan.query.objectfilter.impl.syntax.BooleanFilterNormalizer;
 import org.infinispan.query.objectfilter.impl.syntax.ComparisonExpr;
 import org.infinispan.query.objectfilter.impl.syntax.ConstantBooleanExpr;
 import org.infinispan.query.objectfilter.impl.syntax.ConstantValueExpr;
@@ -50,20 +53,25 @@ import org.infinispan.query.objectfilter.impl.syntax.OrExpr;
 import org.infinispan.query.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.query.objectfilter.impl.syntax.SyntaxTreePrinter;
 import org.infinispan.query.objectfilter.impl.syntax.ValueExpr;
+import org.infinispan.query.objectfilter.impl.syntax.parser.AggregationFunctionPropertyPath;
 import org.infinispan.query.objectfilter.impl.syntax.parser.AggregationPropertyPath;
 import org.infinispan.query.objectfilter.impl.syntax.parser.FunctionPropertyPath;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.query.objectfilter.impl.syntax.parser.IckleQueryStringParser;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.query.objectfilter.impl.syntax.parser.RowPropertyHelper;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.util.function.SerializableFunction;
 
 /**
- * Adds indexing capability to the light (index-less) QueryEngine from query-core module.
+ * Builds Query object implementations based on an Ickle query string, with optional indexing support.
  *
+ * @param <TypeMetadata> the metadata of the indexed entities, either a java.lang.Class or an
+ *                       org.infinispan.protostream.descriptors.Descriptor
  * @author anistor@redhat.com
  * @since 7.2
  */
-public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.QueryEngine<TypeMetadata> {
+public class QueryEngine<TypeMetadata> {
 
    private static final Log log = Log.getLog(QueryEngine.class);
 
@@ -71,14 +79,22 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
 
    public static final String DEFAULT_ALIAS = "_gen0";
 
-   /**
-    * Is the cache indexed?
-    */
+   protected final AdvancedCache<?, ?> cache;
+
+   protected final Matcher matcher;
+
+   protected final Class<? extends Matcher> matcherImplClass;
+
+   protected final ObjectPropertyHelper<TypeMetadata> propertyHelper;
+
+   protected final QueryCache queryCache;
+
+   protected final LocalQueryStatistics queryStatistics;
+
+   protected static final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
+
    protected final boolean isIndexed;
 
-   /**
-    * Optional, lazily. This is {@code null} if the cache is not actually indexed.
-    */
    private SearchMapping searchMapping;
 
    private static final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider = c -> ComponentRegistry.componentOf(c, QueryEngine.class);
@@ -92,8 +108,18 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       this(cache, isIndexed, ObjectReflectionMatcher.class);
    }
 
+   public QueryEngine(AdvancedCache<?, ?> cache) {
+      this(cache, false, ReflectionMatcher.class);
+   }
+
    protected QueryEngine(AdvancedCache<?, ?> cache, boolean isIndexed, Class<? extends Matcher> matcherImplClass) {
-      super(cache, matcherImplClass);
+      this.cache = cache;
+      this.matcherImplClass = matcherImplClass;
+      this.queryCache = SecurityActions.getGlobalComponentRegistry(cache.getCacheManager()).getComponent(QueryCache.class);
+      this.queryStatistics = SecurityActions.getCacheComponentRegistry(cache).getComponent(LocalQueryStatistics.class);
+      this.matcher = SecurityActions.getCacheComponentRegistry(cache).getComponent(matcherImplClass);
+      propertyHelper = ((BaseMatcher<TypeMetadata, ?, ?>) matcher).getPropertyHelper();
+
       Configuration configuration = cache.getCacheConfiguration();
       CacheMode cacheMode = configuration.clustering().cacheMode();
       this.broadcastQuery = cacheMode.isClustered() && !cacheMode.isReplicated();
@@ -118,7 +144,16 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       return propertyHelper;
    }
 
-   @Override
+   public Query<?> buildQuery(IckleParsingResult<TypeMetadata> parsingResult, Map<String, Object> namedParameters, long startOffset, int maxResults, boolean local) {
+      log.tracef("Building query '%s' with parameters %s", parsingResult.getQueryString(), namedParameters);
+
+      BaseQuery<?> query = parsingResult.hasGroupingOrAggregations() ?
+            buildQueryWithAggregations(parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult, local) :
+            buildQueryNoAggregations(parsingResult.getQueryString(), namedParameters, startOffset, maxResults, parsingResult, local);
+      query.validateNamedParameters();
+      return query;
+   }
+
    protected BaseQuery<?> buildQueryWithAggregations(String queryString, Map<String, Object> namedParameters, long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, boolean local) {
       if (parsingResult.getProjectedPaths() == null) {
          throw CONTAINER.groupingAndAggregationQueriesMustUseProjections();
@@ -297,10 +332,6 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       return new EmbeddedLuceneQuery<>(this, namedParameters, parsingResult, parsingResult.getProjections(), null, startOffset, maxResults, local);
    }
 
-   /**
-    * Swaps all occurrences of PropertyPaths in given expression tree (the HAVING clause) with new PropertyPaths
-    * according to the mapping found in {@code columns} map.
-    */
    private BooleanExpr swapVariables(BooleanExpr expr, TypeMetadata targetEntityMetadata,
                                      LinkedHashMap<PropertyPath, RowPropertyHelper.ColumnMetadata> columns,
                                      Map<String, Object> namedParameters, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
@@ -472,7 +503,6 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
             startOffset, maxResults, projectingAggregatingQuery, queryStatistics, local);
    }
 
-   @Override
    protected BaseQuery<?> buildQueryNoAggregations(String queryString, Map<String, Object> namedParameters,
                                                    long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, boolean local) {
       if (parsingResult.hasGroupingOrAggregations()) {
@@ -641,10 +671,6 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
             expandedQuery, queryStatistics, local, allSortFieldsAreStored);
    }
 
-   /**
-    * Make a new FilterParsingResult after normalizing the query. This FilterParsingResult is not supposed to have
-    * grouping/aggregation.
-    */
    private IckleParsingResult<TypeMetadata> makeFilterParsingResult(IckleParsingResult<TypeMetadata> parsingResult, BooleanExpr normalizedWhereClause,
                                                                     PropertyPath[] projection, Class<?>[] projectedTypes, Object[] projectedNullMarkers,
                                                                     SortField[] sortFields) {
@@ -661,9 +687,6 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
             projection, projectedTypes, projectedNullMarkers, null, sortFields);
    }
 
-   /**
-    * Apply some post-processing to the result when we have projections.
-    */
    protected RowProcessor makeProjectionProcessor(Class<?>[] projectedTypes, Object[] projectedNullMarkers) {
       // In embedded mode Hibernate Search is a real blessing as it does all the work for us already. Nothing to be done here.
       return null;
@@ -717,9 +740,27 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       return queryMaker.transform(parsingResult, namedParameters, getTargetedClass(parsingResult), getTargetedNamedType(parsingResult));
    }
 
-   @Override
    public IckleParsingResult<TypeMetadata> parse(String queryString) {
-      return super.parse(queryString);    // TODO [anistor]  public just for org/infinispan/query/dsl/embedded/impl/EmbeddedQueryEngineTest.java
+      return queryCache != null
+            ? queryCache.get(cache.getName(), queryString, null, IckleParsingResult.class, (qs, accumulators) -> IckleQueryStringParser.parse(qs, propertyHelper))
+            : IckleQueryStringParser.parse(queryString, propertyHelper);
+   }
+
+   protected final ObjectFilter getObjectFilter(Matcher matcher, String queryString, Map<String, Object> namedParameters, List<FieldAccumulator> accumulators) {
+      ObjectFilter objectFilter = queryCache != null
+            ? queryCache.get(cache.getName(), queryString, accumulators, matcher.getClass(), matcher::getObjectFilter)
+            : matcher.getObjectFilter(queryString, accumulators);
+      return namedParameters != null ? objectFilter.withParameters(namedParameters) : objectFilter;
+   }
+
+   public final IckleFilterAndConverter createAndWireFilter(String queryString, Map<String, Object> namedParameters) {
+      IckleFilterAndConverter filter = createFilter(queryString, namedParameters);
+      SecurityActions.getCacheComponentRegistry(cache).wireDependencies(filter);
+      return filter;
+   }
+
+   protected IckleFilterAndConverter createFilter(String queryString, Map<String, Object> namedParameters) {
+      return new IckleFilterAndConverter(queryString, namedParameters, matcherImplClass);
    }
 
    protected Class<?> getTargetedClass(IckleParsingResult<?> parsingResult) {
@@ -751,13 +792,35 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       return queryEngineProvider;
    }
 
-   /**
-    * A result processor that processes projections (rows). The input row is never {@code null}.
-    * <p>
-    * Applies some data conversion to some elements of the row. The input row can be modified in-place or a new one (of
-    * equal or different size) can be created and returned. Some of the possible processing are type conversions and the
-    * processing of null markers.
-    */
+   private static String getInputColumnKey(PropertyPath<?> p) {
+      if (p instanceof AggregationFunctionPropertyPath<?> afp) {
+         return afp.toFunctionPropertyPath().toString();
+      }
+      if (p instanceof FunctionPropertyPath<?>) {
+         return p.toString();
+      }
+      return p.asStringPath();
+   }
+
+   private static PropertyPath<?> getInputColumnPath(PropertyPath<?> p) {
+      if (p instanceof AggregationFunctionPropertyPath<?> afp) {
+         return afp.toFunctionPropertyPath();
+      }
+      return p;
+   }
+
+   private static void appendFirstPhaseProjection(StringBuilder query, PropertyPath<?> p) {
+      if (p instanceof FunctionPropertyPath<?> fp) {
+         query.append("distance(").append(DEFAULT_ALIAS).append('.').append(fp.asStringPath());
+         for (Object arg : fp.getArgs()) {
+            query.append(", ").append(arg);
+         }
+         query.append(")");
+      } else {
+         query.append(DEFAULT_ALIAS).append('.').append(p.asStringPath());
+      }
+   }
+
    @FunctionalInterface
    protected interface RowProcessor extends Function<Object[], Object[]> {
    }

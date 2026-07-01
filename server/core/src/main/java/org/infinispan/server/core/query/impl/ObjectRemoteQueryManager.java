@@ -11,7 +11,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.impl.BasicComponentRegistry;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.query.dsl.embedded.impl.ObjectReflectionMatcher;
+import org.infinispan.query.impl.ObjectReflectionMatcher;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.query.objectfilter.Matcher;
 import org.infinispan.query.objectfilter.impl.ReflectionMatcher;

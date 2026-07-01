@@ -74,7 +74,7 @@ public abstract class FieldAccumulator {
 
    public static Class<?> getOutputType(AggregationFunction aggregationType, Class<?> propertyType) {
       if (aggregationType == AggregationFunction.AVG) {
-         return Double.class;
+         return propertyType;
       } else if (aggregationType == AggregationFunction.COUNT) {
          return Long.class;
       } else if (aggregationType == AggregationFunction.SUM) {

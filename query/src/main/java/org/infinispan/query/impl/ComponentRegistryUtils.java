@@ -11,12 +11,9 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.Indexer;
-import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
-import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.core.stats.impl.SearchStatsRetriever;
-import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.security.actions.SecurityActions;
 
@@ -69,11 +66,6 @@ public final class ComponentRegistryUtils {
       return SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache()).getComponent(SearchStatsRetriever.class);
    }
 
-   public static KeyTransformationHandler getKeyTransformationHandler(Cache<?, ?> cache) {
-      ensureIndexed(cache);
-      return getRequiredComponent(cache, KeyTransformationHandler.class, null);
-   }
-
    public static QueryEngine<Class<?>> getEmbeddedQueryEngine(Cache<?, ?> cache) {
       return getRequiredComponent(cache, QueryEngine.class, null);
    }
@@ -84,13 +76,6 @@ public final class ComponentRegistryUtils {
 
    public static ScheduledExecutorService getTimeoutScheduledExecutor(Cache<?, ?> cache) {
       return getRequiredComponent(cache, ScheduledExecutorService.class, TIMEOUT_SCHEDULE_EXECUTOR);
-   }
-
-   /**
-    * Returns the optional QueryCache.
-    */
-   public static QueryCache getQueryCache(Cache<?, ?> cache) {
-      return SecurityActions.getCacheComponentRegistry(cache.getAdvancedCache()).getComponent(QueryCache.class);
    }
 
    public static Indexer getIndexer(AdvancedCache<?, ?> cache) {

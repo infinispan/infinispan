@@ -232,9 +232,10 @@ final class PredicateOptimisations {
       }
 
       // opposite direction intervals
+      boolean b = first.getComparisonType() == ComparisonExpr.Type.LESS || first.getComparisonType() == ComparisonExpr.Type.LESS_OR_EQUAL;
       if (first.getComparisonType() == second.getComparisonType().negate() || first.getComparisonType() == second.getComparisonType().reverse()) {
          if (cmp < 0) {
-            if (first.getComparisonType() == ComparisonExpr.Type.LESS || first.getComparisonType() == ComparisonExpr.Type.LESS_OR_EQUAL) {
+            if (b) {
                if (isConjunction) {
                   return ConstantBooleanExpr.FALSE;
                }
@@ -254,7 +255,7 @@ final class PredicateOptimisations {
       }
 
       // same direction intervals
-      if (first.getComparisonType() == ComparisonExpr.Type.LESS || first.getComparisonType() == ComparisonExpr.Type.LESS_OR_EQUAL) {
+      if (b) {
          // less than
          if (isConjunction) {
             return cmp < 0 ? first : second;

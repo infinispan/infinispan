@@ -6,7 +6,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.core.impl.EmbeddedQueryFactory;
-import org.infinispan.query.dsl.embedded.impl.QueryEngine;
+import org.infinispan.query.impl.QueryEngine;
 import org.infinispan.query.objectfilter.Matcher;
 
 /**

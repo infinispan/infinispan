@@ -101,11 +101,11 @@ public final class IntervalTree<K extends Comparable<K>, V> {
     */
    private int compareIntervals(Interval<K> i1, Interval<K> i2) {
       int res1 = compare(i1.up, i2.low);
-      if (res1 < 0 || res1 <= 0 && (!i1.includeUpper || !i2.includeLower)) {
+      if (res1 < 0 || res1 == 0 && (!i1.includeUpper || !i2.includeLower)) {
          return -1;
       }
       int res2 = compare(i2.up, i1.low);
-      if (res2 < 0 || res2 <= 0 && (!i2.includeUpper || !i1.includeLower)) {
+      if (res2 < 0 || res2 == 0 && (!i2.includeUpper || !i1.includeLower)) {
          return 1;
       }
       return 0;

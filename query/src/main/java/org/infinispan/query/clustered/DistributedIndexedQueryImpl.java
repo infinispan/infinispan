@@ -25,11 +25,11 @@ import org.infinispan.query.core.impl.Log;
 import org.infinispan.query.core.impl.QueryResultImpl;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryResult;
-import org.infinispan.query.dsl.embedded.impl.InfinispanAggregation;
-import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 import org.infinispan.query.impl.IndexedQuery;
 import org.infinispan.query.impl.IndexedQueryImpl;
+import org.infinispan.query.impl.InfinispanAggregation;
 import org.infinispan.query.impl.QueryDefinition;
+import org.infinispan.query.impl.SearchQueryBuilder;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.remoting.transport.Address;
 

@@ -2,6 +2,7 @@ package org.infinispan.query.core.impl;
 
 import org.infinispan.commons.query.BaseQuery;
 import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.impl.QueryEngine;
 
 /**
  * @author anistor@redhat.com
