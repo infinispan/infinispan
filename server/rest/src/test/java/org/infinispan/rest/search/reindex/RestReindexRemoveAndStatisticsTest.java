@@ -116,6 +116,32 @@ public class RestReindexRemoveAndStatisticsTest extends SingleCacheManagerTest {
       }
    }
 
+   @Test
+   public void startReindexAsync() {
+      RestCacheClient cacheClient = restClient.cache(CACHE_NAME);
+
+      assertThat(cacheClient.clearIndex()).isOk();
+      assertEquals(0, count(cacheClient));
+
+      writeEntries(FEW_ENTRIES, cacheClient);
+      assertEquals(0, count(cacheClient));
+
+      assertThat(cacheClient.startReindex()).isOk();
+      eventually(() -> safeCount(cacheClient) == FEW_ENTRIES);
+   }
+
+   @Test
+   public void startUpdateIndexSchemaAsync() {
+      RestCacheClient cacheClient = restClient.cache(CACHE_NAME);
+
+      writeEntries(FEW_ENTRIES, cacheClient);
+      assertThat(cacheClient.reindex()).isOk();
+      assertEquals(FEW_ENTRIES, count(cacheClient));
+
+      assertThat(cacheClient.startUpdateIndexSchema()).isOk();
+      eventually(() -> safeCount(cacheClient) == FEW_ENTRIES);
+   }
+
    @Override
    protected void teardown() {
       Util.close(restClient);
@@ -146,5 +172,13 @@ public class RestReindexRemoveAndStatisticsTest extends SingleCacheManagerTest {
       Json stat = Json.read(response.body());
       Json indexGame = stat.at("index").at("types").at("Game");
       return indexGame.at("count").asInteger();
+   }
+
+   private int safeCount(RestCacheClient cacheClient) {
+      try {
+         return count(cacheClient);
+      } catch (Exception e) {
+         return -1;
+      }
    }
 }

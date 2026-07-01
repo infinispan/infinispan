@@ -134,6 +134,8 @@ public class CliIT {
          terminal.clear();
          terminal.send("index clear qcache");
          terminal.send("index reindex qcache");
+         terminal.send("index reindex qcache --async");
+         terminal.send("index update-schema qcache --async");
          terminal.send("index clear-stats qcache");
          terminal.assertNotContains("Error");
          terminal.clear();
