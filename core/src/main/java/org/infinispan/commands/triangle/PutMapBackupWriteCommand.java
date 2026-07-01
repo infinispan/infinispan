@@ -28,9 +28,9 @@ import org.infinispan.util.TriangleFunctionsUtil;
 @ProtoTypeId(ProtoStreamTypeIds.PUT_MAP_BACKUP_WRITE_COMMAND)
 public class PutMapBackupWriteCommand extends BackupWriteCommand {
 
-   private Map<Object, Object> map;
-   private Metadata metadata;
-   private Map<Object, PrivateMetadata> internalMetadataMap;
+   private final Map<Object, Object> map;
+   private final Metadata metadata;
+   private final Map<Object, PrivateMetadata> internalMetadataMap;
 
    public PutMapBackupWriteCommand(ByteString cacheName, PutMapCommand command, long sequence, int segmentId,
                                    Collection<Object> keys) {

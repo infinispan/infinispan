@@ -25,6 +25,7 @@ import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -98,6 +99,11 @@ public class PessimisticTxIracLocalInterceptor extends AbstractIracLocalSiteInte
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) {
+      return visitWriteCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command) {
       return visitWriteCommand(ctx, command);
    }
 

@@ -61,6 +61,26 @@
           ]
         }
       ]
+    },
+    {
+      "version-from": "[16.0,16.3)",
+      "version-to": "[16.3,)",
+      "exceptions": [
+        {
+          "description": "RemoveAll is a new Hot Rod operation added in 16.3",
+          "issue": "https://github.com/infinispan/infinispan/issues/16245",
+          "test-failures": [
+            {
+              "test-class": "org.infinispan.server.functional.hotrod.HotRodCacheOperations",
+              "test-methods": [
+                "testRemoveAll",
+                "testRemoveAllAsync",
+                "testRemoveAllPartial"
+              ]
+            }
+          ]
+        }
+      ]
     }
   ]
 }

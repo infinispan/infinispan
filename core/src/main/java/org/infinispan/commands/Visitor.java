@@ -29,6 +29,7 @@ import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
@@ -58,6 +59,8 @@ public interface Visitor {
    Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable;
 
    Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable;
+
+   Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command) throws Throwable;
 
    Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable;
 

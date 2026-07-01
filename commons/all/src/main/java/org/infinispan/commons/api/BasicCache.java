@@ -1,6 +1,7 @@
 package org.infinispan.commons.api;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -284,6 +285,16 @@ public interface BasicCache<K, V> extends AsyncCache<K, V>, ConcurrentMap<K, V>,
     * @return the computed value that was stored under key
     */
    V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit);
+
+   /**
+    * Removes all the entries for the given keys.
+    *
+    * @param keys the keys to remove
+    * @since 16.3
+    */
+   default void removeAll(Set<? extends K> keys) {
+      removeAllAsync(keys).toCompletableFuture().join();
+   }
 
    /**
     * {@inheritDoc}
