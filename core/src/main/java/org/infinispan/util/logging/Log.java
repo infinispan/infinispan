@@ -2474,4 +2474,7 @@ public interface Log extends BasicLogger {
          "When the container shrinks under memory pressure, evicted entries must be persisted to the " +
          "store, which may increase memory churn and reduce the effectiveness of the resize.", id = 725)
    void dynamicResizeWithPassivation(String containerName);
+
+   @Message(value = "'awaitLeaveTransfer' can be enabled only if cache mode is distributed.", id = 726)
+   CacheConfigurationException awaitLeaveTransferOnlyForDist();
 }

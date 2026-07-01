@@ -116,6 +116,13 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public enum ParserVersionCheck {
+      INFINISPAN_163(16, 3) {
+         @Override
+         public void check(ConfigurationBuilderHolder cm, int schemaMajor, int schemaMinor) {
+            Configuration distTemplate = getConfiguration(cm, "dist");
+            assertTrue(distTemplate.clustering().stateTransfer().awaitLeaveTransfer());
+         }
+      },
       INFINISPAN_162(16, 2) {
          @Override
          public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {

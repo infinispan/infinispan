@@ -15,15 +15,18 @@ import org.infinispan.configuration.parsing.Element;
  */
 public class StateTransferConfiguration extends ConfigurationElement<StateTransferConfiguration> {
    public static final AttributeDefinition<Boolean> AWAIT_INITIAL_TRANSFER = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AWAIT_INITIAL_TRANSFER, true).global(false).build();
+   public static final AttributeDefinition<Boolean> AWAIT_LEAVE_TRANSFER = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.AWAIT_LEAVE_TRANSFER, false).global(false).build();
    public static final AttributeDefinition<Boolean> FETCH_IN_MEMORY_STATE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ENABLED, true).immutable().build();
    public static final AttributeDefinition<TimeQuantity> TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TIMEOUT, TimeQuantity.valueOf("4m")).parser(TimeQuantity.PARSER).immutable().build();
    public static final AttributeDefinition<Integer> CHUNK_SIZE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CHUNK_SIZE, 512).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(StateTransferConfiguration.class, FETCH_IN_MEMORY_STATE, TIMEOUT, CHUNK_SIZE, AWAIT_INITIAL_TRANSFER);
+      return new AttributeSet(StateTransferConfiguration.class, FETCH_IN_MEMORY_STATE, TIMEOUT, CHUNK_SIZE, AWAIT_INITIAL_TRANSFER,
+            AWAIT_LEAVE_TRANSFER);
    }
 
    private final Attribute<Boolean> awaitInitialTransfer;
+   private final Attribute<Boolean> awaitLeaveTransfer;
    private final Attribute<Boolean> fetchInMemoryState;
    private final Attribute<TimeQuantity> timeout;
    private final Attribute<Integer> chunkSize;
@@ -31,6 +34,7 @@ public class StateTransferConfiguration extends ConfigurationElement<StateTransf
    StateTransferConfiguration(AttributeSet attributes) {
       super(Element.STATE_TRANSFER, attributes);
       awaitInitialTransfer = attributes.attribute(AWAIT_INITIAL_TRANSFER);
+      awaitLeaveTransfer = attributes.attribute(AWAIT_LEAVE_TRANSFER);
       fetchInMemoryState = attributes.attribute(FETCH_IN_MEMORY_STATE);
       timeout = attributes.attribute(TIMEOUT);
       chunkSize = attributes.attribute(CHUNK_SIZE);
@@ -76,9 +80,11 @@ public class StateTransferConfiguration extends ConfigurationElement<StateTransf
    }
 
    /**
-    * We want to remember if the user didn't configure awaitInitialTransfer for the default cache.
+    * If {@code true}, this will cause the call to method {@code Cache.stop()} to block and wait until the state transfer
+    * is complete and the cache has finished sending state to neighboring caches. This option applies to distributed caches
+    * only and is disabled by default.
     */
-   private boolean originalAwaitInitialTransfer() {
-      return !awaitInitialTransfer.isModified();
+   public boolean awaitLeaveTransfer() {
+      return awaitLeaveTransfer.get();
    }
 }
