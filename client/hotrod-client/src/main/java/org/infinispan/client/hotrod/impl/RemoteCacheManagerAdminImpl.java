@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -13,7 +14,9 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteCacheManagerAdmin;
 import org.infinispan.client.hotrod.RemoteSchemasAdmin;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
 import org.infinispan.client.hotrod.impl.operations.ManagerOperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.TimeoutHotRodOperation;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.commons.configuration.BasicConfiguration;
@@ -124,8 +127,26 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    }
 
    @Override
+   public void reindexCache(String name, long timeout, TimeUnit timeUnit) throws HotRodClientException {
+      long timeoutMillis = timeUnit.toMillis(timeout);
+      HotRodOperation<String> op = new TimeoutHotRodOperation<>(
+            operationsFactory.executeOperation("@@cache@reindex", Collections.singletonMap(CACHE_NAME, string(name))),
+            timeoutMillis);
+      Util.await(operationDispatcher.execute(op), timeoutMillis);
+   }
+
+   @Override
    public void updateIndexSchema(String name) throws HotRodClientException {
       operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@updateindexschema", Collections.singletonMap(CACHE_NAME, string(name)))));
+   }
+
+   @Override
+   public void updateIndexSchema(String name, long timeout, TimeUnit timeUnit) throws HotRodClientException {
+      long timeoutMillis = timeUnit.toMillis(timeout);
+      HotRodOperation<String> op = new TimeoutHotRodOperation<>(
+            operationsFactory.executeOperation("@@cache@updateindexschema", Collections.singletonMap(CACHE_NAME, string(name))),
+            timeoutMillis);
+      Util.await(operationDispatcher.execute(op), timeoutMillis);
    }
 
    @Override

@@ -399,22 +399,32 @@ public class RestCacheClientJDK implements RestCacheClient {
 
    @Override
    public CompletionStage<RestResponse> reindex() {
-      return executeIndexOperation("reindex", false);
+      return executeIndexOperation("reindex", false, null);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> startReindex() {
+      return executeIndexOperation("reindex", false, "async");
    }
 
    @Override
    public CompletionStage<RestResponse> reindexLocal() {
-      return executeIndexOperation("reindex", true);
+      return executeIndexOperation("reindex", true, null);
    }
 
    @Override
    public CompletionStage<RestResponse> clearIndex() {
-      return executeIndexOperation("clear", false);
+      return executeIndexOperation("clear", false, null);
    }
 
    @Override
    public CompletionStage<RestResponse> updateIndexSchema() {
-      return executeIndexOperation("updateSchema", false);
+      return executeIndexOperation("updateSchema", false, null);
+   }
+
+   @Override
+   public CompletionStage<RestResponse> startUpdateIndexSchema() {
+      return executeIndexOperation("updateSchema", false, "async");
    }
 
    @Override
@@ -432,8 +442,12 @@ public class RestCacheClientJDK implements RestCacheClient {
       return executeSearchStatOperation("query", "clear");
    }
 
-   private CompletionStage<RestResponse> executeIndexOperation(String action, boolean local) {
-      return client.post(String.format("%s/search/indexes?action=%s&local=%s", path, action, local));
+   private CompletionStage<RestResponse> executeIndexOperation(String action, boolean local, String mode) {
+      String url = String.format("%s/search/indexes?action=%s&local=%s", path, action, local);
+      if (mode != null) {
+         url += "&mode=" + mode;
+      }
+      return client.post(url);
    }
 
    private CompletionStage<RestResponse> executeSearchStatOperation(String type, String action) {

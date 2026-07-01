@@ -472,6 +472,12 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> reindex();
 
    /**
+    * Starts a reindex of the cache and returns immediately.
+    * The reindex operation continues in the background on the server.
+    */
+   CompletionStage<RestResponse> startReindex();
+
+   /**
     * Same as {@link #reindex()} but only considers data from the local cluster member.
     */
    CompletionStage<RestResponse> reindexLocal();
@@ -485,6 +491,12 @@ public interface RestCacheClient {
     * Update index schema for the current cache.
     */
    CompletionStage<RestResponse> updateIndexSchema();
+
+   /**
+    * Starts an index schema update for the current cache and returns immediately.
+    * The update operation continues in the background on the server.
+    */
+   CompletionStage<RestResponse> startUpdateIndexSchema();
 
    /**
     * Obtain statistics about queries.

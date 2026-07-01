@@ -7,6 +7,7 @@ import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
 import org.aesh.command.GroupCommandDefinition;
 import org.aesh.command.option.Argument;
+import org.aesh.command.option.Option;
 import org.infinispan.cli.activators.ConnectionActivator;
 import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.completers.CacheCompleter;
@@ -37,10 +38,12 @@ public class Index extends CliCommand {
       @Argument(description = "Specifies which cache to reindex.", completer = CacheCompleter.class, required = true)
       String cache;
 
+      @Option(name = "async", hasValue = false, description = "Performs the reindex asynchronously. The command returns immediately and the reindex operation continues in the background.")
+      boolean async;
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
-         return client.cache(cache).reindex();
+         return async ? client.cache(cache).startReindex() : client.cache(cache).reindex();
       }
    }
 
@@ -63,10 +66,12 @@ public class Index extends CliCommand {
       @Argument(description = "Specifies which cache to update its index schema.", completer = CacheCompleter.class, required = true)
       String cache;
 
+      @Option(name = "async", hasValue = false, description = "Performs the update asynchronously. The command returns immediately and the update operation continues in the background.")
+      boolean async;
 
       @Override
       protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
-         return client.cache(cache).updateIndexSchema();
+         return async ? client.cache(cache).startUpdateIndexSchema() : client.cache(cache).updateIndexSchema();
       }
    }
 
