@@ -42,6 +42,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.security.Security;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.testing.TestResourceTracker;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.Log;
@@ -95,6 +96,8 @@ public class TestCacheManagerFactory {
          defaultCacheManager = new DefaultCacheManager(gcb.build(), start);
       }
       TestResourceTracker.addResource(new CacheManagerCleaner(defaultCacheManager));
+      if (start)
+         TestingUtil.awaitCacheStartup(defaultCacheManager);
       return defaultCacheManager;
    }
 
@@ -106,6 +109,8 @@ public class TestCacheManagerFactory {
       setNodeName(gcb);
       checkJmx(gcb.build());
       DefaultCacheManager defaultCacheManager = new DefaultCacheManager(holder, start);
+      if (start)
+         TestingUtil.awaitCacheStartup(defaultCacheManager);
       TestResourceTracker.addResource(new CacheManagerCleaner(defaultCacheManager));
       return defaultCacheManager;
    }
