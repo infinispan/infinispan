@@ -4,10 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.ToLongBiFunction;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.stat.HeavyKeeper;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
@@ -28,17 +29,14 @@ import org.infinispan.server.resp.commands.MurmurHash64;
 @ProtoTypeId(ProtoStreamTypeIds.RESP_TOP_K)
 public final class TopK {
 
+   private static final ToLongBiFunction<WrappedByteArray, Integer> HASH_FUNCTION =
+         (wba, seed) -> MurmurHash64.hash(wba.getBytes(), seed);
+
    public static final int DEFAULT_WIDTH = 8;
    public static final int DEFAULT_DEPTH = 7;
    public static final double DEFAULT_DECAY = 0.9;
 
-   private final int k;
-   private final int width;
-   private final int depth;
-   private final double decay;
-   private final long[][] fingerprints;
-   private final long[][] counters;
-   private final Map<WrappedByteArray, Long> topItems;
+   private final Holder holder;
 
    /**
     * Creates a Top-K filter with specified parameters.
@@ -49,24 +47,14 @@ public final class TopK {
     * @param decay decay constant for probabilistic aging
     */
    public TopK(int k, int width, int depth, double decay) {
-      this.k = k;
-      this.width = width;
-      this.depth = depth;
-      this.decay = decay;
-      this.fingerprints = new long[depth][width];
-      this.counters = new long[depth][width];
-      this.topItems = new HashMap<>();
+      this.holder = new Holder(k, width, depth, decay, HASH_FUNCTION);
    }
 
    @ProtoFactory
    TopK(int k, int width, int depth, double decay, long[] flatCounters,
          List<TopKEntry> entries, long[] flatFingerprints) {
-      this.k = k;
-      this.width = width;
-      this.depth = depth;
-      this.decay = decay;
-      this.fingerprints = new long[depth][width];
-      this.counters = new long[depth][width];
+      long[][] fingerprints = new long[depth][width];
+      long[][] counters = new long[depth][width];
       if (flatCounters != null) {
          for (int i = 0; i < depth && i * width < flatCounters.length; i++) {
             for (int j = 0; j < width && i * width + j < flatCounters.length; j++) {
@@ -81,63 +69,49 @@ public final class TopK {
             }
          }
       }
-      this.topItems = new HashMap<>();
+      Map<WrappedByteArray, Long> topItems = new HashMap<>();
       if (entries != null) {
          for (TopKEntry entry : entries) {
             topItems.put(new WrappedByteArray(entry.getItem()), entry.getCount());
          }
       }
+
+      this.holder = new Holder(k, width, depth, decay, HASH_FUNCTION, fingerprints, counters, topItems);
    }
 
    @ProtoField(number = 1, defaultValue = "10")
    public int getK() {
-      return k;
+      return holder.getK();
    }
 
    @ProtoField(number = 2, defaultValue = "8")
    public int getWidth() {
-      return width;
+      return holder.getWidth();
    }
 
    @ProtoField(number = 3, defaultValue = "7")
    public int getDepth() {
-      return depth;
+      return holder.getDepth();
    }
 
    @ProtoField(number = 4, defaultValue = "0.9")
    public double getDecay() {
-      return decay;
+      return holder.getDecay();
    }
 
    @ProtoField(number = 5)
    public long[] getFlatCounters() {
-      long[] flat = new long[depth * width];
-      for (int i = 0; i < depth; i++) {
-         for (int j = 0; j < width; j++) {
-            flat[i * width + j] = counters[i][j];
-         }
-      }
-      return flat;
+      return holder.getFlatCounters();
    }
 
    @ProtoField(number = 6)
    public List<TopKEntry> getEntries() {
-      List<TopKEntry> entries = new ArrayList<>();
-      for (Map.Entry<WrappedByteArray, Long> e : topItems.entrySet()) {
-         entries.add(new TopKEntry(e.getKey().getBytes(), e.getValue()));
-      }
-      return entries;
+      return holder.getEntries();
    }
 
    @ProtoField(number = 7)
    public long[] getFlatFingerprints() {
-      long[] flat = new long[depth * width];
-      for (int i = 0; i < depth; i++) {
-         for (int j = 0; j < width; j++) {
-            flat[i * width + j] = fingerprints[i][j];
-         }
-      }
-      return flat;
+      return holder.getFlatFingerprints();
    }
 
    /**
@@ -147,7 +121,8 @@ public final class TopK {
     * @return the expelled item bytes, or null if no item was expelled
     */
    public byte[] add(byte[] item) {
-      return incrBy(item, 1);
+      WrappedByteArray wba = holder.add(new WrappedByteArray(item));
+      return wba != null ? wba.getBytes() : null;
    }
 
    /**
@@ -167,61 +142,8 @@ public final class TopK {
     */
    public byte[] incrBy(byte[] item, long increment) {
       WrappedByteArray wrappedItem = new WrappedByteArray(item);
-      long fp = MurmurHash64.hash(item, 0);
-      long hash2 = MurmurHash64.hash(item, (int) fp);
-
-      // Phase 1: HeavyKeeper CMS update
-      for (int i = 0; i < depth; i++) {
-         int idx = getIndex(fp, hash2, i);
-         if (counters[i][idx] == 0) {
-            fingerprints[i][idx] = fp;
-            counters[i][idx] = increment;
-         } else if (fingerprints[i][idx] == fp) {
-            counters[i][idx] += increment;
-         } else {
-            double prob = Math.pow(decay, counters[i][idx]);
-            if (ThreadLocalRandom.current().nextDouble() < prob) {
-               counters[i][idx]--;
-               if (counters[i][idx] == 0) {
-                  fingerprints[i][idx] = fp;
-                  counters[i][idx] = increment;
-               }
-            }
-         }
-      }
-
-      // Phase 2: update top-k
-      if (topItems.containsKey(wrappedItem)) {
-         topItems.merge(wrappedItem, increment, Long::sum);
-         return null;
-      }
-
-      long estimatedCount = getMaxMatchingCount(fp, hash2);
-      if (estimatedCount == 0) {
-         return null;
-      }
-
-      if (topItems.size() < k) {
-         topItems.put(wrappedItem, estimatedCount);
-         return null;
-      }
-
-      WrappedByteArray minItem = null;
-      long minCount = Long.MAX_VALUE;
-      for (Map.Entry<WrappedByteArray, Long> e : topItems.entrySet()) {
-         if (e.getValue() < minCount) {
-            minCount = e.getValue();
-            minItem = e.getKey();
-         }
-      }
-
-      if (minItem != null && estimatedCount > minCount) {
-         topItems.remove(minItem);
-         topItems.put(wrappedItem, estimatedCount);
-         return minItem.getBytes();
-      }
-
-      return null;
+      WrappedByteArray res = holder.incrBy(wrappedItem, increment);
+      return res != null ? res.getBytes() : null;
    }
 
    /**
@@ -229,21 +151,14 @@ public final class TopK {
     */
    public long getCount(byte[] item) {
       WrappedByteArray wrappedItem = new WrappedByteArray(item);
-      Long count = topItems.get(wrappedItem);
-      if (count != null) {
-         return count;
-      }
-
-      long fp = MurmurHash64.hash(item, 0);
-      long hash2 = MurmurHash64.hash(item, (int) fp);
-      return getMaxMatchingCount(fp, hash2);
+      return holder.getCount(wrappedItem);
    }
 
    /**
     * Checks if an item is in the Top-K.
     */
    public boolean query(byte[] item) {
-      return topItems.containsKey(new WrappedByteArray(item));
+      return holder.query(new WrappedByteArray(item));
    }
 
    /**
@@ -253,33 +168,14 @@ public final class TopK {
     * @return list of items (byte[]) and optionally counts (Long)
     */
    public List<Object> list(boolean withCount) {
-      List<Map.Entry<WrappedByteArray, Long>> sorted = new ArrayList<>(topItems.entrySet());
-      sorted.sort((a, b) -> Long.compare(b.getValue(), a.getValue()));
-
       List<Object> result = new ArrayList<>();
-      for (Map.Entry<WrappedByteArray, Long> e : sorted) {
-         result.add(e.getKey().getBytes());
+      for (HeavyKeeper.KeyFrequency<WrappedByteArray> item : holder.list()) {
+         result.add(item.key().getBytes());
          if (withCount) {
-            result.add(e.getValue());
+            result.add(item.count());
          }
       }
       return result;
-   }
-
-   private long getMaxMatchingCount(long fp, long hash2) {
-      long maxCount = 0;
-      for (int i = 0; i < depth; i++) {
-         int idx = getIndex(fp, hash2, i);
-         if (fingerprints[i][idx] == fp) {
-            maxCount = Math.max(maxCount, counters[i][idx]);
-         }
-      }
-      return maxCount;
-   }
-
-   private int getIndex(long hash1, long hash2, int row) {
-      long combinedHash = hash1 + (long) row * hash2;
-      return (int) (Math.abs(combinedHash) % width);
    }
 
    /**
@@ -304,6 +200,49 @@ public final class TopK {
       @ProtoField(number = 2, defaultValue = "0")
       public long getCount() {
          return count;
+      }
+   }
+
+   private static final class Holder extends HeavyKeeper<WrappedByteArray> {
+
+      public Holder(int k, int width, int depth, double decay, ToLongBiFunction<WrappedByteArray, Integer> hash) {
+         super(k, width, depth, decay, hash);
+      }
+
+      Holder(int k, int width, int depth, double decay, ToLongBiFunction<WrappedByteArray, Integer> hash,
+             long[][] fingerprints, long[][] counters, Map<WrappedByteArray, Long> topItems) {
+         super(k, width, depth, decay, hash, fingerprints, counters, topItems);
+      }
+
+      public long[] getFlatCounters() {
+         int depth = getDepth();
+         int width = getWidth();
+         long[][] counters = counters();
+         long[] flat = new long[depth * width];
+         for (int i = 0; i < depth; i++) {
+            System.arraycopy(counters[i], 0, flat, i * width, width);
+         }
+         return flat;
+      }
+
+      public long[] getFlatFingerprints() {
+         int depth = getDepth();
+         int width = getWidth();
+         long[][] fingerprints = fingerprints();
+         long[] flat = new long[depth * width];
+         for (int i = 0; i < depth; i++) {
+            System.arraycopy(fingerprints[i], 0, flat, i * width, width);
+         }
+         return flat;
+      }
+
+      public List<TopKEntry> getEntries() {
+         List<TopKEntry> entries = new ArrayList<>();
+         for (Map.Entry<WrappedByteArray, Long> e : topItems().entrySet()) {
+            WrappedByteArray item = e.getKey();
+            entries.add(new TopKEntry(item.getBytes(), e.getValue()));
+         }
+         return entries;
       }
    }
 }
