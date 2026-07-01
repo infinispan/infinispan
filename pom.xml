@@ -2815,6 +2815,10 @@
                         <exclude>org/infinispan/cli/benchmark/jmh_generated/**</exclude>
                         <exclude>org/infinispan/query/objectfilter/impl/ql/parse/**</exclude>
                         <exclude>org/infinispan/server/hotrod/HotRodDecoder.class</exclude>
+                        <exclude>org/infinispan/server/memcached/binary/BinaryOpDecoderImpl.class</exclude>
+                        <exclude>org/infinispan/server/memcached/binary/BinaryAuthDecoderImpl.class</exclude>
+                        <exclude>org/infinispan/server/memcached/text/TextOpDecoderImpl.class</exclude>
+                        <exclude>org/infinispan/server/memcached/text/TextAuthDecoderImpl.class</exclude>
                         <exclude>**/*$___Marshaller_*.class</exclude>
                         <exclude>org/infinispan/**/test/**</exclude>
                      </excludes>
