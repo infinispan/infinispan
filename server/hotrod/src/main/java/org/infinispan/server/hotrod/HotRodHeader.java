@@ -131,6 +131,9 @@ public class HotRodHeader implements InfinispanSpanContext {
       if (op.canSkipIndexing() && hasFlag(ProtocolFlag.SkipIndexing)) {
          flags.add(Flag.SKIP_INDEXING);
       }
+      if (op.canPeek() && hasFlag(ProtocolFlag.Peek)) {
+         flags.add(Flag.PEEK);
+      }
       if (!hasFlag(ProtocolFlag.ForceReturnPreviousValue)) {
          if (op.isNotConditionalAndCanReturnPrevious()) {
             flags.add(Flag.IGNORE_RETURN_VALUES);

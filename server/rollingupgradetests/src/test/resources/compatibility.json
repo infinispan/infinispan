@@ -1,6 +1,32 @@
 {
   "compatibility": [
     {
+      "version-from": "[16.0,16.3)",
+      "version-to": "[16.3,)",
+      "exceptions": [
+        {
+          "description": "Peek flag does not exist in older server versions",
+          "issue": "https://github.com/infinispan/infinispan/issues/17532",
+          "test-failures": [
+            {
+              "test-class": "org.infinispan.server.functional.hotrod.HotRodPeekOperations",
+              "test-methods": [
+                "testPeekDoesNotResetMaxIdle"
+              ]
+            },
+            {
+              "test-class": "org.infinispan.server.functional.rest.RestPeekOperations",
+              "test-methods": [
+                "testGetWithPeekReturnsValue",
+                "testGetWithPeekNonExistentKey",
+                "testGetWithPeekDoesNotResetMaxIdle"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version-from": "[16.0,16.1)",
       "version-to": "[16.1,)",
       "properties": {
