@@ -155,7 +155,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
+      - name: Check SBOM availability
+        id: sbom-check
+        run: |
+          if [ -f distribution/target/bom.json ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Attach SBOM
+        if: steps.sbom-check.outputs.exists == 'true'
         run: |
           gh release upload ${{ steps.resolve-versions.outputs.RELEASE_VERSION }} "distribution/target/bom.json#infinispan-sbom-${{ steps.resolve-versions.outputs.RELEASE_VERSION }}.cdx.json"
         env:
@@ -167,6 +175,7 @@ jobs:
           subject-path: distribution/target/distribution/infinispan-server-${{ steps.resolve-versions.outputs.RELEASE_VERSION }}.zip
 
       - name: Attest SBOM
+        if: steps.sbom-check.outputs.exists == 'true'
         uses: actions/attest-sbom@v2
         with:
           subject-path: distribution/target/distribution/infinispan-server-${{ steps.resolve-versions.outputs.RELEASE_VERSION }}.zip
