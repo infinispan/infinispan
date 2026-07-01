@@ -251,6 +251,17 @@ public class GlobalConfiguration {
       return cacheContainerConfiguration.containerMemoryConfiguration();
    }
 
+   /**
+    * Finds a mutable attribute by dotted path (e.g., "metrics.accurate-size").
+    *
+    * @param name the dotted attribute path
+    * @return the attribute
+    * @throws IllegalArgumentException if the attribute is not found
+    */
+   public org.infinispan.commons.configuration.attributes.Attribute<?> findAttribute(String name) {
+      return cacheContainerConfiguration.findAttribute(name);
+   }
+
    @Override
    public String toString() {
       return "GlobalConfiguration{" +

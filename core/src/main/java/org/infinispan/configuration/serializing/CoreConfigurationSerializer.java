@@ -575,6 +575,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          attributes.write(writer, GlobalMetricsConfiguration.HISTOGRAMS, Attribute.HISTOGRAMS);
          attributes.write(writer, GlobalMetricsConfiguration.PREFIX, Attribute.PREFIX);
          attributes.write(writer, GlobalMetricsConfiguration.NAMES_AS_TAGS, Attribute.NAMES_AS_TAGS);
+         attributes.write(writer, GlobalMetricsConfiguration.ACCURATE_SIZE, Attribute.ACCURATE_SIZE);
          attributes.write(writer, GlobalMetricsConfiguration.JVM, Attribute.JVM);
          attributes.write(writer, GlobalMetricsConfiguration.LEGACY, Attribute.LEGACY);
          writer.writeEndElement();

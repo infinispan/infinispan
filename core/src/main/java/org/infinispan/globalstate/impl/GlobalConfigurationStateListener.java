@@ -1,6 +1,7 @@
 package org.infinispan.globalstate.impl;
 
 import static org.infinispan.globalstate.impl.GlobalConfigurationManagerImpl.CACHE_SCOPE;
+import static org.infinispan.globalstate.impl.GlobalConfigurationManagerImpl.CONTAINER_SCOPE;
 import static org.infinispan.globalstate.impl.GlobalConfigurationManagerImpl.isKnownScope;
 import static org.infinispan.util.logging.Log.CONTAINER;
 
@@ -40,6 +41,9 @@ public class GlobalConfigurationStateListener {
       if (!isKnownScope(scope))
          return CompletableFutures.completedNull();
 
+      if (CONTAINER_SCOPE.equals(scope))
+         return gcm.updateGlobalConfigurationLocally(event.getValue());
+
       String name = event.getKey().getName();
       CacheState state = event.getValue();
       if (CACHE_SCOPE.equals(scope)) {
@@ -60,6 +64,13 @@ public class GlobalConfigurationStateListener {
       if (!isKnownScope(scope))
          return CompletableFutures.completedNull();
 
+      if (CONTAINER_SCOPE.equals(scope)) {
+         if (event.isPre()) {
+            return CompletableFutures.completedNull();
+         }
+         return gcm.updateGlobalConfigurationLocally(event.getNewValue());
+      }
+
       String name = event.getKey().getName();
       CacheState state = event.getNewValue();
       if (event.isPre()) {
@@ -76,6 +87,9 @@ public class GlobalConfigurationStateListener {
          return CompletableFutures.completedNull();
       String scope = event.getKey().getScope();
       if (!isKnownScope(scope))
+         return CompletableFutures.completedNull();
+
+      if (CONTAINER_SCOPE.equals(scope))
          return CompletableFutures.completedNull();
 
       String name = event.getKey().getName();

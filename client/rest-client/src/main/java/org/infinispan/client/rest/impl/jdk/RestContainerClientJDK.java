@@ -194,6 +194,23 @@ public class RestContainerClientJDK implements RestContainerClient {
       return client.post(path + "?action=" + action);
    }
 
+   @Override
+   public CompletionStage<RestResponse> globalConfigurationAttributes(boolean full) {
+      return client.get(path + "/config?action=get-mutable-attributes" + (full ? "&full=true" : ""));
+   }
+
+   @Override
+   public CompletionStage<RestResponse> updateGlobalConfigurationAttribute(String attribute, String... value) {
+      StringBuilder sb = new StringBuilder(path + "/config");
+      sb.append("?action=set-mutable-attribute&attribute-name=");
+      sb.append(sanitize(attribute));
+      for (String v : value) {
+         sb.append("&attribute-value=");
+         sb.append(sanitize(v));
+      }
+      return client.post(sb.toString());
+   }
+
    private String backup(String name) {
       return path + "/backups/" + sanitize(name);
    }

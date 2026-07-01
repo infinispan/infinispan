@@ -289,6 +289,9 @@ public class CacheContainerConfigurationBuilder extends AbstractGlobalConfigurat
       this.shutdown.read(template.shutdown(), combine);
       this.threads.read(template.threads(), combine);
       this.security.read(template.security(), combine);
+      for (Map.Entry<String, ContainerMemoryConfiguration> entry : template.containerMemoryConfiguration().entrySet()) {
+         this.containerMemoryConfiguration(entry.getKey()).read(entry.getValue(), combine);
+      }
       return this;
    }
 }

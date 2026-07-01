@@ -191,6 +191,37 @@ class CacheContainerConfiguration {
       return memoryContainers;
    }
 
+   public Attribute<?> findAttribute(String name) {
+      int sep = name.indexOf('.');
+      if (sep < 0) {
+         throw new IllegalArgumentException("No attribute '" + name + "' in 'container'");
+      }
+      String part = name.substring(0, sep);
+      String remainder = name.substring(sep + 1);
+      AttributeSet childAttributes = switch (part) {
+         case "metrics" -> metrics.attributes();
+         case "tracing" -> tracing.attributes();
+         case "container-memory" -> {
+            int sep2 = remainder.indexOf('.');
+            if (sep2 < 0) {
+               throw new IllegalArgumentException("No attribute '" + name + "' in 'container'");
+            }
+            String containerName = remainder.substring(0, sep2);
+            ContainerMemoryConfiguration container = memoryContainers.get(containerName);
+            if (container == null) {
+               throw new IllegalArgumentException("No container-memory '" + containerName + "' in 'container'");
+            }
+            remainder = remainder.substring(sep2 + 1);
+            yield container.attributes();
+         }
+         default -> throw new IllegalArgumentException("No attribute '" + name + "' in 'container'");
+      };
+      if (!childAttributes.contains(remainder)) {
+         throw new IllegalArgumentException("No attribute '" + remainder + "' in '" + part + "'");
+      }
+      return childAttributes.attribute(remainder);
+   }
+
    @Override
    public String toString() {
       return "CacheContainerConfiguration{" +
