@@ -6,10 +6,14 @@ import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXEC
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -17,6 +21,8 @@ import java.util.function.Consumer;
 
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.ComponentName;
@@ -56,6 +62,8 @@ public class DefaultPendingLockManager implements PendingLockManager {
    @Inject @ComponentName(TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService timeoutExecutor;
 
+   private final Map<Object, SharedPendingSignal> activeSignals = new ConcurrentHashMap<>();
+
    public DefaultPendingLockManager() {
    }
 
@@ -69,8 +77,35 @@ public class DefaultPendingLockManager implements PendingLockManager {
          }
          return PendingLockPromise.NO_OP;
       }
-      return createPromise(getTransactionWithLockedKey(txTopologyId, key, globalTransaction), globalTransaction, time,
-                           unit);
+
+      SharedPendingSignal signal = activeSignals.get(key);
+      if (signal != null && signal.isDone()) {
+         activeSignals.remove(key, signal);
+         signal = null;
+      }
+
+      if (signal == null) {
+         signal = activeSignals.computeIfAbsent(key, k-> {
+            Collection<PendingTransaction> transactions = getTransactionWithLockedKey(txTopologyId, k, globalTransaction);
+            if (transactions.isEmpty())
+               return null;
+
+            return createSharedSignal(transactions);
+         });
+
+         if (signal != null) {
+            final SharedPendingSignal s = signal;
+            signal.onComplete(() -> activeSignals.remove(key, s));
+         }
+      }
+
+      if (signal == null || signal.isDone() || signal.isOnlyPendingFor(globalTransaction)) {
+         return PendingLockPromise.NO_OP;
+      }
+
+      PendingLockPromiseImpl pendingLockPromise = new PendingLockPromiseImpl(globalTransaction, time, unit);
+      signal.addWaiter(pendingLockPromise);
+      return pendingLockPromise;
    }
 
    @Override
@@ -84,26 +119,35 @@ public class DefaultPendingLockManager implements PendingLockManager {
          }
          return PendingLockPromise.NO_OP;
       }
-      return createPromise(getTransactionWithAnyLockedKey(txTopologyId, keys, globalTransaction), globalTransaction,
-                           time, unit);
+
+      if (keys.size() == 1)
+         return checkPendingTransactionsForKey(ctx, keys.iterator().next(), time, unit);
+
+      List<PendingLockPromise> pending = null;
+      for (Object key : keys) {
+         PendingLockPromise promise = checkPendingTransactionsForKey(ctx, key, time, unit);
+         if (promise == PendingLockPromise.NO_OP)
+            continue;
+
+         if (pending == null)
+            pending = new ArrayList<>();
+
+         pending.add(promise);
+      }
+
+      if (pending == null)
+         return PendingLockPromise.NO_OP;
+
+      if (pending.size() == 1)
+         return pending.get(0);
+
+      return new CompositePendingLockPromise(pending, time, unit);
    }
 
-   private PendingLockPromise createPromise(Collection<PendingTransaction> transactions,
-                                            GlobalTransaction globalTransaction, long time, TimeUnit unit) {
-      if (transactions.isEmpty()) {
-         if (log.isTraceEnabled()) {
-            log.tracef("No transactions pending for transaction %s", globalTransaction);
-         }
-         return PendingLockPromise.NO_OP;
-      }
-
-      if (log.isTraceEnabled()) {
-         log.tracef("Transactions pending for transaction %s are %s", globalTransaction, transactions);
-      }
-      PendingLockPromiseImpl pendingLockPromise = new PendingLockPromiseImpl(globalTransaction, time, unit, transactions);
-      pendingLockPromise.scheduleTimeoutTask();
-      pendingLockPromise.registerListenerInCacheTransactions();
-      return pendingLockPromise;
+   private SharedPendingSignal createSharedSignal(Collection<PendingTransaction> transactions) {
+      SharedPendingSignal signal = new SharedPendingSignal(transactions);
+      signal.registerListeners();
+      return signal;
    }
 
    private int getTopologyId(TxInvocationContext<?> context) {
@@ -137,27 +181,8 @@ public class DefaultPendingLockManager implements PendingLockManager {
          if (transaction.getTopologyId() < transactionTopologyId &&
                !transaction.getGlobalTransaction().equals(globalTransaction)) {
             CompletableFuture<Void> keyReleasedFuture = transaction.getReleaseFutureForKey(key);
-            if (keyReleasedFuture != null) {
+            if (keyReleasedFuture != null && !keyReleasedFuture.isDone()) {
                pendingTransactions.add(new PendingTransaction(transaction, Collections.singletonMap(key, keyReleasedFuture)));
-            }
-         }
-      });
-      return pendingTransactions.isEmpty() ? Collections.emptyList() : pendingTransactions;
-   }
-
-   private Collection<PendingTransaction> getTransactionWithAnyLockedKey(int transactionTopologyId,
-                                                                         Collection<Object> keys,
-                                                                         GlobalTransaction globalTransaction) {
-      if (keys.isEmpty()) {
-         return Collections.emptyList();
-      }
-      final Collection<PendingTransaction> pendingTransactions = new ArrayList<>();
-      forEachTransaction(transaction -> {
-         if (transaction.getTopologyId() < transactionTopologyId &&
-               !transaction.getGlobalTransaction().equals(globalTransaction)) {
-            Map<Object, CompletableFuture<Void>> keyReleaseFuture = transaction.getReleaseFutureForKeys(keys);
-            if (keyReleaseFuture != null) {
-               pendingTransactions.add(new PendingTransaction(transaction, keyReleaseFuture));
             }
          }
       });
@@ -180,16 +205,6 @@ public class DefaultPendingLockManager implements PendingLockManager {
       }
    }
 
-   private static long awaitOn(PendingLockPromise pendingLockPromise, GlobalTransaction globalTransaction, long timeout, TimeUnit timeUnit)
-         throws InterruptedException {
-      if (pendingLockPromise == PendingLockPromise.NO_OP) {
-         return timeUnit.toMillis(timeout);
-      }
-      assert pendingLockPromise instanceof PendingLockPromiseImpl;
-      ((PendingLockPromiseImpl) pendingLockPromise).await();
-      return pendingLockPromise.getRemainingTimeout();
-   }
-
    private static class PendingTransaction {
       private final CacheTransaction cacheTransaction;
       private final Map<Object, CompletableFuture<Void>> keyReleased;
@@ -208,7 +223,13 @@ public class DefaultPendingLockManager implements PendingLockManager {
       }
 
       void afterCompleted(Runnable runnable) {
-         keyReleased.values().forEach(voidCompletableFuture -> voidCompletableFuture.thenRun(runnable));
+         for (CompletableFuture<Void> cf : keyReleased.values()) {
+            if (!cf.isDone()) {
+               cf.thenRun(runnable);
+            }
+         }
+
+         runnable.run();
       }
 
       KeyValuePair<CacheTransaction, Object> findUnreleasedKey() {
@@ -221,21 +242,147 @@ public class DefaultPendingLockManager implements PendingLockManager {
       }
    }
 
-   private class PendingLockPromiseImpl implements PendingLockPromise, Callable<Void>, Runnable {
-      private final GlobalTransaction globalTransaction;
-      private final long timeoutNanos;
+   private class SharedPendingSignal implements Runnable {
 
       private final Collection<PendingTransaction> pendingTransactions;
+      private final Queue<PendingLockPromiseImpl> waiters;
+
+      // All the values are read/written by different "requester" threads and by the timeout cleanup.
+      private volatile Runnable onComplete = null;
+      private volatile ScheduledFuture<?> timeoutTask;
+      private volatile boolean completed;
+
+      public SharedPendingSignal(Collection<PendingTransaction> pendingTransactions) {
+         this.pendingTransactions = pendingTransactions;
+         this.waiters = new ConcurrentLinkedDeque<>();
+      }
+
+      public void addWaiter(PendingLockPromiseImpl waiter) {
+         waiters.add(waiter);
+         if (completed) {
+            waiter.complete();
+            return;
+         }
+         scheduleNextTimeout();
+      }
+
+      public void onComplete(Runnable runnable) {
+         this.onComplete = runnable;
+         if (isDone())
+            onComplete.run();
+      }
+
+      private void scheduleNextTimeout() {
+         // Waiters have the same timeout and arrive in any order.
+         // The first one to arrive is most likely one to timeout next.
+         // We schedule a single timeout for the first one, then we timeout everything until the un-expired waiter.
+         PendingLockPromiseImpl head = waiters.peek();
+         if (head == null)
+            return;
+
+         ScheduledFuture<?> curr = timeoutTask;
+         if (curr != null && !curr.isDone())
+            return;
+
+         scheduleNextTimeout(head);
+      }
+
+      private void checkTimeouts() {
+         if (completed)
+            return;
+
+         PendingLockPromiseImpl head;
+         while ((head = waiters.peek()) != null) {
+
+            // If not expired yet, we schedule the timeout operation only for the head and leave.
+            if (!timeService.isTimeExpired(head.expectedEndTime)) {
+               scheduleNextTimeout(head);
+               return;
+            }
+
+            // If the head has expired, we consume the queue until finding the first non-expired entry.
+            waiters.poll();
+            if (!head.notifier.isDone()) {
+               KeyValuePair<CacheTransaction, Object> unreleased = findUnreleasedKey();
+               if (unreleased != null) {
+                  head.timeout(unreleased);
+               } else {
+                  head.complete();
+               }
+            }
+         }
+      }
+
+      public boolean isOnlyPendingFor(GlobalTransaction gtx) {
+         for (PendingTransaction tx : pendingTransactions) {
+            if (tx.findUnreleasedKey() != null && !Objects.equals(gtx, tx.cacheTransaction.getGlobalTransaction()))
+               return false;
+         }
+
+         return true;
+      }
+
+      private void scheduleNextTimeout(PendingLockPromiseImpl head) {
+         long remaining = timeService.remainingTime(head.expectedEndTime, TimeUnit.NANOSECONDS);
+         timeoutTask = timeoutExecutor.schedule(this::checkTimeouts, remaining, TimeUnit.NANOSECONDS);
+      }
+
+      @Override
+      public void run() {
+         if (completed)
+            return;
+
+         for (PendingTransaction tx : pendingTransactions) {
+            if (tx.findUnreleasedKey() != null)
+               return;
+         }
+
+         completed = true;
+
+         ScheduledFuture<?> t = timeoutTask;
+         if (t != null)
+            t.cancel(false);
+
+         PendingLockPromiseImpl plpi;
+         while ((plpi = waiters.poll()) != null) {
+            plpi.complete();
+         }
+
+         if (onComplete != null)
+            onComplete.run();
+      }
+
+      public boolean isDone() {
+         return completed;
+      }
+
+      public KeyValuePair<CacheTransaction, Object> findUnreleasedKey() {
+         for (PendingTransaction tx : pendingTransactions) {
+            KeyValuePair<CacheTransaction, Object> waiting = tx.findUnreleasedKey();
+            if (waiting != null)
+               return waiting;
+         }
+
+         return null;
+      }
+
+      public void registerListeners() {
+         for (PendingTransaction tx : pendingTransactions) {
+            tx.afterCompleted(this);
+         }
+      }
+   }
+
+   private class PendingLockPromiseImpl implements PendingLockPromise {
+
+      private final GlobalTransaction globalTransaction;
+      private final long timeoutNanos;
       private final long expectedEndTime;
       private final CompletableFuture<Void> notifier;
-      private ScheduledFuture<Void> timeoutTask;
 
-      private PendingLockPromiseImpl(GlobalTransaction globalTransaction,
-                                     long timeout, TimeUnit timeUnit,
-                                     Collection<PendingTransaction> pendingTransactions) {
+      private PendingLockPromiseImpl(GlobalTransaction globalTransaction, long timeout, TimeUnit timeUnit) {
          this.globalTransaction = globalTransaction;
          this.timeoutNanos = timeUnit.toNanos(timeout);
-         this.pendingTransactions = pendingTransactions;
          this.expectedEndTime = timeService.expectedEndTime(timeoutNanos, TimeUnit.NANOSECONDS);
          this.notifier = new CompletableFuture<>();
       }
@@ -266,70 +413,64 @@ public class DefaultPendingLockManager implements PendingLockManager {
       }
 
       @Override
-      public Void call() throws Exception {
-         //invoked when the timeout kicks.
-         onRelease();
-         return null;
+      public CompletionStage<Void> toCompletionStage() {
+         return notifier;
+      }
+
+      public void timeout(KeyValuePair<CacheTransaction, Object> unreleased) {
+         log.tracef("Timed out waiting for pending unreleased %s for TX=%s", unreleased, globalTransaction);
+         notifier.completeExceptionally(DefaultPendingLockManager.timeout(unreleased, globalTransaction, timeoutNanos, TimeUnit.NANOSECONDS));
+      }
+
+      public void complete() {
+         log.tracef("All pending transactions have finished for TX=%s", globalTransaction);
+         notifier.complete(null);
+      }
+   }
+
+   private class CompositePendingLockPromise implements PendingLockPromise {
+
+      private final CompletableFuture<Void> notifier;
+      private final long expectedEndTimeNs;
+
+      public CompositePendingLockPromise(Collection<PendingLockPromise> promises, long time, TimeUnit unit) {
+         this.expectedEndTimeNs = timeService.expectedEndTime(unit.toNanos(time), TimeUnit.NANOSECONDS);
+
+         AggregateCompletionStage<Void> aggregate = CompletionStages.aggregateCompletionStage();
+         for (PendingLockPromise promise : promises) {
+            aggregate.dependsOn(promise.toCompletionStage());
+         }
+         this.notifier = aggregate.freeze().toCompletableFuture();
       }
 
       @Override
-      public void run() {
-         //invoked when a pending backup lock is released
-         onRelease();
+      public boolean isReady() {
+         return notifier.isDone();
       }
 
-      private void onRelease() {
-         KeyValuePair<CacheTransaction, Object> timedOutTransaction = null;
-         for (PendingTransaction transaction : pendingTransactions) {
-            KeyValuePair<CacheTransaction, Object> waiting = transaction.findUnreleasedKey();
-            if (waiting != null) {
-               // Found a pending transaction
-               if (timeService.isTimeExpired(expectedEndTime)) {
-                  // Timed out, complete the promise
-                  timedOutTransaction = waiting;
-                  break;
-               } else {
-                  // Not timed out, wait some more
-                  return;
-               }
-            }
-         }
-
-         if (timeoutTask != null) {
-            timeoutTask.cancel(false);
-         }
-         if (timedOutTransaction == null) {
-            if (log.isTraceEnabled()) log.tracef("All pending transactions have finished for transaction %s", globalTransaction);
-            notifier.complete(null);
-         } else {
-            if (log.isTraceEnabled()) log.tracef("Timed out waiting for pending transaction %s for transaction %s", timedOutTransaction, globalTransaction);
-            notifier.completeExceptionally(timeout(timedOutTransaction, globalTransaction, timeoutNanos, TimeUnit.NANOSECONDS));
-         }
+      @Override
+      public void addListener(PendingLockListener listener) {
+         notifier.whenComplete((v, t) -> listener.onReady());
       }
 
-      void registerListenerInCacheTransactions() {
-         for (PendingTransaction transaction : pendingTransactions) {
-            transaction.afterCompleted(this);
-         }
-         // Maybe one of the transactions has finished or removed a backup lock before we added the listener
-         onRelease();
+      @Override
+      public boolean hasTimedOut() {
+         return notifier.isCompletedExceptionally();
       }
 
-      void scheduleTimeoutTask() {
-         if (!notifier.isDone()) {
-            // schedule(Runnable) creates an extra Callable wrapper object
-            timeoutTask = timeoutExecutor.schedule((Callable<Void>) this, timeoutNanos, TimeUnit.NANOSECONDS);
-         }
+      @Override
+      public long getRemainingTimeout() {
+         return timeService.remainingTime(expectedEndTimeNs, TimeUnit.MILLISECONDS);
       }
 
-      void await() throws InterruptedException {
-         try {
-            notifier.get(timeService.remainingTime(expectedEndTime, TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
-         } catch (ExecutionException e) {
-            throw new IllegalStateException("Should never happen.", e);
-         } catch (java.util.concurrent.TimeoutException e) {
-            //ignore
-         }
+      @Override
+      public InvocationStage toInvocationStage() {
+         return new SimpleAsyncInvocationStage(notifier);
+      }
+
+      @Override
+      public CompletionStage<Void> toCompletionStage() {
+         return notifier;
       }
    }
 }
