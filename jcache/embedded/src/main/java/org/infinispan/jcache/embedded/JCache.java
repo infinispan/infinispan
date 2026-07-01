@@ -80,6 +80,8 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    private final AdvancedCache<K, V> skipListenerCache;
    private final ReadWriteMap<K, V> rwMap;
    private final ReadWriteMap<K, V> rwMapSkipCacheLoad;
+   private final ReadWriteMap<K, V> rwMapSkipCacheStore;
+   private final ReadWriteMap<K, V> rwMapSkipCacheLoadStore;
    private final RICacheStatistics stats;
    private final CacheJmxRegistration jmxRegistration;
 
@@ -90,9 +92,11 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       // Typical use cases of the SKIP_LISTENER_NOTIFICATION is when trying
       // to comply with specifications such as JSR-107, which mandate that
       // {@link Cache#clear()}} calls do not fire entry removed notifications
-      this.skipListenerCache = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION);
+      this.skipListenerCache = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION, Flag.SKIP_CACHE_STORE);
       this.rwMap = FunctionalMap.create(cache).toReadWriteMap();
       this.rwMapSkipCacheLoad = rwMap.withParams(Param.PersistenceMode.SKIP_LOAD);
+      this.rwMapSkipCacheStore = rwMap.withParams(Param.PersistenceMode.SKIP_PERSIST);
+      this.rwMapSkipCacheLoadStore = rwMap.withParams(Param.PersistenceMode.SKIP);
       this.stats = new RICacheStatistics(this.cache);
 
       jmxRegistration = cache.getCacheManager().getCacheManagerConfiguration().jmx().enabled() ?
@@ -197,6 +201,18 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       return configuration.isReadThrough() ? this.rwMap : rwMapSkipCacheLoad;
    }
 
+   private ReadWriteMap<K, V> writeMap() {
+      return configuration.isWriteThrough() ? rwMapSkipCacheLoad : rwMapSkipCacheLoadStore;
+   }
+
+   private ReadWriteMap<K, V> readWriteMap() {
+      if (configuration.isReadThrough()) {
+         return configuration.isWriteThrough() ? rwMap : rwMapSkipCacheStore;
+      } else {
+         return configuration.isWriteThrough() ? rwMapSkipCacheLoad : rwMapSkipCacheLoadStore;
+      }
+   }
+
    @Override
    public Map<K, V> getAll(Set<? extends K> keys) {
       checkNotClosed();
@@ -243,7 +259,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotNull(key, "key");
       checkNotNull(value, "value");
       try {
-         return rwMapSkipCacheLoad.eval(key, value, new GetAndPut<>()).join();
+         return writeMap().eval(key, value, new GetAndPut<>()).join();
       } catch (CompletionException e) {
          throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
@@ -257,7 +273,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotNull(key, "key");
       try {
          // We cannot use the regular remove because it does not count hit/miss statistics as JCache expects
-         return rwMapSkipCacheLoad.eval(key, GetAndRemove.getInstance()).join();
+         return writeMap().eval(key, GetAndRemove.getInstance()).join();
       } catch (CompletionException e) {
          throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
@@ -272,7 +288,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotNull(value, "value");
       try {
          checkNotNull(value, "value");
-         return rwMapSkipCacheLoad.eval(key, value, new GetAndReplace<>()).join();
+         return writeMap().eval(key, value, new GetAndReplace<>()).join();
       } catch (CompletionException e) {
          throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
@@ -302,8 +318,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotNull(key, "key");
       checkNotNull(entryProcessor, "entryProcessor");
       try {
-         ReadWriteMap<K, V> rw = configuration.isReadThrough() ? rwMap : rwMapSkipCacheLoad;
-         return rw.eval(key, new Invoke<>(entryProcessor, arguments,
+         return readWriteMap().eval(key, new Invoke<>(entryProcessor, arguments,
                !configuration.isStoreByValue())).join();
       } catch (CompletionException e) {
          throw Exceptions.launderException(e);
@@ -318,7 +333,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       verifyKeys(keys);
       checkNotNull(entryProcessor, "entryProcessor");
       try {
-         ReadWriteMap<K, V> rw = configuration.isReadThrough() ? rwMap : rwMapSkipCacheLoad;
+         ReadWriteMap<K, V> rw = readWriteMap();
          boolean storeByValue = configuration.isStoreByValue();
          // ReadWriteMap.evalMany is not that useful since it forces us to transfer keys
          // intermediary list to force all removes to be invoked before waiting for any
@@ -427,7 +442,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotNull(value, "value");
       // A normal put should not fire notifications when checking TTL
       try {
-         rwMapSkipCacheLoad.eval(key, value, new Put<>()).join();
+         writeMap().eval(key, value, new Put<>()).join();
       } catch (CompletionException e) {
          throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
@@ -445,11 +460,11 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
             // does not block the commit of other, already persisted entries
             AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
             inputMap.entrySet().stream()
-                    .map(e -> rwMap.eval(e.getKey(), e.getValue(), new Put<>()))
+                    .map(e -> writeMap().eval(e.getKey(), e.getValue(), new Put<>()))
                     .forEach(stage::dependsOn);
             CompletionStages.join(stage.freeze());
          } else {
-            rwMapSkipCacheLoad.evalMany(inputMap, new Put<>()).forEach(nil -> {});
+            writeMap().evalMany(inputMap, new Put<>()).forEach(nil -> {});
          }
       } catch (CompletionException e) {
          throw Exceptions.launderException(e);
@@ -464,7 +479,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotNull(key, "key");
       checkNotNull(value, "value");
       try {
-         return rwMapSkipCacheLoad.eval(key, value, new PutIfAbsent<>()).join();
+         return writeMap().eval(key, value, new PutIfAbsent<>()).join();
       } catch (CompletionException e) {
          throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
@@ -477,7 +492,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotClosed();
       checkNotNull(key, "key");
       try {
-         return rwMapSkipCacheLoad.eval(key, Remove.getInstance()).join();
+         return writeMap().eval(key, Remove.getInstance()).join();
       } catch (CompletionException e) {
          throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
@@ -491,7 +506,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotNull(key, "key");
       checkNotNull(oldValue, "oldValue");
       try {
-         return rwMapSkipCacheLoad.eval(key, oldValue, new RemoveConditionally<>()).join();
+         return writeMap().eval(key, oldValue, new RemoveConditionally<>()).join();
       } catch (CompletionException e) {
          throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
@@ -511,8 +526,10 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
       // Delete asynchronously and then wait for removals to complete
       AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
-      for (K key : cache.keySet()) {
-         stage.dependsOn(cache.removeAsync(key));
+      AdvancedCache<K, V> removeAllCache = configuration.isWriteThrough()
+            ? cache : cache.withFlags(Flag.SKIP_CACHE_LOAD, Flag.SKIP_CACHE_STORE);
+      for (K key : removeAllCache.keySet()) {
+         stage.dependsOn(removeAllCache.removeAsync(key));
       }
       try {
          CompletionStages.join(stage.freeze());
@@ -531,11 +548,11 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
             // does not block the commit of other, already persisted entries
             AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
             keys.stream()
-                .map(k -> rwMapSkipCacheLoad.eval(k, Remove.getInstance()))
+                .map(k -> writeMap().eval(k, Remove.getInstance()))
                 .forEach(stage::dependsOn);
             CompletionStages.join(stage.freeze());
          } else {
-            rwMapSkipCacheLoad.evalMany(keys, Remove.getInstance()).forEach(b -> {});
+            writeMap().evalMany(keys, Remove.getInstance()).forEach(b -> {});
          }
       } catch (CompletionException e) {
          throw Exceptions.launderException(e);
@@ -550,7 +567,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotNull(key, "key");
       checkNotNull(value, "value");
       try {
-         return rwMapSkipCacheLoad.eval(key, value, new Replace<>()).join();
+         return writeMap().eval(key, value, new Replace<>()).join();
       } catch (CompletionException e) {
          throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
@@ -565,7 +582,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotNull(oldValue, "oldValue");
       checkNotNull(newValue, "newValue");
       try {
-         return rwMapSkipCacheLoad.eval(key, newValue, new ReplaceConditionally<>(oldValue)).join();
+         return writeMap().eval(key, newValue, new ReplaceConditionally<>(oldValue)).join();
       } catch (CompletionException e) {
          throw Exceptions.launderException(e);
       } catch (org.infinispan.commons.CacheException e) {
