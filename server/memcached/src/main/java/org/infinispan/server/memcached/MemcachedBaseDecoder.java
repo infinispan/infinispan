@@ -20,6 +20,7 @@ import java.util.function.BiConsumer;
 import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ByRef;
 import org.infinispan.container.entries.CacheEntry;
@@ -162,9 +163,9 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
 
    protected abstract MemcachedResponse send(Header header, CompletionStage<?> response, GenericFutureListener<? extends Future<? super Void>> listener);
 
-   protected Map<byte[], byte[]> statsMap() {
+   protected Map<WrappedByteArray, byte[]> statsMap() {
       Stats stats = cache.getAdvancedCache().getStats();
-      Map<byte[], byte[]> map = new LinkedHashMap<>(35);
+      Map<WrappedByteArray, byte[]> map = new LinkedHashMap<>(35);
       map.put(MemcachedStats.MemcachedStatsKeys.PID, ParseUtil.writeAsciiLong(ProcessHandle.current().pid()));
       map.put(MemcachedStats.MemcachedStatsKeys.UPTIME, ParseUtil.writeAsciiLong(stats.getTimeSinceStart()));
       map.put(MemcachedStats.MemcachedStatsKeys.TIME, ParseUtil.writeAsciiLong(TimeUnit.MILLISECONDS.toSeconds(timeService.wallClockTime())));

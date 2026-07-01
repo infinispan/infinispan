@@ -141,7 +141,7 @@ parameters switch op
    | { INCREMENTQ }? delta initial expiration key preCommand { if (out.add(increment(header, key, delta, initial, expiration, true))) { state=0; return false; } }
    | { DECREMENT }? delta initial expiration key preCommand { if (out.add(increment(header, key, -delta, initial, expiration, false))) { state=0; return false; } }
    | { DECREMENTQ }? delta initial expiration key preCommand { if (out.add(increment(header, key, -delta, initial, expiration, true))) { state=0; return false; } }
-   | { QUIT }? { if (out.add(quit(header, false))) { state=0; return false; } }
+   | { QUIT }? { updateHeaderParameters(); if (out.add(quit(header, false))) { state=0; return false; } }
    | { QUITQ }? { quit(header, true) }
    | { FLUSH }? expiration preCommand { if (out.add(flush(header, expiration, false))) { state=0; return false; } }
    | { FLUSHQ }? expiration preCommand { flush(header, expiration, true) }
@@ -151,7 +151,7 @@ parameters switch op
    | { APPENDQ }? key value preCommand { if (out.add(append(header, key, value, true))) { state=0; return false; } }
    | { PREPEND }? key value preCommand { if (out.add(prepend(header, key, value, false))) { state=0; return false; } }
    | { PREPENDQ }? key value preCommand { if (out.add(prepend(header, key, value, true))) { state=0; return false; } }
-   | { VERBOSITY }? verbosity { if (out.add(verbosityLevel(header, verbosity))) { state=0; return false; } }
+   | { VERBOSITY }? verbosity { updateHeaderParameters(); if (out.add(verbosityLevel(header, verbosity))) { state=0; return false; } }
    | { TOUCH }? expiration key preCommand { if (out.add(touch(header, key, expiration))) { state=0; return false; } }
    | { GAT }? expiration key preCommand { if (out.add(gat(header, key, expiration, false))) { state=0; return false; } }
    | { GATQ }? expiration key preCommand { if (out.add(gat(header, key, expiration, true))) { state=0; return false; } }

@@ -273,6 +273,12 @@ public class MemcachedStatsTest extends MemcachedSingleNodeTest {
       assertClientError(resp);
    }
 
+   public void testStatsWithValidArgs() throws IOException {
+      // Requesting a specific, existing stat by name must return its value rather than CLIENT_ERROR.
+      String resp = send("stats version\r\n");
+      assertEquals("STAT version " + Version.getVersion(), resp);
+   }
+
    private Triple<Map<String, String>, Integer, Integer> getStats(int currentBytesRead, int currentBytesWritten) {
       Map<SocketAddress, Map<String, String>> globalStats = client.getStats();
       assertEquals(1, globalStats.size());
