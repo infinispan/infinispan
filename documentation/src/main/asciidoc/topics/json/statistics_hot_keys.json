@@ -1,0 +1,11 @@
+{
+  "distributed-cache": {
+    "statistics": {
+      "enabled": true,
+      "hot-keys": {
+        "enabled": true,
+        "top-k": 100
+      }
+    }
+  }
+}

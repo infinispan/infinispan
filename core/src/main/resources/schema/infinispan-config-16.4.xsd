@@ -1362,6 +1362,11 @@
           </xs:attribute>
         </xs:complexType>
       </xs:element>
+       <xs:element name="statistics" type="tns:statistics" minOccurs="0">
+          <xs:annotation>
+             <xs:documentation>Configures statistics collection and hot key tracking for this cache.</xs:documentation>
+          </xs:annotation>
+       </xs:element>
       <xs:element name="tracing" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
@@ -1536,6 +1541,46 @@
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
+
+   <xs:complexType name="statistics">
+      <xs:annotation>
+         <xs:documentation>Configures statistics collection and hot key tracking for this cache.</xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="hot-keys" type="tns:hot-keys" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Configures hot key tracking using a probabilistic top-k algorithm.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+      <xs:attribute name="enabled" type="xs:boolean" default="${Statistics.statistics}">
+         <xs:annotation>
+            <xs:documentation>Enable or disable statistics collection for this cache.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType name="hot-keys">
+      <xs:annotation>
+         <xs:documentation>Configures hot key tracking using a probabilistic top-k algorithm.</xs:documentation>
+      </xs:annotation>
+      <xs:attribute name="enabled" type="xs:boolean" default="${HotKeys.enabled}">
+         <xs:annotation>
+            <xs:documentation>Enable hot key tracking for this cache.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="top-k" default="${HotKeys.top-k}">
+         <xs:annotation>
+            <xs:documentation>Number of top keys to track per operation type (reads and writes). Must be between 1 and 512.</xs:documentation>
+         </xs:annotation>
+         <xs:simpleType>
+            <xs:restriction base="xs:int">
+               <xs:minInclusive value="1"/>
+               <xs:maxInclusive value="512"/>
+            </xs:restriction>
+         </xs:simpleType>
+      </xs:attribute>
+   </xs:complexType>
 
   <xs:complexType name="encodingType" abstract="true">
     <xs:annotation>
