@@ -62,6 +62,7 @@ import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.ColumnFamilyOptions;
 import org.rocksdb.DBOptions;
+import org.rocksdb.FlushOptions;
 import org.rocksdb.Options;
 import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
@@ -732,6 +733,10 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
       void writeMetadata() throws RocksDBException {
          MetadataImpl metadata = new MetadataImpl(Version.getVersionShort());
          db.put(metaColumnFamilyHandle, META_COLUMN_FAMILY_KEY, marshall(metadata));
+         // Flush meta-cf so RocksDB can delete WAL files that reference it
+         try (FlushOptions flushOptions = new FlushOptions().setWaitForFlush(true)) {
+            db.flush(flushOptions, metaColumnFamilyHandle);
+         }
       }
 
       MetadataImpl loadMetadata() throws RocksDBException {
