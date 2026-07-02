@@ -4,6 +4,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
 
 import com.google.errorprone.annotations.Immutable;
@@ -748,6 +749,73 @@ public class MurmurHash3 implements Hash {
       h1 += h2;
       h2 += h1;
 
+      h1 = fmix(h1);
+      h2 = fmix(h2);
+
+      h1 += h2;
+      h2 += h1;
+
+      return h1;
+   }
+
+   public long MurmurHash3_x64_64(Object o, int seed) {
+      if (o instanceof String s)
+         return MurmurHash3_x64_64_String(s, seed);
+
+      if (o instanceof byte[] b)
+         return MurmurHash3_x64_64(b, seed);
+
+      if (o instanceof WrappedByteArray wba)
+         return MurmurHash3_x64_64(wba.getBytes(), seed);
+
+      if (o instanceof WrappedBytes wb)
+         return MurmurHash3_x64_64(wb.getBytes(), seed);
+
+      if (o instanceof long[] l)
+         return MurmurHash3_x64_64(l, seed);
+
+      int hc = o.hashCode();
+
+      byte b0 = (byte) hc;
+      byte b1 = (byte) (hc >>> 8);
+      byte b2 = (byte) (hc >>> 16);
+      byte b3 = (byte) (hc >>> 24);
+
+      long h1 = 0x9368e53c2f6af274L ^ seed;
+      long h2 = 0x586dcd208f7cd3fdL ^ seed;
+
+      long c1 = 0x87c37b91114253d5L;
+      long c2 = 0x4cf5ad432745937fL;
+
+      long k1 = 0;
+      long k2 = 0;
+
+      k1 ^= b3 << 24;
+      k1 ^= b2 << 16;
+      k1 ^= b1 << 8;
+      k1 ^= b0;
+
+      k1 *= c1;
+      k1 = (k1 << 23) | (k1 >>> 41);
+      k1 *= c2;
+      h1 ^= k1;
+      h1 += h2;
+
+      h2 = (h2 << 41) | (h2 >>> 23);
+
+      k2 *= c2;
+      k2 = (k2 << 23) | (k2 >>> 41);
+      k2 *= c1;
+      h2 ^= k2;
+      h2 += h1;
+
+      h1 = h1 * 3 + 0x52dce729;
+      h2 = h2 * 3 + 0x38495ab5;
+
+      h2 ^= 4;
+
+      h1 += h2;
+      h2 += h1;
       h1 = fmix(h1);
       h2 = fmix(h2);
 

@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.ToLongBiFunction;
 
@@ -47,6 +48,12 @@ public class HeavyKeeper<T> {
    // The exact count of the current top-k elements.
    // After an object in the sketch reaches a minimum, it moves to an exact count in the map.
    private final Map<T, Long> topItems;
+
+   // The smallest entry in topItems.
+   // Cache so that keys outside the top-k do not scan the map on every update.
+   // A null item means unknown, it is recomputed the next time a full top-k is requested.
+   private T minItem;
+   private long minCount;
 
    /**
     * Creates a new HeavyKeeper tracker.
@@ -164,8 +171,12 @@ public class HeavyKeeper<T> {
       // After updating the sketches, the top-k map needs to be updated accordingly.
 
       // This object is already tracked, so we simply increment the counter.
-      if (topItems.containsKey(key)) {
-         topItems.merge(key, increment, Long::sum);
+      Long current = topItems.get(key);
+      if (current != null) {
+         topItems.put(key, current + increment);
+         // Counts only grow, so the minimum can move only when the minimum itself was incremented.
+         if (Objects.equals(key, minItem))
+            minItem = null;
          return null;
       }
 
@@ -178,29 +189,24 @@ public class HeavyKeeper<T> {
       // The item is promoted and the maps has enough room for a new object.
       if (topItems.size() < k) {
          topItems.put(key, estimatedCount);
+         minItem = null;
          return null;
       }
 
-      // The item was promoted but the map is full.
-      // We identiy which is the current object with the smallest count in top-k.
-      // Observe this affects only the top-k map. The sketch still tracks the object.
-      T minItem = null;
-      long minCount = Long.MAX_VALUE;
-      for (Map.Entry<T, Long> entry : topItems.entrySet()) {
-         if (entry.getValue() < minCount) {
-            minCount = entry.getValue();
-            minItem = entry.getKey();
-         }
-      }
+      // The map is full.
+      // Most keys outside the top-k do not beat the minimum, and they return here without a scan.
+      if (minItem == null)
+         findMinimum();
 
       // We only replace if the current object has an estimated count that beats the minimum.
-      if (minItem != null && estimatedCount > minCount) {
-         topItems.remove(minItem);
-         topItems.put(key, estimatedCount);
-         return minItem;
-      }
+      if (estimatedCount <= minCount)
+         return null;
 
-      return null;
+      T expelled = minItem;
+      topItems.remove(expelled);
+      topItems.put(key, estimatedCount);
+      minItem = null;
+      return expelled;
    }
 
    /**
@@ -241,7 +247,7 @@ public class HeavyKeeper<T> {
       for (Map.Entry<T, Long> entry : topItems.entrySet()) {
          result.add(new KeyFrequency<>(entry.getKey(), entry.getValue()));
       }
-      result.sort(KeyFrequency.COMPARATOR);
+      result.sort(KeyFrequency.DESCENDING_COMPARATOR);
       return result;
    }
 
@@ -258,6 +264,7 @@ public class HeavyKeeper<T> {
       }
 
       topItems.clear();
+      minItem = null;
    }
 
    /**
@@ -295,9 +302,19 @@ public class HeavyKeeper<T> {
     * @param count the frequency count
     * @since 16.2
     */
-   public record KeyFrequency<T>(T key, long count) {
-      private static final Comparator<KeyFrequency<?>> COMPARATOR =
+   public record KeyFrequency<T>(T key, long count) implements Comparable<KeyFrequency<T>> {
+      private static final Comparator<KeyFrequency<?>> DESCENDING_COMPARATOR =
             (a, b) -> Long.compare(b.count, a.count);
+
+      public static <T> KeyFrequency<T> sum(KeyFrequency<T> a, KeyFrequency<T> b) {
+         return new KeyFrequency<>(a.key(), a.count() + b.count());
+      }
+
+      @Override
+      public int compareTo(KeyFrequency<T> o) {
+         // Utilize inverse to order in ascending order naturally.
+         return DESCENDING_COMPARATOR.compare(o, this);
+      }
    }
 
    /**
@@ -325,6 +342,21 @@ public class HeavyKeeper<T> {
     */
    protected final Map<T, Long> topItems() {
       return Collections.unmodifiableMap(topItems);
+   }
+
+   /**
+    * Finds the entry with the smallest count in the top-k and caches it in {@code minItem} and {@code minCount}.
+    * Leaves {@code minItem} as {@code null} when the top-k is empty.
+    */
+   private void findMinimum() {
+      minItem = null;
+      minCount = Long.MAX_VALUE;
+      for (Map.Entry<T, Long> entry : topItems.entrySet()) {
+         if (entry.getValue() < minCount) {
+            minCount = entry.getValue();
+            minItem = entry.getKey();
+         }
+      }
    }
 
    /**
