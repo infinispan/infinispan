@@ -117,6 +117,18 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public enum ParserVersionCheck {
+      INFINISPAN_164(16, 4) {
+         @Override
+         public void check(ConfigurationBuilderHolder cm, int schemaMajor, int schemaMinor) {
+            Configuration trackingEnabledConfig = getConfiguration(cm, "tracking-cache");
+            assertThat(trackingEnabledConfig.statistics().enabled()).isTrue();
+            assertThat(trackingEnabledConfig.statistics().hotKeys().enabled()).isTrue();
+            assertThat(trackingEnabledConfig.statistics().hotKeys().topK()).isEqualTo(250);
+
+            Configuration invalidConfig = getConfiguration(cm, "invalid");
+            assertThat(invalidConfig.statistics().hotKeys().enabled()).isFalse();
+         }
+      },
       INFINISPAN_163(16, 3) {
          @Override
          public void check(ConfigurationBuilderHolder cm, int schemaMajor, int schemaMinor) {

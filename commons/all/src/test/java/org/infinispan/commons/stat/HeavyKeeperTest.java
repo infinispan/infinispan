@@ -73,6 +73,24 @@ public class HeavyKeeperTest {
    }
 
    @Test
+   public void testNonPositiveIncrementRejectedWithoutChangingCounts() {
+      HeavyKeeper<String> hk = new HeavyKeeper<>(3, 8, 7, 0.9, HASH);
+      hk.incrBy("a", 10);
+
+      assertThatThrownBy(() -> hk.incrBy("a", 0))
+            .isInstanceOf(IllegalArgumentException.class);
+      assertThatThrownBy(() -> hk.incrBy("a", -5))
+            .isInstanceOf(IllegalArgumentException.class);
+      assertThatThrownBy(() -> hk.incrBy("b", -1))
+            .isInstanceOf(IllegalArgumentException.class);
+
+      // A rejected call leaves both the top-k and the sketch untouched.
+      assertThat(hk.getCount("a")).isEqualTo(10);
+      assertThat(hk.query("b")).isFalse();
+      assertThat(hk.list()).hasSize(1);
+   }
+
+   @Test
    public void testHeavyHitterSurvivesAmongNoise() {
       HeavyKeeper<String> hk = new HeavyKeeper<>(3, 8, 7, 0.9, HASH);
 
@@ -213,5 +231,99 @@ public class HeavyKeeperTest {
 
       assertThat(hk.query("challenger")).isTrue();
       assertThat(expelled).containsExactly("established-2");
+   }
+
+   @Test
+   public void testNewcomerNotAboveMinimumIsNotAdmitted() {
+      HeavyKeeper<String> hk = new HeavyKeeper<>(2, 8, 7, 0.9, HASH);
+
+      hk.incrBy("a", 10);
+      hk.incrBy("b", 5);
+
+      // Admission requires beating the minimum strictly; a tie is not enough.
+      assertThat(hk.incrBy("below", 3)).isNull();
+      assertThat(hk.incrBy("tie", 5)).isNull();
+
+      assertThat(hk.query("below")).isFalse();
+      assertThat(hk.query("tie")).isFalse();
+      assertThat(hk.list()).extracting(HeavyKeeper.KeyFrequency::key).containsExactlyInAnyOrder("a", "b");
+   }
+
+   @Test
+   public void testMinimumMovesWhenSmallestItemGrows() {
+      HeavyKeeper<String> hk = new HeavyKeeper<>(2, 8, 7, 0.9, HASH);
+
+      hk.incrBy("a", 10);
+      hk.incrBy("b", 5);
+
+      // A rejected newcomer, so the minimum ("b") has already been looked up before it changes.
+      assertThat(hk.incrBy("probe", 1)).isNull();
+
+      // "b" overtakes "a", so "a" becomes the minimum.
+      hk.incrBy("b", 20);
+
+      String expelled = hk.incrBy("c", 15);
+      assertThat(expelled).isEqualTo("a");
+      assertThat(hk.query("b")).isTrue();
+      assertThat(hk.query("c")).isTrue();
+   }
+
+   @Test
+   public void testMinimumIsForgottenAfterReset() {
+      HeavyKeeper<String> hk = new HeavyKeeper<>(1, 8, 7, 0.9, HASH);
+
+      hk.incrBy("old", 100);
+      hk.incrBy("rejected", 50);
+      hk.reset();
+
+      hk.incrBy("x", 10);
+
+      // The minimum is now "x" with 10, not the 100 observed before the reset.
+      String expelled = hk.incrBy("y", 20);
+      assertThat(expelled).isEqualTo("x");
+      assertThat(hk.query("y")).isTrue();
+   }
+
+   @Test
+   public void testMinimumCombinedHashOnNonPowerOfTwoWidth() {
+      // Both hashes are Long.MIN_VALUE, so row 0 combines to Long.MIN_VALUE, whose absolute value is negative.
+      HeavyKeeper<String> hk = new HeavyKeeper<>(3, 7, 7, 0.9, (key, seed) -> Long.MIN_VALUE);
+
+      hk.incrBy("a", 5);
+
+      assertThat(hk.getCount("a")).isEqualTo(5);
+   }
+
+   @Test
+   public void testTrackedCountSaturatesInsteadOfOverflowing() {
+      HeavyKeeper<String> hk = new HeavyKeeper<>(2, 8, 7, 0.9, HASH);
+
+      hk.incrBy("big", Long.MAX_VALUE - 1);
+      hk.incrBy("small", 5);
+
+      // "big" is in the top-k, so this increment goes through the top-k map.
+      hk.incrBy("big", 10);
+
+      assertThat(hk.getCount("big")).as("a tracked count stops at Long.MAX_VALUE").isEqualTo(Long.MAX_VALUE);
+      assertThat(hk.list()).extracting(HeavyKeeper.KeyFrequency::key)
+            .as("a saturated count still ranks first")
+            .containsExactly("big", "small");
+   }
+
+   @Test
+   public void testSketchCountSaturatesInsteadOfOverflowing() {
+      // A sketch wide enough that "top" and "other" never share a cell, so each owns its own counters.
+      HeavyKeeper<String> hk = new HeavyKeeper<>(1, 1024, 7, 0.9, HASH);
+
+      hk.incrBy("top", Long.MAX_VALUE);
+
+      // "other" never beats the full top-k, so both increments only reach the sketch.
+      hk.incrBy("other", Long.MAX_VALUE - 1);
+      hk.incrBy("other", 10);
+
+      assertThat(hk.getCount("other")).as("a sketch count stops at Long.MAX_VALUE").isEqualTo(Long.MAX_VALUE);
+      assertThat(hk.list()).extracting(HeavyKeeper.KeyFrequency::key)
+            .as("a saturated sketch count ties the minimum and is not admitted")
+            .containsExactly("top");
    }
 }

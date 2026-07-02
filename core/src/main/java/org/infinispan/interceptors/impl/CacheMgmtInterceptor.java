@@ -23,6 +23,8 @@ import org.infinispan.commands.functional.ReadWriteManyCommand;
 import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
+import org.infinispan.commands.functional.WriteOnlyManyCommand;
+import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -59,6 +61,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.Ownership;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -73,6 +76,7 @@ import org.infinispan.metrics.impl.CustomMetricsSupplier;
 import org.infinispan.metrics.impl.helper.KeyMetrics;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager.AccessMode;
+import org.infinispan.stats.HotKeyTracker;
 import org.infinispan.topology.CacheTopology;
 
 /**
@@ -92,6 +96,8 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
    @Inject GlobalConfiguration globalConfiguration;
    @Inject ComponentRef<PersistenceManager> persistenceManager;
    @Inject DistributionManager distributionManager;
+   @Inject KeyPartitioner keyPartitioner;
+   @Inject HotKeyTracker hotKeyTracker;
 
    private final AtomicLong startNanoseconds = new AtomicLong(0);
    private final AtomicLong resetNanoseconds = new AtomicLong(0);
@@ -123,6 +129,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
 
+      hotKeyTracker.recordRead(command.getKey(), command.getSegment());
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command,
             (rCtx, rCommand, rv, t) -> addDataRead(rv != null, start, getReadOwnership(rCommand.getSegment())));
@@ -134,6 +141,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
 
+      hotKeyTracker.recordRead(command.getKey(), command.getSegment());
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command,
             (rCtx, rCommand, rv, t) -> addDataRead(rv != null, start, getReadOwnership(rCommand.getSegment())));
@@ -153,6 +161,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
 
+      recordReads(command.getKeys());
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
@@ -182,6 +191,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
 
+      recordWrites(command.getMap().keySet());
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          final long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
@@ -201,6 +211,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
 
+      recordWrites(command.getKeys());
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          final long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
@@ -234,6 +245,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
 
+      hotKeyTracker.recordWrite(command.getKey(), command.getSegment());
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          if (rv == null && rCommand.isSuccessful()) {
@@ -254,6 +266,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
 
+      hotKeyTracker.recordWrite(command.getKey(), command.getSegment());
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          if (rCommand.isSuccessful()) {
@@ -270,6 +283,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!getStatisticsEnabled())
          return invokeNextThenApply(ctx, command, StatsEnvelope::unpack);
 
+      hotKeyTracker.recordRead(command.getKey(), command.getSegment());
       long start = timeService.time();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          var envelope = (StatsEnvelope<?>) rv;
@@ -290,6 +304,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!getStatisticsEnabled())
          return invokeNextThenApply(ctx, command, StatsEnvelope::unpackStream);
 
+      recordReads(command.getKeys());
       long start = timeService.time();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
@@ -324,6 +339,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!getStatisticsEnabled())
          return invokeNextThenApply(ctx, command, StatsEnvelope::unpack);
 
+      hotKeyTracker.recordWrite(command.getKey(), command.getSegment());
       long start = timeService.time();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if (!(rv instanceof StatsEnvelope<?> envelope)) {
@@ -352,6 +368,11 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!getStatisticsEnabled())
          return invokeNextThenApply(ctx, command, StatsEnvelope::unpack);
 
+      // Each operation is intentionally classified once.
+      // A read-write command counts as write only, even though it may only be a read, we prefer to assume it is as write.
+      // Counting it in both rankings would count one operation twice.
+      // See the hot key tracking architecture topic in the documentation.
+      hotKeyTracker.recordWrite(command.getKey(), command.getSegment());
       long start = timeService.time();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          // FAIL_SILENTLY makes the return value null
@@ -385,8 +406,70 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       return updateStatisticsWriteOnly(ctx, command);
    }
 
-   // TODO: WriteOnlyManyCommand and WriteOnlyManyEntriesCommand not implemented as the rest of stack
-   // does not pass the return value.
+   @Override
+   public Object visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
+      return recordWriteOnlyMany(ctx, command);
+   }
+
+   @Override
+   public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
+      return recordWriteOnlyMany(ctx, command);
+   }
+
+   /**
+    * Records a write-only multi-key command in the hot key tracker and passes it down the chain.
+    * <p>
+    * Each affected key counts as one write, under the same conditions as the other write commands: the command originated
+    * on this node, it does not carry {@link FlagBitSets#SKIP_STATISTICS}, and statistics are enabled.
+    * </p>
+    *
+    * @param ctx     the invocation context
+    * @param command the write-only multi-key command
+    * @return the result of the rest of the chain
+    */
+   private Object recordWriteOnlyMany(InvocationContext ctx, AbstractWriteManyCommand<?, ?> command) {
+      if (ctx.isOriginLocal() && !command.hasAnyFlag(FlagBitSets.SKIP_STATISTICS) && getStatisticsEnabled()) {
+         recordWrites(command.getAffectedKeys());
+      }
+
+      // TODO: the store counters are not updated for WriteOnlyManyCommand and WriteOnlyManyEntriesCommand because
+      //       the rest of the stack does not pass the return value.
+      return invokeNext(ctx, command);
+   }
+
+   /**
+    * Records a read of every key of a multi-key command in the hot key tracker.
+    * <p>
+    * Does nothing when hot key tracking is disabled, so the segment of each key is computed only when it is used.
+    * </p>
+    *
+    * @param keys the keys the command reads
+    */
+   private void recordReads(Collection<?> keys) {
+      if (!hotKeyTracker.isEnabled())
+         return;
+
+      for (Object key : keys) {
+         hotKeyTracker.recordRead(key, keyPartitioner.getSegment(key));
+      }
+   }
+
+   /**
+    * Records a write of every key of a multi-key command in the hot key tracker.
+    * <p>
+    * Does nothing when hot key tracking is disabled, so the segment of each key is computed only when it is used.
+    * </p>
+    *
+    * @param keys the keys the command writes
+    */
+   private void recordWrites(Collection<?> keys) {
+      if (!hotKeyTracker.isEnabled())
+         return;
+
+      for (Object key : keys) {
+         hotKeyTracker.recordWrite(key, keyPartitioner.getSegment(key));
+      }
+   }
 
    @Override
    public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) {
@@ -401,6 +484,11 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!getStatisticsEnabled())
          return invokeNextThenApply(ctx, command, StatsEnvelope::unpackCollection);
 
+      // Each operation is intentionally classified once.
+      // A read-write command counts as write only, even though it may only be a read, we prefer to assume it is as write.
+      // Counting it in both rankings would count one operation twice.
+      // See the hot key tracking architecture topic in the documentation.
+      recordWrites(command.getAffectedKeys());
       long start = timeService.time();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
@@ -463,6 +551,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
 
+      hotKeyTracker.recordWrite(command.getKey(), command.getSegment());
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          if (rCommand.isConditional()) {
@@ -890,6 +979,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       counters.reset(StripeB.removeTimesFieldUpdater);
       counters.reset(StripeB.removeMissesFieldUpdater);
       resetNanoseconds.set(timeService.time());
+      hotKeyTracker.reset();
 
       //todo [anistor] how do we reset Micrometer metrics ?
    }

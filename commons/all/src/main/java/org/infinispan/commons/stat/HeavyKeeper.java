@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.ToLongBiFunction;
 
@@ -47,6 +48,12 @@ public class HeavyKeeper<T> {
    // The exact count of the current top-k elements.
    // After an object in the sketch reaches a minimum, it moves to an exact count in the map.
    private final Map<T, Long> topItems;
+
+   // The smallest entry in topItems.
+   // Cache so that keys outside the top-k do not scan the map on every update.
+   // A null item means unknown, it is recomputed the next time a full top-k is requested.
+   private T minItem;
+   private long minCount;
 
    /**
     * Creates a new HeavyKeeper tracker.
@@ -116,11 +123,22 @@ public class HeavyKeeper<T> {
     *       if counter reaches 0, replace with the new item's fingerprint</li>
     * </ul>
     *
+    * <p>
+    * Counts only grow, and stop at {@link Long#MAX_VALUE} instead of overflowing. A rejected call leaves the sketch and
+    * the top-k unchanged.
+    * </p>
+    *
     * @param key       the item to increment
-    * @param increment the amount to add
+    * @param increment the amount to add; must be greater than zero
     * @return the expelled item, or null if no item was expelled
+    * @throws IllegalArgumentException if {@code increment} is zero or negative
     */
    public final T incrBy(T key, long increment) {
+      // A non-positive increment break the sketches invariants.
+      // Empty cells are detected as 0 and cached minimum assumes non-decreasing counters.
+      if (increment <= 0)
+         throw new IllegalArgumentException(String.format("Increment must be greater than zero, got %d", increment));
+
       // Two hashes per each element.
       // This hash contains the fingerprint to identify the cells in the sketch.
       long fp = hash.applyAsLong(key, 0);
@@ -143,7 +161,7 @@ public class HeavyKeeper<T> {
          // The fingerprint in the cell matches this object fingerprint.
          // This way, we only update the counting.
          if (fingerprints[i][idx] == fp) {
-            counters[i][idx] += increment;
+            counters[i][idx] = saturatedAdd(counters[i][idx], increment);
             continue;
          }
 
@@ -164,8 +182,12 @@ public class HeavyKeeper<T> {
       // After updating the sketches, the top-k map needs to be updated accordingly.
 
       // This object is already tracked, so we simply increment the counter.
-      if (topItems.containsKey(key)) {
-         topItems.merge(key, increment, Long::sum);
+      Long current = topItems.get(key);
+      if (current != null) {
+         topItems.put(key, saturatedAdd(current, increment));
+         // Counts only grow, so the minimum can move only when the minimum itself was incremented.
+         if (Objects.equals(key, minItem))
+            minItem = null;
          return null;
       }
 
@@ -178,29 +200,24 @@ public class HeavyKeeper<T> {
       // The item is promoted and the maps has enough room for a new object.
       if (topItems.size() < k) {
          topItems.put(key, estimatedCount);
+         minItem = null;
          return null;
       }
 
-      // The item was promoted but the map is full.
-      // We identiy which is the current object with the smallest count in top-k.
-      // Observe this affects only the top-k map. The sketch still tracks the object.
-      T minItem = null;
-      long minCount = Long.MAX_VALUE;
-      for (Map.Entry<T, Long> entry : topItems.entrySet()) {
-         if (entry.getValue() < minCount) {
-            minCount = entry.getValue();
-            minItem = entry.getKey();
-         }
-      }
+      // The map is full.
+      // Most keys outside the top-k do not beat the minimum, and they return here without a scan.
+      if (minItem == null)
+         findMinimum();
 
       // We only replace if the current object has an estimated count that beats the minimum.
-      if (minItem != null && estimatedCount > minCount) {
-         topItems.remove(minItem);
-         topItems.put(key, estimatedCount);
-         return minItem;
-      }
+      if (estimatedCount <= minCount)
+         return null;
 
-      return null;
+      T expelled = minItem;
+      topItems.remove(expelled);
+      topItems.put(key, estimatedCount);
+      minItem = null;
+      return expelled;
    }
 
    /**
@@ -258,6 +275,7 @@ public class HeavyKeeper<T> {
       }
 
       topItems.clear();
+      minItem = null;
    }
 
    /**
@@ -328,6 +346,38 @@ public class HeavyKeeper<T> {
    }
 
    /**
+    * Finds the entry with the smallest count in the top-k and caches it in {@code minItem} and {@code minCount}.
+    * Leaves {@code minItem} as {@code null} when the top-k is empty.
+    */
+   private void findMinimum() {
+      minItem = null;
+      minCount = Long.MAX_VALUE;
+      for (Map.Entry<T, Long> entry : topItems.entrySet()) {
+         if (entry.getValue() < minCount) {
+            minCount = entry.getValue();
+            minItem = entry.getKey();
+         }
+      }
+   }
+
+   /**
+    * Adds a positive increment to a count, stopping at {@link Long#MAX_VALUE} instead of wrapping to a negative value.
+    * <p>
+    * Counts only grow, so a capped count keeps the order that the sketch and the cached minimum rely on. A cell at
+    * {@link Long#MAX_VALUE} never decays, because {@code decay^count} is then 0.
+    * </p>
+    *
+    * @param count     the current count, not negative
+    * @param increment the amount to add, greater than zero
+    * @return the sum, or {@link Long#MAX_VALUE} when the sum does not fit in a {@code long}
+    */
+   private static long saturatedAdd(long count, long increment) {
+      // Check before adding.
+      // Once count + increment wraps and become negative, the overflow is undetectable.
+      return increment > Long.MAX_VALUE - count ? Long.MAX_VALUE : count + increment;
+   }
+
+   /**
     * Queries the sketch for the maximum counter across all rows where the fingerprint matches.
     *
     * <p>
@@ -355,6 +405,8 @@ public class HeavyKeeper<T> {
     */
    private int index(long hash1, long hash2, int row) {
       long combinedHash = hash1 + (long) row * hash2;
-      return (int) (Math.abs(combinedHash) % width);
+      // Take the remained before the absolute value.
+      // Math.abs(Long.MIN_VALUE) is negative, but a remained's absolute value never is.
+      return (int) Math.abs(combinedHash % width);
    }
 }

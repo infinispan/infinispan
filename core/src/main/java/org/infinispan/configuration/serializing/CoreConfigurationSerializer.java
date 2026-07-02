@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.io.ConfigurationSchemaVersion;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
@@ -35,6 +36,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.CustomStoreConfiguration;
 import org.infinispan.configuration.cache.GroupsConfiguration;
 import org.infinispan.configuration.cache.HashConfiguration;
+import org.infinispan.configuration.cache.HotKeysConfiguration;
 import org.infinispan.configuration.cache.IndexMergeConfiguration;
 import org.infinispan.configuration.cache.IndexReaderConfiguration;
 import org.infinispan.configuration.cache.IndexWriterConfiguration;
@@ -562,8 +564,11 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
    }
 
    private void writeCommonCacheAttributesElements(ConfigurationWriter writer, String name, Configuration configuration) {
-      configuration.statistics().attributes().write(writer, StatisticsConfiguration.ENABLED, Attribute.STATISTICS);
+      // Attributes of the cache element must come before any child element.
       configuration.unsafe().attributes().write(writer);
+      // Statistics may be written as either, so it goes after the remaining cache attributes.
+      // Depending on the format of statistics, attribute or element, it must be written later to comply to XSD.
+      boolean statisticsElement = writeStatistics(writer, configuration);
       writeBackup(writer, configuration);
       writeEncoding(writer, configuration);
       configuration.sites().backupFor().attributes().write(writer, Element.BACKUP_FOR.getLocalName());
@@ -574,12 +579,64 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
       writePersistence(writer, configuration);
       writeQuery(writer, configuration);
       writeIndexing(writer, configuration);
+      if (statisticsElement) {
+         writeStatisticsElement(writer, configuration);
+      }
       writeTracing(writer, configuration);
       writeSecurity(writer, configuration);
       if (configuration.clustering().cacheMode().needsStateTransfer()) {
          configuration.clustering().stateTransfer().attributes().write(writer, Element.STATE_TRANSFER.getLocalName());
       }
       writePartitionHandling(writer, configuration);
+   }
+
+   /**
+    * Writes the statistics configuration of a cache in its attribute form, or defers it to the element form.
+    * <p>
+    * When hot keys are configured and the target schema is 16.4 or later, nothing is written and the caller must write
+    * the {@code statistics} element with {@link #writeStatisticsElement(ConfigurationWriter, Configuration)} at its
+    * position in the cache element sequence. Otherwise, it writes the {@code statistics} attribute on the cache
+    * element, which every schema version understands.
+    * </p>
+    *
+    * @param writer        the writer positioned inside the cache element, before any child element
+    * @param configuration the cache configuration to write
+    * @return {@code true} if the caller must still write the {@code statistics} element, {@code false} if the
+    *         statistics configuration was written as an attribute
+    */
+   private boolean writeStatistics(ConfigurationWriter writer, Configuration configuration) {
+      StatisticsConfiguration statistics = configuration.statistics();
+      ConfigurationSchemaVersion target = writer.targetVersion();
+
+      // Only hot-keys tracking (>16.4) needs the <statistics ...> element.
+      // Otherwise, keep the attribute form in the cache element for older versions.
+      if (!statistics.hotKeys().attributes().isModified() || (target != null && !target.since(16, 4))) {
+         statistics.attributes().write(writer, StatisticsConfiguration.ENABLED, Attribute.STATISTICS);
+         return false;
+      }
+
+      return true;
+   }
+
+   /**
+    * Writes the {@code statistics} element of a cache with its {@code hot-keys} child.
+    *
+    * @param writer        the writer positioned inside the cache element, after the elements that precede
+    *                      {@code statistics} in the schema sequence
+    * @param configuration the cache configuration to write
+    */
+   private void writeStatisticsElement(ConfigurationWriter writer, Configuration configuration) {
+      StatisticsConfiguration statistics = configuration.statistics();
+      HotKeysConfiguration hotKeys = statistics.hotKeys();
+
+      // From 16.4 forward, statistics became a configuration element.
+      writer.writeStartElement(Element.STATISTICS);
+      statistics.attributes().write(writer, StatisticsConfiguration.ENABLED, Attribute.ENABLED);
+      writer.writeStartElement(Element.HOT_KEYS);
+      // Only the attributes that were set, the parser applies the defaults to the rest.
+      hotKeys.attributes().write(writer);
+      writer.writeEndElement();
+      writer.writeEndElement();
    }
 
    private void writeEncoding(ConfigurationWriter writer, Configuration configuration) {

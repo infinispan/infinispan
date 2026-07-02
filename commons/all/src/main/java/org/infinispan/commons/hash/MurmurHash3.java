@@ -423,9 +423,9 @@ public class MurmurHash3 implements Hash {
          c2 = c2 * 5 + 0x6bce6396;
       }
 
-      long tail = key[key.length - 1];
-
+      // Only odd lengths have a trailing word left over from the 16-byte blocks.
       if (key.length % 2 != 0) {
+         long tail = key[key.length - 1];
          k1 ^= tail;
 
          k1 *= c1;
@@ -488,15 +488,30 @@ public class MurmurHash3 implements Hash {
 
    @Override
    public int hash(int hashcode) {
-      // Obtained by inlining MurmurHash3_x64_32(byte[], 9001) and removing all the unused code
-      // (since we know the input is always 4 bytes and we only need 4 bytes of output)
+      return (int) (hashInt(hashcode, 9001) >>> 32);
+   }
+
+   /**
+    * Hashes a 32-bit value using the x64 64 bit variant of MurmurHash3.
+    * <p>
+    * The result is the same as hashing the four little-endian bytes of {@code hashcode} with
+    * {@link #MurmurHash3_x64_64(byte[], int)}, without allocating the array.
+    * </p>
+    *
+    * @param hashcode the value to hash
+    * @param seed     random value
+    * @return 64 bit hashed value
+    */
+   private static long hashInt(int hashcode, int seed) {
+      // Obtained by inlining MurmurHash3_x64_64(byte[], seed) and removing all the unused code
+      // (since we know the input is always 4 bytes)
       byte b0 = (byte) hashcode;
       byte b1 = (byte) (hashcode >>> 8);
       byte b2 = (byte) (hashcode >>> 16);
       byte b3 = (byte) (hashcode >>> 24);
 
-      long h1 = 0x9368e53c2f6af274L ^ 9001;
-      long h2 = 0x586dcd208f7cd3fdL ^ 9001;
+      long h1 = 0x9368e53c2f6af274L ^ seed;
+      long h2 = 0x586dcd208f7cd3fdL ^ seed;
 
       long c1 = 0x87c37b91114253d5L;
       long c2 = 0x4cf5ad432745937fL;
@@ -537,7 +552,7 @@ public class MurmurHash3 implements Hash {
       h1 += h2;
       h2 += h1;
 
-      return (int) (h1 >>> 32);
+      return h1;
    }
 
    @Override
@@ -755,6 +770,41 @@ public class MurmurHash3 implements Hash {
       h2 += h1;
 
       return h1;
+   }
+
+   /**
+    * Hash an object using the x64 64 bit variant of MurmurHash3.
+    *
+    * <p>
+    * Strings, byte arrays, {@code long[]} and the backing array of a {@link WrappedBytes} are hashed by their full
+    * content: equal values always produce equal hashes, and distinct values collide only with the probability of a
+    * 64-bit hash. Like {@link #hash(Object)}, a {@link WrappedBytes} must expose its whole content as its backing
+    * array.
+    * </p>
+    * <p>
+    * Any other type is hashed from its {@link Object#hashCode()}. Distinct objects with the same {@code hashCode()}
+    * then always produce the same hash, for every seed: this is a deterministic alias, not a rare collision.
+    * </p>
+    *
+    * @param o    the object to hash, not {@code null}
+    * @param seed random value
+    * @return 64 bit hashed object
+    * @throws NullPointerException if {@code o} is {@code null}, or is a {@link WrappedBytes} without a backing array
+    */
+   public long MurmurHash3_x64_64(Object o, int seed) {
+      if (o instanceof String s)
+         return MurmurHash3_x64_64_String(s, seed);
+
+      if (o instanceof byte[] b)
+         return MurmurHash3_x64_64(b, seed);
+
+      if (o instanceof long[] l)
+         return MurmurHash3_x64_64(l, seed);
+
+      if (o instanceof WrappedBytes wb)
+         return MurmurHash3_x64_64(wb.getBytes(), seed);
+
+      return hashInt(o.hashCode(), seed);
    }
 
    @Override

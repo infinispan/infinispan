@@ -2514,4 +2514,11 @@ public interface Log extends BasicLogger {
    @Description("A tombstone cleanup round for cross-site replication failed, for example because a cluster member did not " +
          "respond in time. The next round retries the cleanup. If this message persists, check the health of the cluster.")
    void warnFailedIracTask(String cacheName, String failure);
+
+   @Message(value = "Invalid value %d for attribute top-k: must be between 1 and %d", id = 734)
+   CacheConfigurationException hotKeysTopKOutOfRange(int topK, int max);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Cache '%s' has hot key tracking enabled but statistics disabled. Keys are only tracked while statistics are enabled", id = 735)
+   void hotKeysEnabledWithoutStatistics(String cacheName);
 }
