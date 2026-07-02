@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
@@ -94,6 +95,29 @@ public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
       }
 
       cache.remove("k");
+   }
+
+   public void testCompactionWithSmallFileSize() throws Exception {
+      String cacheName = "testCompactionWithSmallFileSize";
+      ConfigurationBuilder cb = getDefaultCacheConfiguration();
+      cb.persistence()
+            .addSoftIndexFileStore()
+            .segmented(segmented)
+            .maxFileSize(1024)
+            .purgeOnStartup(false)
+            .expiration().wakeUpInterval(Long.MAX_VALUE);
+      TestingUtil.defineConfiguration(cacheManager, cacheName, cb.build());
+
+      Cache<String, Object> cache = cacheManager.getCache(cacheName);
+
+      for (int i = 0; i < 100; ++i) {
+         cache.put("key-" + i, "value-" + i);
+      }
+
+      NonBlockingSoftIndexFileStore<String, Object> store = TestingUtil.getFirstStore(cache);
+      Compactor compactor = TestingUtil.extractField(store, "compactor");
+      compactor.forceCompactionForAllNonLogFiles()
+            .toCompletableFuture().get(30, TimeUnit.SECONDS);
    }
 
    @DataProvider(name = "keyArgs")
