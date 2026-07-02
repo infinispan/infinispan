@@ -132,7 +132,7 @@
             <artifactId>maven-assembly-plugin</artifactId>
             <executions>
                <execution>
-                  <id>assemble</id>
+                  <id>assemble-src</id>
                   <phase>package</phase>
                   <goals>
                      <goal>single</goal>
@@ -140,6 +140,19 @@
                   <configuration>
                      <descriptors>
                         <descriptor>src/main/assemblies/src.xml</descriptor>
+                     </descriptors>
+                     <finalName>${infinispan.brand.prefix}-${infinispan.brand.version}</finalName>
+                     <attach>false</attach>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>assemble</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>single</goal>
+                  </goals>
+                  <configuration>
+                     <descriptors>
                         <descriptor>src/main/assemblies/xsd.xml</descriptor>
                      </descriptors>
                      <finalName>${infinispan.brand.prefix}-${infinispan.brand.version}</finalName>
@@ -157,13 +170,13 @@
                      </descriptors>
                      <finalName>${infinispan.brand.prefix}-server-${infinispan.brand.version}</finalName>
                      <appendAssemblyId>false</appendAssemblyId>
+                     <attach>false</attach>
                   </configuration>
                </execution>
             </executions>
             <configuration>
                <outputDirectory>${project.build.directory}/distribution</outputDirectory>
                <workDirectory>${project.build.directory}/assembly/work</workDirectory>
-               <attach>${org.infinispan.attachServerZip}</attach>
             </configuration>
          </plugin>
       </plugins>

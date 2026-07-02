@@ -220,7 +220,6 @@
       <versionx.net.sourceforge.pmd>7.0.0-rc3</versionx.net.sourceforge.pmd>
 
       <!-- configuration properties -->
-      <org.infinispan.attachServerZip>true</org.infinispan.attachServerZip>
       <!-- empty by default, means no profiles for upstream or downstream release are enabled. -->
       <!-- upstream: enables profiles for community release -->
       <!-- downstream: enables profiles for downstream/product release -->
