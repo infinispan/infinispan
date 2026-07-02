@@ -121,6 +121,14 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          public void check(ConfigurationBuilderHolder cm, int schemaMajor, int schemaMinor) {
             Configuration distTemplate = getConfiguration(cm, "dist");
             assertTrue(distTemplate.clustering().stateTransfer().awaitLeaveTransfer());
+
+            Configuration trackingEnabledConfig = getConfiguration(cm, "tracking-cache");
+            assertThat(trackingEnabledConfig.statistics().enabled()).isTrue();
+            assertThat(trackingEnabledConfig.statistics().hotKeys().enabled()).isTrue();
+            assertThat(trackingEnabledConfig.statistics().hotKeys().topK()).isEqualTo(250);
+
+            Configuration invalidConfig = getConfiguration(cm, "invalid");
+            assertThat(invalidConfig.statistics().hotKeys().enabled()).isFalse();
          }
       },
       INFINISPAN_162(16, 2) {

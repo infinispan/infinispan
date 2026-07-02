@@ -4,6 +4,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.marshall.WrappedBytes;
 
 import com.google.errorprone.annotations.Immutable;
@@ -168,14 +169,7 @@ public class MurmurHash3 implements Hash {
 
       state.h2 ^= key.length;
 
-      state.h1 += state.h2;
-      state.h2 += state.h1;
-
-      state.h1 = fmix(state.h1);
-      state.h2 = fmix(state.h2);
-
-      state.h1 += state.h2;
-      state.h2 += state.h1;
+      modify(state);
 
       return new long[]{state.h1, state.h2};
    }
@@ -246,14 +240,7 @@ public class MurmurHash3 implements Hash {
 
       state.h2 ^= key.length;
 
-      state.h1 += state.h2;
-      state.h2 += state.h1;
-
-      state.h1 = fmix(state.h1);
-      state.h2 = fmix(state.h2);
-
-      state.h1 += state.h2;
-      state.h2 += state.h1;
+      modify(state);
 
       return state.h1;
    }
@@ -302,14 +289,7 @@ public class MurmurHash3 implements Hash {
 
       state.h2 ^= key.length * 8;
 
-      state.h1 += state.h2;
-      state.h2 += state.h1;
-
-      state.h1 = fmix(state.h1);
-      state.h2 = fmix(state.h2);
-
-      state.h1 += state.h2;
-      state.h2 += state.h1;
+      modify(state);
 
       return new long[]{state.h1, state.h2};
    }
@@ -347,14 +327,7 @@ public class MurmurHash3 implements Hash {
 
       state.h2 ^= key.length * 8;
 
-      state.h1 += state.h2;
-      state.h2 += state.h1;
-
-      state.h1 = fmix(state.h1);
-      state.h2 = fmix(state.h2);
-
-      state.h1 += state.h2;
-      state.h2 += state.h1;
+      modify(state);
 
       return state.h1;
    }
@@ -401,25 +374,7 @@ public class MurmurHash3 implements Hash {
       state.c1 = 0x87c37b91114253d5L;
       state.c2 = 0x4cf5ad432745937fL;
 
-      state.k1 = 0;
-      state.k2 = 0;
-
-      state.k1 ^= (long) b3 << 24;
-      state.k1 ^= (long) b2 << 16;
-      state.k1 ^= (long) b1 << 8;
-      state.k1 ^= b0;
-      bmix(state);
-
-      state.h2 ^= 4;
-
-      state.h1 += state.h2;
-      state.h2 += state.h1;
-
-      state.h1 = fmix(state.h1);
-      state.h2 = fmix(state.h2);
-
-      state.h1 += state.h2;
-      state.h2 += state.h1;
+      apply(b0, b1, b2, b3, state);
 
       return (int) (state.h1 >>> 32);
    }
@@ -542,6 +497,63 @@ public class MurmurHash3 implements Hash {
 
       state.h2 ^= byteLen;
 
+      modify(state);
+
+      return state.h1;
+   }
+
+   public long MurmurHash3_x64_64(Object o, int seed) {
+      if (o instanceof String s)
+         return MurmurHash3_x64_64_String(s, seed);
+
+      if (o instanceof byte[] b)
+         return MurmurHash3_x64_64(b, seed);
+
+      if (o instanceof WrappedByteArray wba)
+         return MurmurHash3_x64_64(wba.getBytes(), seed);
+
+      if (o instanceof WrappedBytes wb)
+         return MurmurHash3_x64_64(wb.getBytes(), seed);
+
+      if (o instanceof long[] l)
+         return MurmurHash3_x64_64(l, seed);
+
+      int hc = o.hashCode();
+
+      byte b0 = (byte) hc;
+      byte b1 = (byte) (hc >>> 8);
+      byte b2 = (byte) (hc >>> 16);
+      byte b3 = (byte) (hc >>> 24);
+
+      State state = new State();
+      state.h1 = 0x9368e53c2f6af274L ^ seed;
+      state.h2 = 0x586dcd208f7cd3fdL ^ seed;
+
+      state.c1 = 0x87c37b91114253d5L;
+      state.c2 = 0x4cf5ad432745937fL;
+
+      apply(b0, b1, b2, b3, state);
+
+      return state.h1;
+   }
+
+   private void apply(byte b0, long b1, long b2, long b3, State state) {
+      state.k1 = 0;
+      state.k2 = 0;
+
+      state.k1 ^= b3 << 24;
+      state.k1 ^= b2 << 16;
+      state.k1 ^= b1 << 8;
+      state.k1 ^= b0;
+
+      bmix(state);
+
+      state.h2 ^= 4;
+
+      modify(state);
+   }
+
+   private static void modify(State state) {
       state.h1 += state.h2;
       state.h2 += state.h1;
 
@@ -550,8 +562,6 @@ public class MurmurHash3 implements Hash {
 
       state.h1 += state.h2;
       state.h2 += state.h1;
-
-      return state.h1;
    }
 
    private void addByte(State state, byte b, int len) {
