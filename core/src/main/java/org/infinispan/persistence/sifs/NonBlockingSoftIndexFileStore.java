@@ -213,6 +213,7 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
       } else {
          cacheSegments = 1;
          segments = singleSegmentSet = IntSets.immutableSet(0);
+         keyPartitioner = key -> 0;
       }
       temporaryTable = new TemporaryTable(cacheSegments);
       temporaryTable.addSegments(segments);
@@ -613,9 +614,10 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
 
    @Override
    public CompletionStage<Boolean> delete(int segment, Object key) {
+      int segmentUsed = segmentUsed(segment);
       try {
-         log.tracef("Deleting key %s for segment %d", key, segment);
-         return logAppender.deleteRequest(segment, key, marshaller.objectToBuffer(key));
+         log.tracef("Deleting key %s for segment %d", key, segmentUsed);
+         return logAppender.deleteRequest(segmentUsed, key, marshaller.objectToBuffer(key));
       } catch (Exception e) {
          return CompletableFuture.failedFuture(new PersistenceException(e));
       }
