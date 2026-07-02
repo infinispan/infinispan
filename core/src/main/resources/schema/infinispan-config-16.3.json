@@ -682,11 +682,7 @@
           }
         },
         "statistics": {
-          "type": [
-            "boolean",
-            "string"
-          ],
-          "description": "Determines whether the cache should collect statistics."
+          "$ref": "#/$defs/Statistics"
         },
         "unreliable-return-values": {
           "type": "boolean",
@@ -863,6 +859,33 @@
         },
         "partition-handling": {
           "$ref": "#/$defs/PartitionHandling"
+        }
+      }
+    },
+    "Statistics": {
+      "type": "object",
+      "description": "Configures statistics collection and hot key tracking for this cache.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable or disable statistics collection for this cache.",
+        },
+        "hot-keys": {
+          "$ref": "#/$defs/HotKeys"
+        }
+      }
+    },
+    "HotKeys": {
+      "type": "object",
+      "description": "Configures hot key tracking using a probabilistic top-k algorithm.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable hot key tracking for this cache."
+        },
+        "top-k": {
+          "type": "integer",
+          "description": "Number of top keys to track per operation type (reads and writes)."
         }
       }
     },
