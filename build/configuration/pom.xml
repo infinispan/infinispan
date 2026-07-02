@@ -220,7 +220,6 @@
       <versionx.com.puppycrawl.tools.checkstyle>13.7.0</versionx.com.puppycrawl.tools.checkstyle>
 
       <!-- configuration properties -->
-      <org.infinispan.attachServerZip>true</org.infinispan.attachServerZip>
       <!-- empty by default, means no profiles for upstream or downstream release are enabled. -->
       <!-- upstream: enables profiles for community release -->
       <!-- downstream: enables profiles for downstream/product release -->
