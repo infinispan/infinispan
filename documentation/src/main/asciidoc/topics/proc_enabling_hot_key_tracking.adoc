@@ -1,0 +1,64 @@
+[id='enabling-hot-key-tracking_{context}']
+= Enabling hot key tracking
+
+{brandname} can track the keys that are read and written most often in a cache.
+_Hot key tracking_ helps you find keys that receive a disproportionate share of requests, which can overload the nodes that own them.
+
+{brandname} tracks reads and writes separately and reports up to `top-k` keys for each, ordered by number of accesses.
+Tracking uses a fixed amount of memory regardless of the number of keys in the cache, so the reported counts are estimates.
+Any key that receives more than one in `top-k + 1` of the accesses is always reported.
+
+Each node counts the requests that it receives, including requests for keys that other nodes own.
+To find the hot keys of a cluster, compare the results from every node.
+
+Hot key tracking counts accesses only while statistics are enabled for the cache.
+
+.Procedure
+
+. Open your {brandname} configuration for editing.
+. Add the `statistics` element to the cache configuration and set `enabled="true"`.
+. Add the `hot-keys` element inside `statistics` and set `enabled="true"`.
+. Optionally set the number of keys to report with the `top-k` attribute.
++
+The value must be between 1 and 512.
+The default is 100.
+. Save and close your {brandname} configuration.
+
+[NOTE]
+====
+Each cache that tracks hot keys uses up to approximately 4 MB of memory on each node with the default `top-k` value, and up to approximately 15 MB with a `top-k` value of 512.
+====
+
+[discrete]
+== Hot key tracking configuration
+
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs="attributes+"]
+----
+include::xml/statistics_hot_keys.xml[]
+----
+
+JSON::
++
+[source,json,options="nowrap",subs="attributes+"]
+----
+include::json/statistics_hot_keys.json[]
+----
+
+YAML::
++
+[source,yaml,options="nowrap",subs="attributes+"]
+----
+include::yaml/statistics_hot_keys.yaml[]
+----
+
+ConfigurationBuilder::
++
+[source,java,options="nowrap",subs="attributes+"]
+----
+include::code_examples/StatisticsHotKeys.java[]
+----
+====

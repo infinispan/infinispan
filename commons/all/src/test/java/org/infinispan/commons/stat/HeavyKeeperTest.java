@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.ToLongBiFunction;
 
+import org.infinispan.commons.hash.MurmurHash3;
 import org.junit.jupiter.api.Test;
 
 public class HeavyKeeperTest {
@@ -70,6 +71,24 @@ public class HeavyKeeperTest {
 
       assertThatThrownBy(() -> new HeavyKeeper<>(3, 8, 7, 1.5, HASH))
             .isInstanceOf(IllegalArgumentException.class);
+   }
+
+   @Test
+   public void testNonPositiveIncrementRejectedWithoutChangingCounts() {
+      HeavyKeeper<String> hk = new HeavyKeeper<>(3, 8, 7, 0.9, HASH);
+      hk.incrBy("a", 10);
+
+      assertThatThrownBy(() -> hk.incrBy("a", 0))
+            .isInstanceOf(IllegalArgumentException.class);
+      assertThatThrownBy(() -> hk.incrBy("a", -5))
+            .isInstanceOf(IllegalArgumentException.class);
+      assertThatThrownBy(() -> hk.incrBy("b", -1))
+            .isInstanceOf(IllegalArgumentException.class);
+
+      // A rejected call leaves both the top-k and the sketch untouched.
+      assertThat(hk.getCount("a")).isEqualTo(10);
+      assertThat(hk.query("b")).isFalse();
+      assertThat(hk.list()).hasSize(1);
    }
 
    @Test
@@ -213,5 +232,81 @@ public class HeavyKeeperTest {
 
       assertThat(hk.query("challenger")).isTrue();
       assertThat(expelled).containsExactly("established-2");
+   }
+
+   @Test
+   public void testNewcomerNotAboveMinimumIsNotAdmitted() {
+      HeavyKeeper<String> hk = new HeavyKeeper<>(2, 8, 7, 0.9, HASH);
+
+      hk.incrBy("a", 10);
+      hk.incrBy("b", 5);
+
+      // Admission requires beating the minimum strictly; a tie is not enough.
+      assertThat(hk.incrBy("below", 3)).isNull();
+      assertThat(hk.incrBy("tie", 5)).isNull();
+
+      assertThat(hk.query("below")).isFalse();
+      assertThat(hk.query("tie")).isFalse();
+      assertThat(hk.list()).extracting(HeavyKeeper.KeyFrequency::key).containsExactlyInAnyOrder("a", "b");
+   }
+
+   @Test
+   public void testMinimumMovesWhenSmallestItemGrows() {
+      HeavyKeeper<String> hk = new HeavyKeeper<>(2, 8, 7, 0.9, HASH);
+
+      hk.incrBy("a", 10);
+      hk.incrBy("b", 5);
+
+      // A rejected newcomer, so the minimum ("b") has already been looked up before it changes.
+      assertThat(hk.incrBy("probe", 1)).isNull();
+
+      // "b" overtakes "a", so "a" becomes the minimum.
+      hk.incrBy("b", 20);
+
+      String expelled = hk.incrBy("c", 15);
+      assertThat(expelled).isEqualTo("a");
+      assertThat(hk.query("b")).isTrue();
+      assertThat(hk.query("c")).isTrue();
+   }
+
+   @Test
+   public void testMinimumIsForgottenAfterReset() {
+      HeavyKeeper<String> hk = new HeavyKeeper<>(1, 8, 7, 0.9, HASH);
+
+      hk.incrBy("old", 100);
+      hk.incrBy("rejected", 50);
+      hk.reset();
+
+      hk.incrBy("x", 10);
+
+      // The minimum is now "x" with 10, not the 100 observed before the reset.
+      String expelled = hk.incrBy("y", 20);
+      assertThat(expelled).isEqualTo("x");
+      assertThat(hk.query("y")).isTrue();
+   }
+
+   @Test
+   public void testKeysWithSameHashCodeDoNotShareCounts() {
+      HeavyKeeper<Object> hk = new HeavyKeeper<>(10, 64, 7, 0.9, MurmurHash3.getInstance()::MurmurHash3_x64_64);
+      Long hot = 0L;
+      Long cold = 0x1_0000_0001L;
+      assertThat(hot.hashCode()).isEqualTo(cold.hashCode());
+
+      hk.incrBy(hot, 100);
+      hk.incrBy(cold, 1);
+
+      // The cold key was seen once; it must not inherit the hot key's count.
+      assertThat(hk.getCount(cold)).isLessThanOrEqualTo(1);
+      assertThat(hk.getCount(hot)).isEqualTo(100);
+   }
+
+   @Test
+   public void testMinimumCombinedHashOnNonPowerOfTwoWidth() {
+      // Both hashes are Long.MIN_VALUE, so row 0 combines to Long.MIN_VALUE, whose absolute value is negative.
+      HeavyKeeper<String> hk = new HeavyKeeper<>(3, 7, 7, 0.9, (key, seed) -> Long.MIN_VALUE);
+
+      hk.incrBy("a", 5);
+
+      assertThat(hk.getCount("a")).isEqualTo(5);
    }
 }
