@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.io.ConfigurationSchemaVersion;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
@@ -35,6 +36,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.CustomStoreConfiguration;
 import org.infinispan.configuration.cache.GroupsConfiguration;
 import org.infinispan.configuration.cache.HashConfiguration;
+import org.infinispan.configuration.cache.HotKeysConfiguration;
 import org.infinispan.configuration.cache.IndexMergeConfiguration;
 import org.infinispan.configuration.cache.IndexReaderConfiguration;
 import org.infinispan.configuration.cache.IndexWriterConfiguration;
@@ -559,7 +561,7 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
    }
 
    private void writeCommonCacheAttributesElements(ConfigurationWriter writer, String name, Configuration configuration) {
-      configuration.statistics().attributes().write(writer, StatisticsConfiguration.ENABLED, Attribute.STATISTICS);
+      writeStatistics(writer, configuration);
       configuration.unsafe().attributes().write(writer);
       writeBackup(writer, configuration);
       writeEncoding(writer, configuration);
@@ -577,6 +579,33 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
          configuration.clustering().stateTransfer().attributes().write(writer, Element.STATE_TRANSFER.getLocalName());
       }
       writePartitionHandling(writer, configuration);
+   }
+
+   private void writeStatistics(ConfigurationWriter writer, Configuration configuration) {
+      StatisticsConfiguration statistics = configuration.statistics();
+      ConfigurationSchemaVersion target = writer.targetVersion();
+
+      if (target != null && !target.since(16, 3)) {
+         // Previous to 16.3, statistics was a cache attribute.
+         statistics.attributes().write(writer, StatisticsConfiguration.ENABLED, Attribute.STATISTICS);
+         return;
+      }
+
+      // From 16.3 forward, statistics became a configuration element.
+      HotKeysConfiguration hotKeys = statistics.hotKeys();
+      boolean hasHotKeys = hotKeys.enabled();
+
+      if (statistics.attributes().isModified() || hasHotKeys) {
+         writer.writeStartElement(Element.STATISTICS);
+         statistics.attributes().write(writer, StatisticsConfiguration.ENABLED, Attribute.ENABLED);
+         if (hasHotKeys) {
+            writer.writeStartElement(Element.HOT_KEYS);
+            writer.writeAttribute(Attribute.ENABLED, Boolean.toString(hotKeys.enabled()));
+            writer.writeAttribute(Attribute.TOP_K, Integer.toString(hotKeys.topK()));
+            writer.writeEndElement();
+         }
+         writer.writeEndElement();
+      }
    }
 
    private void writeEncoding(ConfigurationWriter writer, Configuration configuration) {

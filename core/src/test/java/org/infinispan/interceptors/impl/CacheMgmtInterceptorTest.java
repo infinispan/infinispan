@@ -19,8 +19,10 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.SingleKeyNonTxInvocationContext;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
+import org.infinispan.stats.impl.DisabledHotKeyTracker;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestException;
 import org.infinispan.test.TestingUtil;
@@ -49,7 +51,7 @@ public class CacheMgmtInterceptorTest extends AbstractInfinispanTest {
       interceptor = new CacheMgmtInterceptor();
       interceptor.setNextInterceptor(nextInterceptor);
       interceptor.setNextGetKeyValueInterceptor(nextInterceptor);
-      TestingUtil.inject(interceptor, timeService);
+      TestingUtil.inject(interceptor, timeService, DisabledHotKeyTracker.instance(), (KeyPartitioner) key -> 0);
       interceptor.start();
       interceptor.setStatisticsEnabled(true);
    }

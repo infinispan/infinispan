@@ -1362,6 +1362,37 @@
           </xs:attribute>
         </xs:complexType>
       </xs:element>
+      <xs:element name="statistics" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Configures statistics collection and hot key tracking for this cache.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="hot-keys" minOccurs="0">
+              <xs:annotation>
+                <xs:documentation>Configures hot key tracking using a probabilistic top-k algorithm.</xs:documentation>
+              </xs:annotation>
+              <xs:complexType>
+                <xs:attribute name="enabled" type="xs:boolean" default="false">
+                  <xs:annotation>
+                    <xs:documentation>Enable hot key tracking for this cache.</xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="top-k" type="xs:int" default="100">
+                  <xs:annotation>
+                    <xs:documentation>Number of top keys to track per operation type (reads and writes).</xs:documentation>
+                  </xs:annotation>
+                </xs:attribute>
+              </xs:complexType>
+            </xs:element>
+          </xs:sequence>
+          <xs:attribute name="enabled" type="xs:boolean" default="false">
+            <xs:annotation>
+              <xs:documentation>Enable or disable statistics collection for this cache.</xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
       <xs:element name="tracing" minOccurs="0">
         <xs:annotation>
           <xs:documentation>
