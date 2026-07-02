@@ -18,7 +18,6 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
@@ -63,6 +62,7 @@ import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfiguration;
+import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
 import org.infinispan.telemetry.SpanCategory;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.transaction.LockingMode;
@@ -81,7 +81,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
    @DataProvider(name = "configurationFiles")
    public Object[][] configurationFiles() throws Exception {
       URL configDir = Thread.currentThread().getContextClassLoader().getResource("configs/all");
-      List<Path> paths = Files.list(Paths.get(configDir.toURI())).collect(Collectors.toList());
+      List<Path> paths = Files.list(Paths.get(configDir.toURI())).toList();
       Object[][] configurationFiles = new Object[paths.size()][];
       boolean hasCurrentSchema = false;
       for (int i = 0; i < paths.size(); i++) {
@@ -314,6 +314,11 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
                   assertEquals(proto1.getProperties(), proto2.getProperties(), proto1.getProtocolName());
                }
             }
+            // xsite
+            EmbeddedJGroupsChannelConfigurator xsite = (EmbeddedJGroupsChannelConfigurator) jgroups.configurator("xsite");
+            ProtocolConfiguration relay2 = xsite.getProtocolStack().stream().filter(s -> "relay.RELAY2".equals(s.getProtocolName())).findFirst().orElseThrow(() -> new AssertionError("No relay.RELAY2 protocol found"));
+            assertEquals("LON", relay2.getProperties().get("site"));
+            assertThat(xsite.getRemoteSites().getRemoteSites()).containsOnlyKeys("NYC", "SFO");
          }
       },
 

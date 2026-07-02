@@ -18,8 +18,10 @@ infinispan:
             maxSiteMasters: "1000"
           remoteSites:
             defaultStack: "bridge" # <4>
-            remoteSite:
-              name: "LON"
+            LON:
+              remoteSite: ~
+            NYC:
+              remoteSite: ~
   cacheContainer:
     transport:
       stack: "xsite" # <5>

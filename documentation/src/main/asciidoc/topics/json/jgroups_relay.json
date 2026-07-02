@@ -25,8 +25,11 @@
             "remote-sites": {
               "default-stack": "bridge", // <4>
               "cluster": "xsite",
-              "remote-site": {
-                "name": "LON"
+              "LON": {
+                "remote-site": {}
+              },
+              "NYC": {
+                "remote-site": {}
               }
             }
           }

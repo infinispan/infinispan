@@ -26,6 +26,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
+import org.infinispan.commons.configuration.io.ConfigurationFormatFeature;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.configuration.io.ConfigurationResourceResolver;
 import org.infinispan.commons.configuration.io.NamingStrategy;
@@ -572,33 +573,46 @@ public class Parser extends CacheParser {
       EmbeddedJGroupsChannelConfigurator.RemoteSites remoteSites = new EmbeddedJGroupsChannelConfigurator.RemoteSites(defaultStack, defaultCluster);
       while (reader.inTag()) {
          Element element = Element.forName(reader.getLocalName());
-         switch (element) {
-            case REMOTE_SITE:
-               if (reader.getAttributeCount() > 0) {
-                  String remoteSite = ParseUtils.requireAttributes(reader, Attribute.NAME)[0];
-                  String cluster = defaultCluster;
-                  String stack = defaultStack;
-                  for (int i = 0; i < reader.getAttributeCount(); i++) {
-                     Attribute attribute = Attribute.forName(reader.getAttributeName(i));
-                     switch (attribute) {
-                        case NAME:
-                           break;
-                        case STACK:
-                           stack = reader.getAttributeValue(i);
-                           break;
-                        case CLUSTER:
-                           cluster = reader.getAttributeValue(i);
-                           break;
-                        default:
-                           throw ParseUtils.unexpectedAttribute(reader, i);
-                     }
-                  }
-                  ParseUtils.requireNoContent(reader);
-                  remoteSites.addRemoteSite(stackName, remoteSite, cluster, stack);
-               }
-               break;
-            default:
+         String remoteSite;
+         boolean legacy;
+         if (element == Element.REMOTE_SITE) {
+            // Legacy YAML/JSON format: remoteSite: { name: "NYC" }
+            // XML always uses this path since <remote-site name="..."/> is the only XML representation
+            if (!reader.hasFeature(ConfigurationFormatFeature.MIXED_ELEMENTS)) {
+               CONFIG.deprecatedRemoteSiteFormat(reader.getLocation());
+            }
+            remoteSite = ParseUtils.requireAttributes(reader, Attribute.NAME)[0];
+            legacy = true;
+         } else {
+            Map.Entry<String, String> item = reader.getMapItem(Attribute.NAME);
+            element = Element.forName(item.getValue());
+            if (element != Element.REMOTE_SITE) {
                throw ParseUtils.unexpectedElement(reader);
+            }
+            remoteSite = item.getKey();
+            legacy = false;
+         }
+         String cluster = defaultCluster;
+         String stack = defaultStack;
+         for (int i = 0; i < reader.getAttributeCount(); i++) {
+            Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+            switch (attribute) {
+               case NAME:
+                  break;
+               case STACK:
+                  stack = reader.getAttributeValue(i);
+                  break;
+               case CLUSTER:
+                  cluster = reader.getAttributeValue(i);
+                  break;
+               default:
+                  throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+         ParseUtils.requireNoContent(reader);
+         remoteSites.addRemoteSite(stackName, remoteSite, cluster, stack);
+         if (!legacy) {
+            reader.endMapItem();
          }
       }
       return remoteSites;
