@@ -124,7 +124,7 @@
       <version.jsr107>1.1.0</version.jsr107>
       <version.junit>4.13.2</version.junit>
       <version.jupiter>6.1.1</version.jupiter>
-      <version.log4j>2.26.0</version.log4j>
+      <version.log4j>2.26.1</version.log4j>
       <!-- version.lucene is defined in the lucene profiles below -->
       <version.lucene9>9.12.3</version.lucene9>
       <version.lucene10>10.4.0</version.lucene10>
