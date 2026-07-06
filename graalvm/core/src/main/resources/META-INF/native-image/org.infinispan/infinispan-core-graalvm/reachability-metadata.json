@@ -2,13 +2,35 @@
   "foreign": {
     "downcalls": [
       {
-        "returnType": "long",
-        "parameterTypes": ["long"]
+        "returnType": "jlong",
+        "parameterTypes": ["jlong"]
+      },
+      {
+        "returnType": "jlong",
+        "parameterTypes": ["jlong", "jlong"]
       },
       {
         "returnType": "void",
-        "parameterTypes": ["long"]
+        "parameterTypes": ["jlong"]
       }
     ]
-  }
+  },
+  "reflection": [
+    {
+      "type": "org.jgroups.util.MaxOneThreadPerSender",
+      "fields": [
+        {
+          "name": "max_buffer_size"
+        }
+      ]
+    },
+    {
+      "type": "com.github.benmanes.caffeine.cache.SSLMS",
+      "fields": [
+        {
+          "name": "FACTORY"
+        }
+      ]
+    }
+  ]
 }

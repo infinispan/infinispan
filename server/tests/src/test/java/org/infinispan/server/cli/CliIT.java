@@ -11,7 +11,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Properties;
 
-import org.aesh.terminal.utils.Config;
 import org.infinispan.cli.Context;
 import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.impl.AeshDelegatingShell;
@@ -19,11 +18,14 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.AeshTestConnection;
 import org.infinispan.server.test.core.AeshTestShell;
+import org.infinispan.server.test.core.CliTerminal;
 import org.infinispan.server.test.core.Common;
+import org.infinispan.server.test.core.ProcessCliTerminal;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.jupiter.InfinispanServerExtension;
 import org.infinispan.server.test.jupiter.InfinispanServerExtensionBuilder;
 import org.infinispan.testing.Testing;
+import org.infinispan.testing.jupiter.tags.Cli;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -33,6 +35,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
+@Cli
 public class CliIT {
 
    @RegisterExtension
@@ -61,13 +64,22 @@ public class CliIT {
       Util.recursiveFileRemove(workingDir);
    }
 
+   private CliTerminal createTerminal(String... cliArgs) {
+      String cliPath = System.getProperty("infinispan.cli.bin");
+      if (cliPath != null) {
+         return new ProcessCliTerminal(cliPath, workingDir.getAbsolutePath(), cliArgs);
+      }
+      AeshTestConnection terminal = new AeshTestConnection();
+      CLI.main(new AeshDelegatingShell(terminal), properties, cliArgs);
+      return terminal;
+   }
+
    @Test
    public void testCliInteractive() {
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties);
+      try (CliTerminal terminal = createTerminal()) {
 
          terminal.send("echo Hi");
-         terminal.assertEquals("[disconnected]> echo Hi" + Config.getLineSeparator() + "Hi" + Config.getLineSeparator() + "[disconnected]> ");
+         terminal.assertContains("Hi");
          terminal.clear();
          connect(terminal);
          terminal.send("stats");
@@ -197,15 +209,14 @@ public class CliIT {
    @Test
    public void testCliBatchPreconnect() {
       AeshTestShell shell = new AeshTestShell();
-      CLI.main(shell, properties, "-c", connectionUrl(), "-f", getCliResource("batch-preconnect.cli").getPath());
+      CLI.main(shell, properties, "-c", httpConnectionUrl(), "-f", getCliResource("batch-preconnect.cli").getPath());
       shell.assertContains("Hi CLI");
       shell.assertContains("batch2");
    }
 
    @Test
    public void testCliTasks() {
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties, "-c", connectionUrl());
+      try (CliTerminal terminal = createTerminal("-c", httpConnectionUrl())) {
          connect(terminal);
 
          terminal.send("cd tasks");
@@ -224,8 +235,7 @@ public class CliIT {
 
    @Test
    public void testCliCredentials() {
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties);
+      try (CliTerminal terminal = createTerminal()) {
          String keyStore = Paths.get(System.getProperty("build.directory", ""), "key.store").toAbsolutePath().toString();
 
          terminal.send("credentials add --path=" + keyStore + " --password=secret --credential=credential password");
@@ -239,8 +249,7 @@ public class CliIT {
 
    @Test
    public void testCliAuthorization() {
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties);
+      try (CliTerminal terminal = createTerminal()) {
          connect(terminal);
          terminal.send("user roles ls");
          terminal.assertContains("\"admin\"");
@@ -268,11 +277,11 @@ public class CliIT {
       }
    }
 
-   private void connect(AeshTestConnection terminal) {
+   private void connect(CliTerminal terminal) {
       connect(terminal, TestUser.ADMIN);
    }
 
-   private void connect(AeshTestConnection terminal, TestUser user) {
+   private void connect(CliTerminal terminal, TestUser user) {
       // connect
       terminal.send("connect -u " + user.getUser() + " -p " + user.getPassword() + " " + hostAddress() + ":11222");
       terminal.assertContains("//containers/default]>");
@@ -281,8 +290,7 @@ public class CliIT {
 
    @Test
    public void testCliUploadProtobufSchemas() {
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties);
+      try (CliTerminal terminal = createTerminal()) {
 
          // connect
          connect(terminal);
@@ -307,29 +315,58 @@ public class CliIT {
    }
 
    @Test
-   public void testCliHttpBenchmark() {
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties);
+   public void testCliHttpBenchmarkNoCache() {
+      try (CliTerminal terminal = createTerminal()) {
 
          // no cache
-         terminal.send("benchmark " + connectionUrl());
-         terminal.assertContains("java.lang.IllegalArgumentException: Could not find cache");
+         terminal.send("benchmark --cache=nonexistent " + httpConnectionUrl());
+         terminal.assertContains("IllegalArgumentException: Could not find cache");
+      }
+   }
+
+   @Test
+   public void testCliHttpBenchmarkRun() {
+      try (CliTerminal terminal = createTerminal()) {
+         connect(terminal);
+         terminal.send("create cache http-benchmark '<distributed-cache/>'");
+         terminal.clear();
+         terminal.send("benchmark --cache=http-benchmark --warmup-count=0 --count=1 --time=1s --keyset-size=10 -t 1 " + httpConnectionUrl());
+         terminal.assertContains("Result \"HttpBenchmark.put\"");
+      }
+   }
+
+   @Test
+   public void testCliHotRodBenchmarkRun() {
+      try (CliTerminal terminal = createTerminal()) {
+         connect(terminal);
+         terminal.send("create cache hotrod-benchmark '<distributed-cache/>'");
+         terminal.clear();
+         terminal.send("benchmark --cache=hotrod-benchmark --warmup-count=0 --count=1 --time=1s --keyset-size=10 -t 1 " + hotrodConnectionUrl());
+         terminal.assertContains("Result \"HotRodBenchmark.put\"");
+      }
+   }
+
+   @Test
+   public void testCliRespBenchmarkRun() {
+      try (CliTerminal terminal = createTerminal()) {
+         connect(terminal);
+         terminal.clear();
+         terminal.send("benchmark --cache=respCache --warmup-count=0 --count=1 --time=1s --keyset-size=10 -t 1 " + respConnectionUrl());
+         terminal.assertContains("Result \"RespBenchmark.put\"");
       }
    }
 
    @Test
    public void testCliConfigPersistence() {
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties);
+      try (CliTerminal terminal = createTerminal()) {
 
-         terminal.send("config set autoconnect-url " + connectionUrl());
+         terminal.send("config set autoconnect-url " + httpConnectionUrl());
          terminal.clear();
          terminal.send("config get autoconnect-url");
-         terminal.assertContains(connectionUrl());
+         terminal.assertContains(httpConnectionUrl());
       }
       // Close and recreate the CLI so that auto-connection kicks in
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties);
+      try (CliTerminal terminal = createTerminal()) {
          terminal.assertContains("//containers/default]>");
          terminal.send("config set autoconnect-url");
       }
@@ -337,8 +374,7 @@ public class CliIT {
 
    @Test
    public void testCliCacheAvailability() {
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties);
+      try (CliTerminal terminal = createTerminal()) {
 
          var cacheName = "qcache";
          connect(terminal);
@@ -356,9 +392,8 @@ public class CliIT {
 
    @Test
    public void testCliAlternateContext() {
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties);
-         terminal.send("connect --context-path=/relax " + connectionUrl(TestUser.ADMIN, 11225));
+      try (CliTerminal terminal = createTerminal()) {
+         terminal.send("connect --context-path=/relax " + connectionUrl("http", TestUser.ADMIN, 11225));
          terminal.assertContains("//containers/default]>");
          terminal.clear();
       }
@@ -368,12 +403,20 @@ public class CliIT {
       return SERVERS.getServerDriver().getServerAddress(0).getHostAddress();
    }
 
-   private String connectionUrl() {
-      return connectionUrl(TestUser.ADMIN, 11222);
+   private String connectionUrl(String protocol, TestUser user, int port) {
+      return String.format("%s://%s:%s@%s:%d", protocol, user.getUser(), user.getPassword(), hostAddress(), port);
    }
 
-   private String connectionUrl(TestUser user, int port) {
-      return String.format("http://%s:%s@%s:%d", user.getUser(), user.getPassword(), hostAddress(), port);
+   private String httpConnectionUrl() {
+      return connectionUrl("http", TestUser.ADMIN, 11222);
+   }
+
+   private String hotrodConnectionUrl() {
+      return connectionUrl("hotrod", TestUser.ADMIN, 11222);
+   }
+
+   private String respConnectionUrl() {
+      return connectionUrl("redis", TestUser.ADMIN, 11222);
    }
 
    private File getCliResource(String resource) {

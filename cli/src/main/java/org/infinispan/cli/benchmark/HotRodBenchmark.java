@@ -8,52 +8,42 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.commons.util.Util;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.Param;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.TearDown;
-import org.openjdk.jmh.infra.Blackhole;
 
 /**
- * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.0
  **/
-@State(Scope.Thread)
-public class HotRodBenchmark {
+public abstract class HotRodBenchmark implements BenchmarkTask {
+   private final String uri;
+   private final String cacheName;
+   private final int keySize;
+   private final int valueSize;
+   private final int keySetSize;
+
    RemoteCacheManager cm;
-   RemoteCache cache;
-
-   @Param("hotrod://127.0.0.1")
-   public String uri;
-
-   @Param("benchmark")
-   public String cacheName;
-
-   @Param("16")
-   public int keySize;
-
-   @Param("1000")
-   public int valueSize;
-
-   @Param("1000")
-   public int keySetSize;
-
+   RemoteCache<byte[], byte[]> cache;
    byte[] value;
    List<byte[]> keySet;
    AtomicInteger nextIndex;
 
-   @Setup
+   private HotRodBenchmark(String uri, String cacheName, int keySize, int valueSize, int keySetSize) {
+      this.uri = uri;
+      this.cacheName = cacheName;
+      this.keySize = keySize;
+      this.valueSize = valueSize;
+      this.keySetSize = keySetSize;
+   }
+
+   @Override
    public void setup() {
       cm = new RemoteCacheManager(uri);
       cache = cm.getCache(cacheName);
       if (cache == null) {
+         Util.close(cm);
          throw new IllegalArgumentException("Could not find cache " + cacheName);
       }
       value = new byte[valueSize];
       keySet = new ArrayList<>(keySetSize);
-      Random r = new Random(17); // We always use the same seed to make things repeatable
+      Random r = new Random(17);
       for (int i = 0; i < keySetSize; i++) {
          byte[] key = new byte[keySize];
          r.nextBytes(key);
@@ -63,22 +53,40 @@ public class HotRodBenchmark {
       nextIndex = new AtomicInteger();
    }
 
-   @Benchmark
-   public void get(Blackhole bh) {
-      bh.consume(cache.get(nextKey()));
-   }
-
-   @Benchmark
-   public void put() {
-      cache.put(nextKey(), value);
-   }
-
-   @TearDown
+   @Override
    public void teardown() {
       Util.close(cm);
    }
 
-   private byte[] nextKey() {
+   byte[] nextKey() {
       return keySet.get(nextIndex.getAndIncrement() % keySetSize);
+   }
+
+   public static HotRodBenchmark get(String uri, String cacheName, int keySize, int valueSize, int keySetSize) {
+      return new HotRodBenchmark(uri, cacheName, keySize, valueSize, keySetSize) {
+         @Override
+         public void run() {
+            cache.get(nextKey());
+         }
+
+         @Override
+         public String name() {
+            return "HotRodBenchmark.get";
+         }
+      };
+   }
+
+   public static HotRodBenchmark put(String uri, String cacheName, int keySize, int valueSize, int keySetSize) {
+      return new HotRodBenchmark(uri, cacheName, keySize, valueSize, keySetSize) {
+         @Override
+         public void run() {
+            cache.put(nextKey(), value);
+         }
+
+         @Override
+         public String name() {
+            return "HotRodBenchmark.put";
+         }
+      };
    }
 }

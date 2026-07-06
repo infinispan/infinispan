@@ -156,7 +156,7 @@ public class Install extends CliCommand {
    }
 
    private static void extractTarEntries(Path dest, TarArchiveInputStream tis, CopyOption... options) throws IOException {
-      for (TarArchiveEntry tarEntry = tis.getNextTarEntry(); tarEntry != null; tarEntry = tis.getNextTarEntry()) {
+      for (TarArchiveEntry tarEntry = tis.getNextEntry(); tarEntry != null; tarEntry = tis.getNextEntry()) {
          Path entryPath = dest.resolve(tarEntry.getName());
          if (!entryPath.startsWith(dest)) {
             throw new IOException("Illegal relative path " + tarEntry.getName());

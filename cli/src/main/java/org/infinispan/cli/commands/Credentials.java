@@ -15,8 +15,6 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
-import org.aesh.io.FileResource;
-import org.aesh.io.Resource;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.auth.server.IdentityCredentials;
@@ -61,15 +59,15 @@ public class Credentials extends CliCommand {
       return store;
    }
 
-   static Path resourceToPath(Resource resource, String serverRoot) {
-      if (((FileResource) resource).getFile().getParent() != null) {
-         return Paths.get(resource.getAbsolutePath());
+   static Path resourceToPath(String path, String serverRoot) {
+      java.io.File file = new java.io.File(path);
+      if (file.getParent() != null) {
+         return file.toPath().toAbsolutePath();
       } else {
          String serverHome = System.getProperty("infinispan.server.home.path");
          Path serverHomePath = serverHome == null ? Paths.get("") : Paths.get(serverHome);
-         return serverHomePath.resolve(serverRoot).resolve("conf").resolve(((FileResource) resource).getFile().getPath()).toAbsolutePath();
+         return serverHomePath.resolve(serverRoot).resolve("conf").resolve(path).toAbsolutePath();
       }
-
    }
 
    @CommandDefinition(name = "add", description = "Adds credentials to keystores.")
@@ -79,7 +77,7 @@ public class Credentials extends CliCommand {
       String alias;
 
       @Option(description = "Sets the path to a credential keystore and creates a new one if it does not exist.", completer = FileOptionCompleter.class, defaultValue = CREDENTIALS_PATH)
-      Resource path;
+      String path;
 
       @Option(description = "Specifies a password to protect the credential keystore.", shortName = 'p')
       String password;
@@ -120,7 +118,7 @@ public class Credentials extends CliCommand {
       String alias;
 
       @Option(description = "Sets the path to a credential keystore.", completer = FileOptionCompleter.class, defaultValue = CREDENTIALS_PATH)
-      Resource path;
+      String path;
 
       @Option(description = "Specifies the password that protects the credential keystore.", shortName = 'p')
       String password;
@@ -152,7 +150,7 @@ public class Credentials extends CliCommand {
    public static class Ls extends CliCommand {
 
       @Option(description = "Sets the path to a credential keystore.", completer = FileOptionCompleter.class, defaultValue = CREDENTIALS_PATH)
-      Resource path;
+      String path;
 
       @Option(description = "Specifies the password that protects the credential keystore.", shortName = 'p')
       String password;

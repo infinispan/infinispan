@@ -1,7 +1,9 @@
 package org.infinispan.cli.commands;
 
 import java.net.URI;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
@@ -9,10 +11,13 @@ import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
-import org.infinispan.cli.benchmark.BenchmarkOutputFormat;
+import org.infinispan.cli.benchmark.BenchmarkMode;
+import org.infinispan.cli.benchmark.BenchmarkRunner;
+import org.infinispan.cli.benchmark.BenchmarkTask;
 import org.infinispan.cli.benchmark.HotRodBenchmark;
 import org.infinispan.cli.benchmark.HttpBenchmark;
 import org.infinispan.cli.benchmark.RespBenchmark;
+import org.infinispan.cli.benchmark.VerboseMode;
 import org.infinispan.cli.completers.BenchmarkModeCompleter;
 import org.infinispan.cli.completers.BenchmarkVerbosityModeCompleter;
 import org.infinispan.cli.completers.BookmarkCompleter;
@@ -20,15 +25,8 @@ import org.infinispan.cli.completers.CacheCompleter;
 import org.infinispan.cli.completers.TimeUnitCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.kohsuke.MetaInfServices;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.runner.Runner;
-import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.OptionsBuilder;
-import org.openjdk.jmh.runner.options.TimeValue;
-import org.openjdk.jmh.runner.options.VerboseMode;
 
 /**
- * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.0
  **/
 @MetaInfServices(Command.class)
@@ -40,8 +38,7 @@ public class Benchmark extends CliCommand {
    @Option(shortName = 't', defaultValue = "10", description = "Specifies the number of threads to create. Defaults to 10.")
    int threads;
 
-
-   @Option(completer = BenchmarkModeCompleter.class, defaultValue = "Throughput", description = "Specifies the benchmark mode. Possible values are Throughput, AverageTime, SampleTime, SingleShotTime, and All. Defaults to Throughput.")
+   @Option(completer = BenchmarkModeCompleter.class, defaultValue = "Throughput", description = "Specifies the benchmark mode. Possible values are Throughput, AverageTime, and SampleTime. Defaults to Throughput.")
    String mode;
 
    @Option(completer = BenchmarkVerbosityModeCompleter.class, defaultValue = "NORMAL", description = "Specifies the verbosity level of the output. Possible values, from least to most verbose, are SILENT, NORMAL, and EXTRA. Defaults to NORMAL.")
@@ -50,13 +47,13 @@ public class Benchmark extends CliCommand {
    @Option(shortName = 'c', defaultValue = "5", description = "Specifies how many measurement iterations to perform. Defaults to 5.")
    int count;
 
-   @Option(defaultValue = "10s", description = "Sets the amount of time, in seconds, that each iteration takes. Defaults to 10.")
+   @Option(defaultValue = "10s", description = "Sets the amount of time that each iteration takes. Use a suffix: s for seconds, ms for milliseconds. Defaults to 10s.")
    String time;
 
    @Option(defaultValue = "5", name = "warmup-count", description = "Specifies how many warmup iterations to perform. Defaults to 5.")
    int warmupCount;
 
-   @Option(defaultValue = "1s", name = "warmup-time", description = "Sets the amount of time, in seconds, that each warmup iteration takes. Defaults to 1.")
+   @Option(defaultValue = "1s", name = "warmup-time", description = "Sets the amount of time that each warmup iteration takes. Use a suffix: s for seconds, ms for milliseconds. Defaults to 1s.")
    String warmupTime;
 
    @Option(completer = TimeUnitCompleter.class, defaultValue = "MICROSECONDS", name = "time-unit", description = "Specifies the time unit for results in the benchmark report. Possible values are NANOSECONDS, MICROSECONDS, MILLISECONDS, and SECONDS. The default is MICROSECONDS.")
@@ -76,7 +73,6 @@ public class Benchmark extends CliCommand {
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
-      OptionsBuilder opt = new OptionsBuilder();
       if (this.uri == null) {
          if (invocation.getContext().isConnected()) {
             this.uri = invocation.getContext().connection().getURI();
@@ -84,7 +80,6 @@ public class Benchmark extends CliCommand {
             throw new IllegalArgumentException("You must specify a URI");
          }
       }
-      // Resolve bookmark if the argument is not a URI
       if (!this.uri.contains("://")) {
          Bookmark.ResolvedBookmark bookmark = Bookmark.resolve(invocation, this.uri);
          if (bookmark == null) {
@@ -92,49 +87,42 @@ public class Benchmark extends CliCommand {
          }
          this.uri = embedCredentials(bookmark);
       }
-      URI uri = URI.create(this.uri);
-      switch (uri.getScheme()) {
+      URI parsedUri = URI.create(this.uri);
+      Supplier<BenchmarkTask> getFactory;
+      Supplier<BenchmarkTask> putFactory;
+      switch (parsedUri.getScheme()) {
          case "hotrod":
          case "hotrods":
-            opt.include(HotRodBenchmark.class.getSimpleName());
+            getFactory = () -> HotRodBenchmark.get(this.uri, cache, keySize, valueSize, keySetSize);
+            putFactory = () -> HotRodBenchmark.put(this.uri, cache, keySize, valueSize, keySetSize);
             break;
          case "http":
          case "https":
-            opt.include(HttpBenchmark.class.getSimpleName());
+            getFactory = () -> HttpBenchmark.get(this.uri, cache, keySize, valueSize, keySetSize);
+            putFactory = () -> HttpBenchmark.put(this.uri, cache, keySize, valueSize, keySetSize);
             break;
          case "redis":
          case "rediss":
-            opt.include(RespBenchmark.class.getSimpleName());
+            getFactory = () -> RespBenchmark.get(this.uri, keySize, valueSize, keySetSize);
+            putFactory = () -> RespBenchmark.put(this.uri, keySize, valueSize, keySetSize);
             break;
          default:
-            throw new IllegalArgumentException("Unknown scheme " + uri.getScheme());
+            throw new IllegalArgumentException("Unknown scheme " + parsedUri.getScheme());
       }
-      opt
-            .forks(0)
-            .threads(threads)
-            .param("uri", this.uri)
-            .param("cacheName", this.cache)
-            .param("keySize", Integer.toString(this.keySize))
-            .param("valueSize", Integer.toString(this.valueSize))
-            .param("keySetSize", Integer.toString(this.keySetSize))
-            .mode(Mode.valueOf(mode))
-            .verbosity(VerboseMode.valueOf(verbosity))
-            .measurementIterations(count)
-            .measurementTime(TimeValue.fromString(time))
-            .warmupIterations(warmupCount)
-            .warmupTime(TimeValue.fromString(warmupTime))
-            .timeUnit(TimeUnit.valueOf(timeUnit));
-      try {
-         new Runner(opt.build(), new BenchmarkOutputFormat(invocation.getShell(), VerboseMode.valueOf(verbosity))).run();
-         return CommandResult.SUCCESS;
-      } catch (RunnerException e) {
-         throw new CommandException(e);
+
+      BenchmarkMode benchmarkMode = BenchmarkMode.valueOf(mode);
+      VerboseMode verboseMode = VerboseMode.valueOf(verbosity);
+      TimeUnit unit = TimeUnit.valueOf(timeUnit);
+      long warmupNanos = BenchmarkRunner.parseTime(warmupTime);
+      long measurementNanos = BenchmarkRunner.parseTime(time);
+
+      for (Supplier<BenchmarkTask> factory : List.of(getFactory, putFactory)) {
+         new BenchmarkRunner(invocation.getShell(), verboseMode, benchmarkMode,
+               threads, warmupCount, warmupNanos, count, measurementNanos, unit, factory).run();
       }
+      return CommandResult.SUCCESS;
    }
 
-   /**
-    * Builds a URI string from a resolved bookmark, embedding credentials in the URI if present.
-    */
    private static String embedCredentials(Bookmark.ResolvedBookmark bookmark) {
       if (bookmark.username() == null) {
          return bookmark.url();

@@ -8,8 +8,10 @@ import java.util.Properties;
 import org.infinispan.cli.commands.CLI;
 import org.infinispan.commons.util.Util;
 import org.infinispan.testing.Testing;
+import org.infinispan.testing.jupiter.tags.Cli;
 import org.junit.jupiter.api.Test;
 
+@Cli
 public class BatchFailureHandlingTest {
    @Test
    public void testBatchFailureHandling() {
