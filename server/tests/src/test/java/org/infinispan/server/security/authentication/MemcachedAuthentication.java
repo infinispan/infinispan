@@ -16,8 +16,8 @@ import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.core.Common;
-import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.jupiter.InfinispanServer;
+import org.infinispan.testing.jupiter.tags.Security;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 

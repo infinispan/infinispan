@@ -31,7 +31,7 @@ import javax.sql.DataSource;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.persistence.ContainerDatabase;
-import org.infinispan.server.test.core.tags.Database;
+import org.infinispan.testing.jupiter.tags.Database;
 import org.jgroups.Event;
 import org.jgroups.JChannel;
 import org.jgroups.protocols.FD_ALL3;

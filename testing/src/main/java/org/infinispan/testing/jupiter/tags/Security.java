@@ -1,4 +1,4 @@
-package org.infinispan.server.test.core.tags;
+package org.infinispan.testing.jupiter.tags;
 
 
 import java.lang.annotation.ElementType;
@@ -10,6 +10,6 @@ import org.junit.jupiter.api.Tag;
 
 @Target({ ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
-@Tag("persistence")
-public @interface Persistence {
+@Tag("security")
+public @interface Security {
 }

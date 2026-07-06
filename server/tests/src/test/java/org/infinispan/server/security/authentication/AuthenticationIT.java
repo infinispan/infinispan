@@ -1,10 +1,10 @@
 package org.infinispan.server.security.authentication;
 
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.jupiter.InfinispanServerExtension;
 import org.infinispan.server.test.jupiter.InfinispanServerExtensionBuilder;
 import org.infinispan.server.test.jupiter.InfinispanSuite;
+import org.infinispan.testing.jupiter.tags.Security;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;

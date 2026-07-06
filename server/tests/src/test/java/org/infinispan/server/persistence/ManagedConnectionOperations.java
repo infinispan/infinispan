@@ -19,7 +19,7 @@ import org.infinispan.server.test.jupiter.InfinispanServer;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
-@org.infinispan.server.test.core.tags.Database
+@org.infinispan.testing.jupiter.tags.Database
 public class ManagedConnectionOperations {
 
    @InfinispanServer(PersistenceIT.class)

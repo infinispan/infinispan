@@ -28,7 +28,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
  * Other attributes like singleton, shared, fetch-state do not make sense in single node cluster.
  *
  */
-@org.infinispan.server.test.core.tags.Database
+@org.infinispan.testing.jupiter.tags.Database
 public class JdbcStringBasedCacheStore {
 
     @RegisterExtension

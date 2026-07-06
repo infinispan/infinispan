@@ -8,10 +8,10 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.core.tags.Resilience;
 import org.infinispan.server.test.jupiter.InfinispanServerExtension;
 import org.infinispan.server.test.jupiter.InfinispanServerExtensionBuilder;
 import org.infinispan.testing.Eventually;
+import org.infinispan.testing.jupiter.tags.Resilience;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
