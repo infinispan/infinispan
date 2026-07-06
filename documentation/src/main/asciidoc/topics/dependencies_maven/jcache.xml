@@ -1,0 +1,8 @@
+<dependency>
+  <groupId>org.infinispan</groupId>
+  <artifactId>infinispan-jcache</artifactId>
+</dependency>
+<dependency>
+  <groupId>javax.cache</groupId>
+  <artifactId>cache-api</artifactId>
+</dependency>

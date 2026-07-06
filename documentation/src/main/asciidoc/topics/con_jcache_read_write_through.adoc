@@ -1,0 +1,29 @@
+[id='jcache-read-write-through_{context}']
+= Configuring Read-Through and Write-Through
+
+JCache supports read-through and write-through caching to automatically load and persist cache entries using a `CacheLoader` and `CacheWriter`.
+
+== Read-through
+
+With read-through enabled, {brandname} invokes the `CacheLoader` to load entries from an external store on cache misses.
+Read-through is only triggered by `get()`, `getAll()`, and `invoke()` operations.
+
+[source,java]
+----
+include::code_examples/JCacheReadThrough.java[]
+----
+
+== Write-through
+
+With write-through enabled, {brandname} invokes the `CacheWriter` to persist entries to an external store on cache mutations.
+
+[source,java]
+----
+include::code_examples/JCacheWriteThrough.java[]
+----
+
+[NOTE]
+====
+In the {brandname} JCache implementation, `CacheLoader` and `CacheWriter` instances are integrated as {brandname} persistence stores internally.
+If the underlying {brandname} cache already has a persistence store configured, write operations persist to that store regardless of the `isWriteThrough()` setting.
+====

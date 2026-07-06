@@ -13,6 +13,7 @@ include::{stories}/assembly_wildfly_modules.adoc[leveloffset=+1]
 ifdef::community[]
 include::{stories}/assembly_quarkus_embedded.adoc[leveloffset=+1]
 endif::community[]
+include::{stories}/assembly_jcache.adoc[leveloffset=+1]
 include::{stories}/assembly_cdi.adoc[leveloffset=+1]
 include::{stories}/assembly_multimap_cache.adoc[leveloffset=+1]
 //Community content
