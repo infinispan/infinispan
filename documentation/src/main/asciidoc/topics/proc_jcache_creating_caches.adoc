@@ -1,0 +1,34 @@
+[id='jcache-creating-caches_{context}']
+= Creating and Using JCache Caches
+
+Create a JCache cache using the standard `javax.cache` API with {brandname} as the caching provider.
+
+.Procedure
+
+. Obtain a `CachingProvider` and `CacheManager`.
+. Configure a cache with `MutableConfiguration`.
+. Create the cache and perform operations.
+
+[source,java]
+----
+include::code_examples/JCacheCreateCache.java[]
+----
+
+After you create a cache, you can store and retrieve values:
+
+[source,java]
+----
+include::code_examples/JCachePutGet.java[]
+----
+
+When you are finished, close the `CacheManager` and `CachingProvider` to release resources:
+
+[source,java]
+----
+cacheManager.close();
+cachingProvider.close();
+----
+
+[role="_additional-resources"]
+.Additional resources
+* link:https://github.com/infinispan/infinispan-simple-tutorials/tree/main/infinispan-embedded/jcache[JCache simple tutorial on GitHub]
