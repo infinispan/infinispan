@@ -1,0 +1,11 @@
+[id='jcache-dependencies_{context}']
+= JCache Dependencies
+
+Add the following dependencies to your `pom.xml` to use the JCache API with {brandname}:
+
+[source,xml,options="nowrap"]
+----
+include::dependencies_maven/jcache.xml[]
+----
+
+When these dependencies are on the classpath, {brandname} is automatically discovered as the JCache caching provider through the standard `java.util.ServiceLoader` mechanism.
