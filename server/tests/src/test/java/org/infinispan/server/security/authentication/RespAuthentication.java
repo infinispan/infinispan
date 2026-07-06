@@ -7,9 +7,9 @@ import java.util.List;
 
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.test.api.TestClientDriver;
-import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.jupiter.InfinispanServer;
 import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.jupiter.tags.Security;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.KeyValue;

@@ -55,7 +55,7 @@ public class RollingUpgradePersistenceTestIT {
    }
 
    @ParameterizedTest
-   @org.infinispan.server.test.core.tags.Database
+   @org.infinispan.testing.jupiter.tags.Database
    @ArgumentsSource(PersistenceIT.DefaultDatabaseTypes.class)
    public void testRollingUpgradeWithJdbcString(String databaseType) throws Throwable {
       String cacheName = "rolling_upgrade_jdbc";

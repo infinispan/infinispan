@@ -10,10 +10,10 @@ import javax.management.ObjectName;
 
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ServerRunMode;
-import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.jupiter.InfinispanServerExtension;
 import org.infinispan.server.test.jupiter.InfinispanServerExtensionBuilder;
 import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.jupiter.tags.Security;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 

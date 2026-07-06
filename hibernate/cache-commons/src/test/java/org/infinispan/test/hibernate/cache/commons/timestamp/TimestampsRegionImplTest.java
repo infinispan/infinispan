@@ -26,7 +26,7 @@ import org.infinispan.test.hibernate.cache.commons.functional.entities.AccountHo
 import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
 import org.infinispan.test.hibernate.cache.commons.util.ClassLoaderAwareCache;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
-import org.infinispan.testing.junit.categories.Smoke;
+import org.infinispan.testing.jupiter.tags.Smoke;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 

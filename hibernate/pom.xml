@@ -91,7 +91,7 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
-                     <groups>org.infinispan.testing.junit.categories.Smoke</groups>
+                     <groups>org.infinispan.testing.jupiter.tags.Smoke</groups>
                   </configuration>
                </plugin>
             </plugins>

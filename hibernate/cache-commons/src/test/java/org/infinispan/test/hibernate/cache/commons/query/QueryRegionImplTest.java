@@ -29,7 +29,7 @@ import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
 import org.infinispan.test.hibernate.cache.commons.AbstractGeneralDataRegionTest;
 import org.infinispan.test.hibernate.cache.commons.util.CacheTestUtil;
 import org.infinispan.test.hibernate.cache.commons.util.TestRegionFactory;
-import org.infinispan.testing.junit.categories.Smoke;
+import org.infinispan.testing.jupiter.tags.Smoke;
 import org.jboss.logging.Logger;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;

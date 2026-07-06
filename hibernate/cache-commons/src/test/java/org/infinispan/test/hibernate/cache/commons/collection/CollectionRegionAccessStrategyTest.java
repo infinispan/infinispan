@@ -24,7 +24,7 @@ import org.infinispan.test.hibernate.cache.commons.NodeEnvironment;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess.TestRegionAccessStrategy;
 import org.infinispan.test.hibernate.cache.commons.util.TestSynchronization;
 import org.infinispan.test.hibernate.cache.commons.util.TestingKeyFactory;
-import org.infinispan.testing.junit.categories.Smoke;
+import org.infinispan.testing.jupiter.tags.Smoke;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 

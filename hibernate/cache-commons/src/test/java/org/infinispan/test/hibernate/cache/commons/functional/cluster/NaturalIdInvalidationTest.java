@@ -34,7 +34,7 @@ import org.infinispan.test.hibernate.cache.commons.functional.entities.NaturalId
 import org.infinispan.test.hibernate.cache.commons.functional.entities.State;
 import org.infinispan.test.hibernate.cache.commons.functional.entities.State_;
 import org.infinispan.test.hibernate.cache.commons.util.TestSessionAccess;
-import org.infinispan.testing.junit.categories.Smoke;
+import org.infinispan.testing.jupiter.tags.Smoke;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;

@@ -16,7 +16,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
  * @author Gustavo Lira &lt;glira@redhat.com&gt;
  * @since 10.0
  **/
-@org.infinispan.server.test.core.tags.Database
+@org.infinispan.testing.jupiter.tags.Database
 public class PooledConnectionOperations {
 
    @RegisterExtension
