@@ -62,9 +62,9 @@ jobs:
 
       - if: ${{ matrix.os == 'windows-2022' }}
         name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3.0.0
+        uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3
 
-      - uses: graalvm/setup-graalvm@bef4b0e916c7dd079bf60fb95d49139f67e32c5f # v1
+      - uses: graalvm/setup-graalvm@8c5543b71f44568342e106336639979e94a8f6de # v1
         with:
           java-version: '25'
           distribution: 'graalvm'
@@ -98,3 +98,11 @@ jobs:
       - if: ${{ matrix.os != 'windows-2022' }}
         name: Build native executable
         run: ./mvnw -V install -Pdistribution -Pnative -am -pl ${{ steps.detect-cli.outputs.module }} ${{ matrix.native_extra_args }}
+
+      - if: failure()
+        name: Upload native-image error reports
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: svm-error-report-${{ matrix.asset_name }}
+          path: '**/svm_err_*.md'
+          if-no-files-found: ignore
