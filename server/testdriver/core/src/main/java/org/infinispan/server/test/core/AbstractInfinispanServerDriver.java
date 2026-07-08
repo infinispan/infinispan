@@ -272,8 +272,8 @@ public abstract class AbstractInfinispanServerDriver implements InfinispanServer
             try {
                Path resolved = a.resolveArtifact();
                Files.copy(resolved, libDir.toPath().resolve(resolved.getFileName()), StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-               throw new RuntimeException(e);
+            } catch (Exception e) {
+               throw new RuntimeException("Artifact " + a, e);
             }
          }
       }

@@ -1,4 +1,4 @@
-package org.infinispan.server.core.dataconversion.xml;
+package org.infinispan.transcoder.xml;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +22,8 @@ import com.thoughtworks.xstream.io.xml.CompactWriter;
  **/
 public class MXParserDriver extends AbstractDriver {
 
-   public MXParserDriver() {}
+   public MXParserDriver() {
+   }
 
    @Override
    public HierarchicalStreamReader createReader(Reader reader) {
