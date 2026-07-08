@@ -51,12 +51,10 @@ public class EncoderRegistryImpl implements EncoderRegistry {
 
    private Transcoder getTranscoderOrNull(MediaType mediaType, MediaType another) {
       return transcoderCache.computeIfAbsent(mediaType, mt -> new ConcurrentHashMap<>(4))
-                            .computeIfAbsent(another, mt -> {
-                               return transcoders.stream()
-                                                 .filter(t -> t.supportsConversion(mediaType, another))
-                                                 .findFirst()
-                                                 .orElse(null);
-                            });
+                            .computeIfAbsent(another, mt -> transcoders.stream()
+                                              .filter(t -> t.supportsConversion(mediaType, another))
+                                              .findFirst()
+                                              .orElse(null));
    }
 
    @Override
