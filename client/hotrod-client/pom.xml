@@ -248,6 +248,18 @@
          <artifactId>infinispan-jboss-marshalling</artifactId>
          <scope>test</scope>
       </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-json-pojo-transcoder</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-xml-transcoder</artifactId>
+         <scope>test</scope>
+      </dependency>
    </dependencies>
 
    <build>

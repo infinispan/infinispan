@@ -1,4 +1,4 @@
-package org.infinispan.server.core.dataconversion.xml;
+package org.infinispan.transcoder.xml.xml;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.Converter;
