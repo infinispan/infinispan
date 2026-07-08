@@ -1,5 +1,8 @@
 package org.infinispan.server.functional;
 
+import java.util.Arrays;
+import java.util.stream.Stream;
+
 import org.infinispan.server.functional.extensions.PojoMarshalling;
 import org.infinispan.server.functional.extensions.ScriptingTasks;
 import org.infinispan.server.functional.extensions.ServerTasks;
@@ -96,7 +99,11 @@ public class ClusteredIT extends InfinispanSuite {
                .build();
 
    public static String[] mavenArtifacts() {
-      return Common.NASHORN_DEPS;
+      return Stream.concat(
+                  Arrays.stream(Common.NASHORN_DEPS),
+                  Arrays.stream(Common.JBOSS_MARSHALLING_DEPS)
+            )
+            .toArray(String[]::new);
    }
 
 }

@@ -51,7 +51,10 @@
       <module>commons</module>
       <module>build/infinispan-defaults-maven-plugin</module>
       <module>core</module>
-      <module>jboss-marshalling</module>
+      <module>transcoders</module>
+      <module>transcoders/jboss-marshalling</module>
+      <module>transcoders/json-pojo-transcoder</module>
+      <module>transcoders/xml-transcoder</module>
       <module>counter-api</module>
       <module>counter</module>
       <module>multimap</module>
@@ -292,7 +295,7 @@
          <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${version.jackson}</version>
+            <version>${version.jackson.databind}</version>
          </dependency>
          <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
