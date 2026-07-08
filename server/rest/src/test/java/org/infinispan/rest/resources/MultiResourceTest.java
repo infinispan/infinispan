@@ -21,6 +21,7 @@ import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
 import org.infinispan.client.rest.RestSchemaClient;
 import org.infinispan.commons.api.CacheContainerAdmin;
+import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterType;
@@ -30,9 +31,6 @@ import org.infinispan.rest.assertion.ResponseAssertion;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Test for calling multiple resources concurrently.
@@ -194,13 +192,12 @@ public class MultiResourceTest extends AbstractRestResourceTest {
       ResponseAssertion.assertThat(response).isOk();
    }
 
-   private void createSchema(String name, String value) throws Exception {
+   private void createSchema(String name, String value) {
       RestSchemaClient schemas = client.schemas();
       RestResponse response = join(schemas.put(name, value));
       ResponseAssertion.assertThat(response).isOk();
-      ObjectMapper objectMapper = new ObjectMapper();
-      JsonNode jsonNode = objectMapper.readTree(response.body());
-      assertEquals("null", jsonNode.get("error").asText());
+      Json jsonNode = Json.read(response.body());
+      assertTrue(jsonNode.at("error").isNull());
    }
 
    private String getProtobuf(String name) {

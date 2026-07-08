@@ -1,4 +1,4 @@
-package org.infinispan.server.core.dataconversion;
+package org.infinispan.transcoder.xml;
 
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
@@ -19,7 +19,7 @@ import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.OneToManyTranscoder;
 import org.infinispan.commons.dataconversion.StandardConversions;
-import org.infinispan.server.core.dataconversion.xml.XStreamEngine;
+import org.infinispan.transcoder.xml.xml.XStreamEngine;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -118,7 +118,6 @@ public class XMLTranscoder extends OneToManyTranscoder {
    private boolean isWellFormed(byte[] content) {
       ByteArrayInputStream is = new ByteArrayInputStream(content);
       try (ConfigurationReader reader = ConfigurationReader.from(is).build()) {
-         // Consume all the stream
          while (reader.hasNext()) {
             reader.nextElement();
          }

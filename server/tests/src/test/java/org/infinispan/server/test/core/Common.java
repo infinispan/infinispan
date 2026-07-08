@@ -45,6 +45,7 @@ import org.infinispan.client.rest.configuration.Protocol;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.protostream.FileDescriptorSource;
@@ -104,12 +105,24 @@ public class Common {
    public static final Collection<Protocol> HTTP_PROTOCOLS = Arrays.asList(Protocol.values());
 
    public static final String[] NASHORN_DEPS = new String[]{
-         "org.openjdk.nashorn:nashorn-core:15.7",
-         "org.ow2.asm:asm:9.8",
-         "org.ow2.asm:asm-analysis:9.8",
-         "org.ow2.asm:asm-commons:9.8",
-         "org.ow2.asm:asm-tree:9.8",
-         "org.ow2.asm:asm-util:9.8"
+         "org.openjdk.nashorn:nashorn-core:" + System.getProperty("version.nashorn"),
+         "org.ow2.asm:asm:" + System.getProperty("version.ow2.asm"),
+         "org.ow2.asm:asm-analysis:" + System.getProperty("version.ow2.asm"),
+         "org.ow2.asm:asm-commons:" + System.getProperty("version.ow2.asm"),
+         "org.ow2.asm:asm-tree:" + System.getProperty("version.ow2.asm"),
+         "org.ow2.asm:asm-util:" + System.getProperty("version.ow2.asm")
+   };
+
+   public static final String[] ROCKSDB_DEPS = {
+         "org.infinispan:infinispan-cachestore-rocksdb:" + Version.getVersion(),
+         "org.rocksdb:rocksdbjni:" + System.getProperty("version.rocksdb")
+   };
+
+
+   public static final String[] JBOSS_MARSHALLING_DEPS = new String[]{
+         "org.infinispan:infinispan-jboss-marshalling:" + Version.getVersion(),
+         "org.jboss.marshalling:jboss-marshalling:" + System.getProperty("version.jboss.marshalling"),
+         "org.jboss.marshalling:jboss-marshalling-river:" + System.getProperty("version.jboss.marshalling")
    };
 
    public static class SaslMechsArgumentProvider implements ArgumentsProvider {
@@ -245,17 +258,17 @@ public class Common {
 
 
    public static Schema getSchemaContent(TestClientDriver server, String protoFile) {
-       String content = Exceptions.unchecked(() -> Util.getResourceAsString(protoFile, server.getClass().getClassLoader()));
-       return Schema.buildFromStringContent(protoFile, content);
+      String content = Exceptions.unchecked(() -> Util.getResourceAsString(protoFile, server.getClass().getClassLoader()));
+      return Schema.buildFromStringContent(protoFile, content);
    }
 
    public static <K, V> RemoteCache<K, V> createQueryableCache(TestClientDriver server, boolean indexed, Schema protoschema, String entityName) {
       ConfigurationBuilder config = new ConfigurationBuilder();
       ProtoStreamMarshaller protoStreamMarshaller = new ProtoStreamMarshaller();
       if (protoschema != null) {
-          FileDescriptorSource descriptor = FileDescriptorSource.fromString(protoschema.getName(), protoschema.getContent());
-          protoStreamMarshaller.getSerializationContext().registerProtoFiles(descriptor);
-          config.marshaller(protoStreamMarshaller);
+         FileDescriptorSource descriptor = FileDescriptorSource.fromString(protoschema.getName(), protoschema.getContent());
+         protoStreamMarshaller.getSerializationContext().registerProtoFiles(descriptor);
+         config.marshaller(protoStreamMarshaller);
       }
 
       config.addContextInitializer(TestDomainSCI.INSTANCE);
@@ -293,7 +306,7 @@ public class Common {
       DataFormat df = cache.getDataFormat();
       ConsistentHash ch = dispatcher.getConsistentHash(cache.getName());
       Random r = new Random();
-      for(int i = 0; i < 1000; i++) {
+      for (int i = 0; i < 1000; i++) {
          int aInt = r.nextInt();
          SocketAddress keyAddress = ch.getServer(df.keyToBytes(aInt));
          if (keyAddress.equals(serverAddress)) {

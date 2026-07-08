@@ -1,0 +1,2 @@
+org.jboss.marshalling:jboss-marshalling:${version.jboss.marshalling}
+org.jboss.marshalling:jboss-marshalling-river:${version.jboss.marshalling}

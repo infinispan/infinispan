@@ -117,8 +117,7 @@ public class ExecTypedTest extends MultiHotRodServersTest {
          String resultAsJson = execClient.getCache(NAME)
                .withDataFormat(DataFormat.builder().valueType(APPLICATION_JSON).build())
                .execute(scriptName, new HashMap<>());
-         // Since the array contains nulls, Jackson cannot simplify the type
-         assertEquals("[\"java.util.ArrayList\",[null,null]]", resultAsJson.replaceAll("\\s", ""));
+         assertEquals("[null,null]", resultAsJson.replaceAll("\\s", ""));
       });
    }
 
