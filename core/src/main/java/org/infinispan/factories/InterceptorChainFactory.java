@@ -32,7 +32,6 @@ import org.infinispan.interceptors.impl.EntryWrappingInterceptor;
 import org.infinispan.interceptors.impl.InvalidationCacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.InvalidationCacheWriterInterceptor;
 import org.infinispan.interceptors.impl.InvalidationInterceptor;
-import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.interceptors.impl.IsMarshallableInterceptor;
 import org.infinispan.interceptors.impl.NonTxIracLocalSiteInterceptor;
 import org.infinispan.interceptors.impl.NonTxIracRemoteSiteInterceptor;
@@ -108,11 +107,9 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       boolean invocationBatching = configuration.transaction().invocationBatching();
       CacheMode cacheMode = configuration.clustering().cacheMode();
 
-      // load the icInterceptor first
       if (invocationBatching) {
          interceptorChain.appendInterceptor(createInterceptor(new BatchingInterceptor(), BatchingInterceptor.class), false);
       }
-      interceptorChain.appendInterceptor(createInterceptor(new InvocationContextInterceptor(), InvocationContextInterceptor.class), false);
 
       if (!configuration.transaction().transactionMode().isTransactional()) {
          interceptorChain.appendInterceptor(createInterceptor(new VersionInterceptor(), VersionInterceptor.class), false);
