@@ -7,18 +7,13 @@
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-parent</artifactId>
         <version>16.3.0-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>infinispan-jboss-marshalling</artifactId>
-    <name>Infinispan JBoss Marshalling</name>
+    <artifactId>infinispan-json-pojo-transcoder</artifactId>
+    <name>Infinispan JSON POJO Transcoder</name>
 
     <dependencies>
-        <dependency>
-            <groupId>org.jboss.marshalling</groupId>
-            <artifactId>jboss-marshalling-river</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-commons</artifactId>
@@ -30,8 +25,25 @@
         </dependency>
 
         <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-commons</artifactId>
+            <scope>test</scope>
+            <type>test-jar</type>
+        </dependency>
+
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-core</artifactId>
             <scope>test</scope>
             <type>test-jar</type>
         </dependency>
@@ -40,13 +52,6 @@
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-testing</artifactId>
             <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-core</artifactId>
-            <scope>test</scope>
-            <type>test-jar</type>
         </dependency>
 
         <dependency>
@@ -72,10 +77,20 @@
         <resources>
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>META-INF/infinispan-dependencies.txt</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
                 <filtering>false</filtering>
                 <includes>
                     <include>**/*</include>
                 </includes>
+                <excludes>
+                    <exclude>META-INF/infinispan-dependencies.txt</exclude>
+                </excludes>
             </resource>
         </resources>
     </build>

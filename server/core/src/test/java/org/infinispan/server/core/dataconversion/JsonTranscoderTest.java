@@ -3,7 +3,6 @@ package org.infinispan.server.core.dataconversion;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
-import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
@@ -13,14 +12,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 import java.nio.charset.Charset;
-import java.util.Collections;
 
-import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.EncodingException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.Util;
-import org.infinispan.test.data.Address;
-import org.infinispan.test.data.Person;
 import org.infinispan.test.dataconversion.AbstractTranscoderTest;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -30,15 +25,10 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "functional", testName = "server.core.dataconversion.JsonTranscoderTest")
 public class JsonTranscoderTest extends AbstractTranscoderTest {
-   protected Person dataSrc;
 
    @BeforeClass(alwaysRun = true)
    public void setUp() {
-      dataSrc = new Person("joe");
-      Address address = new Address();
-      address.setCity("London");
-      dataSrc.setAddress(address);
-      transcoder = new JsonTranscoder(new ClassAllowList(Collections.singletonList(".*")));
+      transcoder = new JsonTranscoder();
       supportedMediaTypes = transcoder.getSupportedMediaTypes();
    }
 
@@ -50,7 +40,6 @@ public class JsonTranscoderTest extends AbstractTranscoderTest {
       assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, APPLICATION_OCTET_STREAM, APPLICATION_JSON));
       assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, APPLICATION_WWW_FORM_URLENCODED, APPLICATION_JSON));
       assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, TEXT_PLAIN, APPLICATION_JSON));
-      assertArrayEquals(empty, (byte[]) transcoder.transcode(empty, APPLICATION_OBJECT, APPLICATION_JSON));
    }
 
    @Test

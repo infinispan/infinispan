@@ -7,10 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.infinispan.commons.util.Util;
 import org.jboss.shrinkwrap.api.Archive;
 
 /**
- * Common code for JUnit 4 and Junit 5 Extension
+ * Common code for test extensions
  *
  * @param <T> type of builder
  * @author Katia Aresti
@@ -20,7 +21,7 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
    private final String configurationFile;
    private final boolean defaultFile;
    private final Properties properties;
-   private String[] mavenArtifacts;
+   private String[] mavenArtifacts = Util.EMPTY_STRING_ARRAY;
    private int numServers = 2;
    private int expectedServers = -1;
    private ServerRunMode runMode = ServerRunMode.DEFAULT;
@@ -34,8 +35,8 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
    private int portOffset = 0;
    private String[] dataFiles;
    private CertificateAuthority certificateAuthority;
-   private Map<String, String> env = new HashMap<>();
-   private List<String> args = new ArrayList<>();
+   private final Map<String, String> env = new HashMap<>();
+   private final List<String> args = new ArrayList<>();
 
    protected AbstractServerConfigBuilder(String configurationFile, boolean defaultFile) {
       this.configurationFile = configurationFile;
@@ -56,7 +57,7 @@ public abstract class AbstractServerConfigBuilder<T extends AbstractServerConfig
    }
 
    public T mavenArtifacts(String... mavenArtifacts) {
-      this.mavenArtifacts = mavenArtifacts;
+      this.mavenArtifacts = Util.concat(this.mavenArtifacts, mavenArtifacts);
       return (T) this;
    }
 
