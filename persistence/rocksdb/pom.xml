@@ -56,6 +56,13 @@
       <resources>
          <resource>
             <directory>${project.basedir}/src/main/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>META-INF/infinispan-dependencies.txt</include>
+            </includes>
+         </resource>
+         <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
             <filtering>false</filtering>
             <includes>
                <include>schema/*-${infinispan.core.schema.version}.xsd</include>
@@ -70,7 +77,8 @@
             </includes>
             <excludes>
                <exclude>schema/**</exclude>
-           </excludes>
+               <exclude>META-INF/infinispan-dependencies.txt</exclude>
+            </excludes>
          </resource>
       </resources>
       <plugins>

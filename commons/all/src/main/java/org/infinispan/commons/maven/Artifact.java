@@ -9,10 +9,14 @@ import java.nio.file.Path;
 public interface Artifact {
 
    static Artifact fromString(String name) {
+      return fromString(name, null);
+   }
+
+   static Artifact fromString(String name, String defaultVersion) {
       if ((name.startsWith("http://")) || name.startsWith("https://") || name.startsWith("file://") || name.startsWith("ftp://")) {
          return new URLArtifact(name);
       } else if (MavenArtifact.isMavenArtifact(name)) {
-         return MavenArtifact.fromString(name);
+         return MavenArtifact.fromString(name, defaultVersion);
       } else {
          return new LocalArtifact(name);
       }
