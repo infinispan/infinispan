@@ -12,15 +12,18 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.NullCacheEntry;
-import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.context.Flag;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.executors.LimitedExecutor;
 import org.infinispan.factories.annotations.ComponentName;
@@ -33,11 +36,15 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
+import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.InboundTransferTask;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.topology.CacheTopology;
+
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * @author Ryan Emerson
@@ -48,12 +55,13 @@ import org.infinispan.topology.CacheTopology;
 public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
 
    private static final Log log = LogFactory.getLog(StateReceiverImpl.class);
+   private static final long STATE_TRANSFER_FLAGS = EnumUtil.bitSetOf(Flag.STATE_TRANSFER_PROGRESS);
 
    @ComponentName(CACHE_NAME)
    @Inject String cacheName;
    @Inject CacheNotifier<K, V> cacheNotifier;
    @Inject CommandsFactory commandsFactory;
-   @Inject InternalDataContainer<K, V> dataContainer;
+   @Inject LocalPublisherManager<K, V> localPublisherManager;
    @Inject RpcManager rpcManager;
    @Inject @ComponentName(NON_BLOCKING_EXECUTOR)
    ExecutorService nonBlockingExecutor;
@@ -137,6 +145,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
       final List<Address> replicaHosts;
       final Map<K, Map<Address, CacheEntry<K, V>>> keyReplicaMap = new HashMap<>();
       final Map<Address, InboundTransferTask> transferTaskMap = new ConcurrentHashMap<>();
+      final AtomicInteger pendingRequests = new AtomicInteger();
       CompletableFuture<List<Map<Address, CacheEntry<K, V>>>> future;
 
       SegmentRequest(int segmentId, LocalizedCacheTopology topology, long timeout) {
@@ -166,18 +175,25 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
             }
          });
 
+         pendingRequests.set(replicaHosts.size());
          for (final Address replica : replicaHosts) {
             if (replica.equals(rpcManager.getAddress())) {
-               dataContainer.forEach(entry -> {
-                  int keySegment = topology.getDistribution(entry.getKey()).segmentId();
-                  if (keySegment == segmentId) {
-                     addKeyToReplicaMap(replica, entry);
-                  }
-               });
-               // numOwner == 1, then we cannot rely on receiveState to complete the future
-               if (replicaHosts.size() == 1) {
-                  completeRequest();
-               }
+               Flowable.fromPublisher(localPublisherManager.entryPublisher(
+                           IntSets.immutableSet(segmentId), null, null,
+                           STATE_TRANSFER_FLAGS, DeliveryGuarantee.AT_MOST_ONCE, Function.identity())
+                     .publisherWithoutSegments())
+                     .doOnNext(entry -> addKeyToReplicaMap(replica, entry))
+                     .ignoreElements()
+                     .subscribe(
+                           () -> {
+                              if (pendingRequests.decrementAndGet() == 0) {
+                                 completeRequest();
+                              }
+                           },
+                           throwable -> {
+                              if (log.isTraceEnabled()) log.tracef(throwable, "Cache %s exception when reading local entries", cacheName);
+                              cancel(throwable);
+                           });
             } else {
                final InboundTransferTask transferTask = createTransferTask(segmentId, replica, topology, timeout);
                transferTaskMap.put(replica, transferTask);
@@ -229,7 +245,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
             if (isLastChunk) {
                transferTaskMap.remove(sender);
 
-               if (transferTaskMap.isEmpty()) {
+               if (pendingRequests.decrementAndGet() == 0) {
                   completeRequest();
                }
             }
@@ -260,7 +276,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
          future.complete(Collections.unmodifiableList(retVal));
       }
 
-      void addKeyToReplicaMap(Address address, CacheEntry<K, V> ice) {
+      synchronized void addKeyToReplicaMap(Address address, CacheEntry<K, V> ice) {
          // If a map doesn't already exist for a given key, then init a map that contains all hos with a NullValueEntry
          // This is necessary to determine if a key is missing on a given host as it artificially introduces a conflict
          keyReplicaMap.computeIfAbsent(ice.getKey(), k -> {
