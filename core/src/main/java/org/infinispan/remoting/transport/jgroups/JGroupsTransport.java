@@ -510,7 +510,17 @@ public class JGroupsTransport implements Transport {
          // TODO improve JGroups code so we have access to the key stored
          byte[] key = org.jgroups.util.Util.stringToBytes("raft-id");
          byte[] value = org.jgroups.util.Util.stringToBytes(transportCfg.nodeName());
-         channel.addAddressGenerator(() -> ExtendedUUID.randomUUID(channel.getName()).put(key, value));
+         channel.addAddressGenerator(new AddressGenerator() {
+            public org.jgroups.Address generateAddress() {
+               // override annotation is not here on purpose
+               throw new UnsupportedOperationException("Deprecated for removal and not invoked");
+            }
+
+            @Override
+            public org.jgroups.Address generateAddress(String name) {
+               return Address.randomUUID(name, null, null, null).put(key, value);
+            }
+         });
          insertForkIfMissing();
          raftManager = new JGroupsRaftManager(configuration, channel);
          raftManager.start();
@@ -1674,10 +1684,9 @@ public class JGroupsTransport implements Transport {
       }
 
       // AddressGenerator
-
-      @Override
       public org.jgroups.Address generateAddress() {
-         return generateAddress(channel.getName());
+         // override annotation is not here on purpose
+         throw new UnsupportedOperationException("Deprecated for removal and not invoked");
       }
 
       @Override

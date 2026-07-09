@@ -36,6 +36,7 @@ import org.jgroups.conf.ClassConfigurator;
 import org.jgroups.fork.ForkChannel;
 import org.jgroups.fork.UnknownForkHandler;
 import org.jgroups.protocols.FORK;
+import org.jgroups.stack.AddressGenerator;
 import org.testng.annotations.Test;
 
 /**
@@ -132,7 +133,17 @@ public class ForkChannelRestartTest extends MultipleCacheManagersTest {
          }
       });
       channel.setName(name);
-      channel.addAddressGenerator(Address::randomUUID);
+      channel.addAddressGenerator(new AddressGenerator() {
+         public org.jgroups.Address generateAddress() {
+            // override annotation is not here on purpose
+            throw new UnsupportedOperationException("Deprecated for removal and not invoked");
+         }
+
+         @Override
+         public org.jgroups.Address generateAddress(String name) {
+            return Address.randomUUID(name, null, null, null);
+         }
+      });
       FORK fork = new FORK();
       fork.setUnknownForkHandler(new UnknownForkHandler() {
          @Override
