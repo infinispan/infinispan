@@ -214,6 +214,7 @@
                               <buildArg>--initialize-at-build-time=org.apache.logging.log4j.jul.LogManager</buildArg>
                               <buildArg>--enable-native-access=ALL-UNNAMED</buildArg>
                               <buildArg>-H:+ForeignAPISupport</buildArg>
+                              <buildArg>-H:ReachabilityMetadataResources=foreign-downcalls.json</buildArg>
                            </buildArgs>
                            <fallback>false</fallback>
                            <quickBuild>true</quickBuild>

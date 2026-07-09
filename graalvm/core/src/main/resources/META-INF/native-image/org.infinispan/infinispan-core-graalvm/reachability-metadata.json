@@ -1,20 +1,4 @@
 {
-  "foreign": {
-    "downcalls": [
-      {
-        "returnType": "jlong",
-        "parameterTypes": ["jlong"]
-      },
-      {
-        "returnType": "jlong",
-        "parameterTypes": ["jlong", "jlong"]
-      },
-      {
-        "returnType": "void",
-        "parameterTypes": ["jlong"]
-      }
-    ]
-  },
   "reflection": [
     {
       "type": "org.jgroups.util.MaxOneThreadPerSender",
