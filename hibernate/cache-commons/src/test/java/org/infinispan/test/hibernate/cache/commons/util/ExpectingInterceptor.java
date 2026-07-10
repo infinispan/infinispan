@@ -15,9 +15,12 @@ import java.util.function.BooleanSupplier;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.InvocationFinallyAction;
+import org.infinispan.interceptors.Skip;
 import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -59,6 +62,18 @@ public class ExpectingInterceptor extends BaseCustomAsyncInterceptor {
       StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
       StackTraceElement ste = stackTrace[3];
       return ste.getFileName() + ":" + ste.getLineNumber();
+   }
+
+   @Skip
+   @Override
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
+      throw new UnsupportedOperationException("Get commands should not reach ExpectingInterceptor");
+   }
+
+   @Skip
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
+      throw new UnsupportedOperationException("Get commands should not reach ExpectingInterceptor");
    }
 
    @Override

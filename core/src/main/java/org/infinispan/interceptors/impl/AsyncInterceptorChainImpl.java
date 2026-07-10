@@ -630,6 +630,49 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
       this.firstInterceptor = nextInterceptor;
       this.firstGetKeyValueInterceptor = nextGetKeyValue;
 
+      validateGetChainCoverage();
+   }
+
+   private void validateGetChainCoverage() {
+      for (AsyncInterceptor interceptor : interceptors) {
+         Class<?> clazz = interceptor.getClass();
+         if (overridesGetCommand(clazz) || skipsGetCommand(clazz)) {
+            continue;
+         }
+         if (interceptor instanceof DDAsyncInterceptor && overridesHandleDefault(clazz)) {
+            throw new IllegalStateException(clazz.getName() + " overrides handleDefault() but not " +
+                  "visitGetKeyValueCommand/visitGetCacheEntryCommand. Get operations will bypass this " +
+                  "interceptor's handleDefault() logic. Override both get visit methods if this interceptor " +
+                  "needs to process get commands, or annotate them with @Skip to opt out.");
+         }
+      }
+   }
+
+   private static boolean skipsGetCommand(Class<?> clazz) {
+      return hasSkippedVisitMethod(clazz, "visitGetKeyValueCommand", GetKeyValueCommand.class) &&
+            hasSkippedVisitMethod(clazz, "visitGetCacheEntryCommand", GetCacheEntryCommand.class);
+   }
+
+   private static boolean hasSkippedVisitMethod(Class<?> clazz, String methodName, Class<?> commandClass) {
+      try {
+         java.lang.reflect.Method method = clazz.getMethod(methodName, InvocationContext.class, commandClass);
+         return method.getDeclaringClass() != DDAsyncInterceptor.class && method.isAnnotationPresent(Skip.class);
+      } catch (NoSuchMethodException e) {
+         return false;
+      }
+   }
+
+   private static boolean overridesHandleDefault(Class<?> clazz) {
+      Class<?> current = clazz;
+      while (current != null && current != DDAsyncInterceptor.class) {
+         try {
+            current.getDeclaredMethod("handleDefault", InvocationContext.class, VisitableCommand.class);
+            return true;
+         } catch (NoSuchMethodException e) {
+            current = current.getSuperclass();
+         }
+      }
+      return false;
    }
 
    private static boolean overridesGetCommand(Class<?> clazz) {

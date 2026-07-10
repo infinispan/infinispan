@@ -21,10 +21,12 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.EntrySetCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
-import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -197,18 +199,13 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
     * @author Mircea.Markus@jboss.com
     * @since 4.1
     */
-   public static class HitCountInterceptor extends BaseAsyncInterceptor {
+   public static class HitCountInterceptor extends DDAsyncInterceptor {
       private static final Log log = LogFactory.getLog(HitCountInterceptor.class);
 
       private final AtomicInteger localSiteInvocationCount = new AtomicInteger(0);
       private final AtomicInteger backupSiteInvocationCount = new AtomicInteger(0);
 
-      @Override
-      public Object visitCommand(InvocationContext ctx, VisitableCommand command) {
-         if (command instanceof EntrySetCommand) {
-            return invokeNext(ctx, command);
-         }
-
+      private Object countHitAndInvokeNext(InvocationContext ctx, VisitableCommand command) {
          if (ctx.isOriginLocal()) {
             if ((command instanceof AbstractDataCommand) && ((AbstractDataCommand)command).hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP)) {
                int count = backupSiteInvocationCount.incrementAndGet();
@@ -219,6 +216,24 @@ public abstract class HitsAwareCacheManagersTest extends MultipleCacheManagersTe
             }
          }
          return invokeNext(ctx, command);
+      }
+
+      @Override
+      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
+         if (command instanceof EntrySetCommand) {
+            return invokeNext(ctx, command);
+         }
+         return countHitAndInvokeNext(ctx, command);
+      }
+
+      @Override
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+         return countHitAndInvokeNext(ctx, command);
+      }
+
+      @Override
+      public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+         return countHitAndInvokeNext(ctx, command);
       }
 
       public int getHits() {
