@@ -139,7 +139,6 @@ public class ALPNHandler extends ApplicationProtocolNegotiationHandler {
          public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) { }
       });
       pipeline.addLast(cleartextHttp2ServerUpgradeHandler);
-
       addCommonHandlers(pipeline, restServer);
    }
 }
