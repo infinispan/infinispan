@@ -57,9 +57,17 @@ public class SegmentHasher {
       Iterator<InternalCacheEntry<?, ?>> it = cast(dataContainer.iterator(IntSets.immutableSet(segmentId)));
       while (it.hasNext()) {
          InternalCacheEntry<?, ?> entry = it.next();
-         int bucket = bucketForKey(entry.getKey(), bucketCount);
-         hashes[bucket] ^= hashEntry(entry);
-         counts[bucket]++;
+         try {
+            byte[] keyBytes = marshaller.objectToByteBuffer(entry.getKey());
+            byte[] valueBytes = marshaller.objectToByteBuffer(entry.getValue());
+            long keyHash = MurmurHash3.MurmurHash3_x64_64(keyBytes, HASH_SEED);
+            int bucket = (int) (keyHash & (bucketCount - 1));
+            hashes[bucket] ^= keyHash ^ MurmurHash3.MurmurHash3_x64_64(valueBytes, HASH_SEED);
+            counts[bucket]++;
+         } catch (IOException | InterruptedException e) {
+            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+            throw new RuntimeException("Failed to marshal entry for bucket hashing", e);
+         }
       }
       List<BucketHash> result = new ArrayList<>(bucketCount);
       for (int b = 0; b < bucketCount; b++) {

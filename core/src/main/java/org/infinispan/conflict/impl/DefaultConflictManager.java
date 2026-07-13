@@ -10,23 +10,17 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
-import java.util.Spliterators;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import org.infinispan.cache.impl.InvocationHelper;
 import org.infinispan.commands.CommandsFactory;
@@ -75,10 +69,12 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.reactivestreams.Publisher;
 
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import jakarta.transaction.TransactionManager;
 
 /**
@@ -236,6 +232,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
    private static final int BUCKET_COUNT = SegmentHasher.DEFAULT_BUCKET_COUNT;
    private static final int SMALL_SEGMENT_THRESHOLD = 64;
+   private static final int SEGMENT_CONCURRENCY = 4;
    private static final IntSet ALL_BUCKETS = IntSets.immutableRangeSet(BUCKET_COUNT);
    private static final long localFlags = FlagBitSets.CACHE_MODE_LOCAL | FlagBitSets.SKIP_OWNERSHIP_CHECK | FlagBitSets.SKIP_LOCKING;
    private static final long userMergeFlags = FlagBitSets.IGNORE_RETURN_VALUES;
@@ -267,8 +264,6 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    @Inject
    TimeService timeService;
    @Inject
-   BlockingManager blockingManager;
-   @Inject
    InternalEntryFactory internalEntryFactory;
    @Inject
    TransactionManager transactionManager;
@@ -283,12 +278,10 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    private Address localAddress;
    private long conflictTimeout;
    private EntryMergePolicy<K, V> entryMergePolicy;
-   private BlockingManager.BlockingExecutor resolutionExecutor;
    private final AtomicBoolean streamInProgress = new AtomicBoolean();
    private final Map<K, VersionRequest> versionRequestMap = new HashMap<>();
    private final Queue<VersionRequest> retryQueue = new ConcurrentLinkedQueue<>();
    private volatile boolean running = false;
-   private volatile ReplicaSpliterator conflictSpliterator;
    private volatile CompletableFuture<Void> conflictFuture;
 
    @Start
@@ -301,8 +294,6 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       // TODO make this an explicit configuration param in PartitionHandlingConfiguration
       this.conflictTimeout = cacheConfiguration.clustering().stateTransfer().timeout();
 
-      // Limit the number of concurrent tasks to ensure that internal CR operations can never overlap
-      this.resolutionExecutor = blockingManager.limitedBlockingExecutor("ConflictManager-" + cacheName, 1);
       this.running = true;
       if (log.isTraceEnabled())
          log.tracef("Cache %s starting %s. isRunning=%s", cacheName, getClass().getSimpleName(), !running);
@@ -318,8 +309,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
          versionRequestMap.clear();
       }
 
-      if (isConflictResolutionInProgress() && conflictSpliterator != null)
-         conflictSpliterator.stop();
+      streamInProgress.set(false);
    }
 
    @Override
@@ -378,10 +368,16 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    @Override
    public Stream<Map<Address, CacheEntry<K, V>>> getConflicts() {
       checkIsRunning();
-      return getConflicts(distributionManager.getCacheTopology());
+      return Flowable.fromPublisher(getConflictsPublisher()).blockingStream();
    }
 
-   private Stream<Map<Address, CacheEntry<K, V>>> getConflicts(LocalizedCacheTopology topology) {
+   @Override
+   public Publisher<Map<Address, CacheEntry<K, V>>> getConflictsPublisher() {
+      checkIsRunning();
+      return getConflictsFlowable(distributionManager.getCacheTopology());
+   }
+
+   private Flowable<Map<Address, CacheEntry<K, V>>> getConflictsFlowable(LocalizedCacheTopology topology) {
       if (log.isTraceEnabled())
          log.tracef("getConflicts isStateTransferInProgress=%s, topology=%s", stateConsumer.running().isStateTransferInProgress(), topology);
       if (topology.getPhase() != CacheTopology.Phase.CONFLICT_RESOLUTION && stateConsumer.running().isStateTransferInProgress()) {
@@ -391,14 +387,61 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       if (!streamInProgress.compareAndSet(false, true))
          throw CLUSTER.getConflictsAlreadyInProgress();
 
-      conflictSpliterator = new ReplicaSpliterator(topology);
       if (!running) {
-         conflictSpliterator.stop();
-         return Stream.empty();
+         streamInProgress.set(false);
+         return Flowable.empty();
       }
-      return StreamSupport
-            .stream(new ReplicaSpliterator(topology), false)
-            .filter(filterConsistentEntries());
+
+      int totalSegments = topology.getWriteConsistentHash().getNumSegments();
+
+      return Flowable.fromCompletionStage(prefetchAllBucketHashesAsync(topology))
+            .flatMap(prefetchedHashes ->
+                  Flowable.range(0, totalSegments)
+                        .flatMap(segmentId -> processSegmentAsync(segmentId, topology, prefetchedHashes),
+                              false, SEGMENT_CONCURRENCY)
+            )
+            .filter(map -> hasConflict(map))
+            .timeout(conflictTimeout, TimeUnit.MILLISECONDS)
+            .doOnError(t -> stateReceiver.cancelRequests())
+            .doOnCancel(() -> stateReceiver.cancelRequests())
+            .doFinally(() -> streamInProgress.set(false));
+   }
+
+   private Flowable<Map<Address, CacheEntry<K, V>>> processSegmentAsync(
+         int segmentId, LocalizedCacheTopology topology,
+         Map<Integer, Map<Address, List<BucketHash>>> prefetchedHashes) {
+      IntSet mismatchedBuckets = findMismatchedBuckets(segmentId, topology, prefetchedHashes);
+
+      if (mismatchedBuckets != null && mismatchedBuckets.isEmpty()) {
+         return Flowable.empty();
+      }
+
+      if (mismatchedBuckets != null) {
+         if (log.isTraceEnabled())
+            log.tracef("Cache %s segment %s fetching entries from %d mismatched buckets: %s",
+                  cacheName, segmentId, mismatchedBuckets.size(), mismatchedBuckets);
+         return Flowable.fromCompletionStage(
+                     getReplicasForBucketsAsync(segmentId, mismatchedBuckets, topology))
+               .flatMapIterable(list -> list)
+               .onErrorResumeNext(t -> {
+                  if (log.isTraceEnabled())
+                     log.tracef("Cache %s segment %s bucket fetch failed, falling back: %s",
+                           cacheName, segmentId, t.getMessage());
+                  return fullSegmentFetchFlowable(segmentId, topology);
+               });
+      }
+
+      if (log.isTraceEnabled())
+         log.tracef("Cache %s segment %s hash comparison failed, falling back to full fetch with topology %s",
+               cacheName, segmentId, topology);
+      return fullSegmentFetchFlowable(segmentId, topology);
+   }
+
+   private Flowable<Map<Address, CacheEntry<K, V>>> fullSegmentFetchFlowable(
+         int segmentId, LocalizedCacheTopology topology) {
+      return Flowable.fromCompletionStage(
+                  stateReceiver.getAllReplicasForSegment(segmentId, topology, conflictTimeout))
+            .flatMapIterable(list -> list);
    }
 
    @Override
@@ -417,7 +460,27 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    @Override
    public void resolveConflicts(EntryMergePolicy<K, V> mergePolicy) {
       checkIsRunning();
-      doResolveConflicts(distributionManager.getCacheTopology(), mergePolicy, null);
+      try {
+         resolveConflictsAsync(mergePolicy).toCompletableFuture().join();
+      } catch (CompletionException e) {
+         Throwable cause = e.getCause();
+         if (cause instanceof CacheException) throw (CacheException) cause;
+         throw new CacheException(cause);
+      }
+   }
+
+   @Override
+   public CompletionStage<Void> resolveConflictsAsync() {
+      if (entryMergePolicy == null)
+         throw new CacheException("Cannot resolve conflicts as no EntryMergePolicy has been configured");
+
+      return resolveConflictsAsync(entryMergePolicy);
+   }
+
+   @Override
+   public CompletionStage<Void> resolveConflictsAsync(EntryMergePolicy<K, V> mergePolicy) {
+      checkIsRunning();
+      return doResolveConflictsAsync(distributionManager.getCacheTopology(), mergePolicy, null);
    }
 
    @Override
@@ -431,15 +494,11 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       } else {
          localizedTopology = distributionManager.createLocalizedCacheTopology(topology);
       }
-      conflictFuture = resolutionExecutor.execute(() -> doResolveConflicts(localizedTopology, entryMergePolicy, preferredNodes),
-                  localizedTopology.getTopologyId())
+      conflictFuture = doResolveConflictsAsync(localizedTopology, entryMergePolicy, preferredNodes)
             .toCompletableFuture();
-      return conflictFuture.whenComplete((Void, t) -> {
+      return conflictFuture.whenComplete((v, t) -> {
          if (t != null) {
-            if (conflictSpliterator != null) {
-               conflictSpliterator.stop();
-               conflictSpliterator = null;
-            }
+            streamInProgress.set(false);
          }
       });
    }
@@ -450,10 +509,12 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
          if (log.isTraceEnabled()) log.tracef("Cache %s cancelling conflict resolution future", cacheName);
          conflictFuture.cancel(true);
       }
+      streamInProgress.set(false);
    }
 
-   private void doResolveConflicts(final LocalizedCacheTopology topology, final EntryMergePolicy<K, V> mergePolicy,
-                                   final Set<Address> preferredNodes) {
+   private CompletionStage<Void> doResolveConflictsAsync(final LocalizedCacheTopology topology,
+                                                         final EntryMergePolicy<K, V> mergePolicy,
+                                                         final Set<Address> preferredNodes) {
       boolean userCall = preferredNodes == null;
       final Set<Address> preferredPartition = userCall ? new HashSet<>(topology.getCurrentCH().getMembers()) : preferredNodes;
 
@@ -461,59 +522,65 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
          log.tracef("Cache %s attempting to resolve conflicts.  All Members %s, Installed topology %s, Preferred Partition %s",
                cacheName, topology.getMembers(), topology, preferredPartition);
 
-      final Phaser phaser = new Phaser(1);
-      getConflicts(topology).forEach(conflictMap -> {
-         phaser.register();
-         if (log.isTraceEnabled()) log.tracef("Cache %s conflict detected %s", cacheName, conflictMap);
+      return getConflictsFlowable(topology)
+            .flatMapCompletable(conflictMap -> {
+               if (log.isTraceEnabled()) log.tracef("Cache %s conflict detected %s", cacheName, conflictMap);
 
-         Collection<CacheEntry<K, V>> entries = conflictMap.values();
-         Optional<K> optionalEntry = entries.stream()
-               .filter(entry -> !(entry instanceof NullCacheEntry))
-               .map(CacheEntry::getKey)
-               .findAny();
+               K key = null;
+               for (CacheEntry<K, V> ce : conflictMap.values()) {
+                  if (!(ce instanceof NullCacheEntry)) {
+                     key = ce.getKey();
+                     break;
+                  }
+               }
+               if (key == null) {
+                  throw new CacheException("All returned conflicts are NullCacheEntries. This should not happen!");
+               }
+               final K conflictKey = key;
 
-         final K key = optionalEntry.orElseThrow(() -> new CacheException("All returned conflicts are NullCacheEntries. This should not happen!"));
-         Address primaryReplica = topology.getDistribution(key).primary();
+               Address primaryReplica = topology.getDistribution(conflictKey).primary();
 
-         List<Address> preferredEntries = conflictMap.entrySet().stream()
-               .map(Map.Entry::getKey)
-               .filter(preferredPartition::contains)
-               .collect(Collectors.toList());
+               Address singlePreferred = null;
+               int preferredCount = 0;
+               for (Address addr : conflictMap.keySet()) {
+                  if (preferredPartition.contains(addr)) {
+                     singlePreferred = addr;
+                     if (++preferredCount > 1) break;
+                  }
+               }
 
-         // If only one entry exists in the preferred partition, then use that entry
-         CacheEntry<K, V> preferredEntry;
-         if (preferredEntries.size() == 1) {
-            preferredEntry = conflictMap.remove(preferredEntries.get(0));
-         } else {
-            // If multiple conflicts exist in the preferred partition, then use primary replica from the preferred partition
-            // If not a merge, then also use primary as preferred entry
-            // Preferred is null if no entry exists in preferred partition
-            preferredEntry = conflictMap.remove(primaryReplica);
-         }
+               CacheEntry<K, V> preferredEntry;
+               if (preferredCount == 1) {
+                  preferredEntry = conflictMap.remove(singlePreferred);
+               } else {
+                  preferredEntry = conflictMap.remove(primaryReplica);
+               }
 
-         if (log.isTraceEnabled())
-            log.tracef("Cache %s applying EntryMergePolicy %s to PreferredEntry %s, otherEntries %s",
-                  cacheName, mergePolicy.getClass().getName(), preferredEntry, entries);
+               if (log.isTraceEnabled())
+                  log.tracef("Cache %s applying EntryMergePolicy %s to PreferredEntry %s, otherEntries %s",
+                        cacheName, mergePolicy.getClass().getName(), preferredEntry, conflictMap.values());
 
-         CacheEntry<K, V> entry = preferredEntry instanceof NullCacheEntry ? null : preferredEntry;
-         List<CacheEntry<K, V>> otherEntries = entries.stream().filter(e -> !(e instanceof NullCacheEntry)).collect(Collectors.toList());
-         CacheEntry<K, V> mergedEntry = mergePolicy.merge(entry, otherEntries);
+               CacheEntry<K, V> entry = preferredEntry instanceof NullCacheEntry ? null : preferredEntry;
+               List<CacheEntry<K, V>> otherEntries = new ArrayList<>(conflictMap.size());
+               for (CacheEntry<K, V> ce : conflictMap.values()) {
+                  if (!(ce instanceof NullCacheEntry)) {
+                     otherEntries.add(ce);
+                  }
+               }
+               CacheEntry<K, V> mergedEntry = mergePolicy.merge(entry, otherEntries);
 
-         CompletableFuture<V> future;
-         future = applyMergeResult(userCall, key, mergedEntry);
-         future.whenComplete((responseMap, exception) -> {
-            if (log.isTraceEnabled()) log.tracef("Cache %s resolveConflicts future complete for key %s: ResponseMap=%s",
-                  cacheName, key, responseMap);
-
-            phaser.arriveAndDeregister();
-            if (exception != null)
-               log.exceptionDuringConflictResolution(key, exception);
-         });
-      });
-      phaser.arriveAndAwaitAdvance();
-
-      if (log.isTraceEnabled())
-         log.tracef("Cache %s finished resolving conflicts for topologyId=%s", cacheName, topology.getTopologyId());
+               CompletableFuture<V> future = applyMergeResult(userCall, conflictKey, mergedEntry);
+               return Completable.fromCompletionStage(future)
+                     .onErrorComplete(t -> {
+                        log.exceptionDuringConflictResolution(conflictKey, t);
+                        return true;
+                     });
+            })
+            .toCompletionStage(null)
+            .thenRun(() -> {
+               if (log.isTraceEnabled())
+                  log.tracef("Cache %s finished resolving conflicts for topologyId=%s", cacheName, topology.getTopologyId());
+            });
    }
 
    private CompletableFuture<V> applyMergeResult(boolean userCall, K key, CacheEntry<K, V> mergedEntry) {
@@ -648,27 +715,32 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       }
    }
 
-   private Predicate<? super Map<Address, CacheEntry<K, V>>> filterConsistentEntries() {
-      return map -> map.values().stream().distinct().limit(2).count() > 1 || map.values().isEmpty();
+   private static boolean hasConflict(Map<?, ?> map) {
+      if (map.isEmpty()) return true;
+      Object first = null;
+      for (Object v : map.values()) {
+         if (first == null) {
+            first = v;
+         } else if (!first.equals(v)) {
+            return true;
+         }
+      }
+      return false;
    }
 
    /**
     * Prefetches bucket hashes for all segments from all write owners using batched RPCs.
-    * <p>
-    * Sends one RPC per remote node (rather than one per segment), amortizing network
-    * latency across all segments. Local bucket hashes are computed in bulk as well.
-    *
-    * @return segment ID → (address → bucket hashes), or {@code null} if prefetch fails
+    * Sends one RPC per remote node, amortizing network latency. Returns an empty map on failure
+    * (callers fall back to full segment fetch when hash data is missing).
     */
    @SuppressWarnings("unchecked")
-   private Map<Integer, Map<Address, List<BucketHash>>> prefetchAllBucketHashes(
+   private CompletionStage<Map<Integer, Map<Address, List<BucketHash>>>> prefetchAllBucketHashesAsync(
          LocalizedCacheTopology topology) {
       try {
          int totalSegments = topology.getWriteConsistentHash().getNumSegments();
          SegmentHasher hasher = new SegmentHasher(dataContainer, internalMarshaller);
          Map<Integer, Map<Address, List<BucketHash>>> result = new HashMap<>();
 
-         // Determine which segments each node owns (only multi-owner segments matter)
          Map<Address, IntSet> remoteOwnerSegments = new HashMap<>();
          IntSet localSegments = IntSets.mutableEmptySet(totalSegments);
 
@@ -687,7 +759,6 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
             }
          }
 
-         // Compute local bucket hashes in bulk
          if (!localSegments.isEmpty()) {
             List<BucketHash> localHashes = hasher.computeAllBucketHashes(localSegments, BUCKET_COUNT);
             for (BucketHash bh : localHashes) {
@@ -697,44 +768,53 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
             }
          }
 
-         // Send one batch RPC per remote node in parallel
-         Map<Address, CompletableFuture<Map<Address, Response>>> pendingRPCs = new HashMap<>();
+         if (remoteOwnerSegments.isEmpty()) {
+            return CompletableFuture.completedFuture(result);
+         }
+
+         List<CompletableFuture<Void>> rpcFutures = new ArrayList<>();
          for (Map.Entry<Address, IntSet> entry : remoteOwnerSegments.entrySet()) {
+            Address remoteAddr = entry.getKey();
             GetBucketHashesCommand cmd = commandsFactory.buildGetBucketHashesCommand(
                   topology.getTopologyId(), entry.getValue(), BUCKET_COUNT);
-            CompletableFuture<Map<Address, Response>> future = rpcManager.invokeCommand(
-                  List.of(entry.getKey()), cmd,
-                  MapResponseCollector.ignoreLeavers(1),
-                  rpcManager.getSyncRpcOptions()).toCompletableFuture();
-            pendingRPCs.put(entry.getKey(), future);
+            CompletableFuture<Void> rpcFuture = rpcManager.invokeCommand(
+                        List.of(remoteAddr), cmd,
+                        MapResponseCollector.ignoreLeavers(1),
+                        rpcManager.getSyncRpcOptions())
+                  .toCompletableFuture()
+                  .thenAccept(responseMap -> {
+                     Response rsp = responseMap.get(remoteAddr);
+                     if (!(rsp instanceof SuccessfulResponse)) return;
+                     List<BucketHash> remoteBuckets = (List<BucketHash>) ((SuccessfulResponse<?>) rsp).getResponseValue();
+                     if (remoteBuckets == null) return;
+
+                     synchronized (result) {
+                        for (BucketHash bh : remoteBuckets) {
+                           result.computeIfAbsent(bh.segmentId(), s -> new HashMap<>())
+                                 .computeIfAbsent(remoteAddr, a -> new ArrayList<>())
+                                 .add(bh);
+                        }
+                     }
+                  });
+            rpcFutures.add(rpcFuture);
          }
 
-         // Collect responses
-         for (Map.Entry<Address, CompletableFuture<Map<Address, Response>>> entry : pendingRPCs.entrySet()) {
-            Address remoteAddr = entry.getKey();
-            Map<Address, Response> responseMap = entry.getValue().get();
-            Response rsp = responseMap.get(remoteAddr);
-            if (!(rsp instanceof SuccessfulResponse)) return null;
-            List<BucketHash> remoteBuckets = (List<BucketHash>) ((SuccessfulResponse<?>) rsp).getResponseValue();
-            if (remoteBuckets == null) return null;
-
-            for (BucketHash bh : remoteBuckets) {
-               result.computeIfAbsent(bh.segmentId(), s -> new HashMap<>())
-                     .computeIfAbsent(remoteAddr, a -> new ArrayList<>())
-                     .add(bh);
-            }
-         }
-
-         if (log.isTraceEnabled())
-            log.tracef("Cache %s prefetched bucket hashes for %d segments from %d remote nodes",
-                  cacheName, localSegments.size() + remoteOwnerSegments.values().stream()
-                        .mapToInt(IntSet::size).max().orElse(0), remoteOwnerSegments.size());
-
-         return result;
+         return CompletableFuture.allOf(rpcFutures.toArray(CompletableFuture[]::new))
+               .thenApply(v -> {
+                  if (log.isTraceEnabled())
+                     log.tracef("Cache %s prefetched bucket hashes for %d segments from %d remote nodes",
+                           cacheName, result.size(), remoteOwnerSegments.size());
+                  return result;
+               })
+               .exceptionally(t -> {
+                  if (log.isTraceEnabled())
+                     log.tracef("Cache %s bucket hash prefetch failed: %s", cacheName, t.getMessage());
+                  return Collections.emptyMap();
+               });
       } catch (Exception e) {
          if (log.isTraceEnabled())
             log.tracef("Cache %s bucket hash prefetch failed: %s", cacheName, e.getMessage());
-         return null;
+         return CompletableFuture.completedFuture(Collections.emptyMap());
       }
    }
 
@@ -817,17 +897,15 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
     * matching the same output format as StateReceiverImpl.getAllReplicasForSegment().
     */
    @SuppressWarnings("unchecked")
-   private List<Map<Address, CacheEntry<K, V>>> getReplicasForBuckets(
-         int segmentId, IntSet bucketIds, LocalizedCacheTopology topology) throws Exception {
+   private CompletionStage<List<Map<Address, CacheEntry<K, V>>>> getReplicasForBucketsAsync(
+         int segmentId, IntSet bucketIds, LocalizedCacheTopology topology) {
       List<Address> writeOwners = topology.getSegmentDistribution(segmentId).writeOwners();
       boolean allBuckets = bucketIds.size() >= BUCKET_COUNT;
       Map<K, Map<Address, CacheEntry<K, V>>> keyReplicaMap = new HashMap<>();
 
-      // Local entries
       if (writeOwners.contains(localAddress)) {
          SegmentHasher hasher = allBuckets ? null : new SegmentHasher(dataContainer, internalMarshaller);
-         Iterator<InternalCacheEntry<K, V>> it = (Iterator) dataContainer
-               .iterator(IntSets.immutableSet(segmentId));
+         Iterator<InternalCacheEntry<K, V>> it = dataContainer.iterator(IntSets.immutableSet(segmentId));
          while (it.hasNext()) {
             InternalCacheEntry<K, V> entry = it.next();
             if (allBuckets || bucketIds.contains(hasher.bucketForKey(entry.getKey(), BUCKET_COUNT))) {
@@ -836,29 +914,28 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
          }
       }
 
-      // Remote entries
       List<Address> remoteOwners = writeOwners.stream()
             .filter(a -> !a.equals(localAddress)).collect(Collectors.toList());
-      if (!remoteOwners.isEmpty()) {
-         GetBucketEntriesCommand cmd = commandsFactory.buildGetBucketEntriesCommand(
-               topology.getTopologyId(), segmentId, bucketIds, BUCKET_COUNT);
-         MapResponseCollector collector = MapResponseCollector.validOnly(remoteOwners.size());
-         Map<Address, Response> responseMap = rpcManager.invokeCommand(
-                     remoteOwners, cmd, collector, rpcManager.getSyncRpcOptions())
-               .toCompletableFuture().get();
-
-         for (Map.Entry<Address, Response> rspEntry : responseMap.entrySet()) {
-            Response rsp = rspEntry.getValue();
-            if (!(rsp instanceof SuccessfulResponse))
-               throw new CacheException("Unexpected response from " + rspEntry.getKey());
-            List<CacheEntry<K, V>> entries = (List) ((SuccessfulResponse<?>) rsp).getResponseValue();
-            for (CacheEntry<K, V> entry : entries) {
-               addToReplicaMap(keyReplicaMap, rspEntry.getKey(), entry, writeOwners);
-            }
-         }
+      if (remoteOwners.isEmpty()) {
+         return CompletableFuture.completedFuture(new ArrayList<>(keyReplicaMap.values()));
       }
 
-      return new ArrayList<>(keyReplicaMap.values());
+      GetBucketEntriesCommand cmd = commandsFactory.buildGetBucketEntriesCommand(
+            topology.getTopologyId(), segmentId, bucketIds, BUCKET_COUNT);
+      MapResponseCollector collector = MapResponseCollector.ignoreLeavers(remoteOwners.size());
+      return rpcManager.invokeCommand(remoteOwners, cmd, collector, rpcManager.getSyncRpcOptions())
+            .thenApply(responseMap -> {
+               for (Map.Entry<Address, Response> rspEntry : responseMap.entrySet()) {
+                  Response rsp = rspEntry.getValue();
+                  if (!(rsp instanceof SuccessfulResponse))
+                     throw new CacheException("Unexpected response from " + rspEntry.getKey());
+                  List<CacheEntry<K, V>> entries = (List) ((SuccessfulResponse<?>) rsp).getResponseValue();
+                  for (CacheEntry<K, V> entry : entries) {
+                     addToReplicaMap(keyReplicaMap, rspEntry.getKey(), entry, writeOwners);
+                  }
+               }
+               return new ArrayList<>(keyReplicaMap.values());
+            });
    }
 
    private void addToReplicaMap(Map<K, Map<Address, CacheEntry<K, V>>> keyReplicaMap,
@@ -870,95 +947,4 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       }).put(address, entry);
    }
 
-   private class ReplicaSpliterator extends Spliterators.AbstractSpliterator<Map<Address, CacheEntry<K, V>>> {
-      private final LocalizedCacheTopology topology;
-      private final int totalSegments;
-      private final long endTime;
-      private final Map<Integer, Map<Address, List<BucketHash>>> prefetchedHashes;
-      private int nextSegment = 0;
-      private Iterator<Map<Address, CacheEntry<K, V>>> iterator = Collections.emptyIterator();
-      private volatile CompletableFuture<List<Map<Address, CacheEntry<K, V>>>> segmentRequestFuture;
-
-      ReplicaSpliterator(LocalizedCacheTopology topology) {
-         super(Long.MAX_VALUE, DISTINCT | NONNULL);
-         this.topology = topology;
-         this.totalSegments = topology.getWriteConsistentHash().getNumSegments();
-         this.endTime = timeService.expectedEndTime(conflictTimeout, TimeUnit.MILLISECONDS);
-         this.prefetchedHashes = prefetchAllBucketHashes(topology);
-      }
-
-
-      @Override
-      public boolean tryAdvance(Consumer<? super Map<Address, CacheEntry<K, V>>> action) {
-         while (!iterator.hasNext()) {
-            if (nextSegment < totalSegments) {
-               try {
-                  // Compare bucket hashes using prefetched data (no per-segment RPCs)
-                  IntSet mismatchedBuckets = findMismatchedBuckets(nextSegment, topology, prefetchedHashes);
-                  if (mismatchedBuckets != null && mismatchedBuckets.isEmpty()) {
-                     // All hashes match — skip segment
-                     nextSegment++;
-                     continue;
-                  } else if (mismatchedBuckets != null) {
-                     // Fetch entries only from mismatched buckets
-                     if (log.isTraceEnabled())
-                        log.tracef("Cache %s segment %s fetching entries from %d mismatched buckets: %s",
-                              cacheName, nextSegment, mismatchedBuckets.size(), mismatchedBuckets);
-                     List<Map<Address, CacheEntry<K, V>>> bucketEntries =
-                           getReplicasForBuckets(nextSegment, mismatchedBuckets, topology);
-                     nextSegment++;
-                     iterator = bucketEntries.iterator();
-                  } else {
-                     // Hash comparison failed — fall back to full segment fetch
-                     if (log.isTraceEnabled())
-                        log.tracef("Cache %s segment %s hash comparison failed, falling back to full fetch with topology %s",
-                              cacheName, nextSegment, topology);
-                     long remainingTime = timeService.remainingTime(endTime, TimeUnit.MILLISECONDS);
-                     segmentRequestFuture = stateReceiver.getAllReplicasForSegment(nextSegment, topology, remainingTime);
-                     List<Map<Address, CacheEntry<K, V>>> segmentEntries = segmentRequestFuture.get(remainingTime, TimeUnit.MILLISECONDS);
-                     nextSegment++;
-                     iterator = segmentEntries.iterator();
-                  }
-               } catch (Exception e) {
-                  if (log.isTraceEnabled()) log.tracef("Cache %s replicaSpliterator caught %s", cacheName, e);
-                  stopStream();
-                  return handleException(e);
-               }
-            } else {
-               streamInProgress.compareAndSet(true, false);
-               return false;
-            }
-         }
-         action.accept(iterator.next());
-         return true;
-      }
-
-      void stop() {
-         if (log.isTraceEnabled())
-            log.tracef("Cache %s stop() called on ReplicaSpliterator. Current segment %s", cacheName, nextSegment);
-         if (segmentRequestFuture != null && !segmentRequestFuture.isDone())
-            segmentRequestFuture.cancel(true);
-         streamInProgress.set(false);
-      }
-
-      void stopStream() {
-         stateReceiver.cancelRequests();
-         streamInProgress.set(false);
-      }
-
-      private boolean handleException(Throwable t) {
-         Throwable cause = t.getCause();
-
-         if (t instanceof CancellationException || cause instanceof CancellationException) {
-            return false;
-         }
-
-         if (t instanceof InterruptedException) {
-            Thread.currentThread().interrupt();
-            throw new CacheException(t);
-         }
-
-         throw new CacheException(t.getMessage(), cause != null ? cause : t);
-      }
-   }
 }

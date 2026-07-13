@@ -1576,10 +1576,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                      Log.CLUSTER.failedConflictResolution(cacheName, topology, rootCause);
                      eventLogger.error(EventLogCategory.CLUSTER, MESSAGES.conflictResolutionFailed(
                              topology.getMembers(), topology.getTopologyId(), rootCause.getMessage()));
-                     // If a node is suspected (or the RPC timed out, possibly due to a delayed view change
-                     // notification), we can't restart the CR until a new view is received, so we leave
+                     // If a node is suspected then we can't restart the CR until a new view is received, so we leave
                      // conflictResolution != null so that on a new view restartConflictResolution can return true
-                     if (!(rootCause instanceof SuspectException) && !(rootCause instanceof TimeoutException)) {
+                     if (!(rootCause instanceof SuspectException)) {
                         cancelConflictResolutionPhase(topology);
                      }
                   }
