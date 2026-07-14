@@ -26,6 +26,8 @@ import org.infinispan.transaction.WriteSkewException;
 @ProtoTypeId(ProtoStreamTypeIds.MARSHALLABLE_THROWABLE)
 public class MarshallableThrowable {
 
+   private static final StackTraceElement[] EMPTY_STACK_TRACE = {};
+
     private volatile Throwable throwable;
 
     private static final Set<Class<?>> MARSHALLABLE_EXCEPTIONS = new HashSet<>();
@@ -99,7 +101,9 @@ public class MarshallableThrowable {
                     retVal = create(clazz, c -> getInstance(c, cause), Throwable.class);
                 }
             }
-            return (Throwable) retVal;
+            Throwable tt = (Throwable) retVal;
+            if (tt != null) tt.setStackTrace(EMPTY_STACK_TRACE);
+            return tt;
         } catch (ClassNotFoundException e) {
             throw new MarshallingException(e);
         }
