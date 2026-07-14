@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.infinispan.commons.TimeoutException;
@@ -27,6 +28,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.InvocationStage;
@@ -54,6 +56,8 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.NAMED_CACHE)
 public class DefaultPendingLockManager implements PendingLockManager {
 
+   private static final Object SWEEP_MARKER = new Object();
+
    private static final Log log = LogFactory.getLog(DefaultPendingLockManager.class);
    private static final int NO_PENDING_CHECK = -2;
    @Inject TransactionTable transactionTable;
@@ -63,8 +67,23 @@ public class DefaultPendingLockManager implements PendingLockManager {
    ScheduledExecutorService timeoutExecutor;
 
    private final Map<Object, SharedPendingSignal> activeSignals = new ConcurrentHashMap<>();
+   private final AtomicReference<Object> activeSignalCleaner = new AtomicReference<>();
+   private volatile int highestTopologyId;
 
-   public DefaultPendingLockManager() {
+   private final SharedPendingSignal EMPTY = new SharedPendingSignal(Collections.emptyList()) {
+      @Override
+      public boolean isDone() {
+         return true;
+      }
+   };
+
+   public DefaultPendingLockManager() { }
+
+   @Stop
+   protected void stop() {
+      Object curr = activeSignalCleaner.getAndSet(SWEEP_MARKER);
+      if (curr instanceof ScheduledFuture<?> f)
+         f.cancel(true);
    }
 
    @Override
@@ -78,7 +97,15 @@ public class DefaultPendingLockManager implements PendingLockManager {
          return PendingLockPromise.NO_OP;
       }
 
+      clearCompletedSignals(txTopologyId);
+
       SharedPendingSignal signal = activeSignals.get(key);
+
+      // Already marked that there are no pending TXs for the given key.
+      // There is no need to keep scanning the transaction table anymore, we can proceed.
+      if (signal == EMPTY)
+         return PendingLockPromise.NO_OP;
+
       if (signal != null && signal.isDone()) {
          activeSignals.remove(key, signal);
          signal = null;
@@ -88,18 +115,20 @@ public class DefaultPendingLockManager implements PendingLockManager {
          signal = activeSignals.computeIfAbsent(key, k-> {
             Collection<PendingTransaction> transactions = getTransactionWithLockedKey(txTopologyId, k, globalTransaction);
             if (transactions.isEmpty())
-               return null;
+               return EMPTY;
 
             return createSharedSignal(transactions);
          });
 
-         if (signal != null) {
+         if (signal != EMPTY) {
             final SharedPendingSignal s = signal;
             signal.onComplete(() -> activeSignals.remove(key, s));
+         } else {
+            trySchedulingSignalCleanup();
          }
       }
 
-      if (signal == null || signal.isDone() || signal.isOnlyPendingFor(globalTransaction)) {
+      if (signal == EMPTY || signal.isDone() || signal.isOnlyPendingFor(globalTransaction)) {
          return PendingLockPromise.NO_OP;
       }
 
@@ -142,6 +171,27 @@ public class DefaultPendingLockManager implements PendingLockManager {
          return pending.get(0);
 
       return new CompositePendingLockPromise(pending, time, unit);
+   }
+
+   private void trySchedulingSignalCleanup() {
+      if (!activeSignalCleaner.compareAndSet(null, SWEEP_MARKER))
+         return;
+
+      ScheduledFuture<?> task = timeoutExecutor.schedule(this::cleanupCompletedSignals, 30, TimeUnit.SECONDS);
+      activeSignalCleaner.set(task);
+   }
+
+   private void cleanupCompletedSignals() {
+      activeSignals.values().removeIf(SharedPendingSignal::isDone);
+      activeSignalCleaner.set(null);
+   }
+
+   private void clearCompletedSignals(int newTopologyId) {
+      if (newTopologyId <= highestTopologyId)
+         return;
+
+      highestTopologyId = newTopologyId;
+      activeSignals.values().removeIf(SharedPendingSignal::isDone);
    }
 
    private SharedPendingSignal createSharedSignal(Collection<PendingTransaction> transactions) {

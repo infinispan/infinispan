@@ -464,6 +464,75 @@ public class DefaultPendingLockManagerTest extends AbstractInfinispanTest {
       assertThat(p2.isReady()).isTrue();
    }
 
+   public void testSweepClearsEmptyCachedSignals() {
+      manager.checkPendingTransactionsForKey(
+            context(newGlobalTransaction()), "key-1", LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
+
+      transactions.add(pendingTransaction(newGlobalTransaction(), "key-1", new CompletableFuture<>()));
+
+      PendingLockPromise cached = manager.checkPendingTransactionsForKey(
+            context(newGlobalTransaction()), "key-1", LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
+      assertThat(cached).isSameAs(PendingLockPromise.NO_OP);
+
+      fireLastScheduledTimeout();
+
+      PendingLockPromise afterSweep = manager.checkPendingTransactionsForKey(
+            context(newGlobalTransaction()), "key-1", LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
+      assertThat(afterSweep).isNotSameAs(PendingLockPromise.NO_OP);
+   }
+
+   public void testSingleSweepScheduledForMultipleEmptyEntries() {
+      int initialCount = scheduledTimeouts.size();
+
+      manager.checkPendingTransactionsForKey(
+            context(newGlobalTransaction()), "key-1", LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
+      manager.checkPendingTransactionsForKey(
+            context(newGlobalTransaction()), "key-2", LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
+      manager.checkPendingTransactionsForKey(
+            context(newGlobalTransaction()), "key-3", LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
+
+      assertThat(scheduledTimeouts).hasSize(initialCount + 1);
+   }
+
+   public void testSweepPreservesActiveSignals() {
+      CompletableFuture<Void> releaseFuture = new CompletableFuture<>();
+      transactions.add(pendingTransaction(newGlobalTransaction(), "key-1", releaseFuture));
+
+      PendingLockPromise pending = manager.checkPendingTransactionsForKey(
+            context(newGlobalTransaction()), "key-1", LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
+      assertThat(pending.isReady()).isFalse();
+
+      manager.checkPendingTransactionsForKey(
+            context(newGlobalTransaction()), "key-2", LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
+
+      fireLastScheduledTimeout();
+
+      assertThat(pending.isReady()).isFalse();
+
+      transactions.add(pendingTransaction(newGlobalTransaction(), "key-2", new CompletableFuture<>()));
+      PendingLockPromise afterSweep = manager.checkPendingTransactionsForKey(
+            context(newGlobalTransaction()), "key-2", LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
+      assertThat(afterSweep).isNotSameAs(PendingLockPromise.NO_OP);
+
+      releaseFuture.complete(null);
+      assertThat(pending.isReady()).isTrue();
+      assertThat(pending.hasTimedOut()).isFalse();
+   }
+
+   public void testNewEmptyAfterSweepSchedulesNewSweep() {
+      int initialCount = scheduledTimeouts.size();
+
+      manager.checkPendingTransactionsForKey(
+            context(newGlobalTransaction()), "key-1", LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
+      assertThat(scheduledTimeouts).hasSize(initialCount + 1);
+
+      fireLastScheduledTimeout();
+
+      manager.checkPendingTransactionsForKey(
+            context(newGlobalTransaction()), "key-2", LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
+      assertThat(scheduledTimeouts).hasSize(initialCount + 2);
+   }
+
    private void fireLastScheduledTimeout() {
       Runnable last = null;
       for (Runnable r : scheduledTimeouts) {
