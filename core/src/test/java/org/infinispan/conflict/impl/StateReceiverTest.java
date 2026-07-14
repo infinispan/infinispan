@@ -31,7 +31,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
@@ -39,6 +38,7 @@ import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.event.impl.EventImpl;
+import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -132,7 +132,7 @@ public class StateReceiverTest extends AbstractInfinispanTest {
    @BeforeMethod
    private void createAndInitStateReceiver() {
       CommandsFactory commandsFactory = mock(CommandsFactory.class);
-      InternalDataContainer<?, ?> dataContainer = mock(InternalDataContainer.class);
+      LocalPublisherManager<?, ?> localPublisherManager = mock(LocalPublisherManager.class);
       RpcManager rpcManager = mock(RpcManager.class);
       CacheNotifier<?, ?> cacheNotifier = mock(CacheNotifier.class);
 
@@ -149,7 +149,7 @@ public class StateReceiverTest extends AbstractInfinispanTest {
       when(rpcManager.getSyncRpcOptions()).thenAnswer(invocation -> new RpcOptions(DeliverOrder.PER_SENDER, 10000, TimeUnit.MILLISECONDS));
 
       StateReceiverImpl<Object, Object> stateReceiver = new StateReceiverImpl<>();
-      TestingUtil.inject(stateReceiver, cacheNotifier, commandsFactory, dataContainer, rpcManager, stateTransferExecutor);
+      TestingUtil.inject(stateReceiver, cacheNotifier, commandsFactory, localPublisherManager, rpcManager, stateTransferExecutor);
       stateReceiver.start();
       stateReceiver.onDataRehash(createEventImpl(2, 4, Event.Type.DATA_REHASHED));
       this.localizedCacheTopology = createLocalizedCacheTopology(4);
