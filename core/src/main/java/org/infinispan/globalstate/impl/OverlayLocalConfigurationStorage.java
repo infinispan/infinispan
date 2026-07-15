@@ -87,6 +87,19 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
    }
 
    @Override
+   public CompletionStage<Void> defineCacheConfiguration(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      CompletionStage<Void> cs = super.defineCacheConfiguration(name, template, configuration, flags);
+      if (flags.contains(CacheContainerAdmin.AdminFlag.VOLATILE))
+         return cs;
+
+      return blockingManager.thenApplyBlocking(cs, ignore -> {
+         persistentCaches.add(name);
+         storeCaches();
+         return null;
+      }, name);
+   }
+
+   @Override
    public CompletionStage<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       CompletionStage<Void> future = super.createCache(name, template, configuration, flags);
       if (!flags.contains(CacheContainerAdmin.AdminFlag.VOLATILE)) {
