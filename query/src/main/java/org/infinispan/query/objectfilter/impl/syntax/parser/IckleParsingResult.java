@@ -1,7 +1,10 @@
 package org.infinispan.query.objectfilter.impl.syntax.parser;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
@@ -23,12 +26,48 @@ public final class IckleParsingResult<TypeMetadata> {
    @ProtoTypeId(ProtoStreamTypeIds.ICKLE_PARSING_RESULT_STATEMENT_TYPE)
    public enum StatementType {
       SELECT,
-      DELETE;
+      DELETE,
+      UPDATE;
 
       private static final StatementType[] CACHED_VALUES = StatementType.values();
 
       public static StatementType valueOf(int index) {
          return CACHED_VALUES[index];
+      }
+   }
+
+   public enum UpdateOperationType {
+      SET,
+      ADD,
+      REMOVE
+   }
+
+   public static final class UpdateOperation {
+      private final UpdateOperationType type;
+      private final String[] propertyPath;
+      private final List<Object> values;
+
+      public UpdateOperation(UpdateOperationType type, String[] propertyPath, List<Object> values) {
+         this.type = type;
+         this.propertyPath = propertyPath;
+         this.values = values;
+      }
+
+      public UpdateOperationType getType() {
+         return type;
+      }
+
+      public String[] getPropertyPath() {
+         return propertyPath;
+      }
+
+      public List<Object> getValues() {
+         return values;
+      }
+
+      @Override
+      public String toString() {
+         return type + " " + String.join(".", propertyPath) + " = " + values;
       }
    }
 
@@ -70,6 +109,7 @@ public final class IckleParsingResult<TypeMetadata> {
    private final Object[] projectedNullMarkers;
    private final PropertyPath<?>[] groupBy;
    private final SortField[] sortFields;
+   private final List<UpdateOperation> updateOperations;
 
    public static class Builder<TypeMetadata> {
       private String queryString;
@@ -85,6 +125,7 @@ public final class IckleParsingResult<TypeMetadata> {
       private Object[] projectedNullMarkers;
       private PropertyPath<?>[] groupBy;
       private SortField[] sortFields;
+      private List<UpdateOperation> updateOperations;
 
       public Builder<TypeMetadata> setQueryString(String queryString) {
          this.queryString = queryString;
@@ -151,6 +192,14 @@ public final class IckleParsingResult<TypeMetadata> {
          return this;
       }
 
+      public Builder<TypeMetadata> addUpdateOperation(UpdateOperation operation) {
+         if (this.updateOperations == null) {
+            this.updateOperations = new ArrayList<>();
+         }
+         this.updateOperations.add(operation);
+         return this;
+      }
+
       public IckleParsingResult<TypeMetadata> build() {
          return new IckleParsingResult<>(
                queryString,
@@ -165,7 +214,8 @@ public final class IckleParsingResult<TypeMetadata> {
                projectedTypes,
                projectedNullMarkers,
                groupBy,
-               sortFields
+               sortFields,
+               updateOperations
          );
       }
    }
@@ -177,7 +227,8 @@ public final class IckleParsingResult<TypeMetadata> {
                              String targetEntityName, TypeMetadata targetEntityMetadata,
                              PropertyPath<?>[] projectedPaths, Class<?>[] projectedTypes, Object[] projectedNullMarkers,
                              PropertyPath<?>[] groupBy,
-                             SortField[] sortFields) {
+                             SortField[] sortFields,
+                             List<UpdateOperation> updateOperations) {
       this.queryString = queryString;
       this.statementType = statementType;
       this.parameterNames = parameterNames;
@@ -194,6 +245,7 @@ public final class IckleParsingResult<TypeMetadata> {
       this.projectedNullMarkers = projectedNullMarkers;
       this.groupBy = groupBy;
       this.sortFields = sortFields;
+      this.updateOperations = updateOperations != null ? Collections.unmodifiableList(updateOperations) : null;
    }
 
    public String getQueryString() {
@@ -307,6 +359,10 @@ public final class IckleParsingResult<TypeMetadata> {
 
    public SortField[] getSortFields() {
       return sortFields;
+   }
+
+   public List<UpdateOperation> getUpdateOperations() {
+      return updateOperations;
    }
 
    @Override

@@ -1,3 +1,4 @@
+
 package org.infinispan.rest.resources;
 
 import static org.infinispan.testing.Testing.tmpDirectory;
@@ -103,6 +104,7 @@ public class CacheResourceV3Test extends CacheResourceV2Test {
             // Search operations
             Map.entry("cacheQuery", "/v3/caches/{cacheName}/_search"),
             Map.entry("cacheDeleteByQuery", "/v3/caches/{cacheName}/_delete-by-query"),
+            Map.entry("cacheUpdateByQuery", "/v3/caches/{cacheName}/_update-by-query"),
             Map.entry("cacheIndexMetamodel", "/v3/caches/{cacheName}/_index-metamodel"),
             Map.entry("cacheSearchStats", "/v3/caches/{cacheName}/_search-stats"),
             Map.entry("cacheSearchStatsClear", "/v3/caches/{cacheName}/_search-stats-clear"),

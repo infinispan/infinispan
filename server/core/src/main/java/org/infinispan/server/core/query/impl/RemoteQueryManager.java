@@ -58,6 +58,8 @@ public interface RemoteQueryManager {
 
    byte[] executeDeleteByQuery(String queryString, Map<String, Object> namedParametersMap, AdvancedCache<?, ?> cache, MediaType outputFormat, boolean isLocal);
 
+   byte[] executeUpdateByQuery(String queryString, Map<String, Object> namedParametersMap, AdvancedCache<?, ?> cache, MediaType outputFormat, boolean isLocal);
+
    BaseRemoteQueryManager.QueryResultWithProjection localQuery(String queryString, Map<String, Object> namedParametersMap, Number offset, Number maxResults,
                                                                Integer hitCountAccuracy, AdvancedCache<?, ?> cache, boolean isLocal);
 }

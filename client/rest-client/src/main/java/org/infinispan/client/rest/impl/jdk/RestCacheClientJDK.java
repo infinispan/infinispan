@@ -301,6 +301,11 @@ public class RestCacheClientJDK implements RestCacheClient {
    }
 
    @Override
+   public CompletionStage<RestResponse> updateByQuery(String query, boolean local) {
+      return client.put(path + "?action=updateByQuery&query=" + sanitize(query) + "&local=" + local);
+   }
+
+   @Override
    public CompletionStage<RestResponse> query(String query, int maxResults, int offset) {
       return query(query, maxResults, offset, -1);
    }

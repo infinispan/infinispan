@@ -65,6 +65,21 @@ abstract class BaseRemoteQueryManager implements RemoteQueryManager {
    }
 
    @Override
+   public byte[] executeUpdateByQuery(String queryString, Map<String, Object> namedParametersMap,
+                                      AdvancedCache<?, ?> cache, MediaType outputFormat, boolean isLocal) {
+      QueryResultWithProjection resultWithProjection =
+            localQuery(queryString, namedParametersMap, null, null, null, cache, isLocal);
+      QueryResult<Object> queryResult = resultWithProjection.queryResult;
+      String[] projection = resultWithProjection.projection;
+
+      QuerySerializer<?> querySerializer = querySerializers.getSerializer(outputFormat);
+      RemoteQueryResult remoteQueryResult = new RemoteQueryResult(projection, queryResult.count().value(),
+            queryResult.count().exact(), queryResult.list());
+      Object response = querySerializer.createQueryResponse(remoteQueryResult);
+      return querySerializer.encodeQueryResponse(response, outputFormat);
+   }
+
+   @Override
    public byte[] executeQuery(String queryString, Map<String, Object> namedParametersMap, Number offset, Number maxResults,
                               Integer hitCountAccuracy, AdvancedCache<?, ?> cache, MediaType outputFormat, boolean isLocal) {
       QueryResultWithProjection resultWithProjection =

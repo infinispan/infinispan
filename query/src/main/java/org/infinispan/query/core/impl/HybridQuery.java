@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
@@ -11,10 +12,14 @@ import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
+import org.infinispan.protostream.ImmutableSerializationContext;
+import org.infinispan.protostream.ProtobufFieldUpdater;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.security.actions.SecurityActions;
 
 /**
  * A non-indexed query performed on top of the results returned by another query (usually a Lucene based query). This
@@ -35,13 +40,17 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
 
    private final boolean allSortFieldsAreStored;
 
+   protected final List<IckleParsingResult.UpdateOperation> updateOperations;
+
    public HybridQuery(AdvancedCache<?, ?> cache, String queryString, IckleParsingResult.StatementType statementType,
                       Map<String, Object> namedParameters, ObjectFilter objectFilter, long startOffset, int maxResults,
-                      Query<?> baseQuery, LocalQueryStatistics queryStatistics, boolean local, boolean allSortFieldsAreStored) {
+                      Query<?> baseQuery, LocalQueryStatistics queryStatistics, boolean local, boolean allSortFieldsAreStored,
+                      List<IckleParsingResult.UpdateOperation> updateOperations) {
       super(cache, queryString, statementType, namedParameters, objectFilter.getProjection(), startOffset, maxResults, queryStatistics, local);
       this.objectFilter = objectFilter;
       this.baseQuery = (Query<S>) baseQuery;
       this.allSortFieldsAreStored = allSortFieldsAreStored;
+      this.updateOperations = updateOperations;
    }
 
    @Override
@@ -91,17 +100,48 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
          Iterator<ObjectFilter.FilterResult> it =
                new MappingIterator<>(entryIterator, e -> objectFilter.filter(e.key(), e.value(), null));
          int count = 0;
-         while (it.hasNext()) {
-            ObjectFilter.FilterResult fr = it.next();
-            Object removed = cache.remove(fr.getKey());
-            if (removed != null) {
-               count++;
+         if (statementType == IckleParsingResult.StatementType.UPDATE) {
+            count = executeUpdate(it);
+         } else {
+            while (it.hasNext()) {
+               ObjectFilter.FilterResult fr = it.next();
+               Object removed = cache.remove(fr.getKey());
+               if (removed != null) {
+                  count++;
+               }
             }
          }
          return count;
       } finally {
          if (queryStatistics.isEnabled()) recordQuery(System.nanoTime() - start);
       }
+   }
+
+   @SuppressWarnings("unchecked")
+   private int executeUpdate(Iterator<ObjectFilter.FilterResult> it) {
+      if (updateOperations == null || updateOperations.isEmpty()) {
+         return 0;
+      }
+
+      SerializationContextRegistry ctxRegistry = SecurityActions
+            .getCacheComponentRegistry(cache).getComponent(SerializationContextRegistry.class);
+      ImmutableSerializationContext serCtx = ctxRegistry.getUserCtx();
+
+      List<ProtobufFieldUpdater.UpdateOperation> ops = UpdateQueryHelper.toProtobufOps(updateOperations);
+
+      int count = 0;
+      while (it.hasNext()) {
+         ObjectFilter.FilterResult fr = it.next();
+         Object key = fr.getKey();
+         try {
+            if (UpdateQueryHelper.applyUpdate((AdvancedCache<Object, Object>) cache, key, serCtx, ops)) {
+               count++;
+            }
+         } catch (Exception e) {
+            throw LOG.updateByQueryFailed(key, e);
+         }
+      }
+      return count;
    }
 
    @Override

@@ -191,6 +191,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
          // Search operations
          Map.entry("cacheQuery", "/v2/caches/{cacheName}?action=search"),
          Map.entry("cacheDeleteByQuery", "/v2/caches/{cacheName}?action=deleteByQuery"),
+         Map.entry("cacheUpdateByQuery", "/v2/caches/{cacheName}?action=updateByQuery"),
          Map.entry("cacheIndexMetamodel", "/v2/caches/{cacheName}?action=index-metamodel"),
          Map.entry("cacheSearchStats", "/v2/caches/{cacheName}?action=search-stats"),
          Map.entry("cacheSearchStatsClear", "/v2/caches/{cacheName}?action=search-stats-clear"),
@@ -1921,6 +1922,40 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(response).hasReturnedText("0");
 
       response = join(cacheClient.deleteByQuery("FROM Another WHERE value = 9", true));
+      assertThat(response).isBadRequest();
+   }
+
+   @Test
+   public void testUpdateByQuery() {
+      RestCacheClient cacheClient = adminClient.cache("indexedCache");
+      join(cacheClient.clear());
+
+      insertEntity(1, "Another", 11, "Eleven 1");
+      insertEntity(2, "Another", 11, "Eleven 2");
+      insertEntity(3, "Another", 9, "Nine 1");
+
+      RestResponse response = join(cacheClient.updateByQuery("UPDATE FROM Another SET description = 'Updated' WHERE value > 10", true));
+      assertThat(response).isOk();
+
+      response = join(cacheClient.query("FROM Another WHERE description = 'Updated'"));
+      assertThat(response).isOk();
+      assertThat(response.body()).contains("Updated");
+
+      response = join(cacheClient.query("FROM Another WHERE description = 'Nine 1'"));
+      assertThat(response).isOk();
+      assertThat(response.body()).contains("Nine 1");
+
+      // Test with POST
+      RestRawClient rawClient = adminClient.raw();
+      RestEntity restEntity = RestEntity.create("{\"query\": \"UPDATE FROM Another SET description = 'PostUpdated' WHERE value = 9\"}");
+      response = join(rawClient.post(endpoint("cacheUpdateByQuery", "cacheName", "indexedCache"), restEntity));
+      assertThat(response).isOk();
+
+      response = join(cacheClient.query("FROM Another WHERE description = 'PostUpdated'"));
+      assertThat(response).isOk();
+      assertThat(response.body()).contains("PostUpdated");
+
+      response = join(cacheClient.updateByQuery("FROM Another WHERE value = 9", true));
       assertThat(response).isBadRequest();
    }
 

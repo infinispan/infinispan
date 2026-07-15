@@ -466,7 +466,7 @@ public class QueryEngine<TypeMetadata> {
       HybridQuery<?, ?> projectingAggregatingQuery = new HybridQuery<>(cache,
             secondPhaseQueryStr, parsingResult.getStatementType(), namedParameters,
             getObjectFilter(matcher, secondPhaseQueryStr, namedParameters, secondPhaseAccumulators),
-            startOffset, maxResults, baseQuery, queryStatistics, local, false);
+            startOffset, maxResults, baseQuery, queryStatistics, local, false, null);
 
       StringBuilder thirdPhaseQuery = new StringBuilder();
       thirdPhaseQuery.append("SELECT ");
@@ -541,7 +541,7 @@ public class QueryEngine<TypeMetadata> {
       if (!isIndexed) {
          return new EmbeddedQuery<>(this, cache, queryString, parsingResult.getStatementType(),
                namedParameters, parsingResult.getProjections(), startOffset, maxResults, defaultMaxResults,
-               queryStatistics, local);
+               queryStatistics, local, parsingResult.getUpdateOperations());
       }
 
       IndexedFieldProvider.FieldIndexingMetadata fieldIndexingMetadata = propertyHelper.getIndexedFieldProvider().get(parsingResult.getTargetEntityMetadata());
@@ -642,7 +642,7 @@ public class QueryEngine<TypeMetadata> {
                String projectionQueryStr = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, null, null);
                return new MetadataHybridQuery<>(cache, projectionQueryStr, parsingResult.getStatementType(),
                      null, getObjectFilter(matcher, projectionQueryStr, null, null), startOffset, maxResults, indexQuery,
-                     queryStatistics, local, allSortFieldsAreStored);
+                     queryStatistics, local, allSortFieldsAreStored, null);
             }
          } else {
             // projections may be stored but some sort fields are not so we need to query the index and then execute in-memory sorting and projecting in a second phase
@@ -652,7 +652,7 @@ public class QueryEngine<TypeMetadata> {
             String projectionQueryStr = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), parsingResult.getProjectedPaths(), null, null, sortFields);
             return new MetadataHybridQuery<>(cache, projectionQueryStr, parsingResult.getStatementType(),
                   null, getObjectFilter(matcher, projectionQueryStr, null, null), startOffset, maxResults, indexQuery,
-                  queryStatistics, local, allSortFieldsAreStored);
+                  queryStatistics, local, allSortFieldsAreStored, null);
          }
       }
 
@@ -660,7 +660,7 @@ public class QueryEngine<TypeMetadata> {
          // expansion leads to a full non-indexed query or the expansion is too long/complex
          return new EmbeddedQuery<>(this, cache, queryString, parsingResult.getStatementType(),
                namedParameters, parsingResult.getProjections(), startOffset, maxResults, defaultMaxResults,
-               queryStatistics, local);
+               queryStatistics, local, parsingResult.getUpdateOperations());
       }
 
       // some fields are indexed, run a hybrid query
@@ -668,7 +668,7 @@ public class QueryEngine<TypeMetadata> {
       Query<?> expandedQuery = new EmbeddedLuceneQuery<>(this, namedParameters, fpr, null, null, -1, -1, local);
       return new MetadataHybridQuery<>(cache, queryString, parsingResult.getStatementType(),
             namedParameters, getObjectFilter(matcher, queryString, namedParameters, null), startOffset, maxResults,
-            expandedQuery, queryStatistics, local, allSortFieldsAreStored);
+            expandedQuery, queryStatistics, local, allSortFieldsAreStored, parsingResult.getUpdateOperations());
    }
 
    private IckleParsingResult<TypeMetadata> makeFilterParsingResult(IckleParsingResult<TypeMetadata> parsingResult, BooleanExpr normalizedWhereClause,
@@ -684,7 +684,8 @@ public class QueryEngine<TypeMetadata> {
       return new IckleParsingResult<>(queryString, parsingResult.getStatementType(), parsingResult.getParameterNames(),
             normalizedWhereClause, null, parsingResult.getFilteringClause(),
             parsingResult.getTargetEntityName(), parsingResult.getTargetEntityMetadata(),
-            projection, projectedTypes, projectedNullMarkers, null, sortFields);
+            projection, projectedTypes, projectedNullMarkers, null, sortFields,
+            parsingResult.getUpdateOperations());
    }
 
    protected RowProcessor makeProjectionProcessor(Class<?>[] projectedTypes, Object[] projectedNullMarkers) {
@@ -782,10 +783,10 @@ public class QueryEngine<TypeMetadata> {
          QueryDefinition queryDefinition = new QueryDefinition(queryString, ickleParsingResult.getStatementType(),
                getQueryEngineProvider(), defaultMaxResults);
          queryDefinition.setNamedParameters(namedParameters);
-         return new DistributedIndexedQueryImpl<>(queryDefinition, cache, queryStatistics, defaultMaxResults, searchQuery.knn());
+         return new DistributedIndexedQueryImpl<>(queryDefinition, cache, queryStatistics, defaultMaxResults, searchQuery.knn(), ickleParsingResult.getUpdateOperations());
       }
       return new IndexedQueryImpl<>(queryString, ickleParsingResult.getStatementType(), searchQuery, cache,
-            queryStatistics, defaultMaxResults);
+            queryStatistics, defaultMaxResults, ickleParsingResult.getUpdateOperations());
    }
 
    protected SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> getQueryEngineProvider() {
