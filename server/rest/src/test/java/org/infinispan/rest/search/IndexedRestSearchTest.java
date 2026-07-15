@@ -56,7 +56,7 @@ public class IndexedRestSearchTest extends BaseRestSearchTest {
       String searchUrl = getPath();
 
       Map<String, String> headers = new HashMap<>();
-      headers.put(HOST.toString(), "localhost");
+      headers.put(HOST.toString(), "localhost:" + pickServer().getPort());
       headers.put(ORIGIN.toString(), "http://localhost:" + pickServer().getPort());
       headers.put(ACCESS_CONTROL_REQUEST_METHOD.toString(), "GET");
       RestResponse preFlight = join(client.raw().options(searchUrl, headers));
