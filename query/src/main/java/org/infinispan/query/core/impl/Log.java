@@ -215,11 +215,11 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot index entry since the search mapping failed to initialize.", id = 14055)
    CacheException searchMappingUnavailable();
 
-   @Message(value = "Only DELETE statements are supported by executeStatement", id = 14056)
+   @Message(value = "Only DELETE and UPDATE statements are supported by executeStatement", id = 14056)
    CacheException unsupportedStatement();
 
-   @Message(value = "DELETE statements cannot use paging (firstResult/maxResults)", id = 14057)
-   CacheException deleteStatementsCannotUsePaging();
+   @Message(value = "DELETE and UPDATE statements cannot use paging (firstResult/maxResults)", id = 14057)
+   CacheException statementCannotUsePaging();
 
    @Message(value = "Projections are not supported with entryIterator()", id = 14058)
    CacheException entryIteratorDoesNotAllowProjections();

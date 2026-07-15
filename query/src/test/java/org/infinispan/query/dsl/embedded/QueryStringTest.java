@@ -501,11 +501,105 @@ public class QueryStringTest extends AbstractQueryTest {
       delete.executeStatement();
    }
 
-   @Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = "ISPN014057: DELETE statements cannot use paging \\(firstResult/maxResults\\)")
+   @Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = "ISPN014057: DELETE and UPDATE statements cannot use paging \\(firstResult/maxResults\\)")
    public void testDeleteWithPaging() {
       Query<Transaction> delete = createQueryFromString("DELETE FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'bogus'");
       delete.maxResults(5);
       delete.executeStatement();
+   }
+
+   public void testUpdateByQueryOnNonIndexedType() {
+      getCacheForWrite().put("notIndexedToBeUpdated", new NotIndexed("testing update"));
+
+      Query<NotIndexed> select = createQueryFromString("FROM " + NotIndexed.class.getName() + " WHERE notIndexedField = 'testing update'");
+      QueryResult<NotIndexed> result = select.execute();
+      assertEquals(1, result.count().value());
+      assertTrue(result.count().exact());
+
+      Query<NotIndexed> update = createQueryFromString("UPDATE FROM " + NotIndexed.class.getName() + " SET notIndexedField = 'updated value' WHERE notIndexedField = 'testing update'");
+      assertEquals(1, update.executeStatement());
+
+      Query<NotIndexed> selectUpdated = createQueryFromString("FROM " + NotIndexed.class.getName() + " WHERE notIndexedField = 'updated value'");
+      result = selectUpdated.execute();
+      assertEquals(1, result.count().value());
+      assertTrue(result.count().exact());
+   }
+
+   public void testUpdateByQueryOnIndexedField() throws Exception {
+      Transaction tx = getModelFactory().makeTransaction();
+      tx.setId(9999);
+      tx.setDescription("Holiday booking");
+      tx.setAccountId(1);
+      tx.setAmount(1800);
+      tx.setDate(makeDate("2021-09-07"));
+      tx.setDebit(false);
+      tx.setNotes("will be updated");
+      tx.setValid(true);
+      getCacheForWrite().put("transaction_" + tx.getId(), tx);
+
+      Query<Transaction> select = createQueryFromString("FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Holiday booking'");
+      QueryResult<Transaction> result = select.execute();
+      assertEquals(1, result.count().value());
+      assertTrue(result.count().exact());
+
+      Query<Transaction> update = createQueryFromString("UPDATE FROM " + getModelFactory().getTransactionTypeName() + " SET description = 'Updated booking' WHERE description = 'Holiday booking'");
+      assertEquals(1, update.executeStatement());
+
+      Query<Transaction> selectUpdated = createQueryFromString("FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Updated booking'");
+      result = selectUpdated.execute();
+      assertEquals(1, result.count().value());
+      assertTrue(result.count().exact());
+   }
+
+   public void testUpdateByHybridQuery() throws Exception {
+      Transaction tx = getModelFactory().makeTransaction();
+      tx.setId(9999);
+      tx.setDescription("Holiday booking");
+      tx.setAccountId(1);
+      tx.setAmount(1800);
+      tx.setDate(makeDate("2021-09-07"));
+      tx.setDebit(false);
+      tx.setNotes("will be updated");
+      tx.setValid(false);
+      getCacheForWrite().put("transaction_" + tx.getId(), tx);
+
+      Query<Transaction> select = createQueryFromString("FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Holiday booking' AND isValid = false");
+      QueryResult<Transaction> result = select.execute();
+      assertThat(result.count().value()).isEqualTo(1);
+      assertThat(result.count().exact()).isTrue();
+
+      Query<Transaction> update = createQueryFromString("UPDATE FROM " + getModelFactory().getTransactionTypeName() + " SET description = 'Updated booking' WHERE description = 'Holiday booking' AND isValid = false");
+      assertEquals(1, update.executeStatement());
+
+      Query<Transaction> selectUpdated = createQueryFromString("FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Updated booking'");
+      result = selectUpdated.execute();
+      assertThat(result.count().value()).isEqualTo(1);
+      assertThat(result.count().exact()).isTrue();
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
+   public void testUpdateWithProjections() {
+      Query<Transaction> update = createQueryFromString("UPDATE t.description FROM " + getModelFactory().getTransactionTypeName() + " as t SET description = 'bogus' WHERE t.description = 'bogus'");
+      update.executeStatement();
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
+   public void testUpdateWithOrderBy() {
+      Query<Transaction> update = createQueryFromString("UPDATE FROM " + getModelFactory().getTransactionTypeName() + " SET description = 'bogus' WHERE description = 'bogus' ORDER BY amount");
+      update.executeStatement();
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
+   public void testUpdateWithGroupBy() {
+      Query<Transaction> update = createQueryFromString("UPDATE FROM " + getModelFactory().getTransactionTypeName() + " SET description = 'bogus' WHERE description = 'bogus' GROUP BY accountId");
+      update.executeStatement();
+   }
+
+   @Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = "ISPN014057: DELETE and UPDATE statements cannot use paging \\(firstResult/maxResults\\)")
+   public void testUpdateWithPaging() {
+      Query<Transaction> update = createQueryFromString("UPDATE FROM " + getModelFactory().getTransactionTypeName() + " SET description = 'bogus' WHERE description = 'bogus'");
+      update.maxResults(5);
+      update.executeStatement();
    }
 
    public void testSpatialPredicate() {

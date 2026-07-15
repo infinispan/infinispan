@@ -511,7 +511,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       if (!isIndexed) {
          return new EmbeddedQuery<>(this, cache, queryString, parsingResult.getStatementType(),
                namedParameters, parsingResult.getProjections(), startOffset, maxResults, defaultMaxResults,
-               queryStatistics, local);
+               queryStatistics, local, parsingResult.getUpdateOperations());
       }
 
       IndexedFieldProvider.FieldIndexingMetadata fieldIndexingMetadata = propertyHelper.getIndexedFieldProvider().get(parsingResult.getTargetEntityMetadata());
@@ -630,7 +630,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
          // expansion leads to a full non-indexed query or the expansion is too long/complex
          return new EmbeddedQuery<>(this, cache, queryString, parsingResult.getStatementType(),
                namedParameters, parsingResult.getProjections(), startOffset, maxResults, defaultMaxResults,
-               queryStatistics, local);
+               queryStatistics, local, parsingResult.getUpdateOperations());
       }
 
       // some fields are indexed, run a hybrid query
@@ -658,7 +658,8 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       return new IckleParsingResult<>(queryString, parsingResult.getStatementType(), parsingResult.getParameterNames(),
             normalizedWhereClause, null, parsingResult.getFilteringClause(),
             parsingResult.getTargetEntityName(), parsingResult.getTargetEntityMetadata(),
-            projection, projectedTypes, projectedNullMarkers, null, sortFields);
+            projection, projectedTypes, projectedNullMarkers, null, sortFields,
+            parsingResult.getUpdateOperations());
    }
 
    /**
@@ -744,7 +745,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
          return new DistributedIndexedQueryImpl<>(queryDefinition, cache, queryStatistics, defaultMaxResults, searchQuery.knn());
       }
       return new IndexedQueryImpl<>(queryString, ickleParsingResult.getStatementType(), searchQuery, cache,
-            queryStatistics, defaultMaxResults);
+            queryStatistics, defaultMaxResults, ickleParsingResult.getUpdateOperations());
    }
 
    protected SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> getQueryEngineProvider() {
