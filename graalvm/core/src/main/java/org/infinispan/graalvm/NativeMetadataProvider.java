@@ -117,7 +117,7 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
    }
 
    private void caffeine(ReflectionProcessor processor) {
-      processor.addClasses(
+      processor.addClasses(true, false,
             "com.github.benmanes.caffeine.cache.PDMS",
             "com.github.benmanes.caffeine.cache.PSA",
             "com.github.benmanes.caffeine.cache.PSMS",
@@ -157,10 +157,10 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
                   org.jgroups.util.ThreadPool.class
             ).addImplementations(false, false,
                   org.jgroups.conf.PropertyConverter.class,
-                  org.jgroups.protocols.LocalTransport.class,
-                  org.jgroups.stack.MessageProcessingPolicy.class
+                  org.jgroups.protocols.LocalTransport.class
             ).addImplementations(true, false,
                   org.jgroups.protocols.Bundler.class,
+                  org.jgroups.stack.MessageProcessingPolicy.class,
                   org.jgroups.stack.Protocol.class
             );
 

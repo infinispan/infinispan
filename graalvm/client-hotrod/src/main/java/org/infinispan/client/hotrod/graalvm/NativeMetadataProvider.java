@@ -71,15 +71,15 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
             ).addClasses(
                   org.infinispan.commons.jmx.PlatformMBeanServerLookup.class,
                   org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash.class
-            ).addClasses(
+            ).addClasses(false, true,
                   "org.wildfly.security.sasl.plain.WildFlyElytronSaslPlainProvider",
                   "org.wildfly.security.sasl.digest.WildFlyElytronSaslDigestProvider",
                   "org.wildfly.security.sasl.external.WildFlyElytronSaslExternalProvider",
                   "org.wildfly.security.sasl.oauth2.WildFlyElytronSaslOAuth2Provider",
                   "org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider",
                   "org.wildfly.security.sasl.gssapi.WildFlyElytronSaslGssapiProvider",
-                  "org.wildfly.security.sasl.gs2.WildFlyElytronSaslGs2Provider",
-
+                  "org.wildfly.security.sasl.gs2.WildFlyElytronSaslGs2Provider"
+            ).addClasses(
                   "org.infinispan.client.hotrod.event.impl.ContinuousQueryImpl$ClientEntryListener",
                   "org.infinispan.client.hotrod.near.NearCacheService$InvalidatedNearCacheListener",
 
