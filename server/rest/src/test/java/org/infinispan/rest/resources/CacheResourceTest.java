@@ -278,7 +278,7 @@ public class CacheResourceTest extends BaseCacheResourceTest {
       join(client.cache("default").put("key", "value"));
 
       Map<String, String> headers = new HashMap<>();
-      headers.put(HOST, "localhost");
+      headers.put(HOST, "localhost:" + restServer().getPort());
       headers.put(ORIGIN, "http://localhost:" + restServer().getPort());
       headers.put(ACCESS_CONTROL_REQUEST_METHOD, "GET");
 
