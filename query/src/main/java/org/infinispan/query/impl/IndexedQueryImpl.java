@@ -25,6 +25,13 @@ import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.query.TotalHitCount;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
+import org.infinispan.protostream.ImmutableSerializationContext;
+import org.infinispan.protostream.ProtobufFieldUpdater;
+import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.descriptors.Descriptor;
+import org.infinispan.protostream.descriptors.WireType;
+import org.infinispan.protostream.impl.TagReaderImpl;
 import org.infinispan.query.core.impl.MappingIterator;
 import org.infinispan.query.core.impl.PartitionHandlingSupport;
 import org.infinispan.query.core.impl.QueryResultImpl;
@@ -48,12 +55,20 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
    protected final PartitionHandlingSupport partitionHandlingSupport;
    protected final QueryDefinition queryDefinition;
    protected final LocalQueryStatistics queryStatistics;
+   protected final List<IckleParsingResult.UpdateOperation> updateOperations;
 
    public IndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache, LocalQueryStatistics queryStatistics) {
+      this(queryDefinition, cache, queryStatistics, null);
+   }
+
+   public IndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache,
+                           LocalQueryStatistics queryStatistics,
+                           List<IckleParsingResult.UpdateOperation> updateOperations) {
       this.queryDefinition = queryDefinition;
       this.cache = cache;
       this.partitionHandlingSupport = new PartitionHandlingSupport(cache);
       this.queryStatistics = queryStatistics;
+      this.updateOperations = updateOperations;
    }
 
    /**
@@ -61,8 +76,9 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
     */
    public IndexedQueryImpl(String queryString, IckleParsingResult.StatementType statementType,
                            SearchQueryBuilder searchQuery, AdvancedCache<?, ?> cache,
-                           LocalQueryStatistics queryStatistics, int defaultMaxResults) {
-      this(new QueryDefinition(queryString, statementType, searchQuery, defaultMaxResults), cache, queryStatistics);
+                           LocalQueryStatistics queryStatistics, int defaultMaxResults,
+                           List<IckleParsingResult.UpdateOperation> updateOperations) {
+      this(new QueryDefinition(queryString, statementType, searchQuery, defaultMaxResults), cache, queryStatistics, updateOperations);
    }
 
    /**
@@ -218,13 +234,13 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
 
    @Override
    public int executeStatement() {
-      // at the moment the only supported statement is DELETE
-      if (queryDefinition.getStatementType() != IckleParsingResult.StatementType.DELETE) {
+      if (queryDefinition.getStatementType() != IckleParsingResult.StatementType.DELETE
+            && queryDefinition.getStatementType() != IckleParsingResult.StatementType.UPDATE) {
          throw CONTAINER.unsupportedStatement();
       }
 
       if (queryDefinition.getFirstResult() != 0 || queryDefinition.isCustomMaxResults()) {
-         throw CONTAINER.deleteStatementsCannotUsePaging();
+         throw CONTAINER.statementCannotUsePaging();
       }
 
       try {
@@ -236,12 +252,11 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
          LuceneSearchQuery<Object> searchQuery = searchQueryBuilder.ids();
          List<Object> hits = searchQuery.fetchAllHits();
 
-         int count = 0;
-         for (Object id : hits) {
-            Object removed = cache.remove(id);
-            if (removed != null) {
-               count++;
-            }
+         int count;
+         if (queryDefinition.getStatementType() == IckleParsingResult.StatementType.UPDATE) {
+            count = executeUpdate(hits);
+         } else {
+            count = executeDelete(hits);
          }
 
          if (queryStatistics.isEnabled()) recordQuery(System.nanoTime() - start);
@@ -250,6 +265,103 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       } catch (org.hibernate.search.util.common.SearchTimeoutException timeoutException) {
          throw new TimeoutException();
       }
+   }
+
+   private int executeDelete(List<Object> hits) {
+      int count = 0;
+      for (Object id : hits) {
+         Object removed = cache.remove(id);
+         if (removed != null) {
+            count++;
+         }
+      }
+      return count;
+   }
+
+   @SuppressWarnings("unchecked")
+   private int executeUpdate(List<Object> hits) {
+      if (updateOperations == null || updateOperations.isEmpty()) {
+         return 0;
+      }
+
+      AdvancedCache<Object, Object> storageCache = (AdvancedCache<Object, Object>) cache.withStorageMediaType();
+      SerializationContextRegistry ctxRegistry = org.infinispan.security.actions.SecurityActions
+            .getCacheComponentRegistry(cache).getComponent(SerializationContextRegistry.class);
+      ImmutableSerializationContext serCtx = ctxRegistry.getUserCtx();
+
+      List<ProtobufFieldUpdater.UpdateOperation> ops = new ArrayList<>();
+      for (IckleParsingResult.UpdateOperation uo : updateOperations) {
+         ProtobufFieldUpdater.OperationType opType = switch (uo.getType()) {
+            case SET -> ProtobufFieldUpdater.OperationType.SET;
+            case ADD -> ProtobufFieldUpdater.OperationType.ADD;
+            case REMOVE -> ProtobufFieldUpdater.OperationType.REMOVE;
+         };
+         ops.add(new ProtobufFieldUpdater.UpdateOperation(opType, uo.getPropertyPath(), uo.getValues()));
+      }
+
+      int count = 0;
+      for (Object id : hits) {
+         Object existingValue = storageCache.get(id);
+         if (existingValue == null) continue;
+
+         try {
+            byte[] wrappedBytes = extractBytes(existingValue);
+
+            String typeName = null;
+            Integer typeId = null;
+            byte[] innerBytes = null;
+
+            TagReaderImpl reader = TagReaderImpl.newInstance(serCtx, wrappedBytes);
+            int tag;
+            while ((tag = reader.readTag()) != 0) {
+               int fieldNumber = WireType.getTagFieldNumber(tag);
+               if (fieldNumber == WrappedMessage.WRAPPED_TYPE_NAME) {
+                  typeName = reader.readString();
+               } else if (fieldNumber == WrappedMessage.WRAPPED_TYPE_ID) {
+                  typeId = reader.readUInt32();
+               } else if (fieldNumber == WrappedMessage.WRAPPED_MESSAGE) {
+                  innerBytes = reader.readByteArray();
+               } else {
+                  reader.skipField(tag);
+               }
+            }
+
+            if (innerBytes == null) continue;
+
+            String resolvedTypeName = typeName != null ? typeName
+                  : serCtx.getDescriptorByTypeId(typeId).getFullName();
+            Descriptor descriptor = serCtx.getMessageDescriptor(resolvedTypeName);
+
+            byte[] updatedInner = ProtobufFieldUpdater.update(descriptor, innerBytes, ops);
+            byte[] updatedWrapped = rewrap(serCtx, typeName, typeId, updatedInner);
+
+            storageCache.put(id, updatedWrapped);
+            count++;
+         } catch (Exception e) {
+            throw new RuntimeException("Failed to apply update for key: " + id, e);
+         }
+      }
+      return count;
+   }
+
+   private byte[] extractBytes(Object value) {
+      if (value instanceof byte[] b) return b;
+      if (value instanceof org.infinispan.commons.marshall.WrappedByteArray w) return w.getBytes();
+      throw new IllegalArgumentException("Cannot extract bytes from: " + value.getClass());
+   }
+
+   private byte[] rewrap(ImmutableSerializationContext ctx, String typeName, Integer typeId, byte[] innerBytes) throws java.io.IOException {
+      var baos = new org.infinispan.protostream.impl.RandomAccessOutputStreamImpl(innerBytes.length + 20);
+      var writer = org.infinispan.protostream.impl.TagWriterImpl.newInstance(ctx, (org.infinispan.protostream.RandomAccessOutputStream) baos);
+
+      if (typeId != null) {
+         writer.writeUInt32(WrappedMessage.WRAPPED_TYPE_ID, typeId);
+      } else if (typeName != null) {
+         writer.writeString(WrappedMessage.WRAPPED_TYPE_NAME, typeName);
+      }
+      writer.writeBytes(WrappedMessage.WRAPPED_MESSAGE, innerBytes);
+      writer.flush();
+      return baos.toByteArray();
    }
 
    private <T> ClosableIteratorWithCount<T> iterator(SearchQuery<T> searchQuery) {

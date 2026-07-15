@@ -234,9 +234,51 @@ public class RemoteQueryStringTest extends QueryStringTest {
    }
 
    @Override
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN014057: DELETE statements cannot use paging \\(firstResult/maxResults\\)")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN014057: DELETE and UPDATE statements cannot use paging \\(firstResult/maxResults\\)")
    public void testDeleteWithPaging() {
       super.testDeleteWithPaging();
+   }
+
+   @Override
+   public void testUpdateByQueryOnNonIndexedType() {
+      getCacheForWrite().put("notIndexedToBeUpdated", new NotIndexed("testing update"));
+
+      Query<NotIndexed> select = createQueryFromString("FROM sample_bank_account.NotIndexed WHERE notIndexedField = 'testing update'");
+      QueryResult<NotIndexed> result = select.execute();
+      assertThat(result.count().value()).isOne();
+      assertThat(result.count().exact()).isTrue();
+
+      Query<NotIndexed> update = createQueryFromString("UPDATE FROM sample_bank_account.NotIndexed SET notIndexedField = 'updated value' WHERE notIndexedField = 'testing update'");
+      assertEquals(1, update.executeStatement());
+
+      Query<NotIndexed> selectUpdated = createQueryFromString("FROM sample_bank_account.NotIndexed WHERE notIndexedField = 'updated value'");
+      result = selectUpdated.execute();
+      assertThat(result.count().value()).isOne();
+      assertThat(result.count().exact()).isTrue();
+   }
+
+   @Override
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028526: Invalid query.*")
+   public void testUpdateWithProjections() {
+      super.testUpdateWithProjections();
+   }
+
+   @Override
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028526: Invalid query.*")
+   public void testUpdateWithOrderBy() {
+      super.testUpdateWithOrderBy();
+   }
+
+   @Override
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028526: Invalid query.*")
+   public void testUpdateWithGroupBy() {
+      super.testUpdateWithGroupBy();
+   }
+
+   @Override
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN014057: DELETE and UPDATE statements cannot use paging \\(firstResult/maxResults\\)")
+   public void testUpdateWithPaging() {
+      super.testUpdateWithPaging();
    }
 
    @Override
