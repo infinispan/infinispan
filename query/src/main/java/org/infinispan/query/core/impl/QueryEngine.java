@@ -437,7 +437,7 @@ public class QueryEngine<TypeMetadata> {
       HybridQuery<?, ?> projectingAggregatingQuery = new HybridQuery<>(cache,
             secondPhaseQueryStr, parsingResult.getStatementType(), namedParameters,
             getObjectFilter(matcher, secondPhaseQueryStr, namedParameters, secondPhaseAccumulators),
-            startOffset, maxResults, baseQuery, queryStatistics, local, false);
+            startOffset, maxResults, baseQuery, queryStatistics, local, false, null);
 
       StringBuilder thirdPhaseQuery = new StringBuilder();
       thirdPhaseQuery.append("SELECT ");
@@ -510,7 +510,8 @@ public class QueryEngine<TypeMetadata> {
       }
 
       return new EmbeddedQuery<>(this, cache, queryString, parsingResult.getStatementType(), namedParameters,
-            parsingResult.getProjections(), startOffset, maxResults, defaultMaxResults, queryStatistics, local);
+            parsingResult.getProjections(), startOffset, maxResults, defaultMaxResults, queryStatistics, local,
+            parsingResult.getUpdateOperations());
    }
 
    protected IckleParsingResult<TypeMetadata> parse(String queryString) {

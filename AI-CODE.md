@@ -50,6 +50,14 @@ When working in a specific module, check for an AI-CODE.md in that module's dire
 ## Development Platform
 * **Issues:** Use GitHub issue types (Bug, Feature, Task, Epic) instead of labels for classification. Each type has a template in `.github/ISSUE_TEMPLATE/` that must be filled in when opening issues.
 
+## Rolling Upgrade Compatibility
+
+When adding new Hot Rod commands, REST endpoints, or protocol changes, you **must** update the rolling upgrade compatibility config:
+
+**File:** `server/rollingupgradetests/src/test/resources/compatibility.json`
+
+Rolling upgrade tests run against older Infinispan server versions. If new tests exercise commands that didn't exist in older versions, those tests will fail. Update `compatibility.json` to exclude the specific older versions that don't support the new functionality.
+
 ## Related projects
 
 * **Operator:** The Infinispan Operator source code is in ../infinispan-operator

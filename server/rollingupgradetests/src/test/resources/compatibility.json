@@ -115,6 +115,24 @@
           ]
         }
       ]
+    },
+    {
+      "version-from": "[16.0,16.3)",
+      "version-to": "[16.3,)",
+      "exceptions": [
+        {
+          "description": "Update by query statement does not exist in older server versions",
+          "issue": "https://github.com/infinispan/infinispan/issues/14542",
+          "test-failures": [
+            {
+              "test-class": "org.infinispan.server.functional.hotrod.HotRodCacheQueries",
+              "test-methods": [
+                "testUpdateStatement"
+              ]
+            }
+          ]
+        }
+      ]
     }
   ]
 }

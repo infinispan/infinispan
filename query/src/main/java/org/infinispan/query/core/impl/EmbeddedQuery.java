@@ -2,9 +2,11 @@ package org.infinispan.query.core.impl;
 
 import static org.infinispan.query.core.impl.Log.CONTAINER;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -21,6 +23,9 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.CacheFilters;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
+import org.infinispan.protostream.ImmutableSerializationContext;
+import org.infinispan.protostream.ProtobufFieldUpdater;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
@@ -44,13 +49,17 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
 
    private final int defaultMaxResults;
 
+   private final List<IckleParsingResult.UpdateOperation> updateOperations;
+
    public EmbeddedQuery(QueryEngine<?> queryEngine, AdvancedCache<?, ?> cache,
                         String queryString, IckleParsingResult.StatementType statementType,
                         Map<String, Object> namedParameters, String[] projection,
-                        long startOffset, int maxResults, int defaultMaxResults, LocalQueryStatistics queryStatistics, boolean local) {
+                        long startOffset, int maxResults, int defaultMaxResults, LocalQueryStatistics queryStatistics, boolean local,
+                        List<IckleParsingResult.UpdateOperation> updateOperations) {
       super(cache, queryString, statementType, namedParameters, projection, startOffset, maxResults, queryStatistics, local);
       this.queryEngine = queryEngine;
       this.defaultMaxResults = defaultMaxResults;
+      this.updateOperations = updateOperations;
 
       if (maxResults == -1) {
          // apply the default
@@ -117,7 +126,7 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
       }
 
       if (getStartOffset() != 0 || getMaxResults() != defaultMaxResults) {
-         throw CONTAINER.deleteStatementsCannotUsePaging();
+         throw CONTAINER.statementCannotUsePaging();
       }
 
       long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
@@ -135,12 +144,21 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
          filteredKeyStream = filteredKeyStream.timeout(timeout, TimeUnit.NANOSECONDS);
       }
 
-      Optional<Integer> count = filteredKeyStream.map(new DeleteFunction()).reduce(Integer::sum);
-      filteredKeyStream.close();
+      int result;
+      if (statementType == IckleParsingResult.StatementType.UPDATE) {
+         List<Object> keys = new ArrayList<>();
+         filteredKeyStream.iterator().forEachRemaining(keys::add);
+         filteredKeyStream.close();
+         result = executeUpdate(keys);
+      } else {
+         Optional<Integer> count = filteredKeyStream.map(new DeleteFunction()).reduce(Integer::sum);
+         filteredKeyStream.close();
+         result = count.orElse(0);
+      }
 
       if (queryStatistics.isEnabled()) recordQuery(System.nanoTime() - start);
 
-      return count.orElse(0);
+      return result;
    }
 
    @ProtoTypeId(ProtoStreamTypeIds.ICKLE_DELETE_FUNCTION)
@@ -157,6 +175,31 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
       public Integer apply(Object key) {
          return cache.withStorageMediaType().remove(key) == null ? 0 : 1;
       }
+   }
+
+   @SuppressWarnings("unchecked")
+   private int executeUpdate(List<Object> keys) {
+      if (updateOperations == null || updateOperations.isEmpty()) {
+         return 0;
+      }
+
+      SerializationContextRegistry ctxRegistry = org.infinispan.security.actions.SecurityActions
+            .getCacheComponentRegistry(cache).getComponent(SerializationContextRegistry.class);
+      ImmutableSerializationContext serCtx = ctxRegistry.getUserCtx();
+
+      List<ProtobufFieldUpdater.UpdateOperation> ops = UpdateQueryHelper.toProtobufOps(updateOperations);
+
+      int count = 0;
+      for (Object key : keys) {
+         try {
+            if (UpdateQueryHelper.applyUpdate((AdvancedCache<Object, Object>) cache, key, serCtx, ops)) {
+               count++;
+            }
+         } catch (Exception e) {
+            throw CONTAINER.updateByQueryFailed(key, e);
+         }
+      }
+      return count;
    }
 
    @Override

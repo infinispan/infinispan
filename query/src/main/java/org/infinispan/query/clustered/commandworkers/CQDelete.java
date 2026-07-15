@@ -29,7 +29,7 @@ final class CQDelete extends CQWorker {
 
       // Must never apply any kind of limits to a DELETE! Limits are just for paging a SELECT.
       if (queryDefinition.getFirstResult() != 0 || queryDefinition.isCustomMaxResults()) {
-         throw CONTAINER.deleteStatementsCannotUsePaging();
+         throw CONTAINER.statementCannotUsePaging();
       }
 
       int concurrencyLevel = cache.getCacheConfiguration().locking().concurrencyLevel();

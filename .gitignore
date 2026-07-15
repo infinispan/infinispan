@@ -56,5 +56,6 @@ GEMINI.md
 .goosehints
 AGENTS.md
 .mcp.json
+gen/
 .bob
 
