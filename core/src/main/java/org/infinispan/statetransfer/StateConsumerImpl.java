@@ -898,8 +898,10 @@ public class StateConsumerImpl implements StateConsumer {
                   try {
                      // just in case, set the previous topology id to make the current topology id check for pending locks.
                      tx = transactionTable.getOrCreateRemoteTransaction(gtx, transactionInfo.getModifications(), topologyId - 1);
-                     // Force this node to replay the given transaction data by making it think it is 1 behind
-                     ((RemoteTransaction) tx).setLookedUpEntriesTopology(topologyId - 1);
+                     if (tx != null) {
+                        // Force this node to replay the given transaction data by making it think it is 1 behind
+                        ((RemoteTransaction) tx).setLookedUpEntriesTopology(topologyId - 1);
+                     }
                   } catch (Throwable t) {
                      if (log.isTraceEnabled())
                         log.tracef(t, "Failed to create remote transaction %s", gtx);

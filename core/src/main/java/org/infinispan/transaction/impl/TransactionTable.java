@@ -395,11 +395,11 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    }
 
    /**
-    * Returns an existing remote transaction or creates one if none exists.
+    * Returns an existing remote transaction or creates one if none exists. Returns <code>null</code> if the provided
+    * global transaction has already completed.
     * Atomicity: this method supports concurrent invocations, guaranteeing that all threads will see the same
     * transaction object.
     */
-   // TODO: consider returning null instead of throwing exception when the transaction is already completed
    public RemoteTransaction getOrCreateRemoteTransaction(GlobalTransaction globalTx, List<WriteCommand> modifications) {
       return getOrCreateRemoteTransaction(globalTx, modifications, currentTopologyId);
    }
@@ -414,6 +414,10 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
          throw CONTAINER.cacheIsStopping(cacheName);
       }
 
+      if (isTransactionCompleted(globalTx)) {
+         return null;
+      }
+
       int viewId = rpcManager.getTransport().getViewId();
       if (transactionOriginatorChecker.isOriginatorMissing(globalTx, rpcManager.getTransport().getMembers())) {
          throw CLUSTER.remoteTransactionOriginatorNotInView(globalTx);
@@ -426,9 +430,6 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
                log.tracef("Remote transaction already registered: %s", existing);
             return existing;
          } else {
-            if (isTransactionCompleted(gtx)) {
-               throw CLUSTER.remoteTransactionAlreadyCompleted(gtx);
-            }
             if (log.isTraceEnabled())
                log.tracef("Created and registered remote transaction %s", newTransaction);
             if (topologyId < minTxTopologyId) {
@@ -909,7 +910,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       } else if (status == Status.STATUS_ROLLEDBACK) {
          localTransaction.markForRollback(true); //make sure writes no longer succeed
          return txCoordinator.rollback(localTransaction).exceptionally(t -> {
-            throw new CacheException("Could not commit.", t);
+            throw new CacheException("Could not rollback.", t);
          });
       } else {
          throw new IllegalArgumentException("Unknown status: " + status);
