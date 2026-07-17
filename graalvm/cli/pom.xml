@@ -19,6 +19,7 @@
         <package.runner-suffix>-cli</package.runner-suffix>
         <cli.name>${package.output-name}${package.runner-suffix}</cli.name>
         <k8.cmd>kubectl</k8.cmd>
+        <native.charsets>-H:+AddAllCharsets</native.charsets>
     </properties>
 
     <dependencies>
@@ -113,6 +114,21 @@
 
     <profiles>
         <profile>
+            <!--
+               GraalVM does not support -H:+AddAllCharsets on Windows (JNIRegistrationSupport.makeShimLibrary fails)
+               https://github.com/oracle/graal/issues/13948
+            -->
+            <id>windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <native.charsets>-H:-AddAllCharsets</native.charsets>
+            </properties>
+        </profile>
+        <profile>
             <id>native</id>
             <dependencies>
                 <dependency>
@@ -164,7 +180,7 @@
                                 <buildArg>-H:+UnlockExperimentalVMOptions</buildArg>
                                 <buildArg>-H:+AllowFoldMethods</buildArg>
                                 <buildArg>-H:+ReportExceptionStackTraces</buildArg>
-                                <buildArg>-H:+AddAllCharsets</buildArg>
+                                <buildArg>${native.charsets}</buildArg>
                                 <buildArg>-H:IncludeLocales=en-US</buildArg>
                                 <buildArg>-H:-UnlockExperimentalVMOptions</buildArg>
                                 <buildArg>--exclude-config</buildArg>
