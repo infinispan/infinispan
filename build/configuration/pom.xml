@@ -65,7 +65,7 @@
       <jdk.min.version>17</jdk.min.version>
 
       <!-- Dependency versions -->
-      <version.aesh>3.16.4</version.aesh>
+      <version.aesh>3.16.5</version.aesh>
       <version.ant>1.10.17</version.ant>
       <version.ant-nodeps>1.8.1</version.ant-nodeps>
       <version.ant-contrib>1.0b3</version.ant-contrib>
@@ -120,7 +120,7 @@
       <version.json-path>2.10.0</version.json-path>
       <version.json-smart>2.6.0</version.json-smart>
       <version.junit>4.13.2</version.junit>
-      <version.jupiter>6.1.1</version.jupiter>
+      <version.jupiter>6.1.2</version.jupiter>
       <version.log4j>2.26.1</version.log4j>
       <!-- version.lucene is defined in the lucene profiles below -->
       <version.lucene9>9.12.3</version.lucene9>
@@ -168,12 +168,12 @@
       <version.spring.boot4>4.1.0</version.spring.boot4>
       <version.spring.session4>4.0.3</version.spring.session4>
 
-      <version.swagger-ui-dist>5.32.8</version.swagger-ui-dist>
+      <version.swagger-ui-dist>5.32.9</version.swagger-ui-dist>
       <version.xstream>1.4.21</version.xstream>
 
       <!-- Plugin dependencies -->
       <version.checkstyle.maven-plugin>3.6.0</version.checkstyle.maven-plugin>
-      <version.native.maven.plugin>1.1.3</version.native.maven.plugin>
+      <version.native.maven.plugin>1.1.5</version.native.maven.plugin>
       <version.maven>3.9.16</version.maven>
       <version.maven.antrun>3.2.0</version.maven.antrun>
       <version.maven.archetype>3.4.1</version.maven.archetype>
@@ -212,7 +212,7 @@
       <version.org.wildfly.galleon-plugins>7.4.0.Final</version.org.wildfly.galleon-plugins>
       <version.pmd.plugin>3.28.0</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>9.2.0</version.owasp-dependency-check-plugin>
-      <version.spotbugs.plugin>4.10.2.0</version.spotbugs.plugin>
+      <version.spotbugs.plugin>4.10.3.0</version.spotbugs.plugin>
       <version.openapi.generator>7.23.0</version.openapi.generator>
       <version.weld-servlet>5.1.7.Final</version.weld-servlet>
 
