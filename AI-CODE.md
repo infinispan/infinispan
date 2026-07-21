@@ -32,6 +32,9 @@
 * **Run a single test method:** `mvn verify -pl core -Dtest=SomeTest#testMethod`
 * **Format code before committing:** `mvn spotless:apply`
 
+## Architecture
+When you need to understand the internal architecture (interceptor chain, component lifecycle, clustering, persistence, marshalling, etc.), read the documentation in `documentation/src/main/asciidoc/titles/architecture/` — start with `stories/assembly_architecture.adoc` for the topic index.
+
 ## Module-specific instructions
 When working in a specific module, check for an AI-CODE.md in that module's directory for additional guidelines.
 
