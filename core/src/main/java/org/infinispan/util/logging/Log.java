@@ -2481,4 +2481,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "The 'remote-site' configuration format at %s has been deprecated. Use the map-based format instead, e.g. 'NYC: { remoteSite: ~ }'", id = 727)
    void deprecatedRemoteSiteFormat(Location location);
+
+   @LogMessage(level = WARN)
+   @Message(value = "In cache %s, tracking %d keys occupies too much memory. Limiting the tracker size, the estimates might not be effective", id = 728)
+   void topKeysToTrackTooLarge(String cacheName, int k);
 }

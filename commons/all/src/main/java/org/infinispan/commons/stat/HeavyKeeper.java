@@ -241,7 +241,7 @@ public class HeavyKeeper<T> {
       for (Map.Entry<T, Long> entry : topItems.entrySet()) {
          result.add(new KeyFrequency<>(entry.getKey(), entry.getValue()));
       }
-      result.sort(KeyFrequency.COMPARATOR);
+      result.sort(KeyFrequency.DESCENDING_COMPARATOR);
       return result;
    }
 
@@ -295,9 +295,19 @@ public class HeavyKeeper<T> {
     * @param count the frequency count
     * @since 16.2
     */
-   public record KeyFrequency<T>(T key, long count) {
-      private static final Comparator<KeyFrequency<?>> COMPARATOR =
+   public record KeyFrequency<T>(T key, long count) implements Comparable<KeyFrequency<T>> {
+      private static final Comparator<KeyFrequency<?>> DESCENDING_COMPARATOR =
             (a, b) -> Long.compare(b.count, a.count);
+
+      public static <T> KeyFrequency<T> sum(KeyFrequency<T> a, KeyFrequency<T> b) {
+         return new KeyFrequency<>(a.key(), a.count() + b.count());
+      }
+
+      @Override
+      public int compareTo(KeyFrequency<T> o) {
+         // Utilize inverse to order in ascending order naturally.
+         return DESCENDING_COMPARATOR.compare(o, this);
+      }
    }
 
    /**

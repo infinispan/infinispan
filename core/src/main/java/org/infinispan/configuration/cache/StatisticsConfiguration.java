@@ -20,16 +20,27 @@ public class StatisticsConfiguration extends ConfigurationElement<StatisticsConf
    }
 
    private final Attribute<Boolean> enabled;
+   private final HotKeysConfiguration hotKeysConfiguration;
 
    /**
     * Enable or disable statistics gathering.
     */
-   StatisticsConfiguration(AttributeSet attributes) {
+   StatisticsConfiguration(AttributeSet attributes, HotKeysConfiguration hotKeysConfiguration) {
       super(Element.JMX_STATISTICS, attributes);
       enabled = attributes.attribute(ENABLED);
+      this.hotKeysConfiguration = hotKeysConfiguration;
    }
 
    public boolean enabled() {
       return enabled.get();
+   }
+
+   /**
+    * Returns the hot key tracking configuration for this cache.
+    *
+    * @return the hot keys sub-configuration
+    */
+   public HotKeysConfiguration hotKeys() {
+      return hotKeysConfiguration;
    }
 }
