@@ -626,6 +626,23 @@ public interface AdvancedCache<K, V> extends Cache<K, V>, TransactionalCache {
    CacheEntry<K, V> getCacheEntry(Object key);
 
    /**
+    * Retrieves a CacheEntry corresponding to a specific key without affecting expiration or eviction. Unlike
+    * {@link #getCacheEntry(Object)}, this method does not reset the max-idle timer or update the eviction access
+    * order, making it suitable for inspecting an entry's value and expiration metadata without altering its lifecycle.
+    * <p>
+    * Entries that have already exceeded their max-idle or lifespan may still be returned if they have not yet been
+    * removed by the expiration reaper. However, entries that have been evicted will not be returned.
+    *
+    * @param key the key whose associated cache entry is to be returned
+    * @return the cache entry to which the specified key is mapped, or {@code null} if this map contains no mapping for
+    * the key
+    * @since 16.3
+    */
+   default CacheEntry<K, V> peek(Object key) {
+      return withFlags(Flag.PEEK).getCacheEntry(key);
+   }
+
+   /**
     * Retrieves a CacheEntry corresponding to a specific key.
     *
     * @param key the key whose associated cache entry is to be returned

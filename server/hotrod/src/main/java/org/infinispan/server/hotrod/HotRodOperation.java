@@ -18,9 +18,9 @@ public enum HotRodOperation {
    // Contains
    CONTAINS_KEY(0x0F, 0x10, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD)),
    // Gets
-   GET(0x03, 0x04, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD)),
-   GET_WITH_VERSION(0x11, 0x12, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD)),
-   GET_WITH_METADATA(0x1B, 0x1C, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD)),
+   GET(0x03, 0x04, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD, OpReqs.CAN_PEEK)),
+   GET_WITH_VERSION(0x11, 0x12, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD, OpReqs.CAN_PEEK)),
+   GET_WITH_METADATA(0x1B, 0x1C, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_CACHE_LOAD, OpReqs.CAN_PEEK)),
    // Removes
    REMOVE(0x0B, 0x0C, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.CAN_SKIP_INDEXING, OpReqs.CAN_RETURN_PREVIOUS_VALUE, OpReqs.CAN_SKIP_CACHE_LOAD)),
    REMOVE_IF_UNMODIFIED(0x0D, 0x0E, EnumSet.of(OpReqs.REQUIRES_KEY, OpReqs.REQUIRES_AUTH, OpReqs.IS_CONDITIONAL, OpReqs.CAN_SKIP_INDEXING, OpReqs.CAN_RETURN_PREVIOUS_VALUE)),
@@ -120,6 +120,7 @@ public enum HotRodOperation {
    private final boolean canSkipCacheLoading;
    private final boolean canReturnPreviousValue;
    private final boolean isConditional;
+   private final boolean canPeek;
    private static final HotRodOperation REQUEST_OPCODES[];
    private static final HotRodOperation RESPONSE_OPCODES[];
    public static final int REQUEST_COUNT;
@@ -133,6 +134,7 @@ public enum HotRodOperation {
       this.canSkipCacheLoading = opRequirements.contains(OpReqs.CAN_SKIP_CACHE_LOAD);
       this.canReturnPreviousValue = opRequirements.contains(OpReqs.CAN_RETURN_PREVIOUS_VALUE);
       this.isConditional = opRequirements.contains(OpReqs.IS_CONDITIONAL);
+      this.canPeek = opRequirements.contains(OpReqs.CAN_PEEK);
    }
 
    HotRodOperation(int responseOpCode) {
@@ -157,6 +159,10 @@ public enum HotRodOperation {
 
    boolean canSkipCacheLoading() {
       return canSkipCacheLoading;
+   }
+
+   boolean canPeek() {
+      return canPeek;
    }
 
    boolean isNotConditionalAndCanReturnPrevious() {
@@ -202,5 +208,6 @@ enum OpReqs {
    CAN_SKIP_INDEXING,
    CAN_SKIP_CACHE_LOAD,
    CAN_RETURN_PREVIOUS_VALUE,
-   IS_CONDITIONAL
+   IS_CONDITIONAL,
+   CAN_PEEK
 }

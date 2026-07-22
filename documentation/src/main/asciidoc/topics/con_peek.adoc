@@ -1,0 +1,48 @@
+[id='peeking-cache-entries_{context}']
+= Peeking at cache entries
+
+Reading a cache entry normally updates the access time of the entry, which resets the maximum idle expiration timer and refreshes the eviction access order.
+In some cases you may want to inspect an entry without affecting its expiration or eviction lifecycle.
+{brandname} provides a peek operation that reads entries without updating any access metadata.
+
+When you peek at a cache entry:
+
+* The maximum idle timer is *not* reset, so the entry continues to expire based on its last real access.
+* The eviction access order is *not* updated, so the entry can still be evicted as if it was never accessed.
+* Entries that have already exceeded their maximum idle time or lifespan may still be returned if the expiration reaper has not yet removed them.
+* Entries that have been evicted are not returned.
+
+== Embedded cache
+
+Use the `peek()` method on `AdvancedCache`, which returns a `CacheEntry`:
+
+[source,java]
+----
+include::code_examples/PeekCacheEntry.java[]
+----
+
+The `PEEK` flag can also be used directly with other read operations:
+
+[source,java]
+----
+include::code_examples/PeekCacheEntryWithFlag.java[]
+----
+
+== Hot Rod client
+
+Use the `peek()` method on `RemoteCache`, which returns a `MetadataValue`:
+
+[source,java]
+----
+include::code_examples/PeekRemoteCacheEntry.java[]
+----
+
+== REST API
+
+Add the `flags` header with the value `PEEK` to a `GET` request:
+
+[source,options="nowrap"]
+----
+GET /rest/v2/caches/{cacheName}/{cacheKey}
+flags: PEEK
+----
