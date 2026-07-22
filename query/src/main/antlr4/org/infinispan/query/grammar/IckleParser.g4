@@ -19,7 +19,7 @@ import java.util.List;
  * Toplevel rule, entrypoint to the whole grammar
  */
 statement
-  : (selectStatement | deleteStatement) EOF
+  : (selectStatement | deleteStatement | updateStatement) EOF
   ;
 
 /**
@@ -38,6 +38,41 @@ deleteStatement
 
 deleteClause
    :  delete_key fromClause
+   ;
+
+/**
+ * An 'update' statement
+ */
+updateStatement
+   :  updateClause updateOperations whereClause?
+   ;
+
+updateClause
+   :  update_key fromClause
+   ;
+
+updateOperations
+   :  updateOperation (COMMA updateOperation)*
+   ;
+
+updateOperation
+   :  set_key setAssignment
+   |  add_key collectionAssignment
+   |  remove_key collectionAssignment
+   ;
+
+setAssignment
+   :  path EQUALS updateValue
+   ;
+
+collectionAssignment
+   :  path EQUALS updateValue
+   ;
+
+updateValue
+   :  constant
+   |  LPAREN constant (COMMA constant)* RPAREN
+   |  LSQUARE constant (COMMA constant)* RSQUARE
    ;
 
 querySpec
@@ -224,6 +259,9 @@ identifier
    | ASC
    | DESC
    | SET
+   | UPDATE
+   | ADD
+   | REMOVE
    | VERSIONED
    | KEY
    | VALUE
@@ -793,6 +831,22 @@ select_key
 
 delete_key
    :   DELETE
+   ;
+
+update_key
+   :   UPDATE
+   ;
+
+set_key
+   :   SET
+   ;
+
+add_key
+   :   ADD
+   ;
+
+remove_key
+   :   REMOVE
    ;
 
 distinct_key

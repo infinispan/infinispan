@@ -510,7 +510,8 @@ public class QueryEngine<TypeMetadata> {
       }
 
       return new EmbeddedQuery<>(this, cache, queryString, parsingResult.getStatementType(), namedParameters,
-            parsingResult.getProjections(), startOffset, maxResults, defaultMaxResults, queryStatistics, local);
+            parsingResult.getProjections(), startOffset, maxResults, defaultMaxResults, queryStatistics, local,
+            parsingResult.getUpdateOperations());
    }
 
    protected IckleParsingResult<TypeMetadata> parse(String queryString) {
