@@ -299,6 +299,24 @@ public class EncoderCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
    }
 
    @Override
+   public void removeAll(Set<? extends K> keys) {
+      cache.removeAll(encodeKeysForRemove(keys));
+   }
+
+   @Override
+   public CompletableFuture<Void> removeAllAsync(Set<? extends K> keys) {
+      return cache.removeAllAsync(encodeKeysForRemove(keys));
+   }
+
+   private Set<K> encodeKeysForRemove(Set<? extends K> keys) {
+      if (needsEncoding(keys)) {
+         return keys.stream().map(this::keyToStorage).collect(Collectors.toCollection(LinkedHashSet::new));
+      }
+      //noinspection unchecked
+      return (Set<K>) keys;
+   }
+
+   @Override
    public CompletableFuture<V> putIfAbsentAsync(K key, V value) {
       return cache.putIfAbsentAsync(keyToStorage(key), valueToStorage(value)).thenApply(decodedValueForRead);
    }
