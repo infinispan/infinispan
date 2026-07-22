@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.Internals;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
@@ -80,8 +81,13 @@ public class SocketTimeoutFailureRetryTest extends AbstractRetryTest {
       }
 
       @Override
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
+         CompletionStage<Void> delay = delayNextRequest.getAndSet(null);
+         return asyncInvokeNext(ctx, command, delay);
+      }
+
+      @Override
       public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
-         // Delay just one invocation, then reset to null
          CompletionStage<Void> delay = delayNextRequest.getAndSet(null);
          return asyncInvokeNext(ctx, command, delay);
       }

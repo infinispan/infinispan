@@ -10,6 +10,8 @@ import java.util.Set;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commons.tx.TransactionImpl;
 import org.infinispan.commons.tx.lookup.TransactionManagerLookup;
 import org.infinispan.configuration.cache.CacheMode;
@@ -18,6 +20,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
+import org.infinispan.interceptors.Skip;
 import org.infinispan.interceptors.impl.TxInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -128,6 +131,18 @@ public class StateTransferTransactionTest extends MultipleCacheManagersTest {
 
       CollectTxInterceptor() {
          stateTransferTransactions = Collections.synchronizedSet(new HashSet<>());
+      }
+
+      @Skip
+      @Override
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
+         throw new UnsupportedOperationException("Get commands should not reach CollectTxInterceptor");
+      }
+
+      @Skip
+      @Override
+      public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
+         throw new UnsupportedOperationException("Get commands should not reach CollectTxInterceptor");
       }
 
       @Override

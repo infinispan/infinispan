@@ -40,9 +40,12 @@ import jakarta.transaction.Transaction;
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
  * @since 9.0
+ * @deprecated since 16.2, this interceptor is no longer added to the interceptor chain
  */
+@Deprecated(since = "16.2")
 public class InvocationContextInterceptor extends BaseAsyncInterceptor {
    private static final Log log = LogFactory.getLog(InvocationContextInterceptor.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    @Inject
    ComponentRegistry componentRegistry;
@@ -80,7 +83,7 @@ public class InvocationContextInterceptor extends BaseAsyncInterceptor {
 
    @Override
    public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
-      if (log.isTraceEnabled())
+      if (trace)
          log.tracef("Invoked %s with command %s and InvocationContext [%s]", componentRegistry.getCacheName(), command, ctx);
       if (ctx == null)
          throw new IllegalStateException("Null context not allowed!!");

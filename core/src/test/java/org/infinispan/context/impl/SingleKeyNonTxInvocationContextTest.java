@@ -4,6 +4,7 @@ import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -105,6 +106,12 @@ public class SingleKeyNonTxInvocationContextTest extends MultipleCacheManagersTe
       public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
          if (isRightType(ctx)) getOkay = true;
          return super.visitGetKeyValueCommand(ctx, command);
+      }
+
+      @Override
+      public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+         if (isRightType(ctx)) getOkay = true;
+         return super.visitGetCacheEntryCommand(ctx, command);
       }
 
       @Override

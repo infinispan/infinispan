@@ -41,7 +41,8 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
 
    @Inject PartitionHandlingManager partitionHandlingManager;
 
-   private final InvocationFinallyAction<DataCommand> handleDataReadReturn = this::handleDataReadReturn;
+   private final InvocationFinallyAction<GetKeyValueCommand> handleGetKeyValueReturn = this::handleDataReadReturn;
+   private final InvocationFinallyAction<GetCacheEntryCommand> handleGetCacheEntryReturn = this::handleDataReadReturn;
    private final InvocationFinallyAction<GetAllCommand> handleGetAllCommandReturn = this::handleGetAllCommandReturn;
    private final InvocationSuccessAction<VisitableCommand> postTxCommandCheck = this::postTxCommandCheck;
 
@@ -128,19 +129,15 @@ public class PartitionHandlingInterceptor extends DDAsyncInterceptor {
    @Override
    public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command)
          throws Throwable {
-      return handleDataReadCommand(ctx, command);
+      return invokeNextAndFinally(ctx, command, handleGetKeyValueReturn);
    }
 
    @Override
    public final Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
-      return handleDataReadCommand(ctx, command);
+      return invokeNextAndFinally(ctx, command, handleGetCacheEntryReturn);
    }
 
-   private Object handleDataReadCommand(InvocationContext ctx, DataCommand command) {
-      return invokeNextAndFinally(ctx, command, handleDataReadReturn);
-   }
-
-   private void handleDataReadReturn(InvocationContext rCtx, DataCommand dataCommand, Object rv, Throwable t) {
+   private <T extends DataCommand> void handleDataReadReturn(InvocationContext rCtx, T dataCommand, Object rv, Throwable t) {
       if (!performPartitionCheck(dataCommand))
          return;
 

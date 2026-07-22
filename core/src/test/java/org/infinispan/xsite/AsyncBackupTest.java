@@ -16,6 +16,8 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -35,6 +37,7 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.Skip;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
@@ -372,6 +375,18 @@ public class AsyncBackupTest extends AbstractTwoSitesTest {
       @Override
       public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
          return handle(ctx, command);
+      }
+
+      @Skip
+      @Override
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
+         throw new UnsupportedOperationException("Get commands should not reach BlockingInterceptor");
+      }
+
+      @Skip
+      @Override
+      public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
+         throw new UnsupportedOperationException("Get commands should not reach BlockingInterceptor");
       }
 
       protected Object handle(InvocationContext ctx, VisitableCommand command) throws Throwable {
