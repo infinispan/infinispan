@@ -117,6 +117,9 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
       // 1. first create a remote transaction (or get the existing one)
       TransactionTable txTable = componentRegistry.getTransactionTableRef().running();
       RemoteTransaction remoteTransaction = txTable.getOrCreateRemoteTransaction(globalTx, modifications);
+      if (remoteTransaction == null) {
+         throw log.remoteTransactionAlreadyCompleted(globalTx, false);
+      }
       //set the list of modifications anyway, as the transaction might have already been created by a previous
       //LockControlCommand with null modifications.
       if (hasModifications()) {
