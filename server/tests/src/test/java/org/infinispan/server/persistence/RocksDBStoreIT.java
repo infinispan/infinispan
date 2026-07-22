@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.util.Version;
+import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.jupiter.InfinispanServerExtension;
 import org.infinispan.server.test.jupiter.InfinispanServerExtensionBuilder;
@@ -21,8 +22,7 @@ public class RocksDBStoreIT {
          InfinispanServerExtensionBuilder.config("configuration/CustomStoreTest.xml")
                .numServers(1)
                .runMode(ServerRunMode.CONTAINER)
-               .mavenArtifacts("org.infinispan:infinispan-cachestore-rocksdb:" + Version.getVersion(),
-                     "org.rocksdb:rocksdbjni:" + System.getProperty("version.rocksdb"))
+               .mavenArtifacts(Common.ROCKSDB_DEPS)
                .build();
 
    @Test

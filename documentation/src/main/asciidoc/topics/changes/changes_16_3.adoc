@@ -1,5 +1,43 @@
 == Upgrading from 16.2 to 16.3
 
+=== JSON POJO Transcoder is now a separate module
+
+The deprecated conversion path from Java objects (`application/x-java-object`) to JSON, which relied on Jackson's `ObjectMapper`, has been moved from `infinispan-server-core` to a new `infinispan-json-pojo-transcoder` module.
+
+If you rely on the automatic serialization of Java objects to JSON, you must add the `infinispan-json-pojo-transcoder` artifact to your dependencies:
+
+[source,xml]
+----
+<dependency>
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-json-pojo-transcoder</artifactId>
+</dependency>
+----
+
+This module is not included in the {brandname} server distribution by default.
+If you need it in a server deployment, use the CLI `install` command or add the JAR to the server `lib` directory.
+
+=== XML Transcoder is now a separate module
+
+The XML transcoder, which relies on XStream, has been moved from `infinispan-server-core` to a new `infinispan-xml-transcoder` module.
+If you rely on XML transcoding, add the `infinispan-xml-transcoder` artifact to your dependencies:
+
+[source,xml]
+----
+<dependency>
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-xml-transcoder</artifactId>
+</dependency>
+----
+
+This module is not included in the {brandname} server distribution by default.
+If you need it in a server deployment, use the CLI `install` command or add the JAR and its XStream dependencies to the server `lib` directory.
+
+=== JBoss Marshalling removed from the default server distribution
+
+The `infinispan-jboss-marshalling` module is no longer included in the {brandname} server distribution.
+If you still need JBoss Marshalling support, use the CLI `install` command or add the JAR and its dependencies to the server `lib` directory.
+
 === Deprecations
 
 ==== InvocationBatchingConfiguration
