@@ -1,0 +1,119 @@
+[id='jcache-store-behavior_{context}']
+= JCache Read-Through and Write-Through Behavior
+
+When using the JCache (JSR-107) API with {brandname}, read-through and write-through interact with the underlying persistence layer through `CacheLoader` and `CacheWriter` adapters.
+
+Read-through uses `CacheLoader` to load entries from an external store on cache misses.
+Write-through uses `CacheWriter` to persist entries to an external store on cache mutations.
+
+[NOTE]
+====
+Read-through and write-through behavior is not fully consistent across all JCache operations.
+The following table documents the current behavior of each operation for reference.
+====
+
+.JCache operation store behavior
+[cols="3,2,2,4",options="header"]
+|===
+| Operation | Read-through (CacheLoader) | Write-through (CacheWriter) | Notes
+
+| `get(K)`
+| Conditional on `isReadThrough()`
+| Always enabled
+| CacheLoader called for missing entries
+
+| `getAll(Set)`
+| Conditional on `isReadThrough()`
+| Always enabled
+| Same as `get()`
+
+| `containsKey(K)`
+| Always skip
+| N/A
+| Spec: "only the cache is checked"
+
+| `put(K, V)`
+| Always skip
+| Always enabled
+| No `isWriteThrough()` check
+
+| `getAndPut(K, V)`
+| Always skip
+| Always enabled
+| No `isWriteThrough()` check
+
+| `putAll(Map)`
+| Conditional on `isWriteThrough()`
+| Always enabled
+| `isWriteThrough()` changes load + error handling, not persistence
+
+| `putIfAbsent(K, V)`
+| Always skip
+| Always enabled
+| No `isWriteThrough()` check
+
+| `remove(K)`
+| Always skip
+| Always enabled
+| No `isWriteThrough()` check
+
+| `remove(K, V)`
+| Always skip
+| Always enabled
+| No `isWriteThrough()` check
+
+| `getAndRemove(K)`
+| Always skip
+| Always enabled
+| No `isWriteThrough()` check
+
+| `replace(K, V)`
+| Always skip
+| Always enabled
+| No `isWriteThrough()` check
+
+| `replace(K, V, V)`
+| Always skip
+| Always enabled
+| No `isWriteThrough()` check
+
+| `getAndReplace(K, V)`
+| Always skip
+| Always enabled
+| No `isWriteThrough()` check
+
+| `removeAll(Set)`
+| Always skip
+| Always enabled
+| `isWriteThrough()` only changes error handling strategy
+
+| `removeAll()`
+| Always enabled
+| Always enabled
+| Direct cache API; bypasses functional map
+
+| `invoke(K, EntryProcessor)`
+| Conditional on `isReadThrough()`
+| Always enabled
+| Read-through via `getValue()`; write-through via `setValue()`/`remove()`
+
+| `invokeAll(Set, EntryProcessor)`
+| Conditional on `isReadThrough()`
+| Always enabled
+| Same as `invoke()`
+
+| `clear()`
+| N/A
+| Always enabled
+| Spec: "without notifying listeners or CacheWriters"; clears both cache and store
+|===
+
+"Always enabled" in the write-through column means that writes always go to the store regardless of the `isWriteThrough()` setting.
+This applies both when a JCache `CacheWriterFactory` is configured and when a persistence store is defined directly in the {brandname} configuration (for example, file-based, JDBC, or RocksDB stores).
+
+Conditional operations such as `putIfAbsent`, `replace`, and `remove(K, V)` only trigger write-through when the mutation actually occurs.
+For example, `replace(K, V)` only writes to the store if the entry already exists in memory.
+
+None of these conditional or previous-value-returning operations (`getAndPut`, `getAndRemove`, `getAndReplace`, `putIfAbsent`, `replace`, `remove(K, V)`) trigger read-through.
+Their existence and value checks only see entries currently in memory.
+This is consistent with the JSR-107 specification, which restricts read-through to `get()`, `getAll()`, and `invoke()`.
