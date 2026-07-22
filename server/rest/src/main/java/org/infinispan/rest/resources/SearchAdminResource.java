@@ -131,6 +131,8 @@ public class SearchAdminResource implements ResourceHandler {
    protected CompletionStage<RestResponse> updateSchema(RestRequest request) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
+      boolean async = isAsync(request);
+
       AdvancedCache<?, ?> cache = lookupIndexedCache(request, responseBuilder);
       int status = responseBuilder.getStatus();
       if (status < OK.code() || status >= MULTIPLE_CHOICES.code()) {
@@ -138,6 +140,20 @@ public class SearchAdminResource implements ResourceHandler {
       }
 
       responseBuilder.status(NO_CONTENT);
+
+      if (async) {
+         SearchMapping searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
+         LOG.asyncUpdateSchemaStarted();
+         invocationHelper.getExecutor().execute(() -> {
+            try {
+               searchMapping.restart();
+            } catch (Exception e) {
+               LOG.errorUpdatingMarshallingSchema(e);
+            }
+         });
+         return CompletableFuture.completedFuture(responseBuilder.build());
+      }
+
       try {
          SearchMapping searchMapping = ComponentRegistryUtils.getSearchMapping(cache);
          searchMapping.restart();
@@ -197,10 +213,7 @@ public class SearchAdminResource implements ResourceHandler {
                                                     boolean supportAsync) {
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
 
-      List<String> mode = request.parameters().get("mode");
-
-      boolean asyncParams = mode != null && !mode.isEmpty() && mode.iterator().next().equalsIgnoreCase("async");
-      boolean async = asyncParams && supportAsync;
+      boolean async = isAsync(request) && supportAsync;
 
       AdvancedCache<?, ?> cache = lookupIndexedCache(request, responseBuilder);
       int status = responseBuilder.getStatus();
@@ -229,6 +242,11 @@ public class SearchAdminResource implements ResourceHandler {
       }
 
       return op.apply(indexer).thenApply(v -> responseBuilder.build());
+   }
+
+   private static boolean isAsync(RestRequest request) {
+      List<String> mode = request.parameters().get("mode");
+      return mode != null && !mode.isEmpty() && mode.getFirst().equalsIgnoreCase("async");
    }
 
    private AdvancedCache<?, ?> lookupIndexedCache(RestRequest request, NettyRestResponse.Builder builder) {
