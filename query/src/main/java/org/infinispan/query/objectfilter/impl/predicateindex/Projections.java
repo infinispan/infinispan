@@ -1,7 +1,6 @@
 package org.infinispan.query.objectfilter.impl.predicateindex;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.infinispan.query.objectfilter.impl.FilterSubscriptionImpl;
@@ -35,13 +34,7 @@ final class Projections {
    }
 
    void removeProjections(FilterSubscriptionImpl filterSubscription) {
-      Iterator<ProjectionSubscription> it = subscriptions.iterator();
-      while (it.hasNext()) {
-         ProjectionSubscription s = it.next();
-         if (s.filterSubscription == filterSubscription) {
-            it.remove();
-         }
-      }
+      subscriptions.removeIf(s -> s.filterSubscription == filterSubscription);
    }
 
    void processProjections(MatcherEvalContext<?, ?, ?> ctx, Object attributeValue) {

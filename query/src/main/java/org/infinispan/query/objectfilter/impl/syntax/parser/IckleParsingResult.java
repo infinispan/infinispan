@@ -74,7 +74,7 @@ public final class IckleParsingResult<TypeMetadata> {
    public static class Builder<TypeMetadata> {
       private String queryString;
       private StatementType statementType;
-      private Set<String> parameterNames = new HashSet<>();
+      private final Set<String> parameterNames = new HashSet<>();
       private BooleanExpr whereClause;
       private BooleanExpr havingClause;
       private BooleanExpr filteringClause;

@@ -1,4 +1,4 @@
-package org.infinispan.query.dsl.embedded.impl;
+package org.infinispan.query.impl;
 
 import java.text.ParseException;
 import java.util.Date;
@@ -249,7 +249,7 @@ public final class HibernateSearchPropertyHelper extends ReflectionPropertyHelpe
 
       private IndexValueFieldTypeDescriptor getField(String[] propertyPath) {
          Optional<IndexFieldDescriptor> field = indexDescriptor.field(StringHelper.join(propertyPath));
-         if (!field.isPresent()) {
+         if (field.isEmpty()) {
             return null;
          }
 

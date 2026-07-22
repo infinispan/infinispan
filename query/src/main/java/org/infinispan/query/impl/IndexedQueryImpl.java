@@ -2,7 +2,7 @@ package org.infinispan.query.impl;
 
 import static java.lang.Float.NaN;
 import static org.infinispan.query.core.impl.Log.CONTAINER;
-import static org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder.INFINISPAN_AGGREGATION_KEY_NAME;
+import static org.infinispan.query.impl.SearchQueryBuilder.INFINISPAN_AGGREGATION_KEY_NAME;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,7 +30,6 @@ import org.infinispan.query.core.impl.PartitionHandlingSupport;
 import org.infinispan.query.core.impl.QueryResultImpl;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryResult;
-import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 
 /**

@@ -7,7 +7,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
-import org.infinispan.query.dsl.embedded.impl.MetadataProjectableAdapter;
+import org.infinispan.query.impl.MetadataProjectableAdapter;
 import org.infinispan.query.objectfilter.impl.MetadataAdapter;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ProtobufPropertyHelper;
 

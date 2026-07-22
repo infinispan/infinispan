@@ -4,7 +4,7 @@ import java.util.BitSet;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.query.clustered.QueryResponse;
-import org.infinispan.query.dsl.embedded.impl.SearchQueryBuilder;
+import org.infinispan.query.impl.SearchQueryBuilder;
 
 /**
  * Get the result size of this query on current node

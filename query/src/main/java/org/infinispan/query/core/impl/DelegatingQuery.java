@@ -16,6 +16,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.dsl.impl.logging.Log;
+import org.infinispan.query.impl.QueryEngine;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.jboss.logging.Logger;
 

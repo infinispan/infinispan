@@ -1,4 +1,4 @@
-package org.infinispan.query.dsl.embedded.impl;
+package org.infinispan.query.impl;
 
 import java.util.List;
 

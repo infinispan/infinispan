@@ -6,7 +6,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
-import org.infinispan.query.dsl.embedded.impl.QueryEngine;
+import org.infinispan.query.impl.QueryEngine;
 import org.infinispan.query.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.server.core.query.impl.filter.IckleProtobufFilterAndConverter;

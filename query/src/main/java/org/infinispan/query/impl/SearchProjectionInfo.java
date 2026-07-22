@@ -1,4 +1,4 @@
-package org.infinispan.query.dsl.embedded.impl;
+package org.infinispan.query.impl;
 
 import org.hibernate.search.engine.common.EntityReference;
 import org.hibernate.search.engine.search.projection.SearchProjection;
