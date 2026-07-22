@@ -30,7 +30,7 @@ import org.kohsuke.MetaInfServices;
 public class Help extends AeshFileDisplayer {
 
    @Arguments(completer = HelpCompleter.class)
-   private List<String> manPages;
+   List<String> manPages;
 
    private final ManFileParser fileParser;
    private final ManProvider manProvider;

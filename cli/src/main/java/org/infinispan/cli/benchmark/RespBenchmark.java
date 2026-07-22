@@ -6,51 +6,40 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.commons.util.Util;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.Param;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.TearDown;
-import org.openjdk.jmh.infra.Blackhole;
 
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
 
 /**
- * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 15.0
  **/
-@State(Scope.Thread)
-public class RespBenchmark {
+public abstract class RespBenchmark implements BenchmarkTask {
+   private final String uri;
+   private final int keySize;
+   private final int valueSize;
+   private final int keySetSize;
+
    RedisClient client;
-
    RedisCommands<byte[], byte[]> connection;
-
-   @Param("redis://127.0.0.1:11222")
-   public String uri;
-
-   @Param("16")
-   public int keySize;
-
-   @Param("1000")
-   public int valueSize;
-
-   @Param("1000")
-   public int keySetSize;
-
    byte[] value;
    List<byte[]> keySet;
    AtomicInteger nextIndex;
 
-   @Setup
+   private RespBenchmark(String uri, int keySize, int valueSize, int keySetSize) {
+      this.uri = uri;
+      this.keySize = keySize;
+      this.valueSize = valueSize;
+      this.keySetSize = keySetSize;
+   }
+
+   @Override
    public void setup() {
       client = RedisClient.create(uri);
       connection = client.connect(ByteArrayCodec.INSTANCE).sync();
       value = new byte[valueSize];
       keySet = new ArrayList<>(keySetSize);
-      Random r = new Random(17); // We always use the same seed to make things repeatable
+      Random r = new Random(17);
       for (int i = 0; i < keySetSize; i++) {
          byte[] key = new byte[keySize];
          r.nextBytes(key);
@@ -60,22 +49,40 @@ public class RespBenchmark {
       nextIndex = new AtomicInteger();
    }
 
-   @Benchmark
-   public void get(Blackhole bh) {
-      bh.consume(connection.get(nextKey()));
-   }
-
-   @Benchmark
-   public void put() {
-      connection.set(nextKey(), value);
-   }
-
-   @TearDown
+   @Override
    public void teardown() {
       Util.close(client);
    }
 
-   private byte[] nextKey() {
+   byte[] nextKey() {
       return keySet.get(nextIndex.getAndIncrement() % keySetSize);
+   }
+
+   public static RespBenchmark get(String uri, int keySize, int valueSize, int keySetSize) {
+      return new RespBenchmark(uri, keySize, valueSize, keySetSize) {
+         @Override
+         public void run() {
+            connection.get(nextKey());
+         }
+
+         @Override
+         public String name() {
+            return "RespBenchmark.get";
+         }
+      };
+   }
+
+   public static RespBenchmark put(String uri, int keySize, int valueSize, int keySetSize) {
+      return new RespBenchmark(uri, keySize, valueSize, keySetSize) {
+         @Override
+         public void run() {
+            connection.set(nextKey(), value);
+         }
+
+         @Override
+         public String name() {
+            return "RespBenchmark.put";
+         }
+      };
    }
 }

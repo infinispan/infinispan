@@ -24,8 +24,11 @@ import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.server.functional.XSiteIT;
 import org.infinispan.server.test.api.TestClientXSiteDriver;
 import org.infinispan.server.test.core.AeshTestConnection;
+import org.infinispan.server.test.core.CliTerminal;
+import org.infinispan.server.test.core.ProcessCliTerminal;
 import org.infinispan.server.test.jupiter.InfinispanServer;
 import org.infinispan.testing.Testing;
+import org.infinispan.testing.jupiter.tags.Cli;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -36,6 +39,7 @@ import org.junit.jupiter.api.Test;
  * @author Pedro Ruivo
  * @since 12.1
  */
+@Cli
 public class XSiteCliOperations {
 
    @InfinispanServer(XSiteIT.class)
@@ -172,22 +176,19 @@ public class XSiteCliOperations {
       });
    }
 
-   private void connect(AeshTestConnection terminal, String site) {
-      // connect
+   private void connect(CliTerminal terminal, String site) {
       terminal.send("connect " + SERVERS.hostAndPort(site));
       terminal.assertContains("//containers/default]>");
       terminal.clear();
    }
 
-   private void disconnect(AeshTestConnection terminal) {
-      // connect
+   private void disconnect(CliTerminal terminal) {
       terminal.send("disconnect");
       terminal.clear();
    }
 
-   private static List<String> extractView(AeshTestConnection terminal) {
+   private static List<String> extractView(CliTerminal terminal) {
       terminal.send("describe");
-      // make sure the command succeed
       terminal.assertContains("//containers/default");
       String allOutput = terminal.getOutputBuffer();
       Pattern pattern = Pattern.compile("^\\s*\"cluster_members\"\\s*:\\s*\\[\\s+(.*)\\s+],\\s*$");
@@ -205,9 +206,18 @@ public class XSiteCliOperations {
       throw new IllegalStateException("Unable to find 'cluster_members' in:\n" + allOutput);
    }
 
-   private void doWithTerminal(Consumer<AeshTestConnection> consumer) {
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties);
+   private CliTerminal createTerminal(String... cliArgs) {
+      String cliPath = System.getProperty("infinispan.cli.bin");
+      if (cliPath != null) {
+         return new ProcessCliTerminal(cliPath, workingDir.getAbsolutePath(), cliArgs);
+      }
+      AeshTestConnection terminal = new AeshTestConnection();
+      CLI.main(new AeshDelegatingShell(terminal), properties, cliArgs);
+      return terminal;
+   }
+
+   private void doWithTerminal(Consumer<CliTerminal> consumer) {
+      try (CliTerminal terminal = createTerminal()) {
          consumer.accept(terminal);
       }
    }

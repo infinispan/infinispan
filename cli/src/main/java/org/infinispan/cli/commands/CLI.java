@@ -45,7 +45,6 @@ import org.aesh.command.settings.SettingsBuilder;
 import org.aesh.command.shell.Shell;
 import org.aesh.complete.AeshCompleteOperation;
 import org.aesh.console.ReadlineConsole;
-import org.aesh.io.FileResource;
 import org.aesh.io.Resource;
 import org.aesh.readline.suggestion.CompositeSuggestionProvider;
 import org.infinispan.cli.Context;
@@ -166,13 +165,13 @@ public class CLI extends CliCommand {
    private Context context;
 
    @Option(completer = FileOptionCompleter.class, shortName = 't', name = "truststore", description = "A truststore to use when connecting to SSL/TLS-enabled servers")
-   Resource truststore;
+   String truststore;
 
    @Option(shortName = 's', name = "truststore-password", description = "The password for the truststore")
    String truststorePassword;
 
    @Option(completer = FileOptionCompleter.class, shortName = 'k', name = "keystore", description = "A keystore containing a client certificate to authenticate with the server")
-   Resource keystore;
+   String keystore;
 
    @Option(shortName = 'w', name = "keystore-password", description = "The password for the keystore")
    String keystorePassword;
@@ -255,8 +254,8 @@ public class CLI extends CliCommand {
                Bookmark.ResolvedBookmark bookmark = Bookmark.resolve(invocation, connectionString);
                if (bookmark != null) {
                   // Reconfigure SSL if the bookmark has SSL settings
-                  Resource bmTruststore = bookmark.truststore() != null ? new FileResource(Paths.get(bookmark.truststore()).toFile()) : null;
-                  Resource bmKeystore = bookmark.keystore() != null ? new FileResource(Paths.get(bookmark.keystore()).toFile()) : null;
+                  String bmTruststore = bookmark.truststore();
+                  String bmKeystore = bookmark.keystore();
                   if (bmTruststore != null || bmKeystore != null || bookmark.trustAll()) {
                      configureSslContext(context, bmTruststore, bookmark.truststorePassword(), bmKeystore, bookmark.keystorePassword(), provider, bookmark.hostnameVerifier(), bookmark.trustAll());
                   }
@@ -287,10 +286,10 @@ public class CLI extends CliCommand {
       }
    }
 
-   public static void configureSslContext(Context context, Resource truststore, String truststorePassword, Resource keystore, String keystorePassword, String providerName, String hostnameVerifier, boolean trustAll) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, IOException {
+   public static void configureSslContext(Context context, String truststore, String truststorePassword, String keystore, String keystorePassword, String providerName, String hostnameVerifier, boolean trustAll) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, IOException {
       Provider[] providers = SecurityProviders.discoverSecurityProviders(CLI.class.getClassLoader());
       providerName = providerName != null ? providerName : context.getProperty(Context.Property.PROVIDER);
-      String sslKeyStore = keystore != null ? keystore.getAbsolutePath() : context.getProperty(Context.Property.KEYSTORE);
+      String sslKeyStore = keystore != null ? keystore : context.getProperty(Context.Property.KEYSTORE);
       KeyManager[] keyManagers = null;
       if (sslKeyStore != null) {
          String sslKeyStorePassword = keystorePassword != null ? keystorePassword : context.getProperty(Context.Property.KEYSTORE_PASSWORD);
@@ -301,7 +300,7 @@ public class CLI extends CliCommand {
             keyManagers = keyManagerFactory.getKeyManagers();
          }
       }
-      String sslTrustStore = truststore != null ? truststore.getAbsolutePath() : context.getProperty(Context.Property.TRUSTSTORE);
+      String sslTrustStore = truststore != null ? truststore : context.getProperty(Context.Property.TRUSTSTORE);
 
       if (sslTrustStore != null) {
          TrustManagerFactory trustManagerFactory;

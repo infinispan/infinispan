@@ -18,7 +18,7 @@ import org.kohsuke.MetaInfServices;
 public class Echo extends CliCommand {
 
    @Arguments
-   private List<String> arguments;
+   List<String> arguments;
 
 
    @Override

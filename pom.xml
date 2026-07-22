@@ -961,6 +961,13 @@
          </dependency>
          <dependency>
             <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-cli-client</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+            <version>${version.infinispan}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.infinispan</groupId>
             <artifactId>infinispan-console</artifactId>
             <version>${version.console}</version>
          </dependency>

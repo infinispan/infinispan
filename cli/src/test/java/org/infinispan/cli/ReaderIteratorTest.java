@@ -9,12 +9,14 @@ import java.io.StringReader;
 import java.util.Map;
 
 import org.infinispan.cli.util.JsonReaderIterator;
+import org.infinispan.testing.jupiter.tags.Cli;
 import org.junit.jupiter.api.Test;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
+@Cli
 public class ReaderIteratorTest {
 
    @Test

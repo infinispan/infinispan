@@ -20,7 +20,6 @@ import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Arguments;
 import org.aesh.command.option.Option;
-import org.aesh.io.Resource;
 import org.infinispan.cli.Context;
 import org.infinispan.cli.activators.ConfigConversionAvailable;
 import org.infinispan.cli.completers.ConfigPropertyCompleter;
@@ -109,10 +108,10 @@ public class Config extends CliCommand {
    public static class Convert extends CliCommand {
 
       @Argument(description = "Specifies the path to a configuration file to convert. Uses standard input (stdin) if you do not specify a path.", completer = FileOptionCompleter.class)
-      Resource input;
+      String input;
 
       @Option(description = "Specifies the path to the output configuration file. Uses standard output (stdout) if you do not specify a path.", completer = FileOptionCompleter.class, shortName = 'o')
-      Resource output;
+      String output;
 
       @Option(description = "Sets the format of the output configuration.", required = true, completer = MediaTypeCompleter.class, shortName = 'f')
       String format;
@@ -128,30 +127,21 @@ public class Config extends CliCommand {
                is = System.in;
                resolver = ConfigurationResourceResolvers.DEFAULT;
             } else {
-               File file = new File(input.getAbsolutePath());
+               File file = new File(input);
                is = new FileInputStream(file);
                resolver = new URLConfigurationResourceResolver(file.toURI().toURL());
             }
             ConfigurationBuilderHolder holder = registry.parse(is, resolver, null); // Auto-detect type
-            os = output == null ? System.out : new FileOutputStream(output.getAbsolutePath());
+            os = output == null ? System.out : new FileOutputStream(output);
             Map<String, Configuration> configurations = new HashMap<>();
             for (Map.Entry<String, ConfigurationBuilder> configuration : holder.getNamedConfigurationBuilders().entrySet()) {
                configurations.put(configuration.getKey(), configuration.getValue().build());
             }
-            MediaType mediaType;
-            switch (MediaTypeCompleter.MediaType.valueOf(format.toUpperCase(Locale.ROOT))) {
-               case XML:
-                  mediaType = MediaType.APPLICATION_XML;
-                  break;
-               case YAML:
-                  mediaType = MediaType.APPLICATION_YAML;
-                  break;
-               case JSON:
-                  mediaType = MediaType.APPLICATION_JSON;
-                  break;
-               default:
-                  throw new CommandException("Invalid output format: " + format);
-            }
+            MediaType mediaType = switch (MediaTypeCompleter.MediaType.valueOf(format.toUpperCase(Locale.ROOT))) {
+               case XML -> MediaType.APPLICATION_XML;
+               case YAML -> MediaType.APPLICATION_YAML;
+               case JSON -> MediaType.APPLICATION_JSON;
+            };
             try (ConfigurationWriter writer = ConfigurationWriter.to(os).withType(mediaType).clearTextSecrets(true).prettyPrint(true).build()) {
                registry.serialize(writer, holder.getGlobalConfigurationBuilder().build(), configurations);
             }

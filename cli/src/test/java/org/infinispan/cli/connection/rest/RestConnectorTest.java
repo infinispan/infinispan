@@ -15,13 +15,14 @@ import javax.net.ssl.TrustManager;
 import org.infinispan.cli.util.ZeroSecurityTrustManager;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
+import org.infinispan.testing.jupiter.tags.Cli;
 import org.junit.jupiter.api.Test;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-
+@Cli
 public class RestConnectorTest {
    @Test
    public void testUrlWithCredentials() {

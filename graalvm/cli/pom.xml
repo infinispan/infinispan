@@ -19,6 +19,7 @@
         <package.runner-suffix>-cli</package.runner-suffix>
         <cli.name>${package.output-name}${package.runner-suffix}</cli.name>
         <k8.cmd>kubectl</k8.cmd>
+        <native.charsets>-H:+AddAllCharsets</native.charsets>
     </properties>
 
     <dependencies>
@@ -64,6 +65,12 @@
         </dependency>
 
         <!-- Test Dependencies -->
+       <dependency>
+          <groupId>org.infinispan</groupId>
+          <artifactId>infinispan-cli-client</artifactId>
+          <type>test-jar</type>
+
+       </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-testing</artifactId>
@@ -107,6 +114,21 @@
 
     <profiles>
         <profile>
+            <!--
+               GraalVM does not support -H:+AddAllCharsets on Windows (JNIRegistrationSupport.makeShimLibrary fails)
+               https://github.com/oracle/graal/issues/13948
+            -->
+            <id>windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <native.charsets>-H:-AddAllCharsets</native.charsets>
+            </properties>
+        </profile>
+        <profile>
             <id>native</id>
             <dependencies>
                 <dependency>
@@ -117,6 +139,10 @@
                 <dependency>
                     <groupId>org.infinispan</groupId>
                     <artifactId>infinispan-commons-graalvm</artifactId>
+                </dependency>
+                <dependency>
+                    <groupId>org.infinispan</groupId>
+                    <artifactId>infinispan-core-graalvm</artifactId>
                 </dependency>
             </dependencies>
             <build>
@@ -154,7 +180,7 @@
                                 <buildArg>-H:+UnlockExperimentalVMOptions</buildArg>
                                 <buildArg>-H:+AllowFoldMethods</buildArg>
                                 <buildArg>-H:+ReportExceptionStackTraces</buildArg>
-                                <buildArg>-H:-AddAllCharsets</buildArg>
+                                <buildArg>${native.charsets}</buildArg>
                                 <buildArg>-H:IncludeLocales=en-US</buildArg>
                                 <buildArg>-H:-UnlockExperimentalVMOptions</buildArg>
                                 <buildArg>--exclude-config</buildArg>
