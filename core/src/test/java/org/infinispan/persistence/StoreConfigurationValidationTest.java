@@ -1,8 +1,13 @@
 package org.infinispan.persistence;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.util.EnumSet;
 import java.util.Set;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
@@ -17,6 +22,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.skip.StringLogAppender;
 import org.testng.annotations.Test;
 
 /**
@@ -69,6 +75,45 @@ public class StoreConfigurationValidationTest {
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .shared(true)
             .validate();
+   }
+
+   public void testWarningNonSharedStoreWithoutPurge() {
+      Thread testThread = Thread.currentThread();
+      StringLogAppender logAppender = new StringLogAppender("org.infinispan.CONFIG",
+            Level.WARN,
+            t -> t == testThread,
+            PatternLayout.newBuilder().setPattern("%m").build());
+      logAppender.install();
+      try {
+         ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+         builder.clustering()
+               .cacheMode(CacheMode.DIST_SYNC)
+               .persistence()
+               .addStore(DummyInMemoryStoreConfigurationBuilder.class);
+         builder.build();
+         assertEquals(1, logAppender.size());
+         assertTrue(logAppender.get(0).contains("ISPN000728"));
+      } finally {
+         logAppender.uninstall();
+      }
+   }
+
+   public void testNoWarningNonSharedStoreWithoutPurgeLocalCache() {
+      Thread testThread = Thread.currentThread();
+      StringLogAppender logAppender = new StringLogAppender("org.infinispan.CONFIG",
+            Level.WARN,
+            t -> t == testThread,
+            PatternLayout.newBuilder().setPattern("%m").build());
+      logAppender.install();
+      try {
+         ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+         builder.persistence()
+               .addStore(DummyInMemoryStoreConfigurationBuilder.class);
+         builder.build();
+         assertEquals(0, logAppender.size());
+      } finally {
+         logAppender.uninstall();
+      }
    }
 
    @ConfiguredBy(NonSharedDummyStoreConfiguration.class)
