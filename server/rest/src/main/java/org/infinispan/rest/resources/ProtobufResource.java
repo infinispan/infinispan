@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -28,7 +29,10 @@ import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.config.AnnotationAttributeConfiguration;
+import org.infinispan.protostream.config.AnnotationConfiguration;
 import org.infinispan.protostream.config.Configuration;
+import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
 import org.infinispan.protostream.impl.parser.ProtostreamProtoParser;
@@ -256,6 +260,60 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
          protobufTypes.add(type);
       }
       return asJsonResponseFuture(invocationHelper.newResponse(request), protobufTypes, isPretty(request));
+   }
+
+   private static final Set<String> INTERNAL_ANNOTATIONS = Set.of("TypeId", "ProtoTypeId");
+
+   protected CompletionStage<RestResponse> getAnnotations(RestRequest request) {
+      ProtobufMetadataManagerImpl protobufMetadataManager = (ProtobufMetadataManagerImpl) invocationHelper.protobufMetadataManager();
+      Map<String, AnnotationConfiguration> allAnnotations = protobufMetadataManager
+            .getSerializationContext().getConfiguration().annotationsConfig().annotations();
+
+      // Collect container annotation names so we can filter them out
+      Set<String> containerNames = allAnnotations.values().stream()
+            .map(AnnotationConfiguration::repeatable)
+            .filter(r -> r != null)
+            .collect(Collectors.toSet());
+
+      Json result = Json.array();
+      for (AnnotationConfiguration annot : allAnnotations.values()) {
+         if (INTERNAL_ANNOTATIONS.contains(annot.name())) {
+            continue;
+         }
+         // Skip repeatable container annotations (e.g. Fields, GeoPoints, SortableFields)
+         if (containerNames.contains(annot.name())) {
+            continue;
+         }
+
+         Json annotJson = Json.object();
+         annotJson.set("name", annot.name());
+
+         Json targets = Json.array();
+         for (AnnotationElement.AnnotationTarget target : annot.target()) {
+            targets.add(target.name());
+         }
+         annotJson.set("target", targets);
+
+         Json attributes = Json.object();
+         for (AnnotationAttributeConfiguration attr : annot.attributes().values()) {
+            Json attrJson = Json.object();
+            attrJson.set("type", attr.type().name());
+            if (attr.defaultValue() != null) {
+               attrJson.set("defaultValue", attr.defaultValue().toString());
+            }
+            Json allowed = Json.array();
+            if (attr.allowedValues() != null) {
+               for (String val : attr.allowedValues()) {
+                  allowed.add(val);
+               }
+            }
+            attrJson.set("allowedValues", allowed);
+            attributes.set(attr.name(), attrJson);
+         }
+         annotJson.set("attributes", attributes);
+         result.add(annotJson);
+      }
+      return asJsonResponseFuture(invocationHelper.newResponse(request), result, isPretty(request));
    }
 
    protected CompletionStage<RestResponse> deleteSchema(RestRequest request) {
