@@ -12,6 +12,8 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.infinispan.commands.conflict.GetBucketEntriesCommand;
+import org.infinispan.commands.conflict.GetBucketHashesCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.functional.Mutation;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
@@ -421,6 +423,10 @@ public interface CommandsFactory {
    LockControlCommand buildLockControlCommand(Collection<?> keys, long flagsBitSet);
 
    ConflictResolutionStartCommand buildConflictResolutionStartCommand(int topologyId, IntSet segments);
+
+   GetBucketHashesCommand buildGetBucketHashesCommand(int topologyId, IntSet segments, int bucketCount);
+
+   GetBucketEntriesCommand buildGetBucketEntriesCommand(int topologyId, int segmentId, IntSet bucketIds, int bucketCount);
 
    StateTransferCancelCommand buildStateTransferCancelCommand(int topologyId, IntSet segments);
 
