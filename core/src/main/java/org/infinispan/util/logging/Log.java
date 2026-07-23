@@ -2498,4 +2498,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Creating cache '%s' in a mixed-version cluster (oldest member %s); " +
          "newer configuration elements may be omitted from the configuration replicated to older nodes and some features might be disabled", id = 730)
    void possibleConfigurationOmissionInMixedCluster(String cacheName, NodeVersion oldestMember);
+
+   @Message(value = "Request to %s rejected: destination is overloaded and request was not submitted", id = 731)
+   TimeoutException requestShed(Address destination, @Param boolean writableStackTrace);
 }
