@@ -4,8 +4,7 @@ import java.util.Collection;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
@@ -17,24 +16,29 @@ import org.infinispan.remoting.transport.impl.RequestRepository;
  * @since 9.1
  */
 public class StaggeredRequest<T> extends MultiTargetRequest<T> {
-   private final ReplicableCommand command;
-   private final DeliverOrder deliverOrder;
-   private final JGroupsTransport transport;
-
+   private final StaggeredSender sender;
+   private final ScheduledExecutorService timeoutExecutor;
+   private final TimeService timeService;
    private final long deadline;
    private final long timeoutNanos;
    private int targetIndex;
 
-   StaggeredRequest(ResponseCollector<Address, T> responseCollector, long requestId, RequestRepository repository,
-                    Collection<Address> targets, Address excludedTarget, ReplicableCommand command,
-                    DeliverOrder deliverOrder, long timeout, TimeUnit unit, JGroupsTransport transport) {
-      super(responseCollector, requestId, repository, targets, excludedTarget, transport.metricsManager);
+   public StaggeredRequest(ResponseCollector<Address, T> responseCollector, long requestId, RequestRepository repository,
+                           Collection<Address> targets, Address excludedTarget, JGroupsMetricsManager metricsManager,
+                           TimeService timeService, ScheduledExecutorService timeoutExecutor, StaggeredSender sender,
+                           long timeout, TimeUnit unit) {
+      super(responseCollector, requestId, repository, targets, excludedTarget, metricsManager);
 
-      this.command = command;
-      this.deliverOrder = deliverOrder;
-      this.transport = transport;
+      this.sender = sender;
+      this.timeService = timeService;
+      this.timeoutExecutor = timeoutExecutor;
       this.timeoutNanos = unit.toNanos(timeout);
-      this.deadline = transport.timeService.expectedEndTime(timeout, unit);
+      this.deadline = timeService.expectedEndTime(timeout, unit);
+   }
+
+   @FunctionalInterface
+   public interface StaggeredSender {
+      void send(Address destination, long requestId);
    }
 
    @Override
@@ -78,8 +82,8 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
                // but the request is not yet complete because we're still waiting for a response
                // from one of the other targets (i.e. we are being called from onTimeout).
                // We don't need to send another message, just wait for the real timeout to expire.
-               long delayNanos = transport.getTimeService().remainingTime(deadline, TimeUnit.NANOSECONDS);
-               super.setTimeout(transport.getTimeoutExecutor(), delayNanos, TimeUnit.NANOSECONDS);
+               long delayNanos = timeService.remainingTime(deadline, TimeUnit.NANOSECONDS);
+               super.setTimeout(timeoutExecutor, delayNanos, TimeUnit.NANOSECONDS);
                return;
             }
 
@@ -88,12 +92,12 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
 
          // Sending may block in flow-control or even in TCP, so we must do it outside the critical section
          target.resetSendTime();
-         transport.sendCommandCheckingView(target.destination(), command, requestId, deliverOrder);
+         sender.send(target.destination(), requestId);
 
          // Scheduling the timeout task may also block
          // If this is the last target, set the request timeout at the deadline
          // Otherwise, schedule a timeout task to send a staggered request to the next target
-         long delayNanos = transport.getTimeService().remainingTime(deadline, TimeUnit.NANOSECONDS);
+         long delayNanos = timeService.remainingTime(deadline, TimeUnit.NANOSECONDS);
          if (!isFinalTarget) {
             delayNanos = delayNanos / 10 / getTargetsSize();
          }
@@ -102,7 +106,7 @@ public class StaggeredRequest<T> extends MultiTargetRequest<T> {
          // that every target we just sent a message to gets at least some time to respond.
          long minDelayNanos = timeoutNanos / 10 / getTargetsSize();
          delayNanos = Math.max(delayNanos, minDelayNanos);
-         super.setTimeout(transport.getTimeoutExecutor(), delayNanos, TimeUnit.NANOSECONDS);
+         super.setTimeout(timeoutExecutor, delayNanos, TimeUnit.NANOSECONDS);
       } catch (Exception e) {
          completeExceptionally(e);
       }

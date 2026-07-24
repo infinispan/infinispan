@@ -3,14 +3,17 @@ package org.infinispan.util;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.impl.Request;
 import org.infinispan.remoting.transport.impl.RequestRepository;
+import org.infinispan.remoting.transport.jgroups.JGroupsMetricsManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.TestingUtil;
 
@@ -26,12 +29,21 @@ public class CountingRequestRepository extends RequestRepository {
       JGroupsTransport transport = (JGroupsTransport) GlobalComponentRegistry.componentOf(cacheManager, Transport.class);
       RequestRepository requestRepository =
             TestingUtil.extractField(JGroupsTransport.class, transport, "requests");
-      CountingRequestRepository instance = new CountingRequestRepository(requestRepository);
+      JGroupsMetricsManager metricsManager =
+            TestingUtil.extractField(JGroupsTransport.class, transport, "metricsManager");
+      ScheduledExecutorService timeoutExecutor =
+            TestingUtil.extractField(JGroupsTransport.class, transport, "timeoutExecutor");
+      TimeService timeService =
+            TestingUtil.extractField(JGroupsTransport.class, transport, "timeService");
+      CountingRequestRepository instance = new CountingRequestRepository(requestRepository,
+            metricsManager, timeoutExecutor, timeService);
       TestingUtil.replaceField(instance, "requests", transport, JGroupsTransport.class);
       return instance;
    }
 
-   private CountingRequestRepository(RequestRepository requestRepository) {
+   private CountingRequestRepository(RequestRepository requestRepository, JGroupsMetricsManager metricsManager,
+                                      ScheduledExecutorService timeoutExecutor, TimeService timeService) {
+      super(metricsManager, timeoutExecutor, timeService);
       requestRepository.forEach(this::addRequest);
    }
 

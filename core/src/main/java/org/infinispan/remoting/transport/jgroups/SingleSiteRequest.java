@@ -23,7 +23,7 @@ public class SingleSiteRequest<T> extends AbstractRequest<String, T> {
    private final String site;
    private final AtomicBoolean completed = new AtomicBoolean();
 
-   SingleSiteRequest(ResponseCollector<String, T> wrapper, long requestId, RequestRepository repository, String site) {
+   public SingleSiteRequest(ResponseCollector<String, T> wrapper, long requestId, RequestRepository repository, String site) {
       super(requestId, wrapper, repository);
       this.site = site;
    }

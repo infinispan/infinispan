@@ -37,4 +37,13 @@ public interface Request<S, T> extends CompletionStage<T> {
     * Complete the request with an exception and release its resources.
     */
    void cancel(Exception cancellationException);
+
+   /**
+    * Cancels the current request if it is not already completed.
+    *
+    * @param mayInterruptIfRunning allow to interrupt running thread.
+    * @return <code>true</code>, if this task was cancelled.
+    * @see java.util.concurrent.CompletableFuture#cancel(boolean)
+    */
+   boolean cancel(boolean mayInterruptIfRunning);
 }
