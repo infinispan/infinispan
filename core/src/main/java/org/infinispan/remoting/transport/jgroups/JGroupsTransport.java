@@ -71,9 +71,9 @@ import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
-import org.infinispan.remoting.transport.AbstractRequest;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.remoting.transport.PhysicalAddress;
@@ -83,11 +83,9 @@ import org.infinispan.remoting.transport.XSiteResponse;
 import org.infinispan.remoting.transport.impl.EmptyRaftManager;
 import org.infinispan.remoting.transport.impl.FilterMapResponseCollector;
 import org.infinispan.remoting.transport.impl.MapResponseCollector;
-import org.infinispan.remoting.transport.impl.MultiTargetRequest;
 import org.infinispan.remoting.transport.impl.Request;
 import org.infinispan.remoting.transport.impl.RequestRepository;
 import org.infinispan.remoting.transport.impl.SingleResponseCollector;
-import org.infinispan.remoting.transport.impl.SingleTargetRequest;
 import org.infinispan.remoting.transport.impl.SingletonMapResponseCollector;
 import org.infinispan.remoting.transport.impl.SiteUnreachableXSiteResponse;
 import org.infinispan.remoting.transport.impl.XSiteResponseImpl;
@@ -357,19 +355,14 @@ public class JGroupsTransport implements Transport {
          return new SiteUnreachableXSiteResponse<>(backup, timeService);
       }
       var recipient = new SiteMaster(backup.getSiteName());
-      long requestId = requests.newRequestId();
-      logRequest(requestId, rpcCommand, recipient, "backup");
-      var request = new SingleSiteRequest<>(SingleResponseCollector.validOnly(), requestId, requests, backup.getSiteName());
-      addRequest(request);
+      Request<String, ValidResponse<?>> request = requests.singleSiteRequest(backup.getSiteName(), SingleResponseCollector.validOnly(),
+            backup.getTimeout(), TimeUnit.MILLISECONDS);
+      logRequest(request.getRequestId(), rpcCommand, recipient, "backup");
 
       DeliverOrder order = backup.isSync() ? DeliverOrder.NONE : DeliverOrder.PER_SENDER;
-      long timeout = backup.getTimeout();
       XSiteResponseImpl<O> xSiteResponse = new XSiteResponseImpl<>(timeService, backup);
       try (var ignored = traceRequest(request, rpcCommand)) {
          doSendForCrossSite(recipient, rpcCommand, request.getRequestId(), order);
-         if (timeout > 0) {
-            request.setTimeout(timeoutExecutor, timeout, TimeUnit.MILLISECONDS);
-         }
          request.whenComplete(xSiteResponse);
       } catch (Throwable t) {
          request.cancel(true);
@@ -459,7 +452,7 @@ public class JGroupsTransport implements Transport {
 
       probeHandler.updateThreadPool(nonBlockingExecutor);
       props = TypedProperties.toTypedProperties(configuration.transport().properties());
-      requests = new RequestRepository();
+      requests = new RequestRepository(metricsManager, timeoutExecutor, timeService);
 
       initChannel();
 
@@ -832,6 +825,7 @@ public class JGroupsTransport implements Transport {
    @Override
    public void stop() {
       running = false;
+      requests.stop();
 
       if (channel != null) {
          channel.getProtocolStack().getTransport().unregisterProbeHandler(probeHandler);
@@ -966,19 +960,14 @@ public class JGroupsTransport implements Transport {
       if (target.equals(address)) {
          return CompletableFuture.completedFuture(collector.finish());
       }
-      long requestId = requests.newRequestId();
-      logRequest(requestId, command, target, "single");
-      SingleTargetRequest<T> request = new SingleTargetRequest<>(collector, requestId, requests, metricsManager.trackRequest(target));
-      addRequest(request);
+      Request<Address, T> request = requests.singleRequest(target, collector, timeout, unit);
+      logRequest(request.getRequestId(), command, target, "single");
       if (request.onNewView(clusterView.getMembersSet())) {
          // The request is completed, destination not found in view. We can return immediately.
          return request;
       }
       try (var ignored = traceRequest(request, command)) {
-         sendCommandCheckingView(target, command, requestId, deliverOrder);
-         if (timeout > 0) {
-            request.setTimeout(timeoutExecutor, timeout, unit);
-         }
+         sendCommandCheckingView(target, command, request.getRequestId(), deliverOrder);
          return request;
       }
    }
@@ -990,31 +979,24 @@ public class JGroupsTransport implements Transport {
       if (isCommandUnsupported(command))
          return commandUnsupportedFuture(command);
 
-      long requestId = requests.newRequestId();
-      logRequest(requestId, command, targets, "multi");
       if (targets.isEmpty()) {
          return CompletableFuture.completedFuture(collector.finish());
       }
-      Address excludedTarget = getAddress();
-      MultiTargetRequest<T> request =
-            new MultiTargetRequest<>(collector, requestId, requests, targets, excludedTarget, metricsManager);
+      Request<Address, T> request = requests.multiRequest(targets, getAddress(), collector, timeout, unit);
+      logRequest(request.getRequestId(), command, targets, "multi");
       // Request may be completed due to exclusion of target nodes, so only send it if it isn't complete
-      if (request.isDone()) {
+      if (request.toCompletableFuture().isDone()) {
          return request;
       }
       try (var ignored = traceRequest(request, command)) {
-         addRequest(request);
          request.onNewView(clusterView.getMembersSet());
-         if (request.isDone()) {
+         if (request.toCompletableFuture().isDone()) {
             return request;
          }
-         sendCommand(targets, command, requestId, deliverOrder);
+         sendCommand(targets, command, request.getRequestId(), deliverOrder);
       } catch (Throwable t) {
          request.cancel(true);
          throw t;
-      }
-      if (timeout > 0) {
-         request.setTimeout(timeoutExecutor, timeout, unit);
       }
       return request;
    }
@@ -1025,25 +1007,18 @@ public class JGroupsTransport implements Transport {
       if (isCommandUnsupported(command))
          return commandUnsupportedFuture(command);
 
-      long requestId = requests.newRequestId();
-      logRequest(requestId, command, null, "broadcast");
-      Address excludedTarget = getAddress();
-      MultiTargetRequest<T> request =
-            new MultiTargetRequest<>(collector, requestId, requests, clusterView.getMembers(), excludedTarget, metricsManager);
+      Request<Address, T> request = requests.multiRequest(clusterView.getMembers(), getAddress(), collector, timeout, unit);
+      logRequest(request.getRequestId(), command, null, "broadcast");
       // Request may be completed due to exclusion of target nodes, so only send it if it isn't complete
-      if (request.isDone()) {
+      if (request.toCompletableFuture().isDone()) {
          return request;
       }
       try (var ignored = traceRequest(request, command)) {
-         addRequest(request);
          request.onNewView(clusterView.getMembersSet());
-         sendCommandToAll(command, requestId, deliverOrder);
+         sendCommandToAll(command, request.getRequestId(), deliverOrder);
       } catch (Throwable t) {
          request.cancel(true);
          throw t;
-      }
-      if (timeout > 0) {
-         request.setTimeout(timeoutExecutor, timeout, unit);
       }
       return request;
    }
@@ -1055,28 +1030,21 @@ public class JGroupsTransport implements Transport {
       if (isCommandUnsupported(command))
          return commandUnsupportedFuture(command);
 
-      long requestId = requests.newRequestId();
-      logRequest(requestId, command, requiredTargets, "broadcast");
-      Address excludedTarget = getAddress();
-      MultiTargetRequest<T> request =
-            new MultiTargetRequest<>(collector, requestId, requests, requiredTargets, excludedTarget, metricsManager);
+      Request<Address, T> request = requests.multiRequest(requiredTargets, getAddress(), collector, timeout, unit);
+      logRequest(request.getRequestId(), command, requiredTargets, "broadcast");
       // Request may be completed due to exclusion of target nodes, so only send it if it isn't complete
-      if (request.isDone()) {
+      if (request.toCompletableFuture().isDone()) {
          return request;
       }
       try (var ignored = traceRequest(request, command)) {
          if (isCommandUnsupported(command)) {
             return commandUnsupportedFuture(command);
          }
-         addRequest(request);
          request.onNewView(clusterView.getMembersSet());
-         sendCommandToAll(command, requestId, deliverOrder);
+         sendCommandToAll(command, request.getRequestId(), deliverOrder);
       } catch (Throwable t) {
          request.cancel(true);
          throw t;
-      }
-      if (timeout > 0) {
-         request.setTimeout(timeoutExecutor, timeout, unit);
       }
       return request;
    }
@@ -1088,13 +1056,12 @@ public class JGroupsTransport implements Transport {
       if (isCommandUnsupported(command))
          return commandUnsupportedFuture(command);
 
-      long requestId = requests.newRequestId();
-      logRequest(requestId, command, targets, "staggered");
+      StaggeredRequest.StaggeredSender sender = (dest, reqId) ->
+            sendCommandCheckingView(dest, command, reqId, deliverOrder);
       StaggeredRequest<T> request =
-            new StaggeredRequest<>(collector, requestId, requests, targets, getAddress(), command, deliverOrder,
-                  timeout, unit, this);
+            requests.staggeredRequest(targets, getAddress(), collector, sender, timeout, unit);
+      logRequest(request.getRequestId(), command, targets, "staggered");
       try (var ignored = traceRequest(request, command)) {
-         addRequest(request);
          request.onNewView(clusterView.getMembersSet());
          request.sendNextMessage();
       } catch (Throwable t) {
@@ -1116,19 +1083,16 @@ public class JGroupsTransport implements Transport {
             return commandUnsupportedFuture(cmd);
       }
 
-      long requestId;
-      requestId = requests.newRequestId();
       Address excludedTarget = getAddress();
-      MultiTargetRequest<T> request =
-            new MultiTargetRequest<>(collector, requestId, requests, targets, excludedTarget, metricsManager);
+      Request<Address, T> request =
+            requests.multiRequest(targets, getAddress(), collector, timeout, timeUnit);
       // Request may be completed due to exclusion of target nodes, so only send it if it isn't complete
-      if (request.isDone()) {
+      if (request.toCompletableFuture().isDone()) {
          return request;
       }
-      addRequest(request);
       var view = clusterView;
       request.onNewView(view.getMembersSet());
-      if (request.isDone()) {
+      if (request.toCompletableFuture().isDone()) {
          // The request is completed.
          return request;
       }
@@ -1138,18 +1102,14 @@ public class JGroupsTransport implements Transport {
                continue;
 
             ReplicableCommand command = commandGenerator.apply(target);
-            logRequest(requestId, command, target, "mixed");
+            logRequest(request.getRequestId(), command, target, "mixed");
             try (var ignored = traceRequest(request, command)) { // TODO is correct?
-               sendCommandCheckingView(target, command, requestId, deliverOrder);
+               sendCommandCheckingView(target, command, request.getRequestId(), deliverOrder);
             }
          }
       } catch (Throwable t) {
          request.cancel(true);
          throw t;
-      }
-
-      if (timeout > 0) {
-         request.setTimeout(timeoutExecutor, timeout, timeUnit);
       }
       return request;
    }
@@ -1159,20 +1119,7 @@ public class JGroupsTransport implements Transport {
       return raftManager;
    }
 
-   private void addRequest(AbstractRequest<?, ?> request) {
-      try {
-         requests.addRequest(request);
-         if (!running) {
-            request.cancel(CONTAINER.cacheManagerIsStopping());
-         }
-      } catch (Throwable t) {
-         // Removes the request and the scheduled task, if necessary
-         request.cancel(true);
-         throw t;
-      }
-   }
-
-   private SafeAutoClosable traceRequest(AbstractRequest<?, ?> request, TracedCommand command) {
+   private SafeAutoClosable traceRequest(Request<?, ?> request, TracedCommand command) {
       var traceSpan = command.getSpanAttributes();
       if (traceSpan != null) {
          InfinispanSpan<Object> span = telemetry.startTraceRequest(command.getOperationName(), traceSpan);
@@ -1183,7 +1130,7 @@ public class JGroupsTransport implements Transport {
       }
    }
 
-   void sendCommandCheckingView(Address destination, Object command, long requestId, DeliverOrder deliverOrder) {
+   private void sendCommandCheckingView(Address destination, Object command, long requestId, DeliverOrder deliverOrder) {
       ExtendedUUID target = clusterView.getAddressFromView(destination);
       if (target == null) {
          // not in view
