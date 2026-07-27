@@ -59,14 +59,14 @@ jobs:
             TYPE: ${{ inputs.type }}
 
       - name: Log in to Docker Hub
-        uses: redhat-actions/podman-login@v1
+        uses: redhat-actions/podman-login@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           registry: docker.io
 
       - name: Log in to Quay.io
-        uses: redhat-actions/podman-login@v1
+        uses: redhat-actions/podman-login@v2
         with:
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_TOKEN }}
@@ -95,7 +95,7 @@ jobs:
       - name: Push to Docker Hub
         id: push-to-docker
         if: ${{ inputs.push }}
-        uses: redhat-actions/push-to-registry@v2
+        uses: redhat-actions/push-to-registry@v3
         with:
           registry: docker.io/infinispan
           image: server
@@ -107,7 +107,7 @@ jobs:
       - name: Push to Quay.io
         id: push-to-quay
         if: ${{ inputs.push }}
-        uses: redhat-actions/push-to-registry@v2
+        uses: redhat-actions/push-to-registry@v3
         with:
           registry: quay.io/infinispan
           image: server

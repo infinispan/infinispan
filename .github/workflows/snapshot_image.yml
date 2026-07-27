@@ -71,7 +71,7 @@ jobs:
           tags: ${{ inputs.tag }}
 
       - name: Log in to Quay.io
-        uses: redhat-actions/podman-login@v1
+        uses: redhat-actions/podman-login@v2
         with:
           username: ${{ secrets.QUAY_USERNAME_TEST }}
           password: ${{ secrets.QUAY_TOKEN_TEST }}
@@ -79,7 +79,7 @@ jobs:
 
       - name: Push to Quay.io
         id: push-to-quay
-        uses: redhat-actions/push-to-registry@v2
+        uses: redhat-actions/push-to-registry@v3
         with:
           registry: quay.io/infinispan-test
           image: server
