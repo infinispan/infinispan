@@ -24,10 +24,12 @@ public class PartitionHandlingConfiguration extends ConfigurationElement<Partiti
             MergePolicy policy = MergePolicy.fromConfiguration(value);
             writer.writeAttribute(name, policy == MergePolicy.CUSTOM ? value.getClass().getName() : policy.toString());
          }).build();
+   public static final AttributeDefinition<Integer> HASH_BUCKETS = AttributeDefinition.builder(Attribute.HASH_BUCKETS, 32)
+         .immutable().build();
 
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(PartitionHandlingConfiguration.class, WHEN_SPLIT, MERGE_POLICY);
+      return new AttributeSet(PartitionHandlingConfiguration.class, WHEN_SPLIT, MERGE_POLICY, HASH_BUCKETS);
    }
 
    public PartitionHandlingConfiguration(AttributeSet attributes) {
@@ -40,6 +42,10 @@ public class PartitionHandlingConfiguration extends ConfigurationElement<Partiti
 
    public EntryMergePolicy mergePolicy() {
       return attributes.attribute(MERGE_POLICY).get();
+   }
+
+   public int hashBuckets() {
+      return attributes.attribute(HASH_BUCKETS).get();
    }
 
    public boolean resolveConflictsOnMerge() {

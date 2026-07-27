@@ -5,6 +5,7 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 import org.infinispan.conflict.ConflictManager;
 import org.infinispan.conflict.impl.DefaultConflictManager;
 import org.infinispan.conflict.impl.InternalConflictManager;
+import org.infinispan.conflict.impl.SegmentHashTracker;
 import org.infinispan.conflict.impl.StateReceiver;
 import org.infinispan.conflict.impl.StateReceiverImpl;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
@@ -26,7 +27,7 @@ import org.infinispan.statetransfer.StateTransferManagerImpl;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = {StateTransferManager.class, StateConsumer.class, StateProvider.class, StateReceiver.class,
-      ConflictManager.class, InternalConflictManager.class})
+      ConflictManager.class, InternalConflictManager.class, SegmentHashTracker.class})
 public class StateTransferComponentFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override
    public Object construct(String componentName) {
@@ -43,6 +44,8 @@ public class StateTransferComponentFactory extends AbstractNamedCacheComponentFa
          return new StateReceiverImpl<>();
       } else if (componentName.equals(ConflictManager.class.getName()) || componentName.equals(InternalConflictManager.class.getName())) {
          return new DefaultConflictManager<>();
+      } else if (componentName.equals(SegmentHashTracker.class.getName())) {
+         return new SegmentHashTracker();
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);

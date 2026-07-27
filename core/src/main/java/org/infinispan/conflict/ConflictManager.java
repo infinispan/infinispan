@@ -1,6 +1,7 @@
 package org.infinispan.conflict;
 
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
 
 import org.infinispan.container.entries.CacheEntry;
@@ -9,6 +10,7 @@ import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.remoting.transport.Address;
+import org.reactivestreams.Publisher;
 
 /**
  * @author Ryan Emerson
@@ -68,4 +70,43 @@ public interface ConflictManager<K, V> {
     * with the ConflictManager or if a Split-brain merge is in progress.
     */
    boolean isConflictResolutionInProgress();
+
+   /**
+    * Returns a Publisher of conflicts detected in the cluster. This is a lazily-evaluated
+    * reactive stream which searches for conflicts by fetching cache segments from their
+    * respective owner nodes with parallel segment processing.
+    *
+    * @return a Publisher of Map&lt;Address, CacheEntry&gt; for all conflicts detected throughout this cache.
+    * @throws IllegalStateException if called whilst a previous conflicts stream is still executing
+    *         or state transfer is in progress.
+    * @since 16.2
+    */
+   default Publisher<Map<Address, CacheEntry<K, V>>> getConflictsPublisher() {
+      throw new UnsupportedOperationException();
+   }
+
+   /**
+    * Discovers conflicts between key replicas and uses the configured
+    * {@link EntryMergePolicy} to determine which entry should take precedence. The
+    * resulting {@link org.infinispan.container.entries.CacheEntry} is then applied on all replicas in the cluster.
+    *
+    * @return a CompletionStage that completes when all conflicts have been resolved
+    * @since 16.2
+    */
+   default CompletionStage<Void> resolveConflictsAsync() {
+      throw new UnsupportedOperationException();
+   }
+
+   /**
+    * Discovers conflicts between key replicas and uses the provided
+    * {@link EntryMergePolicy} to determine which entry should take precedence. The
+    * resulting {@link org.infinispan.container.entries.CacheEntry} is then applied on all replicas in the cluster.
+    *
+    * @param mergePolicy the policy to be applied to all detected conflicts
+    * @return a CompletionStage that completes when all conflicts have been resolved
+    * @since 16.2
+    */
+   default CompletionStage<Void> resolveConflictsAsync(EntryMergePolicy<K, V> mergePolicy) {
+      throw new UnsupportedOperationException();
+   }
 }

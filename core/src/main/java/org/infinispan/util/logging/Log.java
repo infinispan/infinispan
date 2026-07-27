@@ -2481,4 +2481,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "The 'remote-site' configuration format at %s has been deprecated. Use the map-based format instead, e.g. 'NYC: { remoteSite: ~ }'", id = 727)
    void deprecatedRemoteSiteFormat(Location location);
+
+   @Message(value = "Non-shared stores must have purge-on-startup enabled when conflict resolution is configured", id = 728)
+   CacheConfigurationException nonSharedStoreMustPurgeWithConflictResolution();
 }

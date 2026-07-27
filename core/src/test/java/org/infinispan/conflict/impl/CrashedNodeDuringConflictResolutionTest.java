@@ -11,8 +11,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commands.conflict.GetBucketHashesCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.statetransfer.ConflictResolutionStartCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.HashConfiguration;
 import org.infinispan.conflict.ConflictManager;
@@ -22,7 +22,6 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.inboundhandler.AbstractDelegatingHandler;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
@@ -37,7 +36,7 @@ import org.testng.annotations.Test;
 
 /**
  * 1. Partition cluster
- * 2. When coordinator sends InboundTransferTask with segment for DURING_CR_CRASH_KEY crash the node
+ * 2. When coordinator sends GetBucketHashesCommand to manager(2) during CR, crash the node
  * 3. CR should hang until a new view is received
  * 4. The previous CR should be cancelled and restarted with the crashed node removed
  * 5. All keys should have the resolved value from the EntryMergePolicy
@@ -96,7 +95,7 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
 
    @Override
    protected void performMerge() throws Exception {
-      CompletableFuture<ConflictResolutionStartCommand> blockedStateRequest = createStateRequestFuture();
+      CompletableFuture<GetBucketHashesCommand> blockedStateRequest = createStateRequestFuture();
 
       for (String key : ALL_KEYS) {
          assertCacheGet(key, PARTITION_0_VAL, p0.getNodes());
@@ -131,32 +130,26 @@ public class CrashedNodeDuringConflictResolutionTest extends BaseMergePolicyTest
       assertEquals(0, cm.getConflicts().peek(m -> log.errorf("Conflict: " + m)).count());
    }
 
-   private CompletableFuture<ConflictResolutionStartCommand> createStateRequestFuture() {
-      int segment = PARTITIONER.getSegment(DURING_CR_CRASH_KEY);
-      CompletableFuture<ConflictResolutionStartCommand> future = new CompletableFuture<>();
-      wrapInboundInvocationHandler(cache(2), handler -> new CompleteFutureOnStateRequestHandler(handler, segment, manager(2), future));
+   private CompletableFuture<GetBucketHashesCommand> createStateRequestFuture() {
+      CompletableFuture<GetBucketHashesCommand> future = new CompletableFuture<>();
+      wrapInboundInvocationHandler(cache(2), handler -> new CompleteFutureOnStateRequestHandler(handler, future));
       return future;
    }
 
    private static class CompleteFutureOnStateRequestHandler extends AbstractDelegatingHandler {
-      final int segment;
-      final EmbeddedCacheManager manager;
-      final CompletableFuture<ConflictResolutionStartCommand> future;
+      final CompletableFuture<GetBucketHashesCommand> future;
 
-      CompleteFutureOnStateRequestHandler(PerCacheInboundInvocationHandler delegate, int segment, EmbeddedCacheManager manager,
-                                          CompletableFuture<ConflictResolutionStartCommand> future) {
+      CompleteFutureOnStateRequestHandler(PerCacheInboundInvocationHandler delegate,
+                                          CompletableFuture<GetBucketHashesCommand> future) {
          super(delegate);
-         this.segment = segment;
-         this.manager = manager;
          this.future = future;
       }
 
       @Override
       public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
-         if (command instanceof ConflictResolutionStartCommand src) {
-            if (src.getSegments().contains(segment)) {
-               log.debugf("Completing future and ignoring state request %s", command);
-               future.complete(src);
+         if (command instanceof GetBucketHashesCommand src) {
+            if (future.complete(src)) {
+               log.debugf("Completing future and ignoring bucket hashes request %s", command);
                return;
             }
          }
