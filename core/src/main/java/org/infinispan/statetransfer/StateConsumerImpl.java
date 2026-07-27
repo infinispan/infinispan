@@ -60,6 +60,7 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.conflict.impl.InternalConflictManager;
+import org.infinispan.conflict.impl.SegmentHashTracker;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -174,6 +175,7 @@ public class StateConsumerImpl implements StateConsumer {
    @Inject ClusterPublisherManager<Object, Object> clusterPublisherManager;
    @Inject Transport transport;
    @Inject StateTransferTracker stateTracker;
+   @Inject SegmentHashTracker segmentHashTracker;
 
    protected String cacheName;
    protected long timeout;
@@ -1400,6 +1402,10 @@ public class StateConsumerImpl implements StateConsumer {
       localPublisherManager.segmentsLost(removedSegments);
 
       dataContainer.removeSegments(removedSegments);
+
+      if (segmentHashTracker != null && segmentHashTracker.isEnabled()) {
+         removedSegments.forEach((int seg) -> segmentHashTracker.resetSegment(seg));
+      }
 
       // We have to invoke removeSegments above on the data container. This is always done in case if L1 is enabled. L1
       // store removes all the temporary entries when removeSegments is invoked. However there is no reason to mess

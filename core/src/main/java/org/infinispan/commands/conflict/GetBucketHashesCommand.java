@@ -10,6 +10,7 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.conflict.impl.BucketHash;
+import org.infinispan.conflict.impl.SegmentHashTracker;
 import org.infinispan.conflict.impl.SegmentHasher;
 import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.factories.ComponentRegistry;
@@ -72,6 +73,10 @@ public class GetBucketHashesCommand extends BaseRpcCommand implements TopologyAf
 
    @Override
    public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
+      SegmentHashTracker tracker = registry.getComponent(SegmentHashTracker.class);
+      if (tracker != null && tracker.isEnabled()) {
+         return CompletableFuture.completedFuture(tracker.getAllBucketHashes(segments));
+      }
       InternalDataContainer<?, ?> dataContainer = registry.getInternalDataContainer().running();
       Marshaller marshaller = registry.getInternalMarshaller();
       SegmentHasher hasher = new SegmentHasher(dataContainer, marshaller);

@@ -1415,17 +1415,23 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       try {
          if (resolveConflictsOnMerge()) {
             conflictResolution = new ConflictResolution();
+            final ConflictResolution thisCR = conflictResolution;
             CompletableFuture<Void> resolutionFuture = conflictResolution.queue(conflictTopology, preferredNodes);
-            resolutionFuture.thenRun(this::completeConflictResolution);
+            resolutionFuture.thenRun(() -> completeConflictResolution(thisCR));
          }
       } finally {
          releaseLock();
       }
    }
 
-   private void completeConflictResolution() {
+   private void completeConflictResolution(ConflictResolution expectedCR) {
       acquireLock();
       try {
+         if (conflictResolution != expectedCR) {
+            if (log.isTraceEnabled())
+               log.tracef("Cache %s ignoring conflict resolution completion from superseded attempt", cacheName);
+            return;
+         }
          if (log.isTraceEnabled()) log.tracef("Cache %s conflict resolution future complete", cacheName);
          // CR is only queued for PreferConsistencyStrategy when a merge it is determined that the newAvailabilityMode will be AVAILABLE
          // therefore if this method is called we know that the partition must be set to AVAILABLE
@@ -1485,10 +1491,13 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                  newHash, null, CacheTopology.Phase.CONFLICT_RESOLUTION, members, persistentUUIDManager.mapAddresses(members));
          currentTopology = conflictTopology;
 
+         Set<Address> preferredNodes = conflictResolution.preferredNodes;
+
          log.debugf("Cache %s restarting conflict resolution with topology %s", cacheName, currentTopology);
          clusterTopologyManager.broadcastTopologyUpdate(cacheName, conflictTopology, availabilityMode);
 
-         queueConflictResolution(conflictTopology, conflictResolution.preferredNodes);
+         conflictResolution.cancelCurrentAttempt();
+         queueConflictResolution(conflictTopology, preferredNodes);
          return true;
       } finally {
          releaseLock();
@@ -1505,7 +1514,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             // a concurrent operation on ClusterCacheStatus that may invalidate the cancel request
             if (conflictResolution.topology.getTopologyId() > resolutionTopology.getTopologyId())
                return;
-            completeConflictResolution();
+            completeConflictResolution(conflictResolution);
          }
       } finally {
          releaseLock();
@@ -1576,10 +1585,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                      Log.CLUSTER.failedConflictResolution(cacheName, topology, rootCause);
                      eventLogger.error(EventLogCategory.CLUSTER, MESSAGES.conflictResolutionFailed(
                              topology.getMembers(), topology.getTopologyId(), rootCause.getMessage()));
-                     // If a node is suspected (or the RPC timed out, possibly due to a delayed view change
-                     // notification), we can't restart the CR until a new view is received, so we leave
+                     // If a node is suspected then we can't restart the CR until a new view is received, so we leave
                      // conflictResolution != null so that on a new view restartConflictResolution can return true
-                     if (!(rootCause instanceof SuspectException) && !(rootCause instanceof TimeoutException)) {
+                     if (!(rootCause instanceof SuspectException)) {
                         cancelConflictResolutionPhase(topology);
                      }
                   }

@@ -23,7 +23,7 @@ import org.infinispan.container.impl.InternalDataContainer;
 public class SegmentHasher {
 
    public static final int DEFAULT_BUCKET_COUNT = 32;
-   private static final int HASH_SEED = 9001;
+   static final int HASH_SEED = 9001;
 
    private final InternalDataContainer<?, ?> dataContainer;
    private final Marshaller marshaller;
@@ -57,9 +57,17 @@ public class SegmentHasher {
       Iterator<InternalCacheEntry<?, ?>> it = cast(dataContainer.iterator(IntSets.immutableSet(segmentId)));
       while (it.hasNext()) {
          InternalCacheEntry<?, ?> entry = it.next();
-         int bucket = bucketForKey(entry.getKey(), bucketCount);
-         hashes[bucket] ^= hashEntry(entry);
-         counts[bucket]++;
+         try {
+            byte[] keyBytes = marshaller.objectToByteBuffer(entry.getKey());
+            byte[] valueBytes = marshaller.objectToByteBuffer(entry.getValue());
+            long keyHash = MurmurHash3.MurmurHash3_x64_64(keyBytes, HASH_SEED);
+            int bucket = (int) (keyHash & (bucketCount - 1));
+            hashes[bucket] ^= keyHash ^ MurmurHash3.MurmurHash3_x64_64(valueBytes, HASH_SEED);
+            counts[bucket]++;
+         } catch (IOException | InterruptedException e) {
+            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+            throw new RuntimeException("Failed to marshal entry for bucket hashing", e);
+         }
       }
       List<BucketHash> result = new ArrayList<>(bucketCount);
       for (int b = 0; b < bucketCount; b++) {
@@ -107,18 +115,41 @@ public class SegmentHasher {
       }
    }
 
-   private long hashEntry(InternalCacheEntry<?, ?> entry) {
+   public record HashAndBucket(long hash, int bucket) {}
+
+   /**
+    * Marshals {@code obj} and returns its MurmurHash3. This is the single hashing primitive
+    * that all higher-level methods delegate to.
+    */
+   public static long hashObject(Object obj, Marshaller marshaller) {
       try {
-         byte[] keyBytes = marshaller.objectToByteBuffer(entry.getKey());
-         byte[] valueBytes = marshaller.objectToByteBuffer(entry.getValue());
-         return MurmurHash3.MurmurHash3_x64_64(keyBytes, HASH_SEED)
-               ^ MurmurHash3.MurmurHash3_x64_64(valueBytes, HASH_SEED);
+         byte[] bytes = marshaller.objectToByteBuffer(obj);
+         return MurmurHash3.MurmurHash3_x64_64(bytes, HASH_SEED);
       } catch (IOException | InterruptedException e) {
          if (e instanceof InterruptedException) {
             Thread.currentThread().interrupt();
          }
-         throw new RuntimeException("Failed to marshal entry for segment hashing", e);
+         throw new RuntimeException("Failed to marshal object for hashing", e);
       }
+   }
+
+   public static long computeEntryHash(Object key, Object value, Marshaller marshaller) {
+      return hashObject(key, marshaller) ^ hashObject(value, marshaller);
+   }
+
+   public static int computeBucket(Object key, int bucketCount, Marshaller marshaller) {
+      return (int) (hashObject(key, marshaller) & (bucketCount - 1));
+   }
+
+   public static HashAndBucket computeHashAndBucket(Object key, Object value, int bucketCount, Marshaller marshaller) {
+      long keyHash = hashObject(key, marshaller);
+      int bucket = (int) (keyHash & (bucketCount - 1));
+      long entryHash = keyHash ^ hashObject(value, marshaller);
+      return new HashAndBucket(entryHash, bucket);
+   }
+
+   private long hashEntry(InternalCacheEntry<?, ?> entry) {
+      return computeEntryHash(entry.getKey(), entry.getValue(), marshaller);
    }
 
    @SuppressWarnings("unchecked")
