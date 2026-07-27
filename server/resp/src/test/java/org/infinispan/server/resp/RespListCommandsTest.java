@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.server.resp.test.RespTestingUtil.ADMIN;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -22,9 +23,11 @@ import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.ArrayOutput;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ProtocolKeyword;
 
 /**
  * RESP List commands testing
@@ -1005,5 +1008,275 @@ public class RespListCommandsTest extends SingleNodeRespBaseTest {
 
    public void testLINDEXWrongType() {
       assertWrongType(() -> redis.set("lindex-str", "value"), () -> redis.lindex("lindex-str", 0));
+   }
+
+   // LMOVEM tests
+
+   private static final ProtocolKeyword LMOVEM_CMD = new ProtocolKeyword() {
+      private final byte[] bytes = "LMOVEM".getBytes(StandardCharsets.US_ASCII);
+
+      @Override
+      public byte[] getBytes() {
+         return bytes;
+      }
+
+      @Override
+      public String name() {
+         return "LMOVEM";
+      }
+   };
+
+   @SuppressWarnings("unchecked")
+   private List<String> lmovem(String source, String dest, String srcDir, String dstDir, String... extraArgs) {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      CommandArgs<String, String> args = new CommandArgs<>(codec)
+            .addKey(source).addKey(dest)
+            .add(srcDir).add(dstDir);
+      for (String arg : extraArgs) {
+         args.add(arg);
+      }
+      List<Object> result = redis.dispatch(LMOVEM_CMD, new ArrayOutput<>(codec), args);
+      if (result == null) return null;
+      return result.stream().map(o -> (String) o).toList();
+   }
+
+   public void testLMOVEMDefault() {
+      redis.rpush("lmm-src", "a", "b", "c");
+
+      // Without COUNT/EXACTLY, moves 1 element (like LMOVE)
+      List<String> result = lmovem("lmm-src", "lmm-dst", "LEFT", "RIGHT");
+      assertThat(result).containsExactly("a");
+      assertThat(redis.lrange("lmm-src", 0, -1)).containsExactly("b", "c");
+      assertThat(redis.lrange("lmm-dst", 0, -1)).containsExactly("a");
+
+      result = lmovem("lmm-src", "lmm-dst", "RIGHT", "LEFT");
+      assertThat(result).containsExactly("c");
+      assertThat(redis.lrange("lmm-src", 0, -1)).containsExactly("b");
+      assertThat(redis.lrange("lmm-dst", 0, -1)).containsExactly("c", "a");
+   }
+
+   public void testLMOVEMCountObo() {
+      redis.rpush("lmm-obo-src", "1", "2", "3", "4", "5");
+
+      // LEFT LEFT COUNT 2 OBO: elements pushed to head one by one, reversed in dest
+      List<String> result = lmovem("lmm-obo-src", "lmm-obo-dst", "LEFT", "LEFT", "COUNT", "2", "OBO");
+      assertThat(result).containsExactly("2", "1");
+      assertThat(redis.lrange("lmm-obo-src", 0, -1)).containsExactly("3", "4", "5");
+      assertThat(redis.lrange("lmm-obo-dst", 0, -1)).containsExactly("2", "1");
+
+      // RIGHT RIGHT COUNT 2 OBO: order preserved at tail
+      result = lmovem("lmm-obo-src", "lmm-obo-dst2", "RIGHT", "RIGHT", "COUNT", "2", "OBO");
+      assertThat(result).containsExactly("5", "4");
+      assertThat(redis.lrange("lmm-obo-src", 0, -1)).containsExactly("3");
+      assertThat(redis.lrange("lmm-obo-dst2", 0, -1)).containsExactly("5", "4");
+   }
+
+   public void testLMOVEMCountBulk() {
+      redis.rpush("lmm-bulk-src", "1", "2", "3", "4", "5");
+
+      // LEFT LEFT COUNT 2 BULK: order preserved at head
+      List<String> result = lmovem("lmm-bulk-src", "lmm-bulk-dst", "LEFT", "LEFT", "COUNT", "2", "BULK");
+      assertThat(result).containsExactly("1", "2");
+      assertThat(redis.lrange("lmm-bulk-src", 0, -1)).containsExactly("3", "4", "5");
+      assertThat(redis.lrange("lmm-bulk-dst", 0, -1)).containsExactly("1", "2");
+
+      // LEFT RIGHT COUNT 2 BULK: order preserved at tail
+      result = lmovem("lmm-bulk-src", "lmm-bulk-dst2", "LEFT", "RIGHT", "COUNT", "2", "BULK");
+      assertThat(result).containsExactly("3", "4");
+      assertThat(redis.lrange("lmm-bulk-src", 0, -1)).containsExactly("5");
+      assertThat(redis.lrange("lmm-bulk-dst2", 0, -1)).containsExactly("3", "4");
+   }
+
+   public void testLMOVEMCountMoreThanAvailable() {
+      redis.rpush("lmm-over-src", "a", "b");
+
+      // COUNT 10 but only 2 elements: moves all available
+      List<String> result = lmovem("lmm-over-src", "lmm-over-dst", "LEFT", "RIGHT", "COUNT", "10", "OBO");
+      assertThat(result).containsExactly("a", "b");
+      assertThat(redis.lrange("lmm-over-dst", 0, -1)).containsExactly("a", "b");
+   }
+
+   public void testLMOVEMExactly() {
+      redis.rpush("lmm-ex-src", "a", "b", "c");
+
+      // EXACTLY 2: source has enough
+      List<String> result = lmovem("lmm-ex-src", "lmm-ex-dst", "LEFT", "RIGHT", "EXACTLY", "2", "OBO");
+      assertThat(result).containsExactly("a", "b");
+      assertThat(redis.lrange("lmm-ex-src", 0, -1)).containsExactly("c");
+      assertThat(redis.lrange("lmm-ex-dst", 0, -1)).containsExactly("a", "b");
+
+      // EXACTLY 5: source doesn't have enough, return nil
+      result = lmovem("lmm-ex-src", "lmm-ex-dst", "LEFT", "RIGHT", "EXACTLY", "5", "OBO");
+      assertThat(result).isNull();
+      // Source should be unchanged
+      assertThat(redis.lrange("lmm-ex-src", 0, -1)).containsExactly("c");
+   }
+
+   public void testLMOVEMNonExistingSrc() {
+      List<String> result = lmovem("lmm-nosrc", "lmm-nodst", "LEFT", "RIGHT");
+      assertThat(result).isNull();
+      assertThat(redis.exists("lmm-nodst")).isEqualTo(0);
+   }
+
+   public void testLMOVEMSameListDefault() {
+      redis.rpush("lmm-same", "a", "b", "c");
+
+      // Same list, no COUNT: equivalent to LMOVE rotate
+      List<String> result = lmovem("lmm-same", "lmm-same", "LEFT", "RIGHT");
+      assertThat(result).containsExactly("a");
+      assertThat(redis.lrange("lmm-same", 0, -1)).containsExactly("b", "c", "a");
+
+      result = lmovem("lmm-same", "lmm-same", "RIGHT", "LEFT");
+      assertThat(result).containsExactly("a");
+      assertThat(redis.lrange("lmm-same", 0, -1)).containsExactly("a", "b", "c");
+
+      // LEFT LEFT: peek head, no change
+      result = lmovem("lmm-same", "lmm-same", "LEFT", "LEFT");
+      assertThat(result).containsExactly("a");
+      assertThat(redis.lrange("lmm-same", 0, -1)).containsExactly("a", "b", "c");
+
+      // RIGHT RIGHT: peek tail, no change
+      result = lmovem("lmm-same", "lmm-same", "RIGHT", "RIGHT");
+      assertThat(result).containsExactly("c");
+      assertThat(redis.lrange("lmm-same", 0, -1)).containsExactly("a", "b", "c");
+   }
+
+   public void testLMOVEMCreatesDst() {
+      redis.rpush("lmm-csrc", "a", "b", "c");
+      List<String> result = lmovem("lmm-csrc", "lmm-newdst", "LEFT", "LEFT", "COUNT", "2", "BULK");
+      assertThat(result).containsExactly("a", "b");
+      assertThat(redis.lrange("lmm-newdst", 0, -1)).containsExactly("a", "b");
+   }
+
+   public void testLMOVEMSourceBecomesEmpty() {
+      redis.rpush("lmm-empty-src", "a", "b");
+      List<String> result = lmovem("lmm-empty-src", "lmm-empty-dst", "LEFT", "RIGHT", "COUNT", "5", "OBO");
+      assertThat(result).containsExactly("a", "b");
+      assertThat(redis.exists("lmm-empty-src")).isEqualTo(0);
+   }
+
+   public void testLMOVEMWrongType() {
+      redis.set("lmm-str", "value");
+      assertThatThrownBy(() -> lmovem("lmm-str", "lmm-dst", "LEFT", "RIGHT"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("WRONGTYPE");
+   }
+
+   public void testLMOVEMSyntaxErrors() {
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+
+      // Invalid source direction
+      assertThatThrownBy(() -> redis.dispatch(LMOVEM_CMD, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey("s").addKey("d").add("UP").add("LEFT")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR syntax error");
+
+      // Invalid destination direction
+      assertThatThrownBy(() -> redis.dispatch(LMOVEM_CMD, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey("s").addKey("d").add("LEFT").add("DOWN")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR syntax error");
+
+      // COUNT without count number and OBO/BULK
+      assertThatThrownBy(() -> redis.dispatch(LMOVEM_CMD, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey("s").addKey("d").add("LEFT").add("RIGHT").add("COUNT")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR syntax error");
+
+      // COUNT with number but without OBO/BULK
+      assertThatThrownBy(() -> redis.dispatch(LMOVEM_CMD, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey("s").addKey("d").add("LEFT").add("RIGHT").add("COUNT").add("2")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR syntax error");
+
+      // Invalid ordering keyword
+      assertThatThrownBy(() -> redis.dispatch(LMOVEM_CMD, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey("s").addKey("d").add("LEFT").add("RIGHT").add("COUNT").add("2").add("WRONG")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR syntax error");
+
+      // Negative count
+      assertThatThrownBy(() -> redis.dispatch(LMOVEM_CMD, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey("s").addKey("d").add("LEFT").add("RIGHT").add("COUNT").add("-1").add("OBO")))
+            .isInstanceOf(RedisCommandExecutionException.class);
+   }
+
+   public void testLMOVEMCaseInsensitive() {
+      redis.rpush("lmm-ci-src", "a", "b", "c");
+      List<String> result = lmovem("lmm-ci-src", "lmm-ci-dst", "left", "right", "count", "2", "obo");
+      assertThat(result).containsExactly("a", "b");
+   }
+
+   public void testLMOVEMRightPopBulkOrdering() {
+      // RIGHT RIGHT BULK: source order preserved
+      redis.rpush("lmm-rrb-src", "1", "2", "3", "4", "5");
+      List<String> result = lmovem("lmm-rrb-src", "lmm-rrb-dst", "RIGHT", "RIGHT", "COUNT", "3", "BULK");
+      assertThat(result).containsExactly("3", "4", "5");
+      assertThat(redis.lrange("lmm-rrb-dst", 0, -1)).containsExactly("3", "4", "5");
+      assertThat(redis.lrange("lmm-rrb-src", 0, -1)).containsExactly("1", "2");
+
+      // RIGHT LEFT BULK: source order preserved at head
+      redis.rpush("lmm-rlb-src", "1", "2", "3", "4", "5");
+      result = lmovem("lmm-rlb-src", "lmm-rlb-dst", "RIGHT", "LEFT", "COUNT", "3", "BULK");
+      assertThat(result).containsExactly("3", "4", "5");
+      assertThat(redis.lrange("lmm-rlb-dst", 0, -1)).containsExactly("3", "4", "5");
+      assertThat(redis.lrange("lmm-rlb-src", 0, -1)).containsExactly("1", "2");
+   }
+
+   public void testLMOVEMIntoExistingDestination() {
+      redis.rpush("lmm-ed-src", "1", "2", "3");
+      redis.rpush("lmm-ed-dst", "x", "y");
+      List<String> result = lmovem("lmm-ed-src", "lmm-ed-dst", "LEFT", "RIGHT", "COUNT", "2", "BULK");
+      assertThat(result).containsExactly("1", "2");
+      assertThat(redis.lrange("lmm-ed-dst", 0, -1)).containsExactly("x", "y", "1", "2");
+   }
+
+   public void testLMOVEMSameListWithCount() {
+      redis.rpush("lmm-same-cnt", "1", "2", "3", "4");
+      List<String> result = lmovem("lmm-same-cnt", "lmm-same-cnt", "LEFT", "RIGHT", "COUNT", "2", "BULK");
+      assertThat(result).containsExactly("1", "2");
+      assertThat(redis.lrange("lmm-same-cnt", 0, -1)).containsExactly("3", "4", "1", "2");
+   }
+
+   public void testLMOVEMCountMustBePositive() {
+      redis.rpush("lmm-pos-src", "a", "b", "c");
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+
+      // count = 0
+      assertThatThrownBy(() -> redis.dispatch(LMOVEM_CMD, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey("lmm-pos-src").addKey("lmm-pos-dst")
+                  .add("LEFT").add("RIGHT").add("COUNT").add("0").add("BULK")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR");
+
+      // exactly = 0
+      assertThatThrownBy(() -> redis.dispatch(LMOVEM_CMD, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey("lmm-pos-src").addKey("lmm-pos-dst")
+                  .add("LEFT").add("RIGHT").add("EXACTLY").add("0").add("BULK")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR");
+
+      // non-numeric count
+      assertThatThrownBy(() -> redis.dispatch(LMOVEM_CMD, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey("lmm-pos-src").addKey("lmm-pos-dst")
+                  .add("LEFT").add("RIGHT").add("COUNT").add("a").add("BULK")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR");
+   }
+
+   public void testLMOVEMWrongTypeDst() {
+      redis.rpush("lmm-wtd-src", "a", "b");
+      redis.set("lmm-wtd-dst", "foo");
+      assertThatThrownBy(() -> lmovem("lmm-wtd-src", "lmm-wtd-dst", "LEFT", "RIGHT", "COUNT", "2", "BULK"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("WRONGTYPE");
+      // Source should be unchanged
+      assertThat(redis.lrange("lmm-wtd-src", 0, -1)).containsExactly("a", "b");
+   }
+
+   public void testLMOVEMEmptySrcWithCountArgs() {
+      List<String> result = lmovem("lmm-nosrc2", "lmm-nodst2", "LEFT", "RIGHT", "COUNT", "5", "BULK");
+      assertThat(result).isNull();
+      assertThat(redis.exists("lmm-nodst2")).isEqualTo(0);
    }
 }
