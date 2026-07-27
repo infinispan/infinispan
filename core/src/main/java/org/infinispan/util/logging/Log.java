@@ -2486,4 +2486,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Non-shared store '%s' is configured without purgeOnStartup in a clustered cache. " +
          "This can lead to data resurrection and inconsistency after a node restart.", id = 728)
    void nonSharedStoreWithoutPurgeOnStartup(String storeType);
+
+   @Message(value = "Non-shared stores must have purge-on-startup enabled when conflict resolution is configured", id = 729)
+   CacheConfigurationException nonSharedStoreMustPurgeWithConflictResolution();
 }
