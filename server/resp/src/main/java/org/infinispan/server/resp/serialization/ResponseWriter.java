@@ -50,6 +50,17 @@ public interface ResponseWriter {
    BiConsumer<Collection<? extends Number>, ResponseWriter> ARRAY_INTEGER = (c, writer) -> writer.array(c, Resp3Type.INTEGER);
    BiConsumer<Collection<? extends Number>, ResponseWriter> ARRAY_DOUBLE = (c, writer) -> writer.array(c, Resp3Type.DOUBLE);
    BiConsumer<Collection<? extends String>, ResponseWriter> ARRAY_STRING = (c, writer) -> writer.array(c, Resp3Type.BULK_STRING);
+   /**
+    * Serializes a collection of bulk strings, writing a nil array when the collection is null or empty.
+    */
+   BiConsumer<Collection<byte[]>, ResponseWriter> ARRAY_BULK_STRING_OR_NIL = (c, writer) -> {
+      if (c == null || c.isEmpty()) {
+         writer.arrayStart(-1);
+         writer.arrayEnd();
+      } else {
+         writer.array(c, Resp3Type.BULK_STRING);
+      }
+   };
 
    /**
     * List the consumers for set responses with the different types needed.

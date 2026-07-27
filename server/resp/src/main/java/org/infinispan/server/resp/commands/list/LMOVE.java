@@ -53,7 +53,7 @@ public class LMOVE extends RespCommand implements Resp3Command {
 
       if (!sameList) {
          // warn when different lists
-         Log.SERVER.lmoveConsistencyMessage();
+         Log.SERVER.lmoveConsistencyMessage("LMOVE");
       }
 
       final boolean isSourceLeft;
