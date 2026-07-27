@@ -34,11 +34,11 @@ import org.infinispan.server.resp.tx.TransactionContext;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- *  Derogating to the command documentation, when multiple client are blocked
- *  on a BLPOP, the order in which they will be served is unspecified.
+ * Derogating to the command documentation, when multiple client are blocked
+ * on a BLPOP, the order in which they will be served is unspecified.
  *
- * @since 15.0
  * @see <a href="https://redis.io/commands/blpop/">BLPOP</a>
+ * @since 15.0
  */
 public abstract class AbstractBlockingPop extends RespCommand implements Resp3Command {
    private static final Log log = Log.getLog(AbstractBlockingPop.class);
@@ -51,8 +51,8 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
-         ChannelHandlerContext ctx,
-         List<byte[]> arguments) {
+                                                      ChannelHandlerContext ctx,
+                                                      List<byte[]> arguments) {
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
       PopConfiguration configuration = parseArguments(handler, arguments);
       if (configuration == null) {
@@ -79,6 +79,15 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
       }), ctx, ResponseWriter.ARRAY_BULK_STRING);
    }
 
+   /**
+    * Computes the absolute deadline for a timeout, or {@code 0} when no timeout is set. The deadline is recorded
+    * before listener installation so that it is relative to when the command was issued, not when the listener is
+    * fully installed (which may take time in clustered environments).
+    */
+   static long deadline(Resp3Handler handler, long timeout) {
+      return timeout > 0 ? handler.respServer().getTimeService().expectedEndTime(timeout, TimeUnit.MILLISECONDS) : 0;
+   }
+
    private CompletableFuture<Collection<byte[]>> addSubscriber(PopConfiguration configuration, Resp3Handler handler) {
       if (log.isTraceEnabled()) {
          log.tracef("Subscriber for keys: %s", configuration.keys());
@@ -87,10 +96,8 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
       DataConversion vc = cache.getValueDataConversion();
       PubSubListener pubSubListener = new PubSubListener(handler, cache, configuration);
       EventListenerKeysFilter filter = new EventListenerKeysFilter(configuration.keys().stream());
-      // Record the deadline before listener installation, which may take time in clustered environments.
-      // The timeout should be relative to when the command was issued, not when the listener is fully installed.
       long timeout = configuration.timeout();
-      long deadline = timeout > 0 ? handler.respServer().getTimeService().expectedEndTime(timeout, TimeUnit.MILLISECONDS) : 0;
+      long deadline = deadline(handler, timeout);
       CompletionStage<Void> addListenerStage = cache.addListenerAsync(pubSubListener, filter,
             new EventListenerConverter<Object, Object, byte[]>(vc));
       addListenerStage.whenComplete((ignore, t) -> {
@@ -211,7 +218,7 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
 
    /**
     * PollListenerSynchronizer
-    *
+    * <p>
     * This class synchronizes the access to a CompletableFuture `resultFuture` so
     * that its final value will be completed either
     * - with value v by an onListenerAdded() call if a not null value is found

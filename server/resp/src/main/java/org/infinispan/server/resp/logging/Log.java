@@ -50,9 +50,9 @@ public interface Log extends BasicLogger {
    void exceptionWhileRegisteringListener(@Cause Throwable cause, CharBuffer channelName);
 
    @LogMessage(level = WARN)
-   @Message(value = "LMOVE command can't guarantee atomicity and consistency when the source list and the destination list are different", id = 13006)
+   @Message(value = "%s command can't guarantee atomicity and consistency when the source list and the destination list are different", id = 13006)
    @Once
-   void lmoveConsistencyMessage();
+   void lmoveConsistencyMessage(String command);
 
    //@Once
    //@LogMessage(level = WARN)
