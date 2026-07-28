@@ -26,7 +26,6 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.core.impl.Log;
-import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.jspecify.annotations.NonNull;
 
 public final class IndexStartupRunner {
@@ -79,11 +78,17 @@ public final class IndexStartupRunner {
          }
       }
       IndexStartupMode startupMode = computeFinalMode(configuration, zapped.get());
-      SearchMapping mapping = ComponentRegistry.of(cache).getComponent(SearchMapping.class);
-      Indexer indexer = ComponentRegistry.of(cache).getComponent(Indexer.class);
       if (IndexStartupMode.PURGE.equals(startupMode)) {
-         mapping.scopeAll().workspace().purge();
+         if (Files.exists(path)) {
+            Util.recursiveFileRemove(path);
+            try {
+               Files.createDirectories(path);
+            } catch (IOException e) {
+               throw new RuntimeException(e);
+            }
+         }
       } else if (IndexStartupMode.REINDEX.equals(startupMode)) {
+         Indexer indexer = ComponentRegistry.of(cache).getComponent(Indexer.class);
          indexer.runLocal();
       }
    }
