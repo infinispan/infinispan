@@ -17,10 +17,8 @@ import org.jboss.jandex.IndexView;
 public class NativeMetadataProvider implements org.infinispan.commons.graalvm.NativeMetadataProvider {
 
    static final Collection<Resource> resourceFiles = Resource.of(
-         "org/infinispan/protostream/message-wrapping\\.proto",
-         "org/infinispan/query/remote/client/query\\.proto",
-         "protostream/common-java-types\\.proto",
-         "protostream/common-java-container-types\\.proto"
+         "org/infinispan/.*\\.proto",
+         "org/infinispan/protostream/.*\\.proto"
    );
 
    static final Collection<Resource> resourceRegexps = Collections.emptyList();
@@ -62,7 +60,8 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
             org.infinispan.protostream.GeneratedSchema.class, // ProtoStream
             org.infinispan.commons.CacheException.class, // Commons
             org.infinispan.client.hotrod.RemoteCache.class, // Client
-            org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.class // Remote Query
+            org.infinispan.query.remote.client.ProtobufMetadataManagerConstants.class, // Remote Query
+            org.wildfly.security.WildFlyElytronBaseProvider.class // Elytron
       );
       return new ReflectionProcessor(featureAccess, index)
             .addImplementations(false, false,
@@ -71,7 +70,7 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
             ).addClasses(
                   org.infinispan.commons.jmx.PlatformMBeanServerLookup.class,
                   org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash.class
-            ).addClasses(
+            ).addClasses(false, true,
                   "org.wildfly.security.sasl.plain.WildFlyElytronSaslPlainProvider",
                   "org.wildfly.security.sasl.digest.WildFlyElytronSaslDigestProvider",
                   "org.wildfly.security.sasl.external.WildFlyElytronSaslExternalProvider",
@@ -79,6 +78,38 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
                   "org.wildfly.security.sasl.scram.WildFlyElytronSaslScramProvider",
                   "org.wildfly.security.sasl.gssapi.WildFlyElytronSaslGssapiProvider",
                   "org.wildfly.security.sasl.gs2.WildFlyElytronSaslGs2Provider",
+                  "org.wildfly.security.password.WildFlyElytronPasswordProvider"
+            ).addClasses(
+                  "org.wildfly.security.sasl.plain.PlainSaslClientFactory",
+                  "org.wildfly.security.sasl.digest.DigestClientFactory",
+                  "org.wildfly.security.sasl.external.ExternalSaslClientFactory",
+                  "org.wildfly.security.sasl.oauth2.OAuth2SaslClientFactory",
+                  "org.wildfly.security.sasl.scram.ScramSaslClientFactory",
+                  "org.wildfly.security.sasl.gssapi.GssapiClientFactory",
+                  "org.wildfly.security.sasl.gs2.Gs2SaslClientFactory",
+
+                  "org.wildfly.security.password.impl.PasswordFactorySpiImpl",
+                  "org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl",
+
+                  // Elytron _$logger classes are spread across many jars,
+                  // so Jandex cannot discover them from a single index entry.
+                  "org.wildfly.security.asn1.ElytronMessages_$logger",
+                  "org.wildfly.security.auth.server._private.ElytronMessages_$logger",
+                  "org.wildfly.security.credential._private.ElytronMessages_$logger",
+                  "org.wildfly.security.http.ElytronMessages_$logger",
+                  "org.wildfly.security.keystore.ElytronMessages_$logger",
+                  "org.wildfly.security.mechanism._private.ElytronMessages_$logger",
+                  "org.wildfly.security.mechanism.gssapi.ElytronMessages_$logger",
+                  "org.wildfly.security.password.impl.ElytronMessages_$logger",
+                  "org.wildfly.security.permission.ElytronMessages_$logger",
+                  "org.wildfly.security.permission.SecurityMessages_$logger",
+                  "org.wildfly.security.provider.util._private.ElytronMessages_$logger",
+                  "org.wildfly.security.sasl._private.ElytronMessages_$logger",
+                  "org.wildfly.security.ssl.ElytronMessages_$logger",
+                  "org.wildfly.security.util.ElytronMessages_$logger",
+                  "org.wildfly.security.x500._private.ElytronMessages_$logger",
+                  "org.wildfly.security.x500.cert._private.ElytronMessages_$logger",
+                  "org.wildfly.security.x500.cert.util.ElytronMessages_$logger",
 
                   "org.infinispan.client.hotrod.event.impl.ContinuousQueryImpl$ClientEntryListener",
                   "org.infinispan.client.hotrod.near.NearCacheService$InvalidatedNearCacheListener",

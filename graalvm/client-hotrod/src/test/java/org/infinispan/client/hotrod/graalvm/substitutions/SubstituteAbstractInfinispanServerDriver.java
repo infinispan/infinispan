@@ -27,19 +27,41 @@ public class SubstituteAbstractInfinispanServerDriver {
    public static void copyFromJar(String source, final Path target) throws URISyntaxException, IOException {
       URI resource = SubstituteAbstractInfinispanServerDriver.class.getResource("/").toURI();
       try (FileSystem fileSystem = FileSystems.newFileSystem(resource, Collections.emptyMap())) {
-         final Path jarPath = fileSystem.getPath(source);
-         Files.walkFileTree(jarPath, new SimpleFileVisitor<>() {
+         final Path root = fileSystem.getRootDirectories().iterator().next();
+         final String sourcePrefix = "/" + source;
+         // Walk from root to work around GraalVM 25.2 bug where readAttributes()
+         // fails on directory entries but cached attributes from directory listing work.
+         // Use string-based relativization to avoid NativeImageResourcePath.relativize()
+         // failing on paths with different resource indexes.
+         Files.walkFileTree(root, new SimpleFileVisitor<>() {
+
+            private String relativize(Path path) {
+               String s = path.toString();
+               if (s.equals(sourcePrefix)) {
+                  return "";
+               }
+               return s.substring(sourcePrefix.length() + 1);
+            }
 
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-               Path currentTarget = target.resolve(jarPath.relativize(dir).toString());
+               String dirStr = dir.toString();
+               if ("/".equals(dirStr)) {
+                  return FileVisitResult.CONTINUE;
+               }
+               if (!dirStr.startsWith(sourcePrefix)) {
+                  return FileVisitResult.SKIP_SUBTREE;
+               }
+               Path currentTarget = target.resolve(relativize(dir));
                Files.createDirectories(currentTarget);
                return FileVisitResult.CONTINUE;
             }
 
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-               Files.copy(file, target.resolve(jarPath.relativize(file).toString()), StandardCopyOption.REPLACE_EXISTING);
+               if (file.toString().startsWith(sourcePrefix)) {
+                  Files.copy(file, target.resolve(relativize(file)), StandardCopyOption.REPLACE_EXISTING);
+               }
                return FileVisitResult.CONTINUE;
             }
          });
