@@ -2,6 +2,7 @@ package org.infinispan.spring.remote.session;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.Map;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -14,7 +15,6 @@ import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.common.session.AbstractApplicationPublisherBridge;
-import org.infinispan.util.KeyValuePair;
 import org.springframework.session.MapSession;
 import org.springframework.session.Session;
 
@@ -62,21 +62,19 @@ public class RemoteApplicationPublishedBridge extends AbstractApplicationPublish
       emitSessionDestroyedEvent(readEvent(event).getValue());
    }
 
-   protected KeyValuePair<String, Session> readEvent(ClientCacheEntryCustomEvent<byte[]> event) {
+   protected Map.Entry<String, Session> readEvent(ClientCacheEntryCustomEvent<byte[]> event) {
       byte[] eventData = event.getEventData();
       ByteBuffer rawData = ByteBuffer.wrap(eventData);
       byte[] rawKey = readElement(rawData);
       byte[] rawValue = readElement(rawData);
       String key = dataFormat.keyToObj(rawKey, allowList);
-      KeyValuePair keyValuePair;
       if (rawValue == null) {
          // This events will hold either an old or a new value almost every time. But there are some corner cases
          // during rebalance where neither a new or an old value will be present. This if handles this case
-         keyValuePair = new KeyValuePair<>(key, new MapSession(key));
+         return Map.entry(key, new MapSession(key));
       } else {
-         keyValuePair = new KeyValuePair<>(key, dataFormat.valueToObj(rawValue, allowList));
+         return Map.entry(key, dataFormat.valueToObj(rawValue, allowList));
       }
-      return keyValuePair;
    }
 
    private byte[] readElement(ByteBuffer buffer) {
