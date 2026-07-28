@@ -1,5 +1,8 @@
 package org.infinispan.util;
 
+import java.util.Map;
+import java.util.Objects;
+
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoFactory;
@@ -14,7 +17,7 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
  * @since 6.0
  */
 @ProtoTypeId(ProtoStreamTypeIds.KEY_VALUE_PAIR)
-public class KeyValuePair<K,V> {
+public class KeyValuePair<K,V> implements Map.Entry<K,V> {
    private final K key;
    private final V value;
 
@@ -51,23 +54,20 @@ public class KeyValuePair<K,V> {
    }
 
    @Override
+   public V setValue(V value) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof KeyValuePair)) return false;
-
-      KeyValuePair that = (KeyValuePair) o;
-
-      if (key != null ? !key.equals(that.key) : that.key != null) return false;
-      if (value != null ? !value.equals(that.value) : that.value != null) return false;
-
-      return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      KeyValuePair<?, ?> that = (KeyValuePair<?, ?>) o;
+      return Objects.equals(key, that.key) && Objects.equals(value, that.value);
    }
 
    @Override
    public int hashCode() {
-      int result = key != null ? key.hashCode() : 0;
-      result = 31 * result + (value != null ? value.hashCode() : 0);
-      return result;
+      return Objects.hash(key, value);
    }
 
    @Override
