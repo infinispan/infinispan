@@ -6,6 +6,8 @@ import static org.infinispan.spring.remote.AbstractRemoteCacheManagerFactory.SPR
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
+import java.util.Map;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -21,7 +23,6 @@ import org.infinispan.spring.common.session.AbstractInfinispanSessionRepository;
 import org.infinispan.spring.common.session.InfinispanApplicationPublishedBridgeTCK;
 import org.infinispan.spring.remote.provider.BasicConfiguration;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.KeyValuePair;
 import org.springframework.session.MapSession;
 import org.springframework.session.Session;
 import org.springframework.test.context.ContextConfiguration;
@@ -100,10 +101,10 @@ public class RemoteApplicationPublishedBridgeTest extends InfinispanApplicationP
       RemoteApplicationPublishedBridge remoteApplicationPublishedBridge = new RemoteApplicationPublishedBridge(createSpringCache());
       String id = "1234";
       ClientCacheEntryCustomEvent<byte[]> event = new TestEvent(id);
-      KeyValuePair<String, Session> keyValuePair = remoteApplicationPublishedBridge.readEvent(event);
-      assertEquals(id, keyValuePair.getKey());
-      assertNotNull(keyValuePair.getValue());
-      MapSession value = (MapSession) keyValuePair.getValue();
+      Map.Entry<String, Session> entry = remoteApplicationPublishedBridge.readEvent(event);
+      assertEquals(id, entry.getKey());
+      assertNotNull(entry.getValue());
+      MapSession value = (MapSession) entry.getValue();
       assertEquals(id, value.getId());
    }
 
