@@ -53,6 +53,7 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       // Register only the providers that matter to us
       List<Provider> providers = new ArrayList<>();
       for (String name : Arrays.asList(
+            "org.wildfly.security.password.WildFlyElytronPasswordProvider",
             "org.wildfly.security.sasl.plain.WildFlyElytronSaslPlainProvider",
             "org.wildfly.security.sasl.digest.WildFlyElytronSaslDigestProvider",
             "org.wildfly.security.sasl.external.WildFlyElytronSaslExternalProvider",

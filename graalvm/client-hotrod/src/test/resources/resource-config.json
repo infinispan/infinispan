@@ -2,6 +2,9 @@
   "resources": {
     "includes": [
       {
+        "pattern": "configuration"
+      },
+      {
         "pattern": "configuration/.*"
       },
       {
