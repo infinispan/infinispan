@@ -475,7 +475,7 @@ jobs:
 
   coverage:
     needs: [get-info, ci-build-test-pr, targets-test, rolling-upgrades-matrix]
-    if: ${{ github.event.workflow_run.conclusion == 'success' && needs.get-info.outputs.source-event == 'pull_request' && needs.get-info.outputs.build-type == 'full' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && needs.get-info.outputs.source-event == 'pull_request' && needs.get-info.outputs.pull-request-number != '' && needs.get-info.outputs.build-type == 'full' }}
     name: Publish Coverage Report
     runs-on: ubuntu-latest
     env:
