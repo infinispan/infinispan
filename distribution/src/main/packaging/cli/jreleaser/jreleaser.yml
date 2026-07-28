@@ -54,9 +54,8 @@ release:
 
 distributions:
   infinispan-cli:
-    type: NATIVE_IMAGE
+    type: FLAT_BINARY
     stereotype: CLI
-    templateDirectory: distribution/src/main/packaging/cli/jreleaser/distributions/infinispan-cli
     executable:
       name: infinispan-cli
       windowsExtension: exe
@@ -67,8 +66,6 @@ distributions:
         platform: linux-aarch_64
       - path: artifacts/infinispan-cli-{{projectVersion}}-osx-aarch_64.zip
         platform: osx-aarch_64
-      - path: artifacts/infinispan-cli-{{projectVersion}}-osx-x86_64.zip
-        platform: osx-x86_64
       - path: artifacts/infinispan-cli-{{projectVersion}}-windows-x86_64.zip
         platform: windows-x86_64
 
@@ -76,6 +73,7 @@ packagers:
   brew:
     active: ALWAYS
     multiPlatform: true
+    templateDirectory: distribution/src/main/packaging/cli/jreleaser/distributions/infinispan-cli
     repository:
       owner: infinispan
       name: homebrew-tap
