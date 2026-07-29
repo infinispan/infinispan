@@ -1143,6 +1143,9 @@ public class ServerConfigurationParser implements ConfigurationParser {
             case ENABLED_CIPHERSUITES_TLS13:
                engine.enabledCiphersuitesNames(reader.getAttributeValue(i));
                break;
+            case ENABLED_NAMED_GROUPS:
+               engine.enabledNamedGroups(reader.getListAttributeValue(i));
+               break;
             default:
                throw ParseUtils.unexpectedAttribute(reader, i);
          }

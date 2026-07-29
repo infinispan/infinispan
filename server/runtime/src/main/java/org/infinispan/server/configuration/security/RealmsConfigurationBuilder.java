@@ -29,6 +29,10 @@ public class RealmsConfigurationBuilder implements Builder<RealmsConfiguration> 
       return realmConfigurationBuilder;
    }
 
+   public RealmConfigurationBuilder getRealm(String name) {
+      return securityRealms.get(name);
+   }
+
    @Override
    public RealmsConfiguration create() {
       Map<String, RealmConfiguration> map = securityRealms.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().create()));

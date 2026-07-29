@@ -734,6 +734,10 @@
           "type": "string",
           "description": "The cipher suite names to use for the TLSv1.3 engine.",
           "default": "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256"
+        },
+        "enabled-named-groups": {
+          "type": "string",
+          "description": "A list of TLS named groups (key exchange algorithms) to enable, e.g. \"x25519 X25519MLKEM768 secp256r1\"."
         }
       },
       "additionalProperties": false

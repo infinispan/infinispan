@@ -38,6 +38,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    private String sniHostName;
    private String protocol;
    private Collection<String> ciphers;
+   private Collection<String> namedGroups;
    private String provider;
    private boolean hostnameValidation = true;
 
@@ -197,6 +198,18 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
    }
 
    /**
+    * Configures the TLS named groups (key exchange algorithms).
+    * Setting this property also implicitly enables SSL/TLS (see {@link #enable()}
+    *
+    * @see javax.net.ssl.SSLParameters
+    * @param namedGroups one or more named group names, e.g. "x25519", "X25519MLKEM768"
+    */
+   public SslConfigurationBuilder namedGroups(String... namedGroups) {
+      this.namedGroups = Arrays.asList(namedGroups);
+      return enable();
+   }
+
+   /**
     * Configures whether to enable hostname validation according to <a href="https://datatracker.ietf.org/doc/html/rfc2818">RFC 2818</a>.
     * This is enabled by default and requires that the server certificate includes a subjectAltName extension of type dNSName or iPAddress.
     *
@@ -237,7 +250,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
             keyStoreFileName, keyStoreType, keyStorePassword, keyAlias,
             sslContext,
             trustStoreFileName, trustStoreType, trustStorePassword,
-            sniHostName, provider, protocol, ciphers, hostnameValidation);
+            sniHostName, provider, protocol, ciphers, namedGroups, hostnameValidation);
    }
 
    @Override
@@ -255,6 +268,7 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
       this.provider = template.provider();
       this.protocol = template.protocol();
       this.ciphers = template.ciphers() != null ? new ArrayList<>(template.ciphers()) : null;
+      this.namedGroups = template.namedGroups() != null ? new ArrayList<>(template.namedGroups()) : null;
       this.hostnameValidation = template.hostnameValidation();
       return this;
    }
@@ -292,6 +306,9 @@ public class SslConfigurationBuilder extends AbstractSecurityConfigurationChildB
 
       if(typed.containsKey(ConfigurationProperties.SSL_CIPHERS))
          this.ciphers(typed.getProperty(ConfigurationProperties.SSL_CIPHERS, null, true).split(" "));
+
+      if(typed.containsKey(ConfigurationProperties.SSL_NAMED_GROUPS))
+         this.namedGroups(typed.getProperty(ConfigurationProperties.SSL_NAMED_GROUPS, null, true).split(" "));
 
       if (typed.containsKey(ConfigurationProperties.SNI_HOST_NAME))
          this.sniHostName(typed.getProperty(ConfigurationProperties.SNI_HOST_NAME, null, true));

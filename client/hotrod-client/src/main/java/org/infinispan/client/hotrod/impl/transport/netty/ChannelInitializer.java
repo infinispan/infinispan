@@ -26,6 +26,7 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.SslConfiguration;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.jdkspecific.SSLParametersHelper;
 import org.infinispan.commons.util.SaslUtils;
 import org.infinispan.commons.util.Util;
 
@@ -122,6 +123,10 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       sslParameters.setServerNames(Collections.singletonList(new SNIHostName(sniHostName)));
       if (ssl.hostnameValidation()) {
          sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+      }
+      Collection<String> namedGroups = ssl.namedGroups();
+      if (namedGroups != null && !namedGroups.isEmpty()) {
+         SSLParametersHelper.setNamedGroups(sslParameters, namedGroups.toArray(new String[0]));
       }
       sslHandler.engine().setSSLParameters(sslParameters);
       channel.pipeline().addFirst(sslHandler, SslHandshakeExceptionHandler.INSTANCE);

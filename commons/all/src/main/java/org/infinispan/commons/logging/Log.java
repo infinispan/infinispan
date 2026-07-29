@@ -341,6 +341,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Feature '%s' is enabled", id = 983)
    void featureEnabled(String featureName);
 
+   @LogMessage(level = WARN)
+   @Message(value = "SSL NamedGroups are not supported on this JDK", id = 984)
+   void sslNamedGroupsUnsupported();
+
    @Message(value = "Cannot instantiate class '%s'", id = 29523)
    CacheConfigurationException cannotInstantiateClass(String classname, @Suppressed Throwable t);
 }
