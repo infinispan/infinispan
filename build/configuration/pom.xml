@@ -65,7 +65,7 @@
       <jdk.min.version>17</jdk.min.version>
 
       <!-- Dependency versions -->
-      <version.aesh>3.16.5</version.aesh>
+      <version.aesh>3.16.6</version.aesh>
       <version.ant>1.10.17</version.ant>
       <version.ant-nodeps>1.8.1</version.ant-nodeps>
       <version.ant-contrib>1.0b3</version.ant-contrib>
@@ -173,7 +173,7 @@
 
       <!-- Plugin dependencies -->
       <version.checkstyle.maven-plugin>3.6.0</version.checkstyle.maven-plugin>
-      <version.native.maven.plugin>1.1.3</version.native.maven.plugin>
+      <version.native.maven.plugin>1.1.6</version.native.maven.plugin>
       <version.maven>3.9.16</version.maven>
       <version.maven.antrun>3.2.0</version.maven.antrun>
       <version.maven.archetype>3.4.1</version.maven.archetype>
