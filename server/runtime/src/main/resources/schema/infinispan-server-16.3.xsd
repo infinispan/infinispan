@@ -1492,6 +1492,13 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
+      <xs:attribute type="tns:name-list" name="enabled-named-groups">
+         <xs:annotation>
+            <xs:documentation>
+               A list of TLS named groups (key exchange algorithms) to enable, e.g. "x25519 X25519MLKEM768 secp256r1".
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:complexType name="security-realm-properties">

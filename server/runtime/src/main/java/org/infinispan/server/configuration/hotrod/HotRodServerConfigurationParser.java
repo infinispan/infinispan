@@ -165,6 +165,7 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
          throw Server.log.encryptionWithoutSecurityRealm();
       } else {
          encryption.realm(securityRealm).sslContext(serverBuilder.serverSSLContextSupplier(securityRealm));
+         encryption.namedGroups(serverBuilder.namedGroupsForRealm(securityRealm));
       }
       while (reader.inTag(Element.ENCRYPTION)) {
          Element element = Element.forName(reader.getLocalName());

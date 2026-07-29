@@ -288,6 +288,7 @@ public class RestServerConfigurationParser implements ConfigurationParser {
          throw Server.log.encryptionWithoutSecurityRealm();
       } else {
          encryption.realm(securityRealmName).sslContext(serverBuilder.serverSSLContextSupplier(securityRealmName));
+         encryption.namedGroups(serverBuilder.namedGroupsForRealm(securityRealmName));
       }
 
       while (reader.inTag(Element.ENCRYPTION)) {

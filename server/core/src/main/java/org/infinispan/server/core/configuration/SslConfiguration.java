@@ -20,10 +20,11 @@ public class SslConfiguration extends ConfigurationElement<SslConfiguration> {
 
    static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
    static final AttributeDefinition<Boolean> REQUIRE_CLIENT_AUTH = AttributeDefinition.builder("require-client-auth", false).immutable().build();
+   static final AttributeDefinition<String[]> NAMED_GROUPS = AttributeDefinition.builder("named-groups", null, String[].class).immutable().build();
    private final Map<String, SslEngineConfiguration> sniDomainsConfiguration;
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(SslConfiguration.class, ENABLED, REQUIRE_CLIENT_AUTH);
+      return new AttributeSet(SslConfiguration.class, ENABLED, REQUIRE_CLIENT_AUTH, NAMED_GROUPS);
    }
 
    SslConfiguration(AttributeSet attributes, Map<String, SslEngineConfiguration> sniDomainsConfiguration) {
@@ -57,6 +58,10 @@ public class SslConfiguration extends ConfigurationElement<SslConfiguration> {
 
    public char[] trustStorePassword() {
       return sniDomainsConfiguration.get(DEFAULT_SNI_DOMAIN).trustStorePassword();
+   }
+
+   public String[] namedGroups() {
+      return attributes.attribute(NAMED_GROUPS).get();
    }
 
    public Map<String, SslEngineConfiguration> sniDomainsConfiguration() {

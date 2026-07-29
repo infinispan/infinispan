@@ -20,9 +20,11 @@ public class SSLEngineConfiguration extends ConfigurationElement<SSLEngineConfig
          .immutable().build();
    static final AttributeDefinition<String> ENABLED_CIPHERSUITES_13 = AttributeDefinition.builder(Attribute.ENABLED_CIPHERSUITES_TLS13, CipherSuiteSelector.OPENSSL_DEFAULT_CIPHER_SUITE_NAMES, String.class)
          .immutable().build();
+   static final AttributeDefinition<String[]> ENABLED_NAMED_GROUPS = AttributeDefinition.builder(Attribute.ENABLED_NAMED_GROUPS, null, String[].class)
+         .serializer(AttributeSerializer.STRING_ARRAY).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(SSLEngineConfiguration.class, ENABLED_PROTOCOLS, ENABLED_CIPHERSUITES, ENABLED_CIPHERSUITES_13);
+      return new AttributeSet(SSLEngineConfiguration.class, ENABLED_PROTOCOLS, ENABLED_CIPHERSUITES, ENABLED_CIPHERSUITES_13, ENABLED_NAMED_GROUPS);
    }
 
    SSLEngineConfiguration(AttributeSet attributes) {

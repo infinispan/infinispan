@@ -261,6 +261,11 @@ All properties are prefixed with `infinispan.client.hotrod.` (abbreviated as `IC
 |String
 |JVM default
 
+|`ssl_named_groups`
+|Comma-separated list of SSL named groups to enable.
+|String
+|JVM default
+
 |`ssl_context`
 |Pre-configured SSLContext instance (programmatic configuration only).
 |SSLContext

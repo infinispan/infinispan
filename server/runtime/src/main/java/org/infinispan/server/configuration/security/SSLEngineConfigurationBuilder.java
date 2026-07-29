@@ -36,6 +36,15 @@ public class SSLEngineConfigurationBuilder implements Builder<SSLEngineConfigura
       return this;
    }
 
+   public SSLEngineConfigurationBuilder enabledNamedGroups(String[] namedGroups) {
+      attributes.attribute(SSLEngineConfiguration.ENABLED_NAMED_GROUPS).set(namedGroups);
+      return this;
+   }
+
+   public String[] enabledNamedGroups() {
+      return attributes.attribute(SSLEngineConfiguration.ENABLED_NAMED_GROUPS).get();
+   }
+
    @Override
    public SSLEngineConfiguration create() {
       return new SSLEngineConfiguration(attributes.protect());
