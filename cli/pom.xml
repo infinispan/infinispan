@@ -87,12 +87,6 @@
          <optional>true</optional>
       </dependency>
       <dependency>
-         <groupId>org.openjdk.jmh</groupId>
-         <artifactId>jmh-core</artifactId>
-         <scope>compile</scope>
-         <optional>true</optional>
-      </dependency>
-      <dependency>
          <artifactId>HdrHistogram</artifactId>
          <groupId>org.hdrhistogram</groupId>
       </dependency>
@@ -121,11 +115,6 @@
             <configuration>
                <annotationProcessorPaths combine.children="append">
                   <annotationProcessorPath>
-                     <groupId>org.openjdk.jmh</groupId>
-                     <artifactId>jmh-generator-annprocess</artifactId>
-                     <version>${version.openjdk.jmh}</version>
-                  </annotationProcessorPath>
-                  <annotationProcessorPath>
                      <groupId>org.aesh</groupId>
                      <artifactId>aesh-processor</artifactId>
                   </annotationProcessorPath>
@@ -150,6 +139,13 @@
                   </manifest>
                </archive>
             </configuration>
+            <executions>
+               <execution>
+                  <goals>
+                     <goal>test-jar</goal>
+                  </goals>
+               </execution>
+            </executions>
          </plugin>
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>

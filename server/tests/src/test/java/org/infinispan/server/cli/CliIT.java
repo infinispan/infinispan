@@ -315,7 +315,7 @@ public class CliIT {
 
          // no cache
          terminal.send("benchmark " + connectionUrl());
-         terminal.assertContains("java.lang.IllegalArgumentException: Could not find cache");
+         terminal.assertContains("IllegalArgumentException: Could not find cache");
       }
    }
 
