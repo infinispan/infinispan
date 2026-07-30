@@ -188,7 +188,7 @@
       <versionx.com.microsoft.sqlserver>12.10.2.jre11</versionx.com.microsoft.sqlserver>
       <versionx.com.mysqldatabase.mysql>9.7.0</versionx.com.mysqldatabase.mysql>
       <versionx.com.postgresqldatabase.postgresql>42.7.3</versionx.com.postgresqldatabase.postgresql>
-      <versionx.com.oracle.database.jdbc.ojdbc11>23.26.2.0.0</versionx.com.oracle.database.jdbc.ojdbc11>
+      <versionx.com.oracle.database.jdbc.ojdbc11>23.26.3.0.0</versionx.com.oracle.database.jdbc.ojdbc11>
       <versionx.commons-dbcp.commons-dbcp>1.4</versionx.commons-dbcp.commons-dbcp>
       <versionx.commons-io.commons-io>2.22.0</versionx.commons-io.commons-io>
       <versionx.commons-logging.commons-logging>1.4.0</versionx.commons-logging.commons-logging>
@@ -215,7 +215,7 @@
       <versionx.org.jboss.weld.se.weld-se-core>5.1.7.Final</versionx.org.jboss.weld.se.weld-se-core>
       <versionx.org.jboss.weld.weld-core-impl>5.1.7.Final</versionx.org.jboss.weld.weld-core-impl>
       <versionx.org.jboss.weld.weld-api>5.0.SP3</versionx.org.jboss.weld.weld-api>
-      <versionx.org.mariadb.jdbc>3.5.9</versionx.org.mariadb.jdbc>
+      <versionx.org.mariadb.jdbc>3.5.10</versionx.org.mariadb.jdbc>
       <versionx.org.postgresql>42.7.13</versionx.org.postgresql>
       <versionx.org.testcontainers.testcontainers>2.0.5</versionx.org.testcontainers.testcontainers>
       <!-- Test dependency. Careful about GraalVM metadata repository -->
@@ -223,7 +223,7 @@
       <versionx.org.testng.testng>6.14.3</versionx.org.testng.testng>
       <versionx.org.twdata.maven.mojo-executor>2.4.1</versionx.org.twdata.maven.mojo-executor>
       <versionx.org.wildfly.common.wildfly-common>1.7.0.Final</versionx.org.wildfly.common.wildfly-common>
-      <versionx.org.wildfly.maven.plugins.licenses-plugin>2.4.5.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
+      <versionx.org.wildfly.maven.plugins.licenses-plugin>2.4.6.Final</versionx.org.wildfly.maven.plugins.licenses-plugin>
       <versionx.org.xerial.sqlite>3.53.2.0</versionx.org.xerial.sqlite>
    </properties>
 
