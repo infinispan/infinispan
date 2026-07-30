@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.File;
@@ -18,6 +17,9 @@ import java.io.FileWriter;
 import java.io.Writer;
 import java.lang.reflect.Method;
 import java.nio.channels.FileLock;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Optional;
 import java.util.Properties;
 
 import org.infinispan.Cache;
@@ -29,6 +31,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StateTransferConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.UncleanShutdownAction;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -244,26 +247,26 @@ public class GlobalStateTest extends AbstractInfinispanTest {
       try {
          cm1.start();
          cm2.start();
-         // Create two DIST caches
+         // Create a DIST cache with a global mutable attribute.
          ConfigurationBuilder builder = new ConfigurationBuilder();
-         builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true);
+         builder.clustering().cacheMode(CacheMode.DIST_SYNC).memory().maxCount(1000);
          cm1.administration().getOrCreateCache("cache1", builder.build());
-         assertTrue(cm1.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
-         assertTrue(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+         assertThat(cm1.getCache("cache1").getCacheConfiguration().memory().maxCount()).isEqualTo(1000);
+         assertThat(cm2.getCache("cache1").getCacheConfiguration().memory().maxCount()).isEqualTo(1000);
 
          // Stop cm2 before updating.
          cm2.stop();
 
          // Update the configuration while cm2 is off.
-         builder.clustering().stateTransfer().awaitInitialTransfer(false);
+         builder.memory().maxCount(2000);
          cm1.administration().withFlags(CacheContainerAdmin.AdminFlag.UPDATE).getOrCreateCache("cache1", builder.build());
-         assertFalse(cm1.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+         assertThat(cm1.getCache("cache1").getCacheConfiguration().memory().maxCount()).isEqualTo(2000);
 
          // Start cm2 again successfully. It should have the same configuration as cm1.
          global2 = statefulGlobalBuilder(state2, false);
          cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
          cm2.start();
-         assertFalse(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+         assertThat(cm2.getCache("cache1").getCacheConfiguration().memory().maxCount()).isEqualTo(2000);
       } finally {
          TestingUtil.killCacheManagers(cm1, cm2);
       }
@@ -279,25 +282,25 @@ public class GlobalStateTest extends AbstractInfinispanTest {
       try {
          cm1.start();
          cm2.start();
-         // Create two DIST caches
+         // Create a DIST cache with a global mutable attribute.
          ConfigurationBuilder builder = new ConfigurationBuilder();
-         builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true);
+         builder.clustering().cacheMode(CacheMode.DIST_SYNC).memory().maxCount(1000);
          cm1.administration().getOrCreateCache("cache1", builder.build());
-         assertTrue(cm1.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
-         assertTrue(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+         assertThat(cm1.getCache("cache1").getCacheConfiguration().memory().maxCount()).isEqualTo(1000);
+         assertThat(cm2.getCache("cache1").getCacheConfiguration().memory().maxCount()).isEqualTo(1000);
 
          // Stop cm2 before updating.
          cm2.stop();
 
          // Update the configuration while cm2 is off.
-         builder.clustering().stateTransfer().awaitInitialTransfer(false);
+         builder.memory().maxCount(2000);
          cm1.administration().withFlags(CacheContainerAdmin.AdminFlag.UPDATE).getOrCreateCache("cache1", builder.build());
-         assertFalse(cm1.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+         assertThat(cm1.getCache("cache1").getCacheConfiguration().memory().maxCount()).isEqualTo(2000);
 
          // Start cm2 again successfully. It should have the same configuration as cm1.
          cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, statefulGlobalBuilder(state2, false), new ConfigurationBuilder(), new TransportFlags());
          cm2.start();
-         assertFalse(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+         assertThat(cm2.getCache("cache1").getCacheConfiguration().memory().maxCount()).isEqualTo(2000);
 
          // Restart both nodes and ensure configuration still updated.
          TestingUtil.killCacheManagers(cm1, cm2);
@@ -307,8 +310,8 @@ public class GlobalStateTest extends AbstractInfinispanTest {
          cm2.start();
          cm1.start();
 
-         assertFalse(cm1.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
-         assertFalse(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer());
+         assertThat(cm1.getCache("cache1").getCacheConfiguration().memory().maxCount()).isEqualTo(2000);
+         assertThat(cm2.getCache("cache1").getCacheConfiguration().memory().maxCount()).isEqualTo(2000);
       } finally {
          TestingUtil.killCacheManagers(cm1, cm2);
       }
@@ -402,6 +405,146 @@ public class GlobalStateTest extends AbstractInfinispanTest {
          cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
          cm1.start();
          assertThat(cm1.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer()).isFalse();
+      } finally {
+         TestingUtil.killCacheManagers(cm1, cm2);
+      }
+   }
+
+   public void testNonOriginatorRetainsDefaultAfterRestart(Method m) {
+      String state1 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "1");
+      GlobalConfigurationBuilder global1 = statefulGlobalBuilder(state1, true);
+      String state2 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "2");
+      GlobalConfigurationBuilder global2 = statefulGlobalBuilder(state2, true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
+      try {
+         cm1.start();
+         cm2.start();
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true);
+         cm1.administration().getOrCreateCache("cache1", builder.build());
+
+         // Update non-global attribute on cm1 only
+         builder.clustering().stateTransfer().awaitInitialTransfer(false);
+         cm1.administration().withFlags(CacheContainerAdmin.AdminFlag.UPDATE).getOrCreateCache("cache1", builder.build());
+
+         // Assert the attribute was updated only on cm1
+         assertThat(cm1.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer()).isFalse();
+         assertThat(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer()).isTrue();
+
+         // Restart cm2, and it never updated the attribute, so it must retain the definition default
+         cm2.stop();
+         global2 = statefulGlobalBuilder(state2, false);
+         cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
+         cm2.start();
+         // Attribute is still the default value.
+         assertThat(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer()).isTrue();
+      } finally {
+         TestingUtil.killCacheManagers(cm1, cm2);
+      }
+   }
+
+   public void testFreshNodeGetsDefinitionDefaultsForNonGlobalAttributes(Method m) {
+      String state1 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "1");
+      GlobalConfigurationBuilder global1 = statefulGlobalBuilder(state1, true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
+      try {
+         cm1.start();
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true);
+         cm1.administration().getOrCreateCache("cache1", builder.build());
+
+         builder.clustering().stateTransfer().awaitInitialTransfer(false);
+         cm1.administration().withFlags(CacheContainerAdmin.AdminFlag.UPDATE).getOrCreateCache("cache1", builder.build());
+         assertThat(cm1.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer()).isFalse();
+
+         // Fresh node joins, it should get definition default (true), not cm1's value (false)
+         String state2 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "2");
+         GlobalConfigurationBuilder global2 = statefulGlobalBuilder(state2, true);
+         EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
+         try {
+            cm2.start();
+            assertThat(cm2.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer()).isTrue();
+         } finally {
+            TestingUtil.killCacheManagers(cm2);
+         }
+      } finally {
+         TestingUtil.killCacheManagers(cm1);
+      }
+   }
+
+   public void testCachesXmlDoesNotContainNonGlobalAttributes(Method m) throws Exception {
+      String state1 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "1");
+      GlobalConfigurationBuilder global1 = statefulGlobalBuilder(state1, true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
+      try {
+         cm1.start();
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true).memory().maxCount(1000);
+         cm1.administration().getOrCreateCache("cache1", builder.build());
+
+         // Update both a per-node and a global mutable attribute.
+         builder.clustering().stateTransfer().awaitInitialTransfer(false);
+         builder.memory().maxCount(2000);
+         cm1.administration().withFlags(CacheContainerAdmin.AdminFlag.UPDATE).getOrCreateCache("cache1", builder.build());
+         assertThat(cm1.getCache("cache1").getCacheConfiguration().clustering().stateTransfer().awaitInitialTransfer()).isFalse();
+         assertThat(cm1.getCache("cache1").getCacheConfiguration().memory().maxCount()).isEqualTo(2000);
+
+         // caches.xml should not contain the per-node value, but should contain the global one.
+         String content = Files.readString(Path.of(state1, "caches.xml"));
+         assertThat(content).doesNotContain("await-initial-transfer=\"false\"");
+         assertThat(content).contains("max-count=\"2000\"");
+      } finally {
+         TestingUtil.killCacheManagers(cm1);
+      }
+   }
+
+   public void testLocalAttrsScopedStateDeletedOnCacheRemoval(Method m) {
+      String state1 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "1");
+      GlobalConfigurationBuilder global1 = statefulGlobalBuilder(state1, true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
+      try {
+         cm1.start();
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true);
+         cm1.administration().getOrCreateCache("cache1", builder.build());
+
+         builder.clustering().stateTransfer().awaitInitialTransfer(false);
+         cm1.administration().withFlags(CacheContainerAdmin.AdminFlag.UPDATE).getOrCreateCache("cache1", builder.build());
+
+         GlobalStateManager gsm1 = TestingUtil.extractGlobalComponent(cm1, GlobalStateManager.class);
+         assertThat(gsm1.readScopedState("___local-attrs.cache1")).isPresent();
+
+         cm1.administration().removeCache("cache1");
+         assertThat(gsm1.readScopedState("___local-attrs.cache1")).isEmpty();
+      } finally {
+         TestingUtil.killCacheManagers(cm1);
+      }
+   }
+
+   public void testNonGlobalAttributeWrittenToScopedPersistentState(Method m) {
+      String state1 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "1");
+      GlobalConfigurationBuilder global1 = statefulGlobalBuilder(state1, true);
+      String state2 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "2");
+      GlobalConfigurationBuilder global2 = statefulGlobalBuilder(state2, true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
+      try {
+         cm1.start();
+         cm2.start();
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true);
+         cm1.administration().getOrCreateCache("cache1", builder.build());
+
+         builder.clustering().stateTransfer().awaitInitialTransfer(false);
+         cm1.administration().withFlags(CacheContainerAdmin.AdminFlag.UPDATE).getOrCreateCache("cache1", builder.build());
+
+         GlobalStateManager gsm1 = TestingUtil.extractGlobalComponent(cm1, GlobalStateManager.class);
+         Optional<ScopedPersistentState> scopedState = gsm1.readScopedState("___local-attrs.cache1");
+         assertThat(scopedState).isPresent();
+
+         String attrKey = StateTransferConfiguration.AWAIT_INITIAL_TRANSFER.name();
+         assertThat(scopedState.get().getProperty(attrKey)).isEqualTo("false");
       } finally {
          TestingUtil.killCacheManagers(cm1, cm2);
       }
