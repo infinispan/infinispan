@@ -34,7 +34,7 @@ jobs:
           - nfpm_arch: arm64
             asset_name: linux-aarch_64
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
 
       - name: Install nfpm
         run: |
@@ -219,7 +219,7 @@ jobs:
   publish-package-managers:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
 
       - name: Download all native CLI artifacts
         run: |
@@ -252,7 +252,7 @@ jobs:
   publish-aur:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
         with:
           sparse-checkout: distribution/src/main/packaging/cli/aur
 

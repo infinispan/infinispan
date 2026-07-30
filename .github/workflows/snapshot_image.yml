@@ -74,7 +74,7 @@ jobs:
           tags: ${{ inputs.tag }}
 
       - name: Log in to Quay.io
-        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
+        uses: redhat-actions/podman-login@50c2d9a331bb67c8fdab99b86455fad05e2e3252 # v2.0
         with:
           username: ${{ secrets.QUAY_USERNAME_TEST }}
           password: ${{ secrets.QUAY_TOKEN_TEST }}
