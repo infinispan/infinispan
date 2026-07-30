@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
+import org.infinispan.cli.Context;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.resources.ContainerResource;
 import org.infinispan.cli.resources.ContainersResource;
@@ -50,6 +51,7 @@ import org.infinispan.commons.util.Util;
  **/
 public class RestConnection implements Connection, Closeable {
    private final RestClientConfigurationBuilder builder;
+   private final Context context;
    private Resource activeResource;
    private MediaType encoding = MediaType.TEXT_PLAIN;
    private Collection<String> availableConfigurations;
@@ -64,11 +66,10 @@ public class RestConnection implements Connection, Closeable {
    private String localSite;
    private boolean relayNode;
    private List<String> relayNodes;
-   private final Path workingDir;
 
-   public RestConnection(RestClientConfigurationBuilder builder) {
+   public RestConnection(Context context, RestClientConfigurationBuilder builder) {
       this.builder = builder;
-      this.workingDir = Paths.get(System.getProperty("user.dir", ""));
+      this.context = context;
    }
 
    @Override
@@ -163,22 +164,14 @@ public class RestConnection implements Connection, Closeable {
    }
 
    private RestResponse handleResponseStatus(RestResponse response) throws IOException {
-      switch (response.status()) {
-         case 200:
-         case 201:
-         case 202:
-            return response;
-         case 204:
-            return null;
-         case 401:
-            throw MSG.unauthorized(response.body());
-         case 403:
-            throw MSG.forbidden(response.body());
-         case 404:
-            throw MSG.notFound(response.body());
-         default:
-            throw MSG.error(response.body());
-      }
+      return switch (response.status()) {
+         case 200, 201, 202 -> response;
+         case 204 -> null;
+         case 401 -> throw MSG.unauthorized(response.body());
+         case 403 -> throw MSG.forbidden(response.body());
+         case 404 -> throw MSG.notFound(response.body());
+         default -> throw MSG.error(response.body());
+      };
    }
 
    @Override
@@ -210,7 +203,7 @@ public class RestConnection implements Connection, Closeable {
             Map<String, List<String>> headers = parseHeaders(r);
             String contentDisposition = headers.get("Content-Disposition").get(0);
             String filename = Util.unquote(contentDisposition.split("filename=")[1]);
-            Path file = workingDir.resolve(filename);
+            Path file = Paths.get(context.getCurrentWorkingDirectory().getAbsolutePath(), filename);
             boolean gzip = MediaType.APPLICATION_GZIP_TYPE.equalsIgnoreCase(headers.get("content-type").get(0));
 
             try (OutputStream os = Files.newOutputStream(file); InputStream is = parseResponseBody(r, gzip)) {
