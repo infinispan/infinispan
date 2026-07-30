@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.infinispan.cli.Context;
-import org.openjdk.jmh.runner.options.VerboseMode;
+import org.infinispan.cli.benchmark.VerboseMode;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
