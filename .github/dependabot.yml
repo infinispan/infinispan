@@ -4,8 +4,7 @@ updates:
   - package-ecosystem: maven
     directory: "/"
     schedule:
-      interval: daily
-    open-pull-requests-limit: 10
+      interval: weekly
     rebase-strategy: disabled
     ignore:
       - dependency-name: "io.opentelemetry:*"
@@ -18,15 +17,6 @@ updates:
       - dependency-name: "*"
         update-types: [ "version-update:semver-major" ]
     groups:
-      netty:
-        patterns:
-          - "io.netty:*"
-      quarkus:
-        patterns:
-          - "io.quarkus:*"
-      vertx:
-        patterns:
-          - "io.vertx:*"
       patch-updates:
         patterns:
           - "*"
@@ -42,12 +32,26 @@ updates:
         patterns:
           - "*"
 
+  # 16.2.x Security Updates Only
+  - package-ecosystem: maven
+    directory: "/"
+    schedule:
+      interval: weekly
+    rebase-strategy: disabled
+    target-branch: "16.2.x"
+    commit-message:
+      prefix: "[16.2] "
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
+
   # 16.0.x Security Updates Only
   - package-ecosystem: maven
     directory: "/"
     schedule:
-      interval: daily
-    open-pull-requests-limit: 0
+      interval: weekly
     rebase-strategy: disabled
     target-branch: "16.0.x"
     commit-message:
@@ -55,19 +59,6 @@ updates:
     groups:
       security-updates:
         applies-to: security-updates
-        patterns:
-          - "*"
-  - package-ecosystem: github-actions
-    directory: "/"
-    schedule:
-      interval: daily
-    open-pull-requests-limit: 10
-    rebase-strategy: disabled
-    target-branch: "16.0.x"
-    commit-message:
-      prefix: "[16.0] "
-    groups:
-      actions:
         patterns:
           - "*"
 
@@ -75,8 +66,7 @@ updates:
   - package-ecosystem: maven
     directory: "/"
     schedule:
-      interval: daily
-    open-pull-requests-limit: 0
+      interval: weekly
     rebase-strategy: disabled
     target-branch: "15.2.x"
     commit-message:
@@ -84,18 +74,5 @@ updates:
     groups:
       security-updates:
         applies-to: security-updates
-        patterns:
-          - "*"
-  - package-ecosystem: github-actions
-    directory: "/"
-    schedule:
-      interval: daily
-    open-pull-requests-limit: 10
-    rebase-strategy: disabled
-    target-branch: "15.2.x"
-    commit-message:
-      prefix: "[15.2] "
-    groups:
-      actions:
         patterns:
           - "*"
