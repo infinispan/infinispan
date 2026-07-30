@@ -761,6 +761,15 @@ When global state persistence is enabled, {brandname} maintains a state director
 The `___global.state` file records the {brandname} version and a timestamp, used to detect unclean shutdowns.
 On startup, if the global state indicates an unclean shutdown, {brandname} takes a configurable action: fail startup, purge stale state, or ignore the inconsistency.
 
+==== Persistent state file format
+
+The `{scope}.state` files are internal implementation details, not user-facing configuration files.
+Do not edit them.
+
+Each node stores its own metadata as line-oriented plain-text `key=value` format, similar to a properties file.
+The `___global.state` file includes the {brandname} version and shutdown timestamp.
+Components can store additional metadata in their own scoped state files.
+
 === Startup restoration
 
 On startup, the `GlobalConfigurationManager` restores runtime-created caches:

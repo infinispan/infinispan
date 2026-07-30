@@ -103,6 +103,6 @@ public class TracingSecurityTest extends SingleHotRodServerTest {
 
       Map<String, List<SpanData>> spansByName = InMemoryTelemetryClient.aggregateByName(spanItems);
       assertThat(spansByName.get("DENY")).hasSize(1);
-      assertThat(spansByName.get("ALLOW")).hasSize(3);
+      assertThat(spansByName.get("ALLOW")).hasSize(4);
    }
 }
