@@ -2,7 +2,6 @@ package org.infinispan.cli.commands;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Paths;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
@@ -14,8 +13,6 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
-import org.aesh.io.FileResource;
-import org.aesh.io.Resource;
 import org.infinispan.cli.completers.BookmarkCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.logging.Messages;
@@ -39,13 +36,13 @@ public class Connect extends CliCommand {
    String password;
 
    @Option(completer = FileOptionCompleter.class, shortName = 't', name = "truststore", description = "A truststore to use when connecting to SSL/TLS-enabled servers")
-   Resource truststore;
+   String truststore;
 
    @Option(shortName = 's', name = "truststore-password", description = "The password for the truststore")
    String truststorePassword;
 
    @Option(completer = FileOptionCompleter.class, shortName = 'k', name = "keystore", description = "A keystore containing a client certificate to authenticate with the server")
-   Resource keystore;
+   String keystore;
 
    @Option(shortName = 'w', name = "keystore-password", description = "The password for the keystore")
    String keystorePassword;
@@ -68,9 +65,9 @@ public class Connect extends CliCommand {
       String resolvedUrl = connectionString;
       String resolvedUsername = username;
       String resolvedPassword = password;
-      Resource resolvedTruststore = truststore;
+      String resolvedTruststore = truststore;
       String resolvedTruststorePassword = truststorePassword;
-      Resource resolvedKeystore = keystore;
+      String resolvedKeystore = keystore;
       String resolvedKeystorePassword = keystorePassword;
       boolean resolvedTrustAll = trustAll;
       String resolvedHostnameVerifier = hostnameVerifier;
@@ -86,14 +83,14 @@ public class Connect extends CliCommand {
             if (resolvedPassword == null) {
                resolvedPassword = bookmark.password();
             }
-            if (resolvedTruststore == null && bookmark.truststore() != null) {
-               resolvedTruststore = new FileResource(Paths.get(bookmark.truststore()).toFile());
+            if (resolvedTruststore == null) {
+               resolvedTruststore = bookmark.truststore();
             }
             if (resolvedTruststorePassword == null) {
                resolvedTruststorePassword = bookmark.truststorePassword();
             }
-            if (resolvedKeystore == null && bookmark.keystore() != null) {
-               resolvedKeystore = new FileResource(Paths.get(bookmark.keystore()).toFile());
+            if (resolvedKeystore == null) {
+               resolvedKeystore = bookmark.keystore();
             }
             if (resolvedKeystorePassword == null) {
                resolvedKeystorePassword = bookmark.keystorePassword();

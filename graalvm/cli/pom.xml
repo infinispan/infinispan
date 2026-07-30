@@ -64,6 +64,12 @@
         </dependency>
 
         <!-- Test Dependencies -->
+       <dependency>
+          <groupId>org.infinispan</groupId>
+          <artifactId>infinispan-cli-client</artifactId>
+          <type>test-jar</type>
+
+       </dependency>
         <dependency>
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-testing</artifactId>
@@ -118,6 +124,10 @@
                     <groupId>org.infinispan</groupId>
                     <artifactId>infinispan-commons-graalvm</artifactId>
                 </dependency>
+                <dependency>
+                    <groupId>org.infinispan</groupId>
+                    <artifactId>infinispan-core-graalvm</artifactId>
+                </dependency>
             </dependencies>
             <build>
                 <plugins>
@@ -135,9 +145,17 @@
                             </execution>
                         </executions>
                         <configuration>
+                            <metadataRepository>
+                                <dependencies>
+                                    <dependency>
+                                        <groupId>org.jgroups</groupId>
+                                        <artifactId>jgroups</artifactId>
+                                        <excluded>true</excluded>
+                                    </dependency>
+                                </dependencies>
+                            </metadataRepository>
                             <mainClass>org.infinispan.cli.commands.CLI</mainClass>
                             <imageName>${cli.name}</imageName>
-                            <fallback>false</fallback>
                             <buildArgs>
                                 <buildArg>-J-Xmx${native.build.xmx}</buildArg>
                                 <buildArg>-J-Djava.awt.headless=true</buildArg>
@@ -154,9 +172,8 @@
                                 <buildArg>-H:+UnlockExperimentalVMOptions</buildArg>
                                 <buildArg>-H:+AllowFoldMethods</buildArg>
                                 <buildArg>-H:+ReportExceptionStackTraces</buildArg>
-                                <buildArg>-H:-AddAllCharsets</buildArg>
+                                <buildArg>-H:+AddAllCharsets</buildArg>
                                 <buildArg>-H:IncludeLocales=en-US</buildArg>
-                                <buildArg>-H:-UnlockExperimentalVMOptions</buildArg>
                                 <buildArg>--exclude-config</buildArg>
                                 <buildArg>io\.netty\.netty-codec</buildArg>
                                 <buildArg>/META-INF/native-image/io\.netty/netty-codec/generated/handlers/reflect-config\.json</buildArg>

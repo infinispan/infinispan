@@ -16,12 +16,14 @@ import org.infinispan.cli.impl.StreamShell;
 import org.infinispan.commons.util.Util;
 import org.infinispan.testing.Eventually;
 import org.infinispan.testing.Testing;
+import org.infinispan.testing.jupiter.tags.Cli;
 import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
 
 /**
  * @since 14.0
  **/
+@Cli
 public class CliPipeTest {
    @Test
    public void testCliBatchPipe() throws IOException, InterruptedException {

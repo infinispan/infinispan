@@ -1,6 +1,5 @@
 package org.infinispan.cli.connection;
 
-import java.util.Properties;
 
 import org.infinispan.cli.Context;
 import org.infinispan.cli.impl.SSLContextSettings;
