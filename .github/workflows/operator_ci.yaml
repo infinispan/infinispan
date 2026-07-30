@@ -46,13 +46,13 @@ jobs:
       version: ${{ steps.infinispan.outputs.version }}
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
 
       - name: Setup Java
         uses: ./.github/actions/setup-java
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
 
       - name: Build Image
         id: infinispan
@@ -75,7 +75,7 @@ jobs:
 
   tests:
     needs: image
-    uses: infinispan/infinispan-operator/.github/workflows/ci.yml@6290ed50115cb1253c73cc83901d79842329736b # main
+    uses: infinispan/infinispan-operator/.github/workflows/ci.yml@d8d730437b6a13c290dced858a31f917cab9f293 # main
     with:
       operand: ${{ needs.image.outputs.image }}
       operandArtifact: operand-image

@@ -39,7 +39,7 @@ jobs:
 
     steps:
       - name: Set up Java
-        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5
         with:
           java-version: '25'
           distribution: 'zulu'
@@ -49,7 +49,7 @@ jobs:
           gpg-private-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
 
       - name: Checkout Source
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
         with:
           ref: ${{ inputs.branch }}
           token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
@@ -170,13 +170,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
       - name: Attest server distribution provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: distribution/target/distribution/infinispan-server-${{ steps.resolve-versions.outputs.RELEASE_VERSION }}.zip
 
       - name: Attest SBOM
         if: steps.sbom-check.outputs.exists == 'true'
-        uses: actions/attest-sbom@v2
+        uses: actions/attest-sbom@v4
         with:
           subject-path: distribution/target/distribution/infinispan-server-${{ steps.resolve-versions.outputs.RELEASE_VERSION }}.zip
           sbom-path: distribution/target/bom.json
@@ -221,20 +221,20 @@ jobs:
             gu_binary: gu
             native_extra_args: -Dnative.build.xmx=10g -Dquarkus.native.native-image-xmx=10g
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
 
       - if: ${{ matrix.os == 'windows-2022' }}
         name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3.0.0
 
-      - uses: graalvm/setup-graalvm@8c5543b71f44568342e106336639979e94a8f6de # v1
+      - uses: graalvm/setup-graalvm@0def53c0fd8534bc13416c9469f5be45265824fd # v1
         with:
           java-version: '25'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout Release Tag
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
         with:
           ref: ${{ needs.release.outputs.version }}
 
@@ -290,7 +290,7 @@ jobs:
   operator-main:
     needs: [images, release]
     if: ${{ !contains(needs.release.outputs.version, '.Dev') }}
-    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@1440ba6a16218701d3e06aafc6cd7c0743c5c78f # main
+    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@d8d730437b6a13c290dced858a31f917cab9f293 # main
     secrets: inherit
     with:
       image: quay.io/infinispan/server:${{ needs.release.outputs.version }}

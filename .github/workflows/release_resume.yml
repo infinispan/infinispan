@@ -55,20 +55,20 @@ jobs:
             asset_name: linux-aarch_64
             gu_binary: gu
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
 
       - if: ${{ matrix.os == 'windows-2022' }}
         name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3.0.0
 
-      - uses: graalvm/setup-graalvm@8c5543b71f44568342e106336639979e94a8f6de # v1
+      - uses: graalvm/setup-graalvm@0def53c0fd8534bc13416c9469f5be45265824fd # v1
         with:
           java-version: '25'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout Release Tag
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
         with:
           ref: ${{ github.event.inputs.version }}
 
@@ -112,7 +112,7 @@ jobs:
   operator:
     needs: images
     if: contains(github.event.inputs.version, '.Final')
-    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@1440ba6a16218701d3e06aafc6cd7c0743c5c78f # main
+    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@d8d730437b6a13c290dced858a31f917cab9f293 # main
     secrets: inherit
     with:
       image: quay.io/infinispan/server:${{ github.ref_name }}
