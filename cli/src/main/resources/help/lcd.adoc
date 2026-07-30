@@ -1,0 +1,30 @@
+LCD(1)
+======
+:doctype: manpage
+
+
+NAME
+----
+lcd - changes the current local working directory.
+
+
+DESCRIPTION
+-----------
+`PATH` can be absolute or relative to the current resource.
+`../` specifies parent resources.
+
+
+SYNOPSIS
+--------
+*lcd* ['PATH']
+
+
+EXAMPLE
+-------
+`lcd /tmp` +
+Changes the local current working directory to `/tmp`.
+
+
+SEE ALSO
+--------
+lpwd(1)

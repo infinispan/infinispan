@@ -1,0 +1,34 @@
+LLS(1)
+======
+:doctype: manpage
+
+
+NAME
+----
+lls - lists files in the current working directory.
+
+
+SYNOPSIS
+--------
+*lls* ['PATH']
+
+
+OPTIONS
+-------
+
+*'PATH'*::
+The path of the directory to list. Defaults to the current working directory.
+
+
+EXAMPLES
+--------
+`lls` +
+Lists the files and directories in the current working directory.
+
+`lls src/main/java` +
+Lists the files and directories in the `src/main/java` directory.
+
+
+SEE ALSO
+--------
+ls(1), run(1)
