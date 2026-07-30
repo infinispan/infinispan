@@ -1,7 +1,8 @@
 package org.infinispan.cli.impl;
 
+import java.util.function.Consumer;
+
 import org.aesh.command.CommandNotFoundHandler;
-import org.aesh.command.shell.Shell;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -9,7 +10,7 @@ import org.aesh.command.shell.Shell;
  **/
 public class CliCommandNotFoundHandler implements CommandNotFoundHandler {
    @Override
-   public void handleCommandNotFound(String line, Shell shell) {
-      shell.writeln("Command not found");
+   public void handleCommandNotFound(String line, Consumer<String> output) {
+      output.accept("Command not found");
    }
 }
