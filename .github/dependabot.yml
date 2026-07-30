@@ -38,6 +38,7 @@ updates:
     schedule:
       interval: weekly
     rebase-strategy: disabled
+    open-pull-requests-limit: 0
     target-branch: "16.2.x"
     commit-message:
       prefix: "[16.2] "
@@ -53,6 +54,7 @@ updates:
     schedule:
       interval: weekly
     rebase-strategy: disabled
+    open-pull-requests-limit: 0
     target-branch: "16.0.x"
     commit-message:
       prefix: "[16.0] "
@@ -68,6 +70,7 @@ updates:
     schedule:
       interval: weekly
     rebase-strategy: disabled
+    open-pull-requests-limit: 0
     target-branch: "15.2.x"
     commit-message:
       prefix: "[15.2] "
