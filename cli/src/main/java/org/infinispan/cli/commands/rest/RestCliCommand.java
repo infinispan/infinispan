@@ -31,7 +31,7 @@ abstract class RestCliCommand extends CliCommand {
       Context context = invocation.getContext();
       if (context.connection() == null) {
          shell.writeln("The command is not available in the current context.");
-         invocation.getContext().refreshPrompt();
+         context.refreshPrompt();
          return CommandResult.FAILURE;
       }
       try {
@@ -45,12 +45,12 @@ abstract class RestCliCommand extends CliCommand {
          if (response != null && !response.isEmpty()) {
             shell.writeln(response);
          }
-         invocation.getContext().refreshPrompt();
+         context.refreshPrompt();
          return CommandResult.SUCCESS;
       } catch (Exception e) {
          TerminalString error = new TerminalString(Util.getRootCause(e).getLocalizedMessage(), new TerminalColor(Color.RED, Color.DEFAULT, Color.Intensity.BRIGHT));
          shell.writeln(error.toString());
-         invocation.getContext().refreshPrompt();
+         context.refreshPrompt();
          return CommandResult.FAILURE;
       }
    }

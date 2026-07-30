@@ -126,7 +126,7 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    @Override
    public void connect(Shell shell, String connectionString) {
       disconnect();
-      connection = ConnectionFactory.getConnection(properties, connectionString, sslContext);
+      connection = ConnectionFactory.getConnection(this, connectionString, sslContext);
       // Attempt a connection. If we receive an exception we might need credentials
       try {
          connection.connect();
@@ -172,7 +172,7 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    @Override
    public void connect(Shell shell, String connectionString, String username, String password) {
       disconnect();
-      connection = ConnectionFactory.getConnection(properties, connectionString, sslContext);
+      connection = ConnectionFactory.getConnection(this, connectionString, sslContext);
       try {
          connection.connect(username, password);
       } catch (IOException e) {
