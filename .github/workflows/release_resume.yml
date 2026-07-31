@@ -40,13 +40,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-2022, ubuntu-24.04-arm]
+        os: [ubuntu-latest, macos-latest, macos-15-intel, windows-2022, ubuntu-24.04-arm]
         include:
           - os: ubuntu-latest
             asset_name: linux-x86_64
             gu_binary: gu
           - os: macos-latest
             asset_name: osx-aarch_64
+            gu_binary: gu
+          - os: macos-15-intel
+            asset_name: osx-x86_64
             gu_binary: gu
           - os: windows-2022
             asset_name: windows-x86_64
@@ -118,3 +121,34 @@ jobs:
       image: quay.io/infinispan/server:${{ github.ref_name }}
       ref: main
       repository: infinispan/infinispan-operator
+
+  update-website:
+    needs: [published, native-cli]
+    if: always() && needs.published.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update website release data
+        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4
+        with:
+          token: ${{ secrets.API_TOKEN_GITHUB }}
+          repository: infinispan/infinispan.github.io
+          event-type: release_updated
+          client-payload: '{"project": "infinispan", "version": "${{ inputs.version }}"}'
+
+  update-org-vars:
+    needs: published
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        id: app-token
+        with:
+            client-id: ${{ secrets.GH_APP_ISPN_ID }}
+            private-key: ${{ secrets.GH_APP_ISPN_KEY }}
+
+      - name: Update GitHub Organization Variable to next release version
+        if: ${{ !contains(inputs.version, '.Dev') }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh variable set "RELEASE_$(echo '${{ inputs.version }}' | cut -f 1-2 -d '.' | tr . _)_VERSION" -b "$(echo ${{ inputs.version }} | cut -f 1 -d '-')" --org infinispan --visibility all;
