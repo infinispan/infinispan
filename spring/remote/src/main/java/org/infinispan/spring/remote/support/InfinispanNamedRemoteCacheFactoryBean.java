@@ -14,21 +14,20 @@ import org.springframework.util.StringUtils;
 
 /**
  * <p>
- * A {@link FactoryBean <code>FactoryBean</code>} for creating a
- * native {@link #setCacheName(String) named} Infinispan {@link org.infinispan.Cache
- * <code>org.infinispan.Cache</code>}, delegating to a
- * {@link #setInfinispanRemoteCacheManager(RemoteCacheManager) <code>configurable</code>}
- * {@link RemoteCacheManager
- * <code>oorg.infinispan.client.hotrod.RemoteCacheManagerr</code>}. If no cache name is explicitly
- * set, this <code>FactoryBean</code>'s {@link #setBeanName(String) <code>beanName</code>} will be
- * used instead.
+ * A {@link FactoryBean} for creating a
+ * native {@link #setCacheName(String) named} Infinispan {@link RemoteCache},
+ * delegating to a
+ * {@link #setInfinispanRemoteCacheManager(RemoteCacheManager) configurable}
+ * {@link RemoteCacheManager}.
+ * If no cache name is explicitly set, this <code>FactoryBean</code>'s
+ * {@link #setBeanName(String) beanName} will be used instead.
  * </p>
  *
  * @author Olaf Bergner
  *
  */
 public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<RemoteCache<K, V>>,
-                                                                    BeanNameAware, InitializingBean {
+      BeanNameAware, InitializingBean {
 
    private static final Log logger = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
@@ -120,15 +119,14 @@ public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<
 
    /**
     * <p>
-    * Sets the {@link org.infinispan.Cache#getName() name} of the {@link org.infinispan.Cache
-    * <code>org.infinispan.Cache</code>} to be created. If no explicit <code>cacheName</code> is
-    * set, this <code>FactoryBean</code> will use its {@link #setBeanName(String)
-    * <code>beanName</code>} as the <code>cacheName</code>.
+    * Sets the name of the {@link RemoteCache}
+    * to be created. If no explicit <code>cacheName</code> is
+    * set, this <code>FactoryBean</code> will use its {@link #setBeanName(String) beanName}
+    * as the <code>cacheName</code>.
     * </p>
     *
-    * @param cacheName
-    *           The {@link org.infinispan.Cache#getName() name} of the {@link org.infinispan.Cache
-    *           <code>org.infinispan.Cache</code>} to be created
+    * @param cacheName The name of the {@link RemoteCache}
+    *                  to be created
     */
    public void setCacheName(final String cacheName) {
       this.cacheName = cacheName;
@@ -136,16 +134,13 @@ public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<
 
    /**
     * <p>
-    * Sets the {@link RemoteCacheManager
-    * <code>org.infinispan.client.hotrod.RemoteCacheManager</code>} to be used for creating our
-    * {@link org.infinispan.Cache <code>Cache</code>} instance. Note that this is a
+    * Sets the {@link RemoteCacheManager} to be used for creating our
+    * {@link RemoteCache} instance. Note that this is a
     * <b>mandatory</b> property.
     * </p>
     *
-    * @param infinispanRemoteCacheManager
-    *           The {@link RemoteCacheManager
-    *           <code>org.infinispan.client.hotrod.RemoteCacheManager</code>} to be used for
-    *           creating our {@link org.infinispan.Cache <code>Cache</code>} instance
+    * @param infinispanRemoteCacheManager The {@link RemoteCacheManager} to be used for
+    *                                     creating our {@link RemoteCache} instance
     */
    public void setInfinispanRemoteCacheManager(final RemoteCacheManager infinispanRemoteCacheManager) {
       this.infinispanRemoteCacheManager = infinispanRemoteCacheManager;
