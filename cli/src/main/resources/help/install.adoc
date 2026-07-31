@@ -28,6 +28,7 @@ ARTIFACT NAMES
 Artifact names can be any of the following:
 
 * Maven coordinates using the `groupId:artifactId:version` format, for example `org.postgresql:postgresql:42.3.1`.
+  For `org.infinispan` artifacts, the version can be omitted and will be inferred from the target server installation.
 * HTTP, HTTPS, or FTP URLs
 * Local paths
 
@@ -65,6 +66,12 @@ The number of retries in case the downloaded artifacts do not match the supplied
 *--clean*::
 Deletes all the contents of the `server/lib` directory before downloading artifacts.
 
+*-d, --with-dependencies*::
+Also installs dependencies declared by the artifact.
+Some artifacts include a `META-INF/infinispan-dependencies.txt` file listing their required external dependencies.
+When this option is set, those dependencies are automatically downloaded and installed.
+Dependencies already present in the `server/lib` directory are skipped.
+
 
 EXAMPLES
 --------
@@ -80,3 +87,6 @@ Downloads the `artifact.zip`, verifies its SHA-256 checksum, and extracts the co
 
 `install https://example.org/artifact.zip|MD5|2b48d1871ee26f969d8481db94e103c2` +
 Downloads the `artifact.zip`, verifies its MD-5 checksum, and extracts the contents.
+
+`install -d org.infinispan:infinispan-xml-transcoder` +
+Installs the XML transcoder module and its dependencies, using the server's version automatically.

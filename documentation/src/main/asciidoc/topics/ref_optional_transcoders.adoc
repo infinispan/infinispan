@@ -1,0 +1,88 @@
+[id='optional-transcoders_{context}']
+= Optional transcoders
+{brandname} provides additional transcoders as optional modules that are not included in the server distribution by default.
+You can install these modules to enable additional data conversion capabilities.
+
+== JSON POJO transcoder
+The JSON POJO transcoder converts Java objects (`application/x-java-object`) to and from JSON using Jackson Databind.
+
+[NOTE]
+====
+This conversion path is deprecated.
+You should use ProtoStream-based marshalling instead.
+====
+
+.Server installation
+
+Use the {brandname} CLI to install the JSON POJO transcoder:
+
+[source,shell,options="nowrap",subs=attributes+]
+----
+[disconnected]> install org.infinispan:infinispan-json-pojo-transcoder:{ispn_version}
+----
+
+You must restart the server after installing the artifact.
+
+.Embedded usage
+
+Add the following dependency to your project:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<dependency>
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-json-pojo-transcoder</artifactId>
+</dependency>
+----
+
+== XML transcoder
+The XML transcoder converts data between XML and other formats, including Java objects, using XStream.
+
+.Server installation
+
+Use the {brandname} CLI to install the XML transcoder:
+
+[source,shell,options="nowrap",subs=attributes+]
+----
+[disconnected]> install org.infinispan:infinispan-xml-transcoder:{ispn_version}
+----
+
+You must restart the server after installing the artifact.
+
+.Embedded usage
+
+Add the following dependency to your project:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<dependency>
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-xml-transcoder</artifactId>
+</dependency>
+----
+
+== JBoss Marshalling transcoder
+The JBoss Marshalling transcoder converts data between Java objects and JBoss Marshalling format.
+
+.Server installation
+
+Use the {brandname} CLI to install the JBoss Marshalling transcoder:
+
+[source,shell,options="nowrap",subs=attributes+]
+----
+[disconnected]> install org.infinispan:infinispan-jboss-marshalling:{ispn_version}
+----
+
+You must restart the server after installing the artifact.
+
+.Embedded usage
+
+Add the following dependency to your project:
+
+[source,xml,options="nowrap",subs=attributes+]
+----
+<dependency>
+   <groupId>org.infinispan</groupId>
+   <artifactId>infinispan-jboss-marshalling</artifactId>
+</dependency>
+----

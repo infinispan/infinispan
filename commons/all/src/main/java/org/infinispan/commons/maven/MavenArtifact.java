@@ -18,7 +18,7 @@ import org.infinispan.commons.logging.Log;
  */
 public final class MavenArtifact extends AbstractArtifact {
    static final Pattern snapshotPattern = Pattern.compile("-\\d{8}\\.\\d{6}-\\d+$");
-   private static final Pattern VALID_PATTERN = Pattern.compile("^([-_a-zA-Z0-9.]+):([-_a-zA-Z0-9.]+):([-_a-zA-Z0-9.]+)(?::([-_a-zA-Z0-9.]+))?$");
+   private static final Pattern VALID_PATTERN = Pattern.compile("^([-_a-zA-Z0-9.]+):([-_a-zA-Z0-9.]+)(?::([-_a-zA-Z0-9.]+)(?::([-_a-zA-Z0-9.]+))?)?$");
 
    private final String groupId;
    private final String artifactId;
@@ -59,12 +59,23 @@ public final class MavenArtifact extends AbstractArtifact {
     * @return the artifact coordinates object (not {@code null})
     */
    public static MavenArtifact fromString(String string) {
+      return fromString(string, null);
+   }
+
+   public static MavenArtifact fromString(String string, String defaultVersion) {
       final Matcher matcher = VALID_PATTERN.matcher(string);
       if (matcher.matches()) {
+         String version = matcher.group(3);
+         if (version == null) {
+            if (defaultVersion == null) {
+               throw new IllegalArgumentException(string);
+            }
+            version = defaultVersion;
+         }
          if (matcher.group(4) != null) {
-            return new MavenArtifact(matcher.group(1), matcher.group(2), matcher.group(3), matcher.group(4));
+            return new MavenArtifact(matcher.group(1), matcher.group(2), version, matcher.group(4));
          } else {
-            return new MavenArtifact(matcher.group(1), matcher.group(2), matcher.group(3));
+            return new MavenArtifact(matcher.group(1), matcher.group(2), version);
          }
       } else {
          throw new IllegalArgumentException(string);
