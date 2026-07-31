@@ -15,7 +15,7 @@ import org.springframework.util.StringUtils;
 /**
  * <p>
  * A {@link FactoryBean} for creating a
- * native {@link #setCacheName(String) named} Infinispan {@link org.infinispan.Cache},
+ * native {@link #setCacheName(String) named} Infinispan {@link RemoteCache},
  * delegating to a
  * {@link #setInfinispanRemoteCacheManager(RemoteCacheManager) configurable}
  * {@link RemoteCacheManager}.
@@ -119,14 +119,14 @@ public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<
 
    /**
     * <p>
-    * Sets the {@link org.infinispan.Cache#getName() name} of the {@link org.infinispan.Cache}
+    * Sets the name of the {@link RemoteCache}
     * to be created. If no explicit <code>cacheName</code> is
     * set, this <code>FactoryBean</code> will use its {@link #setBeanName(String) beanName}
     * as the <code>cacheName</code>.
     * </p>
     *
     * @param cacheName
-    *           The {@link org.infinispan.Cache#getName() name} of the {@link org.infinispan.Cache}
+    *           The name of the {@link RemoteCache}
     *           to be created
     */
    public void setCacheName(final String cacheName) {
@@ -136,13 +136,13 @@ public class InfinispanNamedRemoteCacheFactoryBean<K, V> implements FactoryBean<
    /**
     * <p>
     * Sets the {@link RemoteCacheManager} to be used for creating our
-    * {@link org.infinispan.Cache} instance. Note that this is a
+    * {@link RemoteCache} instance. Note that this is a
     * <b>mandatory</b> property.
     * </p>
     *
     * @param infinispanRemoteCacheManager
     *           The {@link RemoteCacheManager} to be used for
-    *           creating our {@link org.infinispan.Cache} instance
+    *           creating our {@link RemoteCache} instance
     */
    public void setInfinispanRemoteCacheManager(final RemoteCacheManager infinispanRemoteCacheManager) {
       this.infinispanRemoteCacheManager = infinispanRemoteCacheManager;
