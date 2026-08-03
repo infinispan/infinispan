@@ -31,7 +31,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.ContainerFetchException;
 
 /**
  * Tests the Infinispan Hot Rod client integration with third-party application servers.
@@ -51,8 +50,11 @@ public class HotRodIT {
          InfinispanTestServer server = new InfinispanTestServer();
          server.start();
          SERVER = server;
-      } catch (ContainerFetchException e) {
-         Assumptions.abort("Container image not available: " + e.getMessage());
+      } catch (Exception e) {
+         if (e.getClass().getName().equals("org.testcontainers.containers.ContainerFetchException")) {
+            Assumptions.abort("Container image not available: " + e.getMessage());
+         }
+         throw e;
       }
    }
 
