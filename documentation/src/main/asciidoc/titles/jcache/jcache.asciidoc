@@ -1,0 +1,24 @@
+//Directory attributes
+:stories: ../../stories
+:topics: ../topics
+:imagesdir: ../{topics}/images
+
+//Community doc attributes
+include::../{topics}/attributes/community-attributes.adoc[]
+
+//Community title attributes
+:toc2:
+:icons: font
+:toclevels: 3
+:numbered:
+:sectanchors:
+:stem: asciimath
+:context: jcache
+
+//Title
+= JCache (JSR-107) with Infinispan
+
+Infinispan implements the JCache API (also known as JSR-107 and `javax.cache`).
+
+//User stories
+include::stories.adoc[]
