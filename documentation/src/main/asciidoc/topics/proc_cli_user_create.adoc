@@ -42,6 +42,17 @@ admin=scram-sha-1\:BYGcIAwvf6b...
 
 [NOTE]
 ====
-Adding credentials to a properties realm with the CLI creates the user only on the server instance to which you are connected.
-You must manually synchronize credentials in a properties realm to each node in the cluster.
+Adding credentials to a properties realm with the CLI updates the local property realm files on the server instance where you run the command. 
+You must manually synchronize property realm credentials across all nodes in the cluster.
+
+The same limitation applies to user groups and role assignments. 
+Changes to users, groups, and roles are not automatically distributed across the cluster.
+
+Changes to a properties realm do not take effect until the server reloads the updated configuration. 
+After reloading the server, flush security realm caches across the cluster:
+
+[source,options="nowrap",subs=attributes+]
+----
+server aclcache flush
+----
 ====
