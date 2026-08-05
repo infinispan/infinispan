@@ -19,9 +19,9 @@ import org.infinispan.container.versioning.irac.IracVersionGenerator;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.HistoryHintedRendezvousConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.TopologyAwareRendezvousConsistentHashFactory;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -144,9 +144,9 @@ public class StateTransferManagerImpl implements StateTransferManager {
          if (cacheMode.isClustered()) {
             if (cacheMode.isDistributed()) {
                if (globalConfiguration.transport().hasTopologyInfo()) {
-                  factory = TopologyAwareSyncConsistentHashFactory.getInstance();
+                  factory = TopologyAwareRendezvousConsistentHashFactory.getInstance();
                } else {
-                  factory = SyncConsistentHashFactory.getInstance();
+                  factory = HistoryHintedRendezvousConsistentHashFactory.getInstance();
                }
             } else if (cacheMode.isReplicated() || cacheMode.isInvalidation()) {
                factory = SyncReplicatedConsistentHashFactory.getInstance();

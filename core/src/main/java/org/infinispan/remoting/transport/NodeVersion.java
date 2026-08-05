@@ -16,6 +16,12 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 public class NodeVersion implements Comparable<NodeVersion> {
 
    public static final NodeVersion SIXTEEN = new NodeVersion((byte) 16, (byte) 0, (byte) 0);
+   /**
+    * The minimum cluster version required to use {@link org.infinispan.distribution.ch.impl.RendezvousConsistentHashFactory}
+    * or {@link org.infinispan.distribution.ch.impl.TopologyAwareRendezvousConsistentHashFactory}.
+    * All nodes must be at or above this version before either factory becomes active.
+    */
+   public static final NodeVersion RENDEZVOUS_CH_MIN_VERSION = new NodeVersion((byte) 16, (byte) 3, (byte) 0);
    public static final NodeVersion INSTANCE;
 
    static {

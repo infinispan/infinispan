@@ -1,0 +1,360 @@
+= Consistent Hash Factory Comparison
+:toc: left
+:toclevels: 2
+:icons: font
+
+This document summarises the trade-offs of each `ConsistentHashFactory` implementation.
+For detailed algorithm descriptions and open questions, see
+xref:consistent-hash-implementations.adoc[Consistent Hash Factory Implementations].
+
+== Quick Reference
+
+[cols="3,^1,^1,^1,^1,^1,^1,^1,^1",options="header"]
+|===
+| Property
+| Default
+| Sync
+| TopologyAware
+| TopologyAwareSync
+| Replicated
+| SyncReplicated
+| Rendezvous ✦
+| TopoAwareRendezvous ✦
+
+| *Deterministic across caches*
+| {no}
+| {yes}
+| {no}
+| {yes}
+| {no}
+| {yes}
+| {yes}
+| {yes}
+
+| *Topology-aware backups*
+| {no}
+| {no}
+| {yes}
+| {yes}
+| {no}
+| {no}
+| {no}
+| {yes}
+
+| *Tight load balance*
+| {yes}
+| Good
+| {yes}
+| Good*
+| Primary only
+| Primary only
+| {yes}
+| {yes}
+
+| *Minimal segment movement*
+| {yes}
+| {no}
+| {yes}
+| {no}
+| {yes}
+| {no}
+| Near-minimal
+| Near-minimal
+
+| *Computation cost*
+| Medium
+| Medium
+| High
+| High
+| Low
+| Low
+| Very High
+| Very High
+
+| *Suitable for replicated caches*
+| {no}
+| {no}
+| {no}
+| {no}
+| {yes}
+| {yes}
+| {no}
+| {no}
+
+| *Capacity factor support*
+| Full proportional
+| Good (geometric)
+| Full + topology-scaled
+| Good + topology-scaled
+| Zero/one only (ignored)
+| Zero/one only (enforced)
+| Full (inherent)
+| Full (inherent)
+|===
+
+{yes} = Yes / {no} = No / * = poor with low segment counts / ✦ = design complete, implementation pending
+
+See xref:consistent-hash-implementations.adoc#_capacity_factors[Capacity Factors] in the
+implementation spec for a full explanation of each level.
+
+---
+
+== DefaultConsistentHashFactory
+
+=== Pros
+
+* **Tightest load balance** of all distributed-cache factories. Guarantees
+  `floor(N×O/n) ≤ owned ≤ ceil(N×O/n)` for every node, for both primary and total ownership.
+* **Minimal segment movement** on topology change. `updateMembers` retains all existing ownership
+  assignments that are still valid; `rebalance` makes the smallest perturbations needed to restore
+  balance rather than recomputing from scratch.
+* **Full proportional capacity factor support** — every ownership decision compares
+  `owned / capacityFactor` ratios directly, so a node with factor `2.0` receives exactly twice
+  as many segments as a factor-`1.0` node, to within floor/ceil rounding.
+* Accidental side effect: segments assigned to a node tend to be *contiguous ranges*, which gives
+  slightly better cache locality when iterating owned data.
+
+=== Cons
+
+* **Non-deterministic across caches.** Two distributed caches with identical member lists can
+  produce different consistent hashes if they were created at different times or experienced
+  different topology histories. This breaks use cases that require cross-cache segment routing
+  agreement (e.g., shared key spaces, HotRod smart routing for multiple caches).
+* **Not topology-aware.** Backups may land on nodes sharing the same rack or site, reducing
+  fault tolerance.
+* The greedy iterative algorithm is **O(numNodes² × numSegments)** per pass, which can be slow
+  for clusters with hundreds of nodes and thousands of segments.
+
+---
+
+== SyncConsistentHashFactory
+
+=== Pros
+
+* **Fully deterministic.** Any two caches with the same member list and capacity factors produce
+  identical consistent hashes, regardless of topology history. This is essential for:
+  ** HotRod smart routing — clients can compute the primary owner independently.
+  ** Multiple caches sharing a key space needing consistent primary routing.
+  ** Embedded caches that must agree on ownership without coordination.
+* Uses **hash-distance based assignment** which inherently respects the ring structure, giving the
+  assignment a natural geometric interpretation.
+* The virtual-node approach (multiple hash positions per node) smooths distribution without
+  requiring the sequential ordering of `DefaultConsistentHashFactory`.
+* **Capacity factors supported** via geometric distance scaling — higher-capacity nodes appear
+  closer to segments in the priority queue and receive proportionally more of them.
+
+=== Cons
+
+* **Excess segment movement on rebalance.** Because `rebalance` always recomputes from scratch via
+  hashing, it ignores the existing assignment entirely. Segments that could stay in place are
+  unnecessarily moved. In the worst case, a single node leaving can cause O(numSegments) segment
+  moves even though O(numSegments / numNodes) moves are sufficient.
+* **Slightly worse load balance** than `DefaultConsistentHashFactory` in edge cases, particularly
+  when `numSegments` is small relative to `numNodes` or when capacity factors are highly skewed.
+* **Capacity balance is "good" not "tight"** — the distance-scaling mechanism is an indirect
+  proxy for capacity, not a direct ratio guarantee. Behaviour under highly skewed capacity factor
+  distributions is harder to predict.
+* The `fudgeExpectedSegments` tuning parameters are empirically derived, not analytically proven,
+  which makes behaviour under unusual capacity factor distributions harder to predict.
+* **Not topology-aware.**
+
+---
+
+== TopologyAwareConsistentHashFactory
+
+=== Pros
+
+* **Maximises backup fault tolerance** across failure domains. For a segment with `numOwners`
+  owners, it attempts to place owners across distinct sites first, then distinct racks, then
+  distinct machines, before settling for distinct nodes. This is the best choice when hardware
+  failure domains are important.
+* Gracefully **degrades** when topology information is incomplete — falls back to node-level
+  diversity if site/rack/machine IDs are not configured.
+* Inherits `DefaultConsistentHashFactory`'s **tight primary load balance**, **minimal primary
+  movement**, and **full proportional capacity factor support** for the primary-owner phase.
+* `TopologyInfo.getExpectedOwnedSegments()` distributes capacity correctly across topology levels
+  — nodes in larger sites absorb proportionally more segments even when their individual capacity
+  factors are equal.
+
+=== Cons
+
+* **Non-deterministic** across caches (inherits from `DefaultConsistentHashFactory`).
+* **Primary owners are not topology-aware.** The primary-owner phase is purely load-balanced;
+  topology diversity is only applied to backups. A site failure can leave segments with no
+  surviving primary even when backups are on other sites.
+* **Most expensive** factory. The multi-level add and replace passes (SITE → RACK → MACHINE →
+  NODE, twice each) make this significantly more expensive than the base `DefaultConsistentHashFactory`
+  for large clusters.
+* Topology awareness only works if nodes are configured with `siteId`, `rackId`, and `machineId`
+  in the JGroups transport configuration. Silently degrades without warning if not set.
+
+---
+
+== TopologyAwareSyncConsistentHashFactory
+
+=== Pros
+
+* **Both deterministic and topology-aware** — the only existing factory with both properties.
+  The best current choice for multi-datacenter deployments that also require consistent client-side
+  routing.
+* Topology constraints are enforced **inline** during hash-distance assignment via efficient
+  integer lookup arrays, avoiding the costly post-assignment replacement passes of
+  `TopologyAwareConsistentHashFactory`.
+* Inherits all determinism guarantees of `SyncConsistentHashFactory`.
+* **Most sophisticated capacity handling of any existing factory** — `computeExpectedSegments`
+  uses `TopologyInfo.getExpectedOwnedSegments()` combining capacity and topology level, so a
+  node's target segment count reflects both its weight and its position in the cluster hierarchy.
+
+=== Cons
+
+* Inherits `SyncConsistentHashFactory`'s **excess segment movement** on topology changes.
+* **Explicitly not recommended for low segment counts** (`numSegments < numNodes`). The combination
+  of topology constraints with distance-based assignment produces poor load balance in this regime.
+* **Capacity balance is "good" not "tight"** — inherits the geometric distance-scaling limitation
+  from `SyncConsistentHashFactory`.
+* Most complex implementation — combining distance scoring, topology lookup arrays, and
+  multi-position constraints simultaneously.
+* Primary owners are still **not topology-aware** (same limitation as `TopologyAwareConsistentHashFactory`).
+
+---
+
+== ReplicatedConsistentHashFactory
+
+=== Pros
+
+* **Simple and cheap.** Round-robin primary assignment is O(numSegments). Rebalance is O(numSegments
+  × numNodes).
+* Correct handling of `membersWithoutState` — new joiners do not become primaries until they have
+  received all data.
+* Appropriate and sufficient for replicated caches where every node owns every segment — only
+  primary ownership matters.
+
+=== Cons
+
+* **Non-deterministic** across caches.
+* **No topology awareness.**
+* **Capacity factors do not affect distribution.** Fractional factors (e.g., `0.5`, `2.0`) are
+  accepted without error but silently ignored — round-robin and rebalance treat all nodes as
+  equal. Only zero-capacity exclusion via `membersWithoutState` is honoured.
+
+---
+
+== SyncReplicatedConsistentHashFactory
+
+=== Pros
+
+* **Deterministic** for replicated caches, matching the primary owner of `SyncConsistentHashFactory`
+  for distributed caches with the same members. This allows mixed replicated/distributed topologies
+  to route to the same primaries.
+* Clean delegation — reuses all `SyncConsistentHashFactory` logic without duplication.
+
+=== Cons
+
+* Inherits `SyncConsistentHashFactory`'s **excess segment movement** on topology changes.
+* **Stricter capacity factor validation** than `ReplicatedConsistentHashFactory` — any value
+  other than `0.0` or `1.0` throws `IllegalArgumentException` at construction time. Fractional
+  capacity is not silently ignored; it is actively rejected.
+* Creates intermediate `DefaultConsistentHash` objects during conversion that are immediately
+  discarded — minor but unnecessary GC pressure.
+
+---
+
+== RendezvousConsistentHashFactory (Proposed)
+
+NOTE: For the companion topology-aware variant, see
+xref:consistent-hash-implementations.adoc#_8_topologyawarerendezvousconssistenthashfactory_proposed[§8 TopologyAwareRendezvousConsistentHashFactory]
+in the implementation spec.
+
+=== Pros
+
+* **Deterministic** — rendezvous scores are a pure function of `(segment, node.uuid,
+  capacityFactor)`. No history dependency.
+* **Near-minimal segment movement** — the rendezvous base ensures that only segments involving
+  the changed node are candidates for movement. The bounded-load greedy correction then minimises
+  the actual moves within that candidate set.
+* **Topology awareness supported** — topology constraints are applied as a ranking filter during
+  rendezvous scoring, using the same `TopologyInfo` hierarchy (site → rack → machine → node)
+  as existing topology-aware factories.
+* **Primary owner balance** is addressed by a primary-swap pass after the greedy fill, matching
+  `DefaultConsistentHashFactory`'s approach.
+* **No virtual nodes** required — rendezvous hashing gives each segment an independent score per
+  node, avoiding the virtual-node approximation used by `SyncConsistentHashFactory`.
+* **Full proportional capacity factor support — inherent, not bolted on.** Dividing the hash
+  score by `capacityFactor(n)` before ranking mathematically gives higher-capacity nodes
+  proportionally more "slots" in the score space. A node with factor `2.0` wins twice as many
+  segments in expectation with zero additional mechanism. The bounded-load greedy correction then
+  tightens this to exact floor/ceil bounds. This is cleaner and more correct than the
+  distance-scaling approximation used by `SyncConsistentHashFactory`.
+* Produces `DefaultConsistentHash` — no new serialisation code needed.
+
+=== Cons
+
+* **Higher computation cost than Sync.** The greedy correction is O(numSegments × numNodes) —
+  more expensive than `SyncConsistentHashFactory` but far cheaper than an MCF solver. Acceptable
+  given that topology-change computation cost is not a concern.
+* **Segment contiguity is lost.** Like `SyncConsistentHashFactory`, rendezvous hashing scatters
+  segments pseudo-randomly. The minor cache-locality benefit of contiguous segment blocks (an
+  accidental property of `DefaultConsistentHashFactory`) is not preserved. This is not a
+  correctness issue — the `IntSet` abstraction handles arbitrary segment sets — but may be a
+  micro-performance regression for data-container iteration.
+
+---
+
+== Choosing a Factory
+
+[cols="2,3",options="header"]
+|===
+| Use Case | Recommended Factory
+
+| Standard distributed cache, single embedded deployment
+| `DefaultConsistentHashFactory`
+
+| Multiple caches sharing a key space, or HotRod smart routing across caches
+| `SyncConsistentHashFactory`
+
+| Distributed cache with hardware fault-domain awareness (rack/site)
+| `TopologyAwareConsistentHashFactory`
+
+| Multi-datacenter with both topology awareness and consistent client routing
+| `TopologyAwareSyncConsistentHashFactory`
+
+| Replicated cache, standard deployment
+| `ReplicatedConsistentHashFactory`
+
+| Replicated cache with mixed replicated/distributed topology routing alignment
+| `SyncReplicatedConsistentHashFactory`
+
+| New: deterministic + near-minimal movement, no topology awareness
+| `RendezvousConsistentHashFactory`
+
+| New: deterministic + near-minimal movement + topology-aware
+| `TopologyAwareRendezvousConsistentHashFactory`
+|===
+
+---
+
+== TopologyAwareRendezvousConsistentHashFactory (Proposed)
+
+=== Pros
+
+* **Deterministic and topology-aware** — resolves both limitations of `TopologyAwareSyncConsistentHashFactory`.
+* **Near-minimal segment movement** — topology constraints are applied as a clean pre-pass before
+  the greedy correction, so the two goals (diversity and balance) no longer compete inside the
+  same loop.
+* **No low-segment-count penalty** — unlike `TopologyAwareSyncConsistentHashFactory`, there is no
+  regime where topology constraints and the assignment loop combine to produce poor balance.
+* Graceful degradation when topology IDs are absent — collapses to `RendezvousConsistentHashFactory`
+  behaviour without errors.
+* **Full proportional capacity factor support — inherent** — identical to
+  `RendezvousConsistentHashFactory`. Topology constraints in Step 2 are independent of capacity;
+  the greedy correction uses `capacityFactor(n) / totalCapacity` directly as the balance target.
+* Produces `DefaultConsistentHash` — no new serialisation code required.
+
+=== Cons
+
+* **Higher computation cost** — inherits the greedy correction from `RendezvousConsistentHashFactory`,
+  plus the topology constraint pass adds O(numSegments × numNodes × numTopologyLevels) overhead.
+  Still O(numSegments × numNodes) overall and predictable at all cluster sizes.
+* **Primary owners are still not topology-aware** — position-0 of the rendezvous ranking is
+  load-balanced only. This is the same limitation as all existing topology-aware factories.
+* Segment contiguity is not preserved (same as all Sync/Rendezvous variants).

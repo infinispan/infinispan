@@ -1,0 +1,918 @@
+= Consistent Hash Factory Implementations
+:toc: left
+:toclevels: 3
+:icons: font
+
+This document describes each `ConsistentHashFactory` implementation in Infinispan, covering its algorithm,
+design intent, configuration, and open questions. For a side-by-side comparison of pros and cons, see
+xref:consistent-hash-comparison.adoc[Consistent Hash Comparison].
+
+== Interface Contract
+
+All factories implement
+`org.infinispan.distribution.ch.impl.ConsistentHashFactory` and must satisfy:
+
+* `create(numOwners, numSegments, members, capacityFactors)` — returns a *balanced* CH.
+* `updateMembers(baseCH, newMembers, capacityFactors)` — removes leavers; does *not* add new owners
+  beyond what is needed to ensure every segment has at least one owner. Returns `baseCH` unchanged
+  if members and capacity factors are the same.
+* `rebalance(baseCH)` — returns a balanced CH for the same member set.
+* `union(ch1, ch2)` — returns a CH whose owner list for every segment is the union of both inputs,
+  allowing a live topology switch from `union(ch1, ch2)` to `ch2` without state transfer.
+
+A CH is *balanced* when `rebalance(ch).equals(ch)`.
+
+== Capacity Factors
+
+A *capacity factor* is a per-node floating-point weight that controls the relative number of
+segments a node should own compared to other nodes. A node with capacity factor `2.0` should own
+twice as many segments as a node with capacity factor `1.0`. A capacity factor of `0.0` means the
+node is a member of the cluster view but should not own any data (e.g., a query-only node).
+
+If no capacity factors are supplied (the map is `null`), all nodes are assumed to have a capacity
+factor of `1.0`.
+
+The table below summarises how each factory implements capacity factor support:
+
+[cols="3,1,4",options="header"]
+|===
+| Factory | Support level | Mechanism
+
+| `DefaultConsistentHashFactory`
+| Full proportional
+| Ownership decisions compare `owned / capacityFactor` ratios directly. Target =
+  `numSegments × numOwners × capacityFactor(n) / totalCapacity`. Zero-capacity nodes excluded entirely.
+
+| `SyncConsistentHashFactory`
+| Good (geometric)
+| Capacity converted to a distance multiplier: `distanceFactor = minCapacity / nodeCapacity`.
+  Higher capacity → smaller distance → wins more segments in the priority queue.
+  Target segments also scaled by capacity in `computeExpectedSegments`. Balance is good but
+  not as provably tight as `Default`.
+
+| `TopologyAwareConsistentHashFactory`
+| Full proportional + topology-scaled
+| Inherits `Default`'s direct ratio tracking. `TopologyInfo.getExpectedOwnedSegments()` further
+  scales targets so that capacity is distributed correctly within and across topology levels.
+
+| `TopologyAwareSyncConsistentHashFactory`
+| Good (geometric + topology-scaled)
+| Overrides `computeExpectedSegments` to use `TopologyInfo.getExpectedOwnedSegments()` (capacity
+  and topology combined). Assignment still uses distance scaling from parent. Most sophisticated
+  capacity handling of any existing factory, but balance is "good" not "tight".
+
+| `ReplicatedConsistentHashFactory`
+| Zero/one only (ignored for balance)
+| Round-robin `create` ignores capacity entirely. Rebalance targets `numSegments / numMembers`
+  with no capacity weighting. Capacity factors are stored and forwarded to the resulting CH
+  but play no role in distribution. Zero-capacity nodes are excluded via `membersWithoutState`.
+
+| `SyncReplicatedConsistentHashFactory`
+| Zero/one only (enforced, throws on other values)
+| `computeMembersWithoutState` throws `IllegalArgumentException` for any value other than `0.0`
+  or `1.0`. Zero = excluded from primary ownership; one = normal member. No fractional support.
+
+| `RendezvousConsistentHashFactory` (proposed)
+| Full proportional (inherent)
+| Dividing the hash score by `capacityFactor(n)` before ranking is mathematically equivalent to
+  giving a node proportionally more "slots" in the score space. A node with factor `2.0` wins
+  roughly twice as many segments in expectation with zero additional code. The bounded-load greedy
+  correction in Step 3 then tightens this to exact `floor`/`ceil` bounds. Zero-capacity nodes
+  score `+∞` and are excluded.
+
+| `TopologyAwareRendezvousConsistentHashFactory` (proposed)
+| Full proportional (inherent) + topology-scaled
+| Identical to `RendezvousConsistentHashFactory`. Topology constraints in Step 2 are independent
+  of capacity; the greedy correction targets use `capacityFactor(n) / totalCapacity` directly,
+  same as the base class.
+|===
+
+---
+
+== 1. DefaultConsistentHashFactory
+
+`org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory`
+
+=== Intent
+
+The original, production default for distributed caches. Produces the tightest possible load balance
+with minimal segment movement on topology changes. Does *not* guarantee cross-cache determinism.
+
+=== Algorithm
+
+`create` and `rebalance` run a two-phase greedy builder:
+
+. **Primary owner phase** — iterates segments sequentially. For each segment:
+  .. Assigns the segment to the node with the worst primary-owned/capacity ratio.
+  .. Swaps primary owners with existing backups when a backup has a better ratio.
+  .. Performs replacement passes, first allowing up to `numOwners` total owners per segment, then
+     `numOwners + 1`, to ensure every over-loaded primary can be displaced.
+
+. **Backup owner phase** — iterates segments sequentially:
+  .. Removes extra owners leftover from the primary phase.
+  .. Adds backup owners greedily, always choosing the node with the lowest owned/capacity ratio.
+  .. Replaces backup owners in segments where a non-owner has a better owned/capacity ratio.
+
+`updateMembers` constructs a new builder from the base CH (retaining existing owner lists minus
+leavers) and only runs a rebalance sub-pass for segments that lost all owners.
+
+==== Balance Guarantee
+
+----
+floor(numOwners * numSegments / numNodes) <= owned(n) <= ceil(numOwners * numSegments / numNodes)
+----
+
+for every node `n` (both primary and total), provided all capacity factors are equal.
+With capacity factors the bounds scale proportionally.
+
+=== Capacity Factor Handling
+
+Every ownership decision is made by comparing `owned / capacityFactor` ratios:
+
+* `findNewPrimaryOwner` / `findNewBackupOwner` — both select the candidate whose
+  `(owned ± 1) / capacityFactor` ratio is most favourable, ensuring all swaps converge toward
+  proportional balance.
+* Zero-capacity nodes are excluded from ownership entirely before the algorithm runs. They remain
+  in the member list (so topology changes can be detected) but never appear in any segment's owner
+  list.
+* Capacity factors are stored verbatim in the resulting `DefaultConsistentHash` and forwarded
+  through `updateMembers`, `rebalance`, and `union`.
+
+=== Produces
+
+`DefaultConsistentHash` — a flat array of per-segment owner lists.
+
+=== Configuration
+
+Used automatically for distributed caches unless overridden with
+`HashConfigurationBuilder.consistentHashFactory(...)`.
+
+=== Open Questions
+
+* The greedy algorithm is O(numNodes² × numSegments) per pass. For clusters with thousands of nodes
+  this becomes expensive — is there a threshold above which a faster approximation should be used?
+* The sequential iteration over segments (0 → N) during assignment accidentally produces contiguous
+  segment blocks per node. Is this property worth preserving explicitly, or is it acceptable to lose
+  it in future implementations?
+* Should primary-owner balance and total-owner balance be weighted differently when capacity factors
+  are set?
+
+---
+
+== 2. SyncConsistentHashFactory
+
+`org.infinispan.distribution.ch.impl.SyncConsistentHashFactory`
+
+=== Intent
+
+Guarantees that any two caches with the same member list produce the *same* consistent hash,
+regardless of how those caches were created or their topology history. This is required when
+multiple caches share a key space and must route to the same primary owner (e.g., embedded caches
+used together, or HotRod client segment routing).
+
+=== Algorithm
+
+Uses hash-distance based assignment. Each node gets `numNodeHashes = 32 - leadingZeros(numSegments)`
+virtual hash positions derived from `MurmurHash3(nodeUUID, virtualNodeIndex)`. Each segment has a
+canonical hash position at the midpoint of its hash-space slot.
+
+Assignment proceeds in two passes (primary owners, then all owners) via a priority-queue:
+
+. For each segment, compute the *scaled distance* from the segment's hash position to each node's
+  nearest virtual hash position, scaled by `minCapacity / nodeCapacity` to give higher-capacity
+  nodes effectively closer distances.
+. Build priority queues of `(segment, node, distance)` tuples sorted ascending by distance.
+. Assign owners iteratively, each iteration allowing each node up to an increasing number of
+  segments (`fudgeExpectedSegments`), until all segments have `numOwners` owners.
+
+`rebalance` always calls `create` from scratch — there is no attempt to preserve the existing
+assignment.
+
+=== Capacity Factor Handling
+
+Capacity factors are converted to *distance factors* before the assignment loop:
+
+----
+distanceFactor[n] = minCapacity / capacityFactor[n]
+----
+
+The raw hash distance between a segment and a node's virtual position is then multiplied by this
+factor before entering the priority queue. Nodes with higher capacity receive a smaller
+`distanceFactor`, which makes their virtual positions appear geometrically closer to every
+segment — so they naturally win more segments in the priority queue.
+
+`computeExpectedSegments` also scales the per-iteration target for each node by
+`capacityFactor(n) / totalCapacity`, so the load-balancing correction step accounts for capacity
+proportionally.
+
+Zero-capacity nodes are sorted to the end of the member list (after `sortMembersByCapacity`) and
+excluded from the assignment entirely. Their `distanceFactor` would be infinite, so they could
+never win a segment anyway.
+
+*Important caveat:* balance is "good" rather than provably tight. Because capacity is encoded
+indirectly as a geometric distance multiplier rather than a direct ratio, the balance guarantee is
+a strong empirical property rather than the exact floor/ceil bound provided by
+`DefaultConsistentHashFactory`.
+
+=== Produces
+
+`DefaultConsistentHash`.
+
+=== Determinism Property
+
+For a fixed member list and capacity factor map, `create`, `rebalance`, and `updateMembers` (when
+called on a CH built from those members) all produce identical output on any JVM because:
+
+* Node hash positions are derived solely from `UUID` bits, which are stable across JVMs.
+* Segment hash positions are derived solely from `numSegments`.
+* The priority-queue algorithm is deterministic given those inputs.
+
+=== Known Limitation
+
+Segment movement on topology change is higher than `DefaultConsistentHashFactory`. Because
+`rebalance` recomputes from scratch, segments that were stable under the old topology may be
+reassigned to different nodes even when the mathematical optimum would leave them in place.
+
+Example from the class Javadoc:
+----
+Before D leaves: {0:AB, 1:BA, 2:CD, 3:DA}
+Sync result:     {0:BC, 1:CA, 2:CB, 3:AB}
+Optimal result:  {0:AB, 1:BA, 2:CB, 3:AC}
+----
+
+=== Open Questions
+
+* The number of virtual hash positions per node (`numNodeHashes`) is logarithmic in `numSegments`.
+  Is this sufficient for good distribution at very large segment counts (e.g., 4096+)?
+* The `fudgeExpectedSegments` step function is empirically tuned. Is there a closed-form derivation
+  for optimal step sizes given arbitrary capacity factor distributions?
+* When two nodes have identical UUIDs (impossible in practice but possible in tests), the algorithm
+  produces undefined results. Should this be explicitly detected and rejected?
+
+---
+
+== 3. TopologyAwareConsistentHashFactory
+
+`org.infinispan.distribution.ch.impl.TopologyAwareConsistentHashFactory`
+
+=== Intent
+
+Extends `DefaultConsistentHashFactory` to maximise backup-owner diversity across failure domains
+(site → rack → machine → node). For a segment with `numOwners` owners, the factory attempts to
+place each owner in a distinct site first, then distinct rack, then distinct machine, before
+falling back to node-level diversity.
+
+=== Algorithm
+
+Inherits the full primary-owner phase from `DefaultConsistentHashFactory` unchanged (primary owners
+are load-balanced only, not topology-diversified).
+
+Overrides the backup-owner phase with a three-level iterative replacement strategy using
+`TopologyInfo`:
+
+. **Add phase (per level: SITE, RACK, MACHINE, NODE)** — for each segment that still has fewer
+  than `numOwners` owners, add candidates that do not duplicate an already-represented location at
+  this level. Repeats with relaxed load limits until all segments are filled.
+
+. **Replace phase (per level: SITE, RACK, MACHINE)** — for each segment where distinct locations at
+  this level is below the maximum possible, replace a duplicate-location backup with a node from
+  an unrepresented location.
+
+. **No-level replace phase** — replaces overloaded backups with underloaded nodes, subject to the
+  constraint that diversity at all levels is maintained or improved.
+
+=== Topology Levels
+
+Topology information comes from `Address.getSiteId()`, `Address.getRackId()`, and
+`Address.getMachineId()`. If a node does not set these values, all nodes appear to be in a single
+site/rack/machine and the factory degrades to `DefaultConsistentHashFactory` behaviour.
+
+=== Capacity Factor Handling
+
+Inherits `DefaultConsistentHashFactory`'s direct ratio-based tracking unchanged for both the
+primary-owner and backup-owner phases.
+
+Additionally, `TopologyInfo.getExpectedOwnedSegments(node)` is used as the per-node target in the
+add and replace passes. This method accounts for capacity *and* topology level simultaneously: a
+node in a large site is expected to hold proportionally more segments than a same-capacity node in
+a small site, because the site must collectively absorb its fair share of the total ownership.
+
+Zero-capacity nodes are excluded via the standard `checkCapacityFactors` validation inherited from
+`AbstractConsistentHashFactory`.
+
+=== Produces
+
+`DefaultConsistentHash`.
+
+=== Known Limitations
+
+* Primary owners are not topology-aware — a site failure can make all primaries for a segment
+  unavailable even when backups are on surviving sites.
+* Non-deterministic across caches with the same members (inherits from `DefaultConsistentHashFactory`).
+* Most expensive factory to run due to the multi-level iterative replacement passes.
+
+=== Open Questions
+
+* Should primary owner placement also consider topology diversity, even at the cost of some primary
+  load imbalance?
+* When `numOwners > numSites`, what is the correct priority: maximise site diversity first, or
+  maximise load balance first?
+* The replace passes iterate owners in reverse order (highest backup position first) for stability.
+  Is this ordering provably optimal or just empirically stable?
+
+---
+
+== 4. TopologyAwareSyncConsistentHashFactory
+
+`org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory`
+
+=== Intent
+
+Combines the cross-cache determinism of `SyncConsistentHashFactory` with the topology-aware
+placement of `TopologyAwareConsistentHashFactory`. Intended for multi-datacenter deployments where
+HotRod clients must compute the correct primary owner independently and backup owners must span
+failure domains.
+
+=== Algorithm
+
+Extends `SyncConsistentHashFactory`. Overrides two methods:
+
+* `createBuilder` — returns a specialised `Builder` that pre-computes integer lookup arrays
+  (`siteLookup`, `rackLookup`, `machineLookup`) mapping each sorted node index to its topology
+  integer ID.
+
+* `nodeCanOwnSegment(segment, ownerPosition, nodeIndex)` — adds topology constraints inline
+  during the hash-distance priority-queue assignment:
+  ** Owner position 0: no constraint (any node).
+  ** Positions 1 .. numSites-1: candidate must be in a distinct site from all earlier owners.
+  ** Positions numSites .. numRacks-1: candidate must be in a distinct rack.
+  ** Positions numRacks .. numMachines-1: candidate must be in a distinct machine.
+  ** Remaining positions: candidate must be a distinct node.
+
+* `computeExpectedSegments` — uses `TopologyInfo.getExpectedOwnedSegments()` for per-node targets,
+  which accounts for the topology-level capacity distribution, rather than the flat capacity-factor
+  formula used in the base class.
+
+=== Produces
+
+`DefaultConsistentHash`.
+
+=== Determinism Property
+
+Fully deterministic for a given member list, inheriting from `SyncConsistentHashFactory`.
+
+=== Known Limitation
+
+Explicitly documented: **not recommended when `numSegments < numNodes`**. The topology constraints
+combine with the distance-based assignment to produce poor load balance when there are too few
+segments to spread across both nodes and topology levels simultaneously.
+
+=== Capacity Factor Handling
+
+Overrides `computeExpectedSegments` to use `TopologyInfo.getExpectedOwnedSegments(node)` instead
+of the flat capacity formula used in `SyncConsistentHashFactory`. This gives the most
+sophisticated capacity handling of any existing factory: capacity is distributed correctly both
+within each topology level and across levels.
+
+The distance-factor mechanism from `SyncConsistentHashFactory` is inherited unchanged for the
+actual assignment loop. The override only affects how many segments each node is *expected* to
+receive; the priority-queue ordering still uses geometric distance scaling.
+
+Zero-capacity nodes are excluded via `sortMembersByCapacity` inherited from the parent builder.
+
+=== Open Questions
+
+* The owner-position thresholds (0 → sites → racks → machines → nodes) are hardcoded. Should they
+  be configurable to support deployments with only rack-level diversity, skipping site-level
+  constraints?
+* When topology information is partially configured (some nodes have site IDs, others do not), the
+  behaviour is undefined. Should missing topology IDs be treated as a distinct synthetic value or
+  as a match-all wildcard?
+* How does the excess-segment-movement problem (inherited from `SyncConsistentHashFactory`) interact
+  with topology constraints? Could a node lose topology diversity on a rebalance that the base
+  class would have left stable?
+
+---
+
+== 5. ReplicatedConsistentHashFactory
+
+`org.infinispan.distribution.ch.impl.ReplicatedConsistentHashFactory`
+
+=== Intent
+
+Factory for replicated caches where every node owns every segment as a backup. Only *primary*
+ownership is significant — it determines which node handles writes and coordinates replication.
+
+=== Algorithm
+
+`create` — assigns primary owners via round-robin over the member list, skipping members in the
+`membersWithoutState` list (new joiners or zero-capacity nodes).
+
+`updateMembers` — retains existing primary assignments where possible. For segments whose primary
+left the cluster, assigns the least-loaded surviving node. If `rebalance` is requested, additionally
+runs a pass that moves segments from most-loaded to least-loaded nodes until all nodes hold
+`floor(numSegments / numNodes)` primaries.
+
+`membersWithoutState` is computed as nodes that either have `capacityFactor == 0` or that are new
+members not present in the previous CH.
+
+=== Capacity Factor Handling
+
+Capacity factors are *stored* in the resulting `ReplicatedConsistentHash` and forwarded through
+all operations, but they do **not** affect primary ownership distribution:
+
+* `create` uses a plain round-robin, completely ignoring capacity factors for assignment.
+* The rebalance pass targets `floor(numSegments / numMembers)` (integer division, no capacity
+  weighting) — all surviving members are treated as equal regardless of their capacity factors.
+* `findLeastUsedNode` / `findMostUsedNode` count segments only, not capacity-weighted segments.
+
+The only effective use of capacity factors for replicated caches is **zero-capacity exclusion**:
+nodes with `capacityFactor == 0` are placed in `membersWithoutState` and will never be assigned
+as primary owners.
+
+Fractional capacity factors (e.g., `0.5` or `2.0`) are accepted without error but have no effect
+on distribution. This is a known gap — see open questions.
+
+=== Produces
+
+`ReplicatedConsistentHash` — stores only the list of primary owner indices, not full per-segment
+owner lists, since all nodes own all segments.
+
+=== Known Limitations
+
+* Non-deterministic across caches with the same members.
+* No topology awareness.
+* The rebalance pass (`findLeastUsedNode` / `findMostUsedNode`) is O(nodes) per segment move,
+  which is acceptable but not cache-efficient for large clusters.
+
+=== Open Questions
+
+* Should `ReplicatedConsistentHashFactory` support topology-aware primary placement (e.g., prefer
+  primaries in a specific site)?
+* The `capacityFactor` validation in `computeMembersWithoutState` throws on any value other than
+  `0.0` or `1.0`. Is this restriction intentional and documented to users?
+
+---
+
+== 6. SyncReplicatedConsistentHashFactory
+
+`org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory`
+
+=== Intent
+
+Provides the same cross-cache determinism guarantee as `SyncConsistentHashFactory` but for replicated
+caches. Ensures the primary owner of a segment in a replicated cache is the same node as the
+primary owner of that segment in a distributed cache using `SyncConsistentHashFactory`, allowing
+mixed-mode topologies to route reads consistently.
+
+=== Algorithm
+
+Delegates entirely to `SyncConsistentHashFactory` with `numOwners = 1`:
+
+. Creates a `DefaultConsistentHash` via `SyncConsistentHashFactory.create(1, ...)`.
+. Extracts the primary owner index for each segment.
+. Wraps in a `ReplicatedConsistentHash`.
+
+`updateMembers` and `rebalance` follow the same delegation pattern via `defaultFromReplicated` ↔
+`replicatedFromDefault` conversion helpers.
+
+=== Produces
+
+`ReplicatedConsistentHash`.
+
+=== Determinism Property
+
+Fully deterministic for a given member list. Primary owner for segment `s` in a replicated cache
+with members `M` will always be the same as the primary owner for segment `s` in a distributed
+cache using `SyncConsistentHashFactory` with the same members `M`.
+
+=== Capacity Factor Handling
+
+`computeMembersWithoutState` (shared with `ReplicatedConsistentHashFactory`) **enforces** that
+capacity factors for replicated caches are either `0.0` or `1.0`, throwing
+`IllegalArgumentException` for any other value:
+
+[source,java]
+----
+if (capacityFactor != 0f && capacityFactor != 1f) {
+    throw new IllegalArgumentException(
+        "Invalid replicated cache capacity factor for node " + a);
+}
+----
+
+* `0.0` — node is placed in `membersWithoutState` and excluded from primary ownership.
+* `1.0` — normal member, eligible for primary ownership.
+* Any other value — hard rejection at construction time.
+
+This means `SyncReplicatedConsistentHashFactory` is stricter than `ReplicatedConsistentHashFactory`
+(which accepts but ignores fractional values).
+
+=== Known Limitations
+
+* Inherits `SyncConsistentHashFactory`'s excess segment movement on topology change.
+* The `defaultFromReplicated` conversion creates intermediate `DefaultConsistentHash` objects that
+  are immediately discarded, adding minor GC pressure on large clusters.
+
+=== Open Questions
+
+* When a replicated and distributed cache share members, the primary-alignment guarantee is exact.
+  When they diverge (different member lists), is there a defined behaviour or is it simply
+  best-effort?
+
+---
+
+== 7. RendezvousConsistentHashFactory (Proposed)
+
+`org.infinispan.distribution.ch.impl.RendezvousConsistentHashFactory`
+
+=== Status
+
+*Design complete — implementation pending.*
+
+=== Intent
+
+A new factory that combines the cross-cache determinism of `SyncConsistentHashFactory` with
+segment movement closer to the theoretical minimum achieved by `DefaultConsistentHashFactory`.
+High computation cost at topology-change time is acceptable. Topology awareness is supported via
+the same `TopologyInfo` mechanism used by existing topology-aware factories.
+
+=== Core Idea
+
+Uses *rendezvous (highest-random-weight) hashing* as the base assignment, then applies a
+minimum-cost flow correction to restore load balance. Rendezvous hashing is inherently stable:
+when a node leaves, only segments it owned are affected; when a node joins, it claims exactly the
+segments it scores highest on. The flow correction is then local to the affected segments only.
+
+=== Algorithm (Sketch)
+
+=== Capacity Factor Handling
+
+Capacity proportionality is an **inherent property** of the rendezvous scoring formula — no extra
+mechanism is needed:
+
+----
+score(s, n) = murmurHash3(s, n.uuid) / capacityFactor(n)
+----
+
+Dividing the hash score by `capacityFactor(n)` before ranking is mathematically equivalent to
+giving node `n` proportionally more "virtual slots" in the uniform score space. Under a uniform
+hash:
+
+* A node with factor `2.0` will have scores roughly half as large as a factor-`1.0` node on
+  average, so it will rank first for approximately twice as many segments.
+* A node with factor `0.5` will rank first for approximately half as many segments.
+
+This proportionality holds *in expectation* with zero additional code, requiring no distance
+multipliers, no virtual nodes, and no `computeExpectedSegments` iteration.
+
+The bounded-load greedy correction in Step 3 then hardens this "in expectation" property into an
+exact guarantee: `floor(ideal) ≤ owned(n) ≤ ceil(ideal)` where
+`ideal(n) = numSegments × numOwners × capacityFactor(n) / totalCapacity`.
+
+*Zero-capacity nodes* score `+∞` (division by zero produces infinity in IEEE 754 floating point
+with a positive numerator) and therefore always rank last, effectively excluding them from
+ownership. Alternatively they can be explicitly filtered before Step 1.
+
+==== Step 1 — Rendezvous Scoring
+
+For every `(segment s, node n)` pair compute:
+
+----
+score(s, n) = murmurHash3(s, n.uuid) / capacityFactor(n)
+----
+
+Rank all nodes by score (ascending) for each segment. The top `numOwners` distinct nodes in the
+ranking form the *natural assignment*. Zero-capacity nodes are excluded before ranking.
+This step is O(numSegments × numNodes).
+
+==== Step 2 — Topology Constraint Filtering (optional)
+
+If topology awareness is enabled, the natural ranking is filtered at each owner position:
+
+* Position 0: no constraint.
+* Position k (1 ≤ k < numSites): candidate must be in a site not already represented in positions
+  0..k-1.
+* Position k (numSites ≤ k < numRacks): candidate must be in a rack not already represented.
+* Position k (numRacks ≤ k < numMachines): candidate must be in a machine not already represented.
+* Remaining positions: candidate must be a distinct node.
+
+For each segment, walk the rendezvous ranking in order and greedily fill owner slots subject to
+these constraints. This produces the *topology-filtered natural assignment*.
+
+==== Step 3 — Load Balance Correction via Bounded-Load Greedy
+
+Compute for each node:
+
+----
+ideal(n) = numSegments × numOwners × capacityFactor(n) / totalCapacity
+cap(n)   = ceil(ideal(n))
+----
+
+For each owner position 0…numOwners−1, iterate all segments in ascending rendezvous score order.
+For each segment, assign the highest-ranked eligible node that:
+
+* Has not yet reached `cap(n)` for this pass
+* Is not already an owner of this segment
+* Passes topology constraints for this owner position (if Step 2 is active)
+
+After all owner positions are filled, run a *primary-swap pass*: for any segment where
+position-0 is held by a node above `ideal` and another owner in the list is below `ideal`, swap
+their positions. This reorder is free — it does not change which nodes own the segment, only
+which is primary, so no state transfer is triggered.
+
+This step is O(numSegments × numNodes) and requires only per-node counters (no graph construction).
+
+==== Step 4 — Output
+
+Apply the corrected owner assignments to produce the final `segmentOwners` array.
+Wrap in `DefaultConsistentHash`.
+
+=== Determinism Property
+
+Fully deterministic. The rendezvous scores are a pure function of `(segmentIndex, node.uuid,
+capacityFactor)`. The greedy correction is uniquely determined by those scores and the member
+list. Any two caches with identical members and capacity factors will produce identical output.
+
+=== Topology Awareness
+
+Topology awareness is supported via the constraint filtering in Step 2 and is provided by the
+companion `TopologyAwareRendezvousConsistentHashFactory` subclass, mirroring the existing
+`SyncConsistentHashFactory` → `TopologyAwareSyncConsistentHashFactory` relationship.
+
+See xref:#_8_topologyawarerendezvousconssistenthashfactory_proposed[§8 TopologyAwareRendezvousConsistentHashFactory]
+for the full specification.
+
+=== Segment Movement Properties
+
+* **Node leaves**: only segments previously owned by the leaving node are in play. Their natural
+  assignments shift to their next-ranked nodes. The greedy correction redistributes only those
+  segments.
+* **Node joins**: the new node scores into the rendezvous ranking for each segment. It naturally
+  displaces segments from the nodes it scores above. The greedy correction is again local.
+* In both cases, segments not involving the changed node are *provably unchanged* by the rendezvous
+  base — the greedy correction only touches them if needed to restore balance, which for
+  single-node changes is rare.
+
+=== Produces
+
+`DefaultConsistentHash` (reuses existing data structure unchanged).
+
+=== Open Questions
+
+==== Algorithm Design
+
+* **Tie-breaking during greedy assignment**: when multiple nodes are below `cap(n)` and equally
+  eligible for a segment, the rendezvous score order already provides a deterministic tie-break.
+  No additional policy is needed — the ascending score walk resolves ties naturally.
+  _Resolved: natural rendezvous score order._
+
+* **Primary vs. backup balance**: primary ownership is tightened by the primary-swap pass in
+  Step 3. This matches `DefaultConsistentHashFactory`'s approach and gives exact floor/ceil
+  primary-owner balance.
+  _Resolved: primary-swap pass after greedy fill._
+
+* **Topology constraint interaction with greedy**: when topology constraints reduce the eligible
+  candidate set for a position, the greedy walk simply skips ineligible nodes and continues down
+  the ranking. Unlike a flow solver, there is no risk of infeasibility — if no topology-legal
+  candidate exists the constraint relaxes to the next level (same degradation as
+  `TopologyAwareSyncConsistentHashFactory`). Cluster-size scarcity is not a correctness issue,
+  only a diversity quality issue.
+  _Resolved: inline skip + same degradation behaviour as existing topology-aware factories._
+
+==== Implementation
+
+* **Algorithm choice**: bounded-load greedy (inspired by Mahdian & Wieder, SODA 2017).
+  No separate solver class needed. O(numSegments × numNodes), predictable at all cluster sizes.
+  _Resolved: greedy._
+
+* **Incremental warm-start**: considered and deliberately rejected. The full from-scratch greedy
+  pass costs ~0.1–2ms even for large clusters (1024 segments, 100 nodes), because it is a bounded
+  scan with no graph construction. A topology-change event already takes hundreds of milliseconds
+  of network round-trips — the rebalance computation is invisible. Implementing warm-start would
+  add complexity (cascade termination proofs, consistency with the from-scratch output) for zero
+  observable benefit. All existing factories (`SyncConsistentHashFactory`, `DefaultConsistentHashFactory`)
+  also recompute from scratch on every `rebalance()` call. If cluster sizes ever reach a scale
+  where this matters, parallelising the scoring step (O(S × N) hashes) would have far greater
+  impact than incremental solving.
+  _Decision: always recompute from scratch. Warm-start will not be implemented._
+
+* **Serialisation**: both new factories produce `DefaultConsistentHash` — no new serialisation
+  format needed. Factory classes themselves are registered in `GlobalContextInitializer` and
+  allocated IDs in `ProtoStreamTypeIds` (Core range). See Phase 2 of the implementation plan.
+  _Resolved: allocate IDs in Phase 2._
+
+* **`updateMembers` contract**: `updateMembers` removes leavers and promotes next-ranked nodes
+  for bare coverage only. It does not run the greedy correction pass — that is deferred to
+  `rebalance()`. This matches `DefaultConsistentHashFactory`'s behaviour and satisfies the
+  interface contract.
+  _Resolved: skip greedy in `updateMembers`; coverage-only._
+
+==== Validation
+
+* Segment movement is measured by `countMovedSegments(before, after)` — segments where the
+  owner list changed by position. See `ConsistentHashFactoryComparisonTest` in the implementation
+  plan for the full scenario matrix (16 movement comparison tests).
+  _Resolved: defined in test plan._
+* Computation time is bounded by O(numSegments × numNodes) for the greedy pass. No degenerate
+  input can cause pathological behaviour since the algorithm is a bounded scan with no graph.
+  _Resolved: greedy eliminates the degenerate-input risk._
+
+==== Future Considerations
+
+* **Partial segment movement / throttled rebalance**: when switching from
+  `SyncConsistentHashFactory` to `RendezvousConsistentHashFactory` at the end of a rolling
+  upgrade, the resulting rebalance may move a large number of segments in one operation —
+  potentially all of them, since Sync and Rendezvous produce different assignments for the same
+  member list. Similarly, any large topology change (cluster doubles, cluster halves) produces a
+  large single state-transfer wave. It should be investigated whether the topology protocol can
+  support *partial rebalance* — moving only a bounded number of segments per topology event and
+  deferring the rest to subsequent events — to cap the maximum state-transfer load on the cluster
+  at any one time. This is independent of the CH factory algorithm and would require changes to
+  `ClusterCacheStatus` and the state-transfer coordination layer.
+  _Deferred: requires design work in the topology/state-transfer layer, not the CH factory._
+
+* **Dynamic capacity factor recalculation**: capacity factors are currently set at cache
+  configuration time and fixed for the lifetime of the cache. It should be investigated whether
+  capacity factors can be updated at runtime — for example in response to changing heap pressure
+  or storage utilisation — by installing a new topology with updated values. The CH factory
+  itself requires no changes for this: `rebalance(ch)` already reads capacity factors from the
+  CH and a new call with updated factors would produce a correctly rebalanced result. The work
+  is in the configuration and topology layers to detect the change and trigger the rebalance.
+  _Deferred: CH factory is already capable; requires configuration/topology layer work._
+
+* **Dynamic segment count**: it should be investigated whether the number of segments can be
+  changed at runtime on a live cache. The CH factory produces a `DefaultConsistentHash` of any
+  segment count, so computing a new CH with a different `numSegments` is trivial. The hard
+  problems are (a) routing requests during the transition — keys hash to different segments at
+  different segment counts, so any in-flight request could be routed to either the old or new
+  segment owner; (b) state transfer — every segment in the new CH potentially needs data from
+  multiple segments in the old CH (or vice versa, for shrinkage); (c) persistence — the segment
+  index is part of the key's persistent location. The feasibility and cost of resolving these
+  problems needs a dedicated investigation before this can be scoped as a feature.
+  _Deferred: significant cross-cutting design work required; not specific to Rendezvous CH._
+
+---
+
+== 8. TopologyAwareRendezvousConsistentHashFactory (Proposed)
+
+`org.infinispan.distribution.ch.impl.TopologyAwareRendezvousConsistentHashFactory`
+
+=== Status
+
+*Design complete — implementation pending.* Companion to `RendezvousConsistentHashFactory`.
+
+=== Intent
+
+Extends `RendezvousConsistentHashFactory` to enforce placement of backup owners across distinct
+failure domains (site → rack → machine → node), while preserving full cross-cache determinism and
+near-minimal segment movement. This is the proposed successor to `TopologyAwareSyncConsistentHashFactory`,
+resolving its two core limitations:
+
+* Excess segment movement inherited from `SyncConsistentHashFactory`.
+* Poor load balance when `numSegments < numNodes`.
+
+=== Relationship to Parent
+
+`TopologyAwareRendezvousConsistentHashFactory` extends `RendezvousConsistentHashFactory` and
+overrides only Step 2 of the algorithm (the topology constraint filtering pass). All other steps —
+rendezvous scoring, bounded-load greedy correction, primary-swap pass, output — are inherited
+unchanged.
+
+This mirrors exactly the relationship between `SyncConsistentHashFactory` and
+`TopologyAwareSyncConsistentHashFactory`, where the child class overrides only
+`nodeCanOwnSegment` and `computeExpectedSegments`.
+
+=== Algorithm Changes vs. Base
+
+==== Step 2 — Topology-Filtered Natural Assignment
+
+Uses `TopologyInfo` (the same class used by existing topology-aware factories) to enforce
+owner-position constraints when walking the rendezvous ranking:
+
+[cols="1,3",options="header"]
+|===
+| Owner position | Constraint
+
+| 0
+| None — any node with the highest rendezvous score
+
+| 1 … min(numSites, numOwners)−1
+| Candidate must be in a site not already represented in positions 0…k−1
+
+| min(numSites, numOwners) … min(numRacks, numOwners)−1
+| Candidate must be in a rack not already represented
+
+| min(numRacks, numOwners) … min(numMachines, numOwners)−1
+| Candidate must be in a machine not already represented
+
+| Remaining positions
+| Candidate must be a distinct node
+|===
+
+For each segment, walk the rendezvous ranking in score order. Skip any candidate that would
+violate the constraint for the current owner position. Assign the first valid candidate. This
+produces the *topology-filtered natural assignment* passed into the greedy correction step.
+
+==== Step 3 — Greedy Correction with Topology Constraint
+
+The greedy correction from the base class runs unchanged except that the eligible-node check
+includes a topology diversity guard: a candidate replacement is only used if it would not reduce
+the topology diversity of that segment's owner list (same check as `maintainsDiversity` in
+`TopologyAwareConsistentHashFactory`). The primary-swap pass is similarly constrained to only
+swap positions when the resulting owner list remains topology-legal.
+
+=== Why This Is Better Than TopologyAwareSyncConsistentHashFactory
+
+[cols="2,1,1",options="header"]
+|===
+| Property | TopologyAwareSync | TopologyAwareRendezvous
+
+| Deterministic
+| Yes
+| Yes
+
+| Topology-aware backups
+| Yes
+| Yes
+
+| Tight load balance
+| Poor (low segment counts)
+| Tight
+
+| Segment movement
+| Excess
+| Near-minimal
+
+| Topology constraints applied
+| Inline during distance assignment
+| Inline during rendezvous ranking filter
+
+| Primary owner topology-aware
+| No
+| No (same limitation — see open questions)
+
+| Computation cost
+| High
+| Very High
+|===
+
+The key improvement is that topology constraints in `TopologyAwareSyncConsistentHashFactory` are
+applied inside the load-balancing priority-queue loop, which means the load balancing and topology
+diversity goals compete directly. When the combination forces a sub-optimal choice, the only
+option is to accept excess segment movement. In `TopologyAwareRendezvousConsistentHashFactory`,
+topology constraints are applied in a clean pre-pass that produces a topology-legal candidate set,
+and the greedy correction then achieves load balance within that set at minimal movement cost.
+
+=== Degradation Behaviour
+
+When topology information is absent or incomplete:
+
+* If no nodes have `siteId`/`rackId`/`machineId` configured, the `TopologyInfo` hierarchy
+  collapses to a single site containing all nodes. Step 2 degrades to node-level uniqueness only,
+  producing identical output to `RendezvousConsistentHashFactory`.
+* If only some nodes have topology IDs, nodes without IDs are treated as belonging to a synthetic
+  location distinct from all named locations. This is consistent with the behaviour of
+  `TopologyAwareConsistentHashFactory`.
+
+=== Produces
+
+`DefaultConsistentHash` (same as base class — no new serialisation code required).
+
+=== Determinism Property
+
+Fully deterministic. Topology constraints in Step 2 are applied via `TopologyInfo`, which is
+constructed deterministically from the member list and their addresses (site/rack/machine IDs are
+part of the `Address` contract and stable across JVMs). The greedy correction is therefore also
+deterministic.
+
+=== Open Questions
+
+==== Topology-Specific
+
+* **Primary owner topology placement**: primary owners are load-balanced only at position 0 of
+  the rendezvous ranking, matching `TopologyAwareConsistentHashFactory`'s existing behaviour.
+  Topology-aware primary placement is deferred as a potential future enhancement.
+  _Resolved: parity with existing factory; deferred._
+
+* **Topology constraint relaxation under scarcity**: when there are fewer distinct sites than
+  `numOwners`, the `min(numSites, numOwners)` threshold table in Step 2 degrades automatically
+  from site-level to rack-level to machine-level to node-level. This is the correct policy —
+  it matches the degradation behaviour of `TopologyAwareSyncConsistentHashFactory` and requires
+  no user-configurable fallback.
+  _Resolved: automatic degradation via threshold table._
+
+* **Greedy correction scarcity**: the topology diversity guard in Step 3 may mean some overloaded
+  nodes have no valid replacement for certain segments. The greedy walk simply skips those
+  segments, leaving them temporarily over the `cap(n)` limit. The primary-swap pass then attempts
+  to reduce primary imbalance without violating diversity. This is bounded O(numSegments × numNodes)
+  and cannot enter an infinite loop.
+  _Resolved: greedy skip; no infeasibility risk._
+
+* **Consistency with `TopologyAwareConsistentHashFactory`**: topology is applied at the backup
+  level but not the primary level, matching the existing factory's behaviour exactly.
+  _Resolved: parity with existing factory._
+
+* **Testing**: the test harness is the `TopologyAwareRendezvousConsistentHashFactoryTest` class
+  defined in the implementation plan, which constructs arbitrary site/rack/machine topologies
+  using `JGroupsAddress` with explicit topology IDs. No new harness infrastructure is needed.
+  _Resolved: covered by existing test plan._

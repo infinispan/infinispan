@@ -32,6 +32,10 @@ import org.infinispan.conflict.impl.InternalConflictManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.PersistedConsistentHash;
 import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.PureRendezvousConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.PureTopologyAwareRendezvousConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.globalstate.ScopedPersistentState;
@@ -41,6 +45,7 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.AvailabilityStrategy;
 import org.infinispan.partitionhandling.impl.AvailabilityStrategyContext;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.RebalanceType;
@@ -103,6 +108,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private volatile boolean rebalanceInProgress = false;
    private boolean manuallyPutDegraded = false;
    private volatile ConflictResolution conflictResolution;
+   /** Tracks whether we are currently using the Sync fallback factory due to a mixed-version cluster. */
+   @GuardedBy("lock")
+   private boolean usingFallbackFactory = false;
 
    private RebalanceConfirmationCollector rebalanceConfirmationCollector;
    private ComponentStatus status;
@@ -146,6 +154,49 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    @Override
    public CacheJoinInfo getJoinInfo() {
       return joinInfo;
+   }
+
+   /**
+    * Returns the effective {@link ConsistentHashFactory} for the current topology operation.
+    *
+    * <p>If the configured factory is a {@link PureRendezvousConsistentHashFactory} (or any subclass,
+    * including the topology-aware and greedy variants) and the cluster still contains at least one node older than
+    * {@link NodeVersion#RENDEZVOUS_CH_MIN_VERSION}, returns the appropriate Sync fallback instead.</p>
+    *
+    * <p>Once all nodes have upgraded, this method returns the configured factory and logs the
+    * transition exactly once.</p>
+    */
+   @GuardedBy("lock")
+   @SuppressWarnings("unchecked")
+   private <CH extends ConsistentHash> ConsistentHashFactory<CH> effectiveConsistentHashFactory() {
+      ConsistentHashFactory<CH> configured = (ConsistentHashFactory<CH>) joinInfo.getConsistentHashFactory();
+      if (!(configured instanceof PureRendezvousConsistentHashFactory)) {
+         return configured;
+      }
+
+      NodeVersion oldest = transport.getOldestMember();
+      if (oldest.lessThan(NodeVersion.RENDEZVOUS_CH_MIN_VERSION)) {
+         if (!usingFallbackFactory) {
+            usingFallbackFactory = true;
+         }
+         ConsistentHashFactory<CH> fallback = (ConsistentHashFactory<CH>) (
+               configured instanceof PureTopologyAwareRendezvousConsistentHashFactory
+                     ? TopologyAwareSyncConsistentHashFactory.getInstance()
+                     : SyncConsistentHashFactory.getInstance());
+         CLUSTER.debugf("Mixed-version cluster (oldest: %s): using %s fallback for cache %s",
+               oldest, fallback.getClass().getSimpleName(), cacheName);
+         return fallback;
+      }
+
+      if (usingFallbackFactory) {
+         usingFallbackFactory = false;
+         CLUSTER.infof("All cluster members are now at or above version %s. " +
+               "Activating %s for cache %s. A full rebalance will redistribute segment ownership.",
+               NodeVersion.RENDEZVOUS_CH_MIN_VERSION,
+               configured.getClass().getSimpleName(),
+               cacheName);
+      }
+      return configured;
    }
 
    @Override
@@ -556,7 +607,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          if (currentTopology == null) {
             createInitialCacheTopology();
          }
-         var consistentHashFactory = getJoinInfo().getConsistentHashFactory();
+         var consistentHashFactory = effectiveConsistentHashFactory();
          int topologyId = currentTopology.getTopologyId();
          int rebalanceId = currentTopology.getRebalanceId();
          ConsistentHash currentCH = currentTopology.getCurrentCH();
@@ -592,7 +643,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
             newCurrentMembers = getExpectedMembers();
             actualMembers = newCurrentMembers;
-            newCurrentCH = joinInfo.getConsistentHashFactory().create(joinInfo.getNumOwners(),
+            newCurrentCH = effectiveConsistentHashFactory().create(joinInfo.getNumOwners(),
                     joinInfo.getNumSegments(), newCurrentMembers, getCapacityFactors());
          } else {
             // ReplicatedConsistentHashFactory allocates segments to all its members, so we can't add any members here
@@ -1088,7 +1139,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             } else {
                // We don't have enough members to safely recover the previous topology, so we create a new one, as the
                // node will clear the storage, so we don't need the same segments mapping.
-               ConsistentHashFactory<ConsistentHash> chf = joinInfo.getConsistentHashFactory();
+               ConsistentHashFactory<ConsistentHash> chf = effectiveConsistentHashFactory();
                ch = chf.create(joinInfo.getNumOwners(), joinInfo.getNumSegments(), members, getCapacityFactors());
             }
             CacheTopology topology = new CacheTopology(initialTopologyId, INITIAL_REBALANCE_ID, true, ch, null,
@@ -1109,7 +1160,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    protected CacheTopology createInitialCacheTopology() {
       log.tracef("Initializing status for cache %s", cacheName);
       List<Address> initialMembers = getExpectedMembers();
-      ConsistentHash initialCH = joinInfo.getConsistentHashFactory().create(joinInfo.getNumOwners(),
+      ConsistentHash initialCH = effectiveConsistentHashFactory().create(joinInfo.getNumOwners(),
             joinInfo.getNumSegments(), initialMembers, getCapacityFactors());
       CacheTopology initialTopology = new CacheTopology(initialTopologyId, INITIAL_REBALANCE_ID, initialCH, null,
             CacheTopology.Phase.NO_REBALANCE, initialMembers, persistentUUIDManager.mapAddresses(initialMembers));
@@ -1212,7 +1263,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             return;
          }
 
-         var chFactory = getJoinInfo().getConsistentHashFactory();
+         var chFactory = effectiveConsistentHashFactory();
          // This update will only add the joiners to the CH, we have already checked that we don't have leavers
          ConsistentHash updatedMembersCH = chFactory.updateMembers(currentCH, newMembers, getCapacityFactors());
          ConsistentHash balancedCH = chFactory.rebalance(updatedMembersCH);
@@ -1404,7 +1455,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                                                List<Address> actualMembers) {
       // If we are required to resolveConflicts, then we utilise a union of all distinct CHs. This is necessary
       // to ensure that we read the entries associated with all possible read owners before the rebalance occurs
-      var chf = getJoinInfo().getConsistentHashFactory();
+      var chf = effectiveConsistentHashFactory();
       ConsistentHash unionHash = distinctHashes.stream().reduce(preferredHash, chf::union);
       unionHash = chf.union(unionHash, chf.rebalance(unionHash));
       return chf.updateMembers(unionHash, actualMembers, capacityFactors);
@@ -1479,7 +1530,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          }
 
          CacheTopology conflictTopology = conflictResolution.topology;
-         var chf = getJoinInfo().getConsistentHashFactory();
+         var chf = effectiveConsistentHashFactory();
          ConsistentHash newHash = chf.updateMembers(conflictTopology.getCurrentCH(), members, capacityFactors);
 
          conflictTopology = new CacheTopology(currentTopology.getTopologyId() + 1, currentTopology.getRebalanceId(),
