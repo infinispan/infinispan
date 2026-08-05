@@ -18,8 +18,8 @@ xref:consistent-hash-implementations.adoc[Consistent Hash Factory Implementation
 | TopologyAwareSync
 | Replicated
 | SyncReplicated
-| Rendezvous ✦
-| TopoAwareRendezvous ✦
+| HistoryHintedRendezvous
+| TopoAwareRendezvous
 
 | *Deterministic across caches*
 | {no}
@@ -58,8 +58,8 @@ xref:consistent-hash-implementations.adoc[Consistent Hash Factory Implementation
 | {no}
 | {yes}
 | {no}
-| Near-minimal
-| Near-minimal
+| Near-minimal + history-hinted
+| Near-minimal + history-hinted
 
 | *Computation cost*
 | Medium
@@ -92,7 +92,7 @@ xref:consistent-hash-implementations.adoc[Consistent Hash Factory Implementation
 | Full (inherent)
 |===
 
-{yes} = Yes / {no} = No / * = poor with low segment counts / ✦ = design complete, implementation pending
+{yes} = Yes / {no} = No / * = poor with low segment counts
 
 See xref:consistent-hash-implementations.adoc#_capacity_factors[Capacity Factors] in the
 implementation spec for a full explanation of each level.
@@ -194,14 +194,14 @@ implementation spec for a full explanation of each level.
 
 === Pros
 
-* **Both deterministic and topology-aware** — the only existing factory with both properties.
-  The best current choice for multi-datacenter deployments that also require consistent client-side
-  routing.
+* **Both deterministic and topology-aware** — the only legacy factory with both properties.
+  The best existing choice for multi-datacenter deployments that also require consistent client-side
+  routing when `HistoryHintedRendezvousConsistentHashFactory` is not suitable.
 * Topology constraints are enforced **inline** during hash-distance assignment via efficient
   integer lookup arrays, avoiding the costly post-assignment replacement passes of
   `TopologyAwareConsistentHashFactory`.
 * Inherits all determinism guarantees of `SyncConsistentHashFactory`.
-* **Most sophisticated capacity handling of any existing factory** — `computeExpectedSegments`
+* **Most sophisticated capacity handling of any legacy factory** — `computeExpectedSegments`
   uses `TopologyInfo.getExpectedOwnedSegments()` combining capacity and topology level, so a
   node's target segment count reflects both its weight and its position in the cluster hierarchy.
 
@@ -259,11 +259,10 @@ implementation spec for a full explanation of each level.
 
 ---
 
-== RendezvousConsistentHashFactory (Proposed)
+== HistoryHintedRendezvousConsistentHashFactory
 
-NOTE: For the companion topology-aware variant, see
-xref:consistent-hash-implementations.adoc#_8_topologyawarerendezvousconssistenthashfactory_proposed[§8 TopologyAwareRendezvousConsistentHashFactory]
-in the implementation spec.
+NOTE: This is the *default factory* for `DIST_SYNC` caches without topology information, introduced
+in 16.3. For the topology-aware variant, see <<TopologyAwareRendezvousConsistentHashFactory>> below.
 
 === Pros
 
@@ -272,31 +271,31 @@ in the implementation spec.
 * **Near-minimal segment movement** — the rendezvous base ensures that only segments involving
   the changed node are candidates for movement. The bounded-load greedy correction then minimises
   the actual moves within that candidate set.
-* **Topology awareness supported** — topology constraints are applied as a ranking filter during
-  rendezvous scoring, using the same `TopologyInfo` hierarchy (site → rack → machine → node)
-  as existing topology-aware factories.
-* **Primary owner balance** is addressed by a primary-swap pass after the greedy fill, matching
+* **History-hinted rebalancing** — when rebalancing, prior owners of a segment are preferred over
+  cold candidates whenever they have capacity. This further reduces unnecessary data movement
+  across topology changes without sacrificing load balance.
+* **Stable-state idempotency** — when all segments already have the correct owner count and all
+  members have segments, `rebalance()` skips Phases 1 and 2 entirely and runs only primary
+  redistribution. Prevents `waitForNoRebalance` from looping unnecessarily.
+* **Primary owner balance** is addressed by a primary-swap pass, matching
   `DefaultConsistentHashFactory`'s approach.
 * **No virtual nodes** required — rendezvous hashing gives each segment an independent score per
   node, avoiding the virtual-node approximation used by `SyncConsistentHashFactory`.
 * **Full proportional capacity factor support — inherent, not bolted on.** Dividing the hash
   score by `capacityFactor(n)` before ranking mathematically gives higher-capacity nodes
-  proportionally more "slots" in the score space. A node with factor `2.0` wins twice as many
-  segments in expectation with zero additional mechanism. The bounded-load greedy correction then
-  tightens this to exact floor/ceil bounds. This is cleaner and more correct than the
-  distance-scaling approximation used by `SyncConsistentHashFactory`.
+  proportionally more "slots" in the score space. The bounded-load correction tightens this to
+  exact floor/ceil bounds.
 * Produces `DefaultConsistentHash` — no new serialisation code needed.
 
 === Cons
 
 * **Higher computation cost than Sync.** The greedy correction is O(numSegments × numNodes) —
-  more expensive than `SyncConsistentHashFactory` but far cheaper than an MCF solver. Acceptable
-  given that topology-change computation cost is not a concern.
+  more expensive than `SyncConsistentHashFactory` but far cheaper than an MCF solver.
 * **Segment contiguity is lost.** Like `SyncConsistentHashFactory`, rendezvous hashing scatters
   segments pseudo-randomly. The minor cache-locality benefit of contiguous segment blocks (an
-  accidental property of `DefaultConsistentHashFactory`) is not preserved. This is not a
-  correctness issue — the `IntSet` abstraction handles arbitrary segment sets — but may be a
-  micro-performance regression for data-container iteration.
+  accidental property of `DefaultConsistentHashFactory`) is not preserved.
+* **Requires all cluster members to be at or above 16.3.0** — falls back to
+  `SyncConsistentHashFactory` during rolling upgrades until all nodes are upgraded.
 
 ---
 
@@ -307,16 +306,16 @@ in the implementation spec.
 | Use Case | Recommended Factory
 
 | Standard distributed cache, single embedded deployment
-| `DefaultConsistentHashFactory`
+| `HistoryHintedRendezvousConsistentHashFactory` (default since 16.3)
 
 | Multiple caches sharing a key space, or HotRod smart routing across caches
-| `SyncConsistentHashFactory`
+| `HistoryHintedRendezvousConsistentHashFactory` (deterministic by design)
 
 | Distributed cache with hardware fault-domain awareness (rack/site)
-| `TopologyAwareConsistentHashFactory`
+| `TopologyAwareRendezvousConsistentHashFactory` (default for topology-aware configs since 16.3)
 
 | Multi-datacenter with both topology awareness and consistent client routing
-| `TopologyAwareSyncConsistentHashFactory`
+| `TopologyAwareRendezvousConsistentHashFactory`
 
 | Replicated cache, standard deployment
 | `ReplicatedConsistentHashFactory`
@@ -324,37 +323,40 @@ in the implementation spec.
 | Replicated cache with mixed replicated/distributed topology routing alignment
 | `SyncReplicatedConsistentHashFactory`
 
-| New: deterministic + near-minimal movement, no topology awareness
-| `RendezvousConsistentHashFactory`
+| Legacy: non-deterministic, tight balance, minimal movement
+| `DefaultConsistentHashFactory`
 
-| New: deterministic + near-minimal movement + topology-aware
-| `TopologyAwareRendezvousConsistentHashFactory`
+| Legacy: deterministic, slightly looser balance, excess movement
+| `SyncConsistentHashFactory`
 |===
 
 ---
 
-== TopologyAwareRendezvousConsistentHashFactory (Proposed)
+== TopologyAwareRendezvousConsistentHashFactory
+
+NOTE: This is the *default factory* for `DIST_SYNC` caches with topology information, introduced
+in 16.3. Extends `HistoryHintedRendezvousConsistentHashFactory`.
 
 === Pros
 
 * **Deterministic and topology-aware** — resolves both limitations of `TopologyAwareSyncConsistentHashFactory`.
-* **Near-minimal segment movement** — topology constraints are applied as a clean pre-pass before
-  the greedy correction, so the two goals (diversity and balance) no longer compete inside the
-  same loop.
+* **Near-minimal segment movement with history hints** — inherits `HistoryHintedRendezvousConsistentHashFactory`'s
+  `rebalance()` unchanged, so topology-aware caches also benefit from history-hinted rebalancing.
 * **No low-segment-count penalty** — unlike `TopologyAwareSyncConsistentHashFactory`, there is no
   regime where topology constraints and the assignment loop combine to produce poor balance.
-* Graceful degradation when topology IDs are absent — collapses to `RendezvousConsistentHashFactory`
-  behaviour without errors.
+* Graceful degradation when topology IDs are absent — collapses to
+  `HistoryHintedRendezvousConsistentHashFactory` behaviour without errors.
 * **Full proportional capacity factor support — inherent** — identical to
-  `RendezvousConsistentHashFactory`. Topology constraints in Step 2 are independent of capacity;
-  the greedy correction uses `capacityFactor(n) / totalCapacity` directly as the balance target.
+  `HistoryHintedRendezvousConsistentHashFactory`.
 * Produces `DefaultConsistentHash` — no new serialisation code required.
 
 === Cons
 
-* **Higher computation cost** — inherits the greedy correction from `RendezvousConsistentHashFactory`,
-  plus the topology constraint pass adds O(numSegments × numNodes × numTopologyLevels) overhead.
-  Still O(numSegments × numNodes) overall and predictable at all cluster sizes.
-* **Primary owners are still not topology-aware** — position-0 of the rendezvous ranking is
-  load-balanced only. This is the same limitation as all existing topology-aware factories.
-* Segment contiguity is not preserved (same as all Sync/Rendezvous variants).
+* **Higher computation cost** — inherits the greedy correction, plus the topology constraint pass
+  adds O(numSegments × numNodes × numTopologyLevels) overhead. Still O(numSegments × numNodes)
+  overall and predictable at all cluster sizes.
+* **Primary owners are still not topology-aware** — position-0 is load-balanced only. Same
+  limitation as all existing topology-aware factories.
+* Segment contiguity is not preserved (same as all Rendezvous/Sync variants).
+* **Requires all cluster members to be at or above 16.3.0** — falls back to
+  `TopologyAwareSyncConsistentHashFactory` during rolling upgrades.

@@ -12,13 +12,17 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.remoting.transport.Address;
 
 /**
- * A topology-aware variant of {@link RendezvousConsistentHashFactory} that enforces placement of
- * backup owners across distinct failure domains (site → rack → machine → node), combined with
- * bounded-load greedy correction and primary-ownership redistribution to guarantee tight
- * {@code floor/ceil} balance.
+ * A topology-aware variant of {@link HistoryHintedRendezvousConsistentHashFactory} that enforces
+ * placement of backup owners across distinct failure domains (site → rack → machine → node),
+ * combined with bounded-load greedy correction and primary-ownership redistribution to guarantee
+ * tight {@code floor/ceil} balance.
  *
- * <p>Extends {@link PureTopologyAwareRendezvousConsistentHashFactory}, overriding {@code build()}
- * in three phases:</p>
+ * <p>Extends {@link HistoryHintedRendezvousConsistentHashFactory}, overriding only {@code build()}
+ * to apply topology diversity constraints inline during the greedy owner assignment. The
+ * history-hinted {@code rebalance()} implementation is inherited unchanged, so topology-aware
+ * caches also benefit from minimal segment movement across topology changes.</p>
+ *
+ * <p>The {@code build()} override runs in three phases:</p>
  * <ol>
  *   <li><b>Phase 1 — topology-aware greedy assignment</b>: assign owners per segment using
  *       rendezvous rankings, bounded-load caps, and a {@link TopologyFilter} that enforces
@@ -34,15 +38,16 @@ import org.infinispan.remoting.transport.Address;
  * </ol>
  *
  * <p>When topology information is absent, this factory degrades gracefully to the behaviour of
- * {@link RendezvousConsistentHashFactory}.</p>
+ * {@link HistoryHintedRendezvousConsistentHashFactory}.</p>
  *
  * @author Infinispan
  * @since 16.3
+ * @see HistoryHintedRendezvousConsistentHashFactory
  * @see SegmentOwnershipBalancer
  */
 @ProtoTypeId(ProtoStreamTypeIds.TOPOLOGY_AWARE_RENDEZVOUS_CONSISTENT_HASH_FACTORY)
 public class TopologyAwareRendezvousConsistentHashFactory
-      extends PureTopologyAwareRendezvousConsistentHashFactory {
+      extends HistoryHintedRendezvousConsistentHashFactory {
 
    private static final TopologyAwareRendezvousConsistentHashFactory INSTANCE =
          new TopologyAwareRendezvousConsistentHashFactory();

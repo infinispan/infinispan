@@ -142,7 +142,6 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
             org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory.class,
             org.infinispan.distribution.ch.impl.HistoryHintedRendezvousConsistentHashFactory.class,
             org.infinispan.distribution.ch.impl.PureRendezvousConsistentHashFactory.class,
-            org.infinispan.distribution.ch.impl.PureTopologyAwareRendezvousConsistentHashFactory.class,
             org.infinispan.distribution.ch.impl.RendezvousConsistentHashFactory.class,
             org.infinispan.distribution.ch.impl.TopologyAwareRendezvousConsistentHashFactory.class,
             org.infinispan.distribution.group.impl.CacheEntryGroupPredicate.class,

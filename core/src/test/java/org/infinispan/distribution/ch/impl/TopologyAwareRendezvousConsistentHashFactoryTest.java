@@ -14,7 +14,7 @@ import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
 
 /**
- * Tests topology diversity constraints for {@link PureTopologyAwareRendezvousConsistentHashFactory}.
+ * Tests topology diversity constraints for {@link TopologyAwareRendezvousConsistentHashFactory}.
  * Extends {@link RendezvousConsistentHashFactoryTest} to inherit all base correctness and
  * movement tests with the same permissive distribution tolerances.
  */
@@ -23,7 +23,7 @@ public class TopologyAwareRendezvousConsistentHashFactoryTest extends Rendezvous
 
    @Override
    protected ConsistentHashFactory<DefaultConsistentHash> createConsistentHashFactory() {
-      return PureTopologyAwareRendezvousConsistentHashFactory.getInstance();
+      return TopologyAwareRendezvousConsistentHashFactory.getInstance();
    }
 
    public void testBackupOwnersInDifferentSites() {

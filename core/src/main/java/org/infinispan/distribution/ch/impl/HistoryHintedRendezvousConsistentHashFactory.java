@@ -39,7 +39,7 @@ import org.infinispan.remoting.transport.Address;
  * than {@code ceil(ideal)} segments and achieves tight {@code floor/ceil} primary balance.</p>
  *
  * <p>This factory requires all cluster members to be at or above
- * {@link org.infinispan.remoting.transport.NodeVersion#RENDEZVOUS_CH_MIN_VERSION}.</p>
+ * {@link org.infinispan.remoting.transport.NodeVersion#SIXTEEN_THREE}.</p>
  *
  * @author wburns
  * @since 16.3

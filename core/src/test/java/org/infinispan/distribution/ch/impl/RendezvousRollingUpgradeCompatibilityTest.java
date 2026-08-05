@@ -54,7 +54,7 @@ public class RendezvousRollingUpgradeCompatibilityTest extends AbstractInfinispa
    // ---- Version constant ----
 
    public void testMinVersionConstant() {
-      NodeVersion v = NodeVersion.RENDEZVOUS_CH_MIN_VERSION;
+      NodeVersion v = NodeVersion.SIXTEEN_THREE;
       assertEquals(16, v.getMajor());
       assertEquals(3, v.getMinor());
       assertEquals(0, v.getPatch());
@@ -62,9 +62,9 @@ public class RendezvousRollingUpgradeCompatibilityTest extends AbstractInfinispa
 
    public void testVersionLessThan() {
       NodeVersion v162 = NodeVersion.from((byte) 16, (byte) 2, (byte) 0);
-      assertTrue(v162.lessThan(NodeVersion.RENDEZVOUS_CH_MIN_VERSION),
+      assertTrue(v162.lessThan(NodeVersion.SIXTEEN_THREE),
             "16.2 should be less than 16.3");
-      assertFalse(NodeVersion.RENDEZVOUS_CH_MIN_VERSION.lessThan(NodeVersion.RENDEZVOUS_CH_MIN_VERSION),
+      assertFalse(NodeVersion.SIXTEEN_THREE.lessThan(NodeVersion.SIXTEEN_THREE),
             "16.3 should not be less than itself");
    }
 
@@ -76,18 +76,18 @@ public class RendezvousRollingUpgradeCompatibilityTest extends AbstractInfinispa
    public void testOldVersionReturnsSyncFallback() {
       // Simulate: configured=Rendezvous, oldest node is 16.2 (below 16.3)
       NodeVersion old = NodeVersion.from((byte) 16, (byte) 2, (byte) 0);
-      assertTrue(old.lessThan(NodeVersion.RENDEZVOUS_CH_MIN_VERSION),
+      assertTrue(old.lessThan(NodeVersion.SIXTEEN_THREE),
             "16.2 should be less than RENDEZVOUS_CH_MIN_VERSION 16.3");
    }
 
    public void testExactMinVersionIsNotLessThan() {
-      assertFalse(NodeVersion.RENDEZVOUS_CH_MIN_VERSION.lessThan(NodeVersion.RENDEZVOUS_CH_MIN_VERSION),
+      assertFalse(NodeVersion.SIXTEEN_THREE.lessThan(NodeVersion.SIXTEEN_THREE),
             "RENDEZVOUS_CH_MIN_VERSION must not be less than itself");
    }
 
    public void testNewerVersionIsNotLessThan() {
       NodeVersion newer = NodeVersion.from((byte) 16, (byte) 4, (byte) 0);
-      assertFalse(newer.lessThan(NodeVersion.RENDEZVOUS_CH_MIN_VERSION),
+      assertFalse(newer.lessThan(NodeVersion.SIXTEEN_THREE),
             "16.4 should not be less than 16.3");
    }
 
@@ -102,8 +102,8 @@ public class RendezvousRollingUpgradeCompatibilityTest extends AbstractInfinispa
 
    public void testTopologyAwareRendezvousIsInstanceOfRendezvous() {
       // This is the key instanceof check used by the version guard to select the correct fallback.
-      // TopologyAwareRendezvous extends PureTopologyAwareRendezvous extends PureRendezvous, so the
-      // version guard checks against PureRendezvousConsistentHashFactory.
+      // TopologyAwareRendezvous extends HistoryHintedRendezvous extends RendezvousConsistentHashFactory
+      // extends PureRendezvous, so the version guard checks against PureRendezvousConsistentHashFactory.
       assertInstanceOf(PureRendezvousConsistentHashFactory.class,
             TopologyAwareRendezvousConsistentHashFactory.getInstance(),
             "TopologyAwareRendezvous must be caught by the PureRendezvousConsistentHashFactory instanceof check");

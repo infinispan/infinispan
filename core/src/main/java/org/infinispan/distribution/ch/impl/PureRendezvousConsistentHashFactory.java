@@ -37,7 +37,7 @@ import org.infinispan.remoting.transport.Address;
  * balance guarantees.</p>
  *
  * <p>This factory requires all cluster members to be at or above
- * {@link org.infinispan.remoting.transport.NodeVersion#RENDEZVOUS_CH_MIN_VERSION}. When used in a
+ * {@link org.infinispan.remoting.transport.NodeVersion#SIXTEEN_THREE}. When used in a
  * mixed-version cluster, {@code ClusterCacheStatus} automatically falls back to
  * {@link SyncConsistentHashFactory} until all nodes are upgraded.</p>
  *
