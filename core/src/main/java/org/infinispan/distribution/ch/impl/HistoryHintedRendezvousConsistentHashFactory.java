@@ -11,7 +11,7 @@ import org.infinispan.remoting.transport.Address;
 
 /**
  * A {@link org.infinispan.distribution.ch.impl.ConsistentHashFactory} that extends
- * {@link RendezvousConsistentHashFactory} with a history-hinted load-balancing pass to minimise
+ * {@link PureRendezvousConsistentHashFactory} with a history-hinted load-balancing pass to minimise
  * segment movement across topology changes.
  *
  * <h2>Rebalance algorithm</h2>
@@ -35,19 +35,18 @@ import org.infinispan.remoting.transport.Address;
  * load balance, reducing the total number of segments that move on each topology change compared
  * to the pure-rendezvous rebalance.</p>
  *
- * <p>Like {@link RendezvousConsistentHashFactory}, this factory guarantees that no node owns more
- * than {@code ceil(ideal)} segments and achieves tight {@code floor/ceil} primary balance.</p>
+ * <p>This factory guarantees that no node owns more than {@code ceil(ideal)} segments and achieves
+ * tight {@code floor/ceil} primary balance.</p>
  *
  * <p>This factory requires all cluster members to be at or above
  * {@link org.infinispan.remoting.transport.NodeVersion#SIXTEEN_THREE}.</p>
  *
  * @author wburns
  * @since 16.3
- * @see RendezvousConsistentHashFactory
  * @see SegmentOwnershipBalancer
  */
 @ProtoTypeId(ProtoStreamTypeIds.HISTORY_HINTED_RENDEZVOUS_CONSISTENT_HASH_FACTORY)
-public class HistoryHintedRendezvousConsistentHashFactory extends RendezvousConsistentHashFactory {
+public class HistoryHintedRendezvousConsistentHashFactory extends PureRendezvousConsistentHashFactory {
 
    private static final HistoryHintedRendezvousConsistentHashFactory INSTANCE =
          new HistoryHintedRendezvousConsistentHashFactory();
@@ -57,6 +56,35 @@ public class HistoryHintedRendezvousConsistentHashFactory extends RendezvousCons
    @ProtoFactory
    public static HistoryHintedRendezvousConsistentHashFactory getInstance() {
       return INSTANCE;
+   }
+
+   /**
+    * Builds a floor/ceil-balanced {@link DefaultConsistentHash} in two phases:
+    * <ol>
+    *   <li><b>Phase 1</b>: pure rendezvous assignment — top-N nodes per segment by score.</li>
+    *   <li><b>Phase 2</b>: load balancing via {@link SegmentOwnershipBalancer#apply} — drains
+    *       over-assigned nodes and redistributes primary ownership within existing owner sets.</li>
+    * </ol>
+    */
+   @Override
+   DefaultConsistentHash build(int numOwners, int numSegments, List<Address> members,
+                                Map<Address, Float> capacityFactors) {
+      int actualNumOwners = computeActualNumOwners(numOwners, members, capacityFactors);
+      List<Address>[] rankings = computeRankings(numSegments, members, capacityFactors);
+
+      @SuppressWarnings("unchecked")
+      List<Address>[] segmentOwners = new List[numSegments];
+      for (int s = 0; s < numSegments; s++) {
+         List<Address> ranking = rankings[s];
+         List<Address> owners = new ArrayList<>(actualNumOwners);
+         for (int i = 0; i < actualNumOwners; i++) {
+            owners.add(ranking.get(i));
+         }
+         segmentOwners[s] = owners;
+      }
+      SegmentOwnershipBalancer.apply(segmentOwners, rankings, members, capacityFactors,
+            numSegments, actualNumOwners);
+      return DefaultConsistentHash.create(numOwners, numSegments, members, capacityFactors, segmentOwners);
    }
 
    /**
@@ -121,7 +149,7 @@ public class HistoryHintedRendezvousConsistentHashFactory extends RendezvousCons
       // Phase 1: pure rendezvous rankings
       List<Address>[] rankings = computeRankings(numSegments, members, capacityFactors);
 
-      // Build initial owners from pure-rendezvous top-N (same as RendezvousConsistentHashFactory)
+      // Build initial owners from pure-rendezvous top-N
       @SuppressWarnings("unchecked")
       List<Address>[] segmentOwners = new List[numSegments];
       for (int s = 0; s < numSegments; s++) {

@@ -261,8 +261,7 @@ implementation spec for a full explanation of each level.
 
 == HistoryHintedRendezvousConsistentHashFactory
 
-NOTE: This is the *default factory* for `DIST_SYNC` caches without topology information, introduced
-in 16.3. For the topology-aware variant, see <<TopologyAwareRendezvousConsistentHashFactory>> below.
+NOTE: This is the *default factory* for `DIST_SYNC` caches, introduced in 16.3.
 
 === Pros
 
@@ -305,17 +304,11 @@ in 16.3. For the topology-aware variant, see <<TopologyAwareRendezvousConsistent
 |===
 | Use Case | Recommended Factory
 
-| Standard distributed cache, single embedded deployment
+| Standard distributed cache, single or multi-node deployment
 | `HistoryHintedRendezvousConsistentHashFactory` (default since 16.3)
 
 | Multiple caches sharing a key space, or HotRod smart routing across caches
 | `HistoryHintedRendezvousConsistentHashFactory` (deterministic by design)
-
-| Distributed cache with hardware fault-domain awareness (rack/site)
-| `TopologyAwareRendezvousConsistentHashFactory` (default for topology-aware configs since 16.3)
-
-| Multi-datacenter with both topology awareness and consistent client routing
-| `TopologyAwareRendezvousConsistentHashFactory`
 
 | Replicated cache, standard deployment
 | `ReplicatedConsistentHashFactory`
@@ -329,34 +322,3 @@ in 16.3. For the topology-aware variant, see <<TopologyAwareRendezvousConsistent
 | Legacy: deterministic, slightly looser balance, excess movement
 | `SyncConsistentHashFactory`
 |===
-
----
-
-== TopologyAwareRendezvousConsistentHashFactory
-
-NOTE: This is the *default factory* for `DIST_SYNC` caches with topology information, introduced
-in 16.3. Extends `HistoryHintedRendezvousConsistentHashFactory`.
-
-=== Pros
-
-* **Deterministic and topology-aware** — resolves both limitations of `TopologyAwareSyncConsistentHashFactory`.
-* **Near-minimal segment movement with history hints** — inherits `HistoryHintedRendezvousConsistentHashFactory`'s
-  `rebalance()` unchanged, so topology-aware caches also benefit from history-hinted rebalancing.
-* **No low-segment-count penalty** — unlike `TopologyAwareSyncConsistentHashFactory`, there is no
-  regime where topology constraints and the assignment loop combine to produce poor balance.
-* Graceful degradation when topology IDs are absent — collapses to
-  `HistoryHintedRendezvousConsistentHashFactory` behaviour without errors.
-* **Full proportional capacity factor support — inherent** — identical to
-  `HistoryHintedRendezvousConsistentHashFactory`.
-* Produces `DefaultConsistentHash` — no new serialisation code required.
-
-=== Cons
-
-* **Higher computation cost** — inherits the greedy correction, plus the topology constraint pass
-  adds O(numSegments × numNodes × numTopologyLevels) overhead. Still O(numSegments × numNodes)
-  overall and predictable at all cluster sizes.
-* **Primary owners are still not topology-aware** — position-0 is load-balanced only. Same
-  limitation as all existing topology-aware factories.
-* Segment contiguity is not preserved (same as all Rendezvous/Sync variants).
-* **Requires all cluster members to be at or above 16.3.0** — falls back to
-  `TopologyAwareSyncConsistentHashFactory` during rolling upgrades.

@@ -25,16 +25,16 @@ public class RendezvousRollingUpgradeCompatibilityTest extends AbstractInfinispa
 
    // ---- Factory singleton / ProtoTypeId sanity ----
 
-   public void testRendezvousFactorySingletonIsInstance() {
-      assertInstanceOf(RendezvousConsistentHashFactory.class,
-            RendezvousConsistentHashFactory.getInstance());
+   public void testHistoryHintedFactorySingletonIsInstance() {
+      assertInstanceOf(HistoryHintedRendezvousConsistentHashFactory.class,
+            HistoryHintedRendezvousConsistentHashFactory.getInstance());
    }
 
    public void testProtoTypeIdUniqueness() {
       // The real check is done by ProtoStreamTypeIdsUniquenessTest; this just asserts the
       // constant is set to its expected value so a future re-allocation is detectable.
-      assertEquals(1000 + 342,
-            org.infinispan.commons.marshall.ProtoStreamTypeIds.RENDEZVOUS_CONSISTENT_HASH_FACTORY);
+      assertEquals(1000 + 344,
+            org.infinispan.commons.marshall.ProtoStreamTypeIds.HISTORY_HINTED_RENDEZVOUS_CONSISTENT_HASH_FACTORY);
    }
 
    // ---- Version constant ----
@@ -78,12 +78,12 @@ public class RendezvousRollingUpgradeCompatibilityTest extends AbstractInfinispa
    }
 
    public void testNonRendezvousFactoryNotAffectedByVersionGuard() {
-      // The version guard only intercepts RendezvousConsistentHashFactory instances.
+      // The version guard only intercepts PureRendezvousConsistentHashFactory instances.
       // Non-Rendezvous factories should be returned unchanged regardless of cluster version.
       ConsistentHashFactory<?> sync = SyncConsistentHashFactory.getInstance();
       ConsistentHashFactory<?> def = DefaultConsistentHashFactory.getInstance();
-      assertFalse(sync instanceof RendezvousConsistentHashFactory);
-      assertFalse(def instanceof RendezvousConsistentHashFactory);
+      assertFalse(sync instanceof PureRendezvousConsistentHashFactory);
+      assertFalse(def instanceof PureRendezvousConsistentHashFactory);
    }
 
    // ---- Persistent state compatibility ----
@@ -95,7 +95,7 @@ public class RendezvousRollingUpgradeCompatibilityTest extends AbstractInfinispa
       int numOwners = 2;
       int numSegments = 64;
 
-      DefaultConsistentHash renCH = RendezvousConsistentHashFactory.getInstance()
+      DefaultConsistentHash renCH = HistoryHintedRendezvousConsistentHashFactory.getInstance()
             .create(numOwners, numSegments, members, null);
       DefaultConsistentHash defCH = DefaultConsistentHashFactory.getInstance()
             .create(numOwners, numSegments, members, null);

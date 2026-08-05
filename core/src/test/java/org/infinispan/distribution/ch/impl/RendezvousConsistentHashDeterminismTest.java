@@ -13,7 +13,7 @@ import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 /**
- * Tests cross-cache determinism for {@link RendezvousConsistentHashFactory}.
+ * Tests cross-cache determinism for {@link HistoryHintedRendezvousConsistentHashFactory}.
  */
 @Test(groups = "unit", testName = "distribution.ch.RendezvousConsistentHashDeterminismTest")
 public class RendezvousConsistentHashDeterminismTest extends AbstractInfinispanTest {
@@ -24,7 +24,7 @@ public class RendezvousConsistentHashDeterminismTest extends AbstractInfinispanT
       Address C = Address.random("C");
       List<Address> members = Arrays.asList(A, B, C);
 
-      ConsistentHashFactory<DefaultConsistentHash> chf = RendezvousConsistentHashFactory.getInstance();
+      ConsistentHashFactory<DefaultConsistentHash> chf = HistoryHintedRendezvousConsistentHashFactory.getInstance();
       DefaultConsistentHash ch1 = chf.create(2, 64, members, null);
       DefaultConsistentHash ch2 = chf.create(2, 64, members, null);
 
@@ -36,7 +36,7 @@ public class RendezvousConsistentHashDeterminismTest extends AbstractInfinispanT
       Address B = Address.random("B");
       Address C = Address.random("C");
 
-      ConsistentHashFactory<DefaultConsistentHash> chf = RendezvousConsistentHashFactory.getInstance();
+      ConsistentHashFactory<DefaultConsistentHash> chf = HistoryHintedRendezvousConsistentHashFactory.getInstance();
       DefaultConsistentHash ch1 = chf.create(2, 64, Arrays.asList(A, B, C), null);
       DefaultConsistentHash ch2 = chf.create(2, 64, Arrays.asList(C, A, B), null);
 
@@ -56,7 +56,7 @@ public class RendezvousConsistentHashDeterminismTest extends AbstractInfinispanT
       Address C = Address.random("C");
       List<Address> members = Arrays.asList(A, B, C);
 
-      ConsistentHashFactory<DefaultConsistentHash> chf = RendezvousConsistentHashFactory.getInstance();
+      ConsistentHashFactory<DefaultConsistentHash> chf = HistoryHintedRendezvousConsistentHashFactory.getInstance();
       DefaultConsistentHash cache1CH = chf.create(2, 64, members, null);
       DefaultConsistentHash cache2CH = chf.create(2, 64, members, null);
 
@@ -86,7 +86,7 @@ public class RendezvousConsistentHashDeterminismTest extends AbstractInfinispanT
       cf2.put(B, 2f);
       cf2.put(C, 2f);
 
-      ConsistentHashFactory<DefaultConsistentHash> chf = RendezvousConsistentHashFactory.getInstance();
+      ConsistentHashFactory<DefaultConsistentHash> chf = HistoryHintedRendezvousConsistentHashFactory.getInstance();
       DefaultConsistentHash ch1 = chf.create(2, 64, members, cf1);
       DefaultConsistentHash ch2 = chf.create(2, 64, members, cf2);
 
@@ -103,7 +103,7 @@ public class RendezvousConsistentHashDeterminismTest extends AbstractInfinispanT
       Address B2 = Address.random("B2");
       Address C2 = Address.random("C2");
 
-      ConsistentHashFactory<DefaultConsistentHash> chf = RendezvousConsistentHashFactory.getInstance();
+      ConsistentHashFactory<DefaultConsistentHash> chf = HistoryHintedRendezvousConsistentHashFactory.getInstance();
       DefaultConsistentHash ch1 = chf.create(2, 64, Arrays.asList(A1, B1, C1), null);
       DefaultConsistentHash ch2 = chf.create(2, 64, Arrays.asList(A2, B2, C2), null);
 

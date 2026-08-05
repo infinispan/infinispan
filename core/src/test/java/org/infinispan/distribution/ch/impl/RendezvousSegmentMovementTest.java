@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 public class RendezvousSegmentMovementTest extends AbstractInfinispanTest {
 
    private static final ConsistentHashFactory<DefaultConsistentHash> CHF =
-         RendezvousConsistentHashFactory.getInstance();
+         HistoryHintedRendezvousConsistentHashFactory.getInstance();
 
    public void testNodeJoinMovesBoundedSegments() {
       List<Address> before = makeNodes(4);

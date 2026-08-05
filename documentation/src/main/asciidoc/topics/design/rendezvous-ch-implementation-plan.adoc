@@ -23,7 +23,7 @@ mvn install -pl core,commons/all -am -DskipTests -Dcheckstyle.skip
 
 # Run all CH test classes
 mvn verify -pl core -Dcheckstyle.skip \
-  -Dtest="RendezvousConsistentHashFactoryTest,TopologyAwareRendezvousConsistentHashFactoryTest,\
+  -Dtest="RendezvousConsistentHashFactoryTest,\
 HistoryHintedRendezvousConsistentHashFactoryTest,RendezvousConsistentHashDeterminismTest,\
 RendezvousCapacityFactorTest,RendezvousSegmentMovementTest,ConsistentHashFactoryComparisonTest,\
 RendezvousRollingUpgradeCompatibilityTest"
@@ -34,61 +34,53 @@ RendezvousRollingUpgradeCompatibilityTest"
 [source]
 ----
 AbstractConsistentHashFactory
-└── PureRendezvousConsistentHashFactory          (pure rendezvous, no caps/corrections)
-    ├── RendezvousConsistentHashFactory            (Phase 1: rendezvous → Phase 2: SegmentOwnershipBalancer)
-    └── HistoryHintedRendezvousConsistentHashFactory  (inherits build(); overrides rebalance() with history hints)
-        └── TopologyAwareRendezvousConsistentHashFactory  (overrides build() with topology filter; inherits history rebalance)
+└── PureRendezvousConsistentHashFactory          (abstract; rendezvous infrastructure + coverage-only updateMembers)
+    └── HistoryHintedRendezvousConsistentHashFactory  (build() = rendezvous + SegmentOwnershipBalancer;
+                                                        rebalance() = history-hinted 3-phase algorithm)
 
 SegmentOwnershipBalancer                         (standalone utility — the load-balancing post-processor)
 TopologyFilter                                   (functional interface for per-position topology constraints)
 ----
 
 All shared rendezvous infrastructure (`computeRankings`, `updateMembers`, `rebalance`, etc.) lives
-in `PureRendezvousConsistentHashFactory`. Subclasses override `build()` and/or `rebalance()`.
+in `PureRendezvousConsistentHashFactory`. `HistoryHintedRendezvousConsistentHashFactory` is the
+single concrete subclass, overriding both `build()` and `rebalance()`.
 
 The load-balancing logic (`redistributeTotal`, `redistributeSingleOwner`, `redistributePrimary`,
-counting helpers) lives exclusively in `SegmentOwnershipBalancer`. Both `RendezvousConsistentHashFactory`
-and `TopologyAwareRendezvousConsistentHashFactory` compose with it — they provide different initial
-segment mappings (Phase 1) and then delegate to `SegmentOwnershipBalancer` for the balancing passes.
+counting helpers) lives exclusively in `SegmentOwnershipBalancer`.
+`HistoryHintedRendezvousConsistentHashFactory` composes with it for both `build()` and `rebalance()`.
 
 == Key Decisions
 
-* `PureRendezvousConsistentHashFactory`: assigns segment owners by pure rendezvous rank (top-N
-  from the score-sorted list), with no load cap, no balance correction, and no primary-swap pass.
-  This is the **evaluation** factory — use it to observe raw rendezvous distribution quality.
-* `RendezvousConsistentHashFactory`: extends the pure base; `build()` does Phase 1 (pure rendezvous
-  initial assignment) then delegates Phase 2 to `SegmentOwnershipBalancer.apply()`.
-* `HistoryHintedRendezvousConsistentHashFactory`: extends `RendezvousConsistentHashFactory`;
-  inherits `build()` unchanged. Overrides `rebalance()` with a three-phase algorithm that:
-  - Phase 1: pure rendezvous initial assignment (same as `RendezvousConsistentHashFactory.build()`)
-  - Phase 2: history-hinted redistribution — prefer prior owners when draining over-loaded nodes
-  - Phase 3: `SegmentOwnershipBalancer.apply()` for remaining excess and primary redistribution
-  - Stable-state shortcut: when all segments have the right number of owners and all members have
-    segments, skip Phases 1–2 and run only primary redistribution over the existing owner sets.
-  This is the *default factory* for `DIST_SYNC` caches without topology information.
-* `TopologyAwareRendezvousConsistentHashFactory`: extends `HistoryHintedRendezvousConsistentHashFactory`;
-  overrides only `build()` with the topology-aware greedy algorithm (topology filter + caps +
-  `balanceCorrection` + `redistributePrimary`). Inherits the history-hinted `rebalance()` from
-  `HistoryHintedRendezvousConsistentHashFactory` — topology-aware caches also benefit from
-  minimal segment movement across topology changes.
-  This is the *default factory* for `DIST_SYNC` caches with topology information.
+* `PureRendezvousConsistentHashFactory`: **abstract** base class — provides rendezvous
+  infrastructure (`computeRankings`, `computeActualNumOwners`, `updateMembers`, `rebalance`,
+  `union`, `fromPersistentState`) and a default `build()` that assigns top-N owners with no load
+  cap. Also serves as the `instanceof` target for the rolling-upgrade version guard in
+  `ClusterCacheStatus.effectiveConsistentHashFactory()`.
+* `HistoryHintedRendezvousConsistentHashFactory`: the single concrete factory. Overrides:
+  - `build()`: Phase 1 (pure rendezvous ranking) + Phase 2 (`SegmentOwnershipBalancer.apply()`)
+    for floor/ceil total and primary balance. This is the path taken by `create()`.
+  - `rebalance()`: three-phase algorithm:
+    - Phase 1: pure rendezvous initial assignment (same as `build()` Phase 1)
+    - Phase 2: history-hinted redistribution — prefer prior owners when draining over-loaded nodes
+    - Phase 3: `SegmentOwnershipBalancer.apply()` for remaining excess and primary redistribution
+    - Stable-state shortcut: when all segments have the right number of owners and all members have
+      segments, skip Phases 1–2 and run only primary redistribution over the existing owner sets.
+  This is the *default factory* for `DIST_SYNC` caches.
 * `SegmentOwnershipBalancer`: package-private utility class — not a factory itself; not serialized;
-  purely algorithmic. Can be composed with any initial segment mapping.
+  purely algorithmic.
 * `updateMembers`: coverage-only in `PureRendezvousConsistentHashFactory`, no greedy correction
   (deferred to `rebalance()`).
-* `SIXTEEN_THREE` = `NodeVersion` constant for 16.3.0 (the minimum version for all rendezvous factories).
+* `SIXTEEN_THREE` = `NodeVersion` constant for 16.3.0 (the minimum version for the rendezvous factory).
 * ProtoTypeIds:
-  - `RENDEZVOUS_CONSISTENT_HASH_FACTORY = CORE_LOWER_BOUND + 342`
-  - `TOPOLOGY_AWARE_RENDEZVOUS_CONSISTENT_HASH_FACTORY = CORE_LOWER_BOUND + 343`
-  - `PURE_RENDEZVOUS_CONSISTENT_HASH_FACTORY = CORE_LOWER_BOUND + 344`
-  - `HISTORY_HINTED_RENDEZVOUS_CONSISTENT_HASH_FACTORY = CORE_LOWER_BOUND + 346`
+  - `HISTORY_HINTED_RENDEZVOUS_CONSISTENT_HASH_FACTORY = CORE_LOWER_BOUND + 344`
 * Version guard in `ClusterCacheStatus.effectiveConsistentHashFactory()` checks
-  `instanceof PureRendezvousConsistentHashFactory` (catches all variants). Fallback selection
-  checks `instanceof TopologyAwareRendezvousConsistentHashFactory`.
+  `instanceof PureRendezvousConsistentHashFactory` (catches `HistoryHintedRendezvousConsistentHashFactory`
+  and any future subclasses). Falls back to `SyncConsistentHashFactory` for older cluster members.
 
 == Algorithm Description
 
-=== `PureRendezvousConsistentHashFactory.build()`
+=== `PureRendezvousConsistentHashFactory.build()` (default, overridden by subclass)
 
 [source,java]
 ----
@@ -98,7 +90,7 @@ segment mappings (Phase 1) and then delegate to `SegmentOwnershipBalancer` for t
 // No cap enforcement, no balance correction, no primary-swap.
 ----
 
-=== `RendezvousConsistentHashFactory.build()` (overrides pure)
+=== `HistoryHintedRendezvousConsistentHashFactory.build()` (overrides base)
 
 [source,java]
 ----
@@ -117,7 +109,7 @@ segment mappings (Phase 1) and then delegate to `SegmentOwnershipBalancer` for t
 // redistributePrimary over the existing owner sets. Return baseCH if nothing changed.
 
 // Otherwise:
-// Phase 1: pure rendezvous initial assignment (same as RendezvousConsistentHashFactory.build())
+// Phase 1: pure rendezvous initial assignment (same as build() Phase 1)
 // Phase 2: history-hinted redistribution
 //   For each overloaded node (owned > ceil(ideal)):
 //     For each backup segment:
@@ -125,19 +117,6 @@ segment mappings (Phase 1) and then delegate to `SegmentOwnershipBalancer` for t
 //       If yes, prefer that prior owner — data already warm, no net movement cost.
 // Phase 3: SegmentOwnershipBalancer.apply() — handles remaining excess + primary redistribution.
 ----
-
-=== `TopologyAwareRendezvousConsistentHashFactory.build()` (overrides base)
-
-[source,java]
-----
-// Phase 1: topology-aware greedy assignment (assignOwners with TopologyFilter + caps)
-// Phase 2a: balanceCorrection (give ≥1 segment to any zero-owned eligible node)
-// Phase 2b: SegmentOwnershipBalancer.redistributePrimary (iterative floor/ceil primary balance)
-----
-
-`rebalance()` is **inherited** from `HistoryHintedRendezvousConsistentHashFactory` — topology-aware
-caches also get history-hinted rebalancing. Primary swaps within an existing owner set never change
-which nodes own a segment, so topology diversity is always preserved across rebalances.
 
 === `SegmentOwnershipBalancer` — the composable load-balancing post-processor
 
@@ -172,11 +151,9 @@ Iterates until no node exceeds `ceil(primaryIdeal)` primary ownership:
 ==== Entry points
 
 * `apply(segmentOwners, rankings, members, capacityFactors, numSegments, actualNumOwners)` —
-  runs both passes (total + primary). Use this for the standard non-topology-aware case.
-* `redistributePrimary(...)` — runs only the primary pass. Use when Phase 1 already handles
-  total-ownership balance (e.g. topology-aware greedy + `balanceCorrection`).
-* `countOwned(...)` / `countPrimaryOwned(...)` — counting helpers, also available to callers
-  that need ownership counts before calling the redistribution methods.
+  runs both passes (total + primary).
+* `redistributePrimary(...)` — runs only the primary pass.
+* `countOwned(...)` / `countPrimaryOwned(...)` — counting helpers.
 
 === `computeIdeals()` — capped ideal
 
@@ -191,12 +168,11 @@ Iterates until no node exceeds `ceil(primaryIdeal)` primary ownership:
 
 == Rolling Upgrade
 
-The version guard in `ClusterCacheStatus.effectiveConsistentHashFactory()` ensures that all
-rendezvous factories degrade gracefully during rolling upgrades:
+The version guard in `ClusterCacheStatus.effectiveConsistentHashFactory()` ensures that the
+rendezvous factory degrades gracefully during rolling upgrades:
 
 * While any cluster member is below `NodeVersion.SIXTEEN_THREE` (16.3.0):
-  - `TopologyAwareRendezvousConsistentHashFactory` → falls back to `TopologyAwareSyncConsistentHashFactory`
-  - All other rendezvous variants → fall back to `SyncConsistentHashFactory`
+  - `HistoryHintedRendezvousConsistentHashFactory` → falls back to `SyncConsistentHashFactory`
 * Once all members reach 16.3.0, the configured factory is activated and a full rebalance
   redistributes segment ownership. The transition is logged exactly once.
 
@@ -204,50 +180,43 @@ rendezvous factories degrade gracefully during rolling upgrades:
 
 === `RendezvousConsistentHashFactoryTest`
 
-Tests `PureRendezvousConsistentHashFactory`. Distribution enforcement is **intentionally disabled**:
-`checkDistribution()` only verifies that each segment has the correct number of distinct owners
-(structural check). Movement tolerance is also relaxed (`allowedExtraMoves` = full segment count)
-since the pure factory makes no bounded-load guarantees.
-
-=== `TopologyAwareRendezvousConsistentHashFactoryTest`
-
-Tests `TopologyAwareRendezvousConsistentHashFactory`. Inherits the permissive distribution
-tolerances from `RendezvousConsistentHashFactoryTest`. Topology diversity tests (distinct
-sites/racks) are enforced as-usual.
+Tests `HistoryHintedRendezvousConsistentHashFactory`. Extends `DefaultConsistentHashFactoryTest`
+but overrides `testConsistentHashDistribution()` (no-op) to skip the base-class
+`assertSame(baseCH, rebalance(baseCH))` assertion, which does not hold when `numSegments < numNodes`
+(the stable-state shortcut requires all members to have segments). Also overrides `checkDistribution()`
+for structural-only checks and `allowedExtraMoves()` to allow full-range movement.
 
 === `HistoryHintedRendezvousConsistentHashFactoryTest`
 
-Tests `HistoryHintedRendezvousConsistentHashFactory` directly: basic distribution, idempotent
-rebalance, stable-state shortcut, and the two-node/two-segment primary ownership assertion.
+Tests `HistoryHintedRendezvousConsistentHashFactory` directly: convergence after divergent history,
+idempotent rebalance (stable-state shortcut fires), deterministic fresh create, and the two-node
+two-segment primary ownership assertion.
 
 === Other tests
 
-* `RendezvousConsistentHashDeterminismTest` — verifies determinism of `PureRendezvousConsistentHashFactory`.
+* `RendezvousConsistentHashDeterminismTest` — verifies determinism of `HistoryHintedRendezvousConsistentHashFactory`.
 * `RendezvousCapacityFactorTest` — tests proportional capacity factor allocation with 256 segments.
 * `RendezvousSegmentMovementTest` — tests movement bounds (relaxed tolerance applies).
-* `ConsistentHashFactoryComparisonTest` — compares `RendezvousConsistentHashFactory` movement vs Sync.
-* `RendezvousRollingUpgradeCompatibilityTest` — verifies ProtoTypeIds and version guard.
+* `ConsistentHashFactoryComparisonTest` — compares Default, Sync, and HistoryHinted movement across topology scenarios.
+* `RendezvousRollingUpgradeCompatibilityTest` — verifies ProtoTypeId and version guard behaviour.
 
 == File Map
 
 === Implementation files
 
 * `core/src/main/java/org/infinispan/remoting/transport/NodeVersion.java` — `SIXTEEN_THREE` constant
-* `core/src/main/java/org/infinispan/distribution/ch/impl/PureRendezvousConsistentHashFactory.java` — base class
-* `core/src/main/java/org/infinispan/distribution/ch/impl/RendezvousConsistentHashFactory.java` — Phase 1 (rendezvous) + Phase 2 (`SegmentOwnershipBalancer`)
-* `core/src/main/java/org/infinispan/distribution/ch/impl/HistoryHintedRendezvousConsistentHashFactory.java` — history-hinted `rebalance()` override
-* `core/src/main/java/org/infinispan/distribution/ch/impl/TopologyAwareRendezvousConsistentHashFactory.java` — topology-aware `build()` override; inherits history-hinted `rebalance()`
+* `core/src/main/java/org/infinispan/distribution/ch/impl/PureRendezvousConsistentHashFactory.java` — abstract base class
+* `core/src/main/java/org/infinispan/distribution/ch/impl/HistoryHintedRendezvousConsistentHashFactory.java` — `build()` + history-hinted `rebalance()`
 * `core/src/main/java/org/infinispan/distribution/ch/impl/SegmentOwnershipBalancer.java` — composable load-balancing utility
 * `core/src/main/java/org/infinispan/distribution/ch/impl/TopologyFilter.java` — per-position topology constraint interface
-* `commons/all/src/main/java/org/infinispan/commons/marshall/ProtoStreamTypeIds.java` — IDs 342–344, 346
-* `core/src/main/java/org/infinispan/marshall/protostream/impl/GlobalContextInitializer.java` — registered all 4 factories
+* `commons/all/src/main/java/org/infinispan/commons/marshall/ProtoStreamTypeIds.java` — ID 344
+* `core/src/main/java/org/infinispan/marshall/protostream/impl/GlobalContextInitializer.java` — registered `HistoryHintedRendezvousConsistentHashFactory`
 * `core/src/main/java/org/infinispan/topology/ClusterCacheStatus.java` — version guard + `effectiveConsistentHashFactory()`
 * `core/src/main/java/org/infinispan/statetransfer/StateTransferManagerImpl.java` — `pickConsistentHashFactory()` defaults
 
 === Test files
 
 * `core/src/test/java/org/infinispan/distribution/ch/impl/RendezvousConsistentHashFactoryTest.java`
-* `core/src/test/java/org/infinispan/distribution/ch/impl/TopologyAwareRendezvousConsistentHashFactoryTest.java`
 * `core/src/test/java/org/infinispan/distribution/ch/impl/HistoryHintedRendezvousConsistentHashFactoryTest.java`
 * `core/src/test/java/org/infinispan/distribution/ch/impl/RendezvousConsistentHashDeterminismTest.java`
 * `core/src/test/java/org/infinispan/distribution/ch/impl/RendezvousCapacityFactorTest.java`
@@ -262,5 +231,4 @@ rebalance, stable-state shortcut, and the two-node/two-segment primary ownership
 * `DefaultConsistentHash.create()` preserves member list order as-passed — `equals()` fails if members are in different order even with same assignments
 * `computeCaps` and `computeIdeals` are package-private (not `private`) so subclasses can call them
 * `SegmentOwnershipBalancer` methods are all package-private — accessible to all classes in `org.infinispan.distribution.ch.impl`
-* Version guard (`effectiveConsistentHashFactory`) checks `instanceof PureRendezvousConsistentHashFactory` — catches all 4 variants
-* Fallback to topology-aware sync checks `instanceof TopologyAwareRendezvousConsistentHashFactory`
+* Version guard (`effectiveConsistentHashFactory`) checks `instanceof PureRendezvousConsistentHashFactory` — catches `HistoryHintedRendezvousConsistentHashFactory` and any future subclasses

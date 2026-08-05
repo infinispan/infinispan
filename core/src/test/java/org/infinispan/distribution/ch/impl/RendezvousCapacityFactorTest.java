@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 public class RendezvousCapacityFactorTest extends AbstractInfinispanTest {
 
    private static final ConsistentHashFactory<DefaultConsistentHash> CHF =
-         RendezvousConsistentHashFactory.getInstance();
+         HistoryHintedRendezvousConsistentHashFactory.getInstance();
 
    public void testProportionalDistributionTwoNodes() {
       Address A = Address.random("A");

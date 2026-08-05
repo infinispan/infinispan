@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
  * and determinism / load-balance matrix properties.
  *
  * <p>Also includes {@link #testMovementMatrix()} which prints a side-by-side table of moved
- * segments across all four factories (Default, Sync, PureRendezvous, Rendezvous) for a range
+ * segments across all factories (Default, Sync, HistoryHinted) for a range
  * of topology scenarios. Run that test individually to evaluate distribution differences.</p>
  */
 @Test(groups = "unit", testName = "distribution.ch.ConsistentHashFactoryComparisonTest")
@@ -36,10 +36,6 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
          DefaultConsistentHashFactory.getInstance();
    private static final ConsistentHashFactory<DefaultConsistentHash> SYNC =
          SyncConsistentHashFactory.getInstance();
-   private static final ConsistentHashFactory<DefaultConsistentHash> PURE_RENDEZVOUS =
-         PureRendezvousConsistentHashFactory.getInstance();
-   private static final ConsistentHashFactory<DefaultConsistentHash> RENDEZVOUS =
-         RendezvousConsistentHashFactory.getInstance();
    private static final ConsistentHashFactory<DefaultConsistentHash> HISTORY_HINTED =
          HistoryHintedRendezvousConsistentHashFactory.getInstance();
    private static final ConsistentHashFactory<DefaultConsistentHash> TOPO_SYNC =
@@ -59,10 +55,8 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       // Deterministic factories must produce equal CHs
       assertEquals(SYNC.create(2, 64, members, null), SYNC.create(2, 64, members, null),
             "Sync must be deterministic");
-      assertEquals(PURE_RENDEZVOUS.create(2, 64, members, null), PURE_RENDEZVOUS.create(2, 64, members, null),
-            "PureRendezvous must be deterministic");
-      assertEquals(RENDEZVOUS.create(2, 64, members, null), RENDEZVOUS.create(2, 64, members, null),
-            "Rendezvous must be deterministic");
+      assertEquals(HISTORY_HINTED.create(2, 64, members, null), HISTORY_HINTED.create(2, 64, members, null),
+            "HistoryHinted must be deterministic");
    }
 
    public void testCapacityFactorComparison() {
@@ -76,8 +70,8 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       List<Address> members = Arrays.asList(A, B, C);
       int numSegments = 300;
 
-      // Default, Rendezvous, and HistoryHinted (greedy) must achieve tight floor/ceil
-      for (ConsistentHashFactory<DefaultConsistentHash> factory : List.of(DEFAULT, RENDEZVOUS, HISTORY_HINTED)) {
+      // Default and HistoryHinted (greedy) must achieve tight floor/ceil
+      for (ConsistentHashFactory<DefaultConsistentHash> factory : List.of(DEFAULT, HISTORY_HINTED)) {
          DefaultConsistentHash ch = factory.create(1, numSegments, members, cf);
          OwnershipStatistics stats = new OwnershipStatistics(ch, members);
          // A=50, B=100, C=150
@@ -86,13 +80,13 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
          assertInRange(factory + " C (3x)", stats.getOwned(C), 148, 152);
       }
 
-      // Pure rendezvous: only check direction (no strict proportionality guarantee)
-      DefaultConsistentHash pureCH = PURE_RENDEZVOUS.create(1, numSegments, members, cf);
-      OwnershipStatistics pureStats = new OwnershipStatistics(pureCH, members);
-      assertTrue(pureStats.getOwned(C) > pureStats.getOwned(B),
-            "PureRendezvous: C (3x) should own more than B (2x)");
-      assertTrue(pureStats.getOwned(B) > pureStats.getOwned(A),
-            "PureRendezvous: B (2x) should own more than A (1x)");
+      // HistoryHinted: also check proportionality
+      DefaultConsistentHash hisCH = HISTORY_HINTED.create(1, numSegments, members, cf);
+      OwnershipStatistics hisStats = new OwnershipStatistics(hisCH, members);
+      assertTrue(hisStats.getOwned(C) > hisStats.getOwned(B),
+            "HistoryHinted: C (3x) should own more than B (2x)");
+      assertTrue(hisStats.getOwned(B) > hisStats.getOwned(A),
+            "HistoryHinted: B (2x) should own more than A (1x)");
    }
 
    public void testTopologyDiversityComparison() {
@@ -341,17 +335,16 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       DefaultConsistentHash hisBefore = HISTORY_HINTED.create(numOwners, numSegments, before, null);
       DefaultConsistentHash hisAfter = HISTORY_HINTED.rebalance(HISTORY_HINTED.updateMembers(hisBefore, after, null));
 
-      // Rendezvous: fresh create on the same final member list (fully deterministic, no history)
-      DefaultConsistentHash renFresh = RENDEZVOUS.create(numOwners, numSegments, after, null);
+      // Count how many segments differ from a fresh create on the final member list
+      DefaultConsistentHash hisFresh = HISTORY_HINTED.create(numOwners, numSegments, after, null);
 
-      // Count segment-level divergence (any owner-set difference) and primary divergence
       int segDiff = 0;
       int primaryDiff = 0;
       for (int s = 0; s < numSegments; s++) {
          List<Address> hisOwners = hisAfter.locateOwnersForSegment(s);
-         List<Address> renOwners = renFresh.locateOwnersForSegment(s);
-         if (!new HashSet<>(hisOwners).equals(new HashSet<>(renOwners))) segDiff++;
-         if (!hisOwners.get(0).equals(renOwners.get(0))) primaryDiff++;
+         List<Address> freshOwners = hisFresh.locateOwnersForSegment(s);
+         if (!new HashSet<>(hisOwners).equals(new HashSet<>(freshOwners))) segDiff++;
+         if (!hisOwners.get(0).equals(freshOwners.get(0))) primaryDiff++;
       }
       double segPct     = 100.0 * segDiff     / numSegments;
       double primaryPct = 100.0 * primaryDiff / numSegments;
@@ -363,7 +356,7 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       int numSegments = 256;
       int numOwners = 2;
 
-      // All scenarios — each entry is { label, int[5][2] } where [factory][0]=moved, [factory][1]=lost.
+      // All scenarios — each entry is { label, int[3][2] } where [factory][0]=moved, [factory][1]=lost.
       // Both metrics come from the same CH instance so moved >= lost is guaranteed.
       // Factories: 0=Default, 1=Sync, 2=PureRendezv, 3=Rendezvous, 4=HistoryHinted
       List<Object[]> rows = new ArrayList<>();
@@ -390,9 +383,9 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       rows.add(row("20 random events × 10 seeds",
                    collectRandomTopologies(10, 20, numSegments, numOwners)));
 
-      String header  = String.format("%-45s  %8s  %8s  %12s  %11s  %13s",
-            "Scenario", "Default", "Sync", "PureRendezv", "Rendezvous", "HistoryHinted");
-      String divider = "-".repeat(103);
+      String header  = String.format("%-45s  %8s  %8s  %13s",
+            "Scenario", "Default", "Sync", "HistoryHinted");
+      String divider = "-".repeat(78);
 
       System.out.println();
       System.out.println("## Owner list changed (includes primary<->backup reorders)");
@@ -422,8 +415,8 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
          }
          String label = (String) r[0];
          int[][] d = (int[][]) r[1];
-         System.out.printf("%-45s  %8d  %8d  %12d  %11d  %13d%n",
-               label, d[0][metric], d[1][metric], d[2][metric], d[3][metric], d[4][metric]);
+         System.out.printf("%-45s  %8d  %8d  %13d%n",
+               label, d[0][metric], d[1][metric], d[2][metric]);
       }
    }
 
@@ -446,11 +439,9 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
    private int[][] collectRow(List<Address> before, List<Address> after,
                                int numSegments, int numOwners) {
       return new int[][] {
-            collectPair(DEFAULT,         before, after, numSegments, numOwners),
-            collectPair(SYNC,            before, after, numSegments, numOwners),
-            collectPair(PURE_RENDEZVOUS, before, after, numSegments, numOwners),
-            collectPair(RENDEZVOUS,      before, after, numSegments, numOwners),
-            collectPair(HISTORY_HINTED,  before, after, numSegments, numOwners),
+            collectPair(DEFAULT,        before, after, numSegments, numOwners),
+            collectPair(SYNC,           before, after, numSegments, numOwners),
+            collectPair(HISTORY_HINTED, before, after, numSegments, numOwners),
       };
    }
 
@@ -468,30 +459,22 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       List<Address> members = new ArrayList<>(makeNodes(startNodes));
       DefaultConsistentHash defCH = DEFAULT.create(numOwners, numSegments, members, null);
       DefaultConsistentHash synCH = SYNC.create(numOwners, numSegments, members, null);
-      DefaultConsistentHash purCH = PURE_RENDEZVOUS.create(numOwners, numSegments, members, null);
-      DefaultConsistentHash renCH = RENDEZVOUS.create(numOwners, numSegments, members, null);
       DefaultConsistentHash hisCH = HISTORY_HINTED.create(numOwners, numSegments, members, null);
-      int[] totDef = new int[2], totSyn = new int[2], totPur = new int[2], totRen = new int[2], totHis = new int[2];
+      int[] totDef = new int[2], totSyn = new int[2], totHis = new int[2];
 
       for (int i = 0; i < numJoins; i++) {
          members.add(Address.random("join" + i));
          DefaultConsistentHash newDef = DEFAULT.rebalance(DEFAULT.updateMembers(defCH, members, null));
          DefaultConsistentHash newSyn = SYNC.rebalance(SYNC.updateMembers(synCH, members, null));
-         DefaultConsistentHash newPur = PURE_RENDEZVOUS.rebalance(PURE_RENDEZVOUS.updateMembers(purCH, members, null));
-         DefaultConsistentHash newRen = RENDEZVOUS.rebalance(RENDEZVOUS.updateMembers(renCH, members, null));
          DefaultConsistentHash newHis = HISTORY_HINTED.rebalance(HISTORY_HINTED.updateMembers(hisCH, members, null));
          accumulate(totDef, defCH, newDef);
          accumulate(totSyn, synCH, newSyn);
-         accumulate(totPur, purCH, newPur);
-         accumulate(totRen, renCH, newRen);
          accumulate(totHis, hisCH, newHis);
          defCH = newDef;
          synCH = newSyn;
-         purCH = newPur;
-         renCH = newRen;
          hisCH = newHis;
       }
-      return new int[][]{ totDef, totSyn, totPur, totRen, totHis };
+      return new int[][]{ totDef, totSyn, totHis };
    }
 
    private int[][] collectConsecutiveLeaves(int startNodes, int numLeaves,
@@ -499,43 +482,33 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       List<Address> members = new ArrayList<>(makeNodes(startNodes));
       DefaultConsistentHash defCH = DEFAULT.create(numOwners, numSegments, members, null);
       DefaultConsistentHash synCH = SYNC.create(numOwners, numSegments, members, null);
-      DefaultConsistentHash purCH = PURE_RENDEZVOUS.create(numOwners, numSegments, members, null);
-      DefaultConsistentHash renCH = RENDEZVOUS.create(numOwners, numSegments, members, null);
       DefaultConsistentHash hisCH = HISTORY_HINTED.create(numOwners, numSegments, members, null);
-      int[] totDef = new int[2], totSyn = new int[2], totPur = new int[2], totRen = new int[2], totHis = new int[2];
+      int[] totDef = new int[2], totSyn = new int[2], totHis = new int[2];
 
       for (int i = 0; i < numLeaves; i++) {
          members.remove(members.size() - 1);
          DefaultConsistentHash newDef = DEFAULT.rebalance(DEFAULT.updateMembers(defCH, members, null));
          DefaultConsistentHash newSyn = SYNC.rebalance(SYNC.updateMembers(synCH, members, null));
-         DefaultConsistentHash newPur = PURE_RENDEZVOUS.rebalance(PURE_RENDEZVOUS.updateMembers(purCH, members, null));
-         DefaultConsistentHash newRen = RENDEZVOUS.rebalance(RENDEZVOUS.updateMembers(renCH, members, null));
          DefaultConsistentHash newHis = HISTORY_HINTED.rebalance(HISTORY_HINTED.updateMembers(hisCH, members, null));
          accumulate(totDef, defCH, newDef);
          accumulate(totSyn, synCH, newSyn);
-         accumulate(totPur, purCH, newPur);
-         accumulate(totRen, renCH, newRen);
          accumulate(totHis, hisCH, newHis);
          defCH = newDef;
          synCH = newSyn;
-         purCH = newPur;
-         renCH = newRen;
          hisCH = newHis;
       }
-      return new int[][]{ totDef, totSyn, totPur, totRen, totHis };
+      return new int[][]{ totDef, totSyn, totHis };
    }
 
    private int[][] collectRandomTopologies(int numSeeds, int eventsPerSeed,
                                             int numSegments, int numOwners) {
-      int[] totDef = new int[2], totSyn = new int[2], totPur = new int[2], totRen = new int[2], totHis = new int[2];
+      int[] totDef = new int[2], totSyn = new int[2], totHis = new int[2];
 
       for (int seed = 0; seed < numSeeds; seed++) {
          Random rng = new Random(seed);
          List<Address> members = new ArrayList<>(makeNodes(8));
          DefaultConsistentHash defCH = DEFAULT.create(numOwners, numSegments, members, null);
          DefaultConsistentHash synCH = SYNC.create(numOwners, numSegments, members, null);
-         DefaultConsistentHash purCH = PURE_RENDEZVOUS.create(numOwners, numSegments, members, null);
-         DefaultConsistentHash renCH = RENDEZVOUS.create(numOwners, numSegments, members, null);
          DefaultConsistentHash hisCH = HISTORY_HINTED.create(numOwners, numSegments, members, null);
 
          for (int event = 0; event < eventsPerSeed; event++) {
@@ -546,22 +519,16 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
             }
             DefaultConsistentHash newDef = DEFAULT.rebalance(DEFAULT.updateMembers(defCH, members, null));
             DefaultConsistentHash newSyn = SYNC.rebalance(SYNC.updateMembers(synCH, members, null));
-            DefaultConsistentHash newPur = PURE_RENDEZVOUS.rebalance(PURE_RENDEZVOUS.updateMembers(purCH, members, null));
-            DefaultConsistentHash newRen = RENDEZVOUS.rebalance(RENDEZVOUS.updateMembers(renCH, members, null));
             DefaultConsistentHash newHis = HISTORY_HINTED.rebalance(HISTORY_HINTED.updateMembers(hisCH, members, null));
             accumulate(totDef, defCH, newDef);
             accumulate(totSyn, synCH, newSyn);
-            accumulate(totPur, purCH, newPur);
-            accumulate(totRen, renCH, newRen);
             accumulate(totHis, hisCH, newHis);
             defCH = newDef;
             synCH = newSyn;
-            purCH = newPur;
-            renCH = newRen;
             hisCH = newHis;
          }
       }
-      return new int[][]{ totDef, totSyn, totPur, totRen, totHis };
+      return new int[][]{ totDef, totSyn, totHis };
    }
 
    private static void accumulate(int[] totals, DefaultConsistentHash before, DefaultConsistentHash after) {
@@ -598,8 +565,8 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       // factors, the asymmetric ideal values (non-integer ideals for some nodes) mean the
       // primary pass can get stuck one step higher; upperTol=2 covers that until threshold #1
       // (drain at strict ceil) is addressed.
-      if (factory instanceof SyncConsistentHashFactory)       return new int[]{2, 2};
-      if (factory instanceof RendezvousConsistentHashFactory) return new int[]{Integer.MAX_VALUE, 2};
+      if (factory instanceof SyncConsistentHashFactory)             return new int[]{2, 2};
+      if (factory instanceof PureRendezvousConsistentHashFactory)   return new int[]{Integer.MAX_VALUE, 2};
       return new int[]{0, 0}; // DefaultConsistentHashFactory — strict
    }
 
@@ -611,9 +578,8 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
     * so that write and read-primary load is evenly distributed.  A node with many backup segments
     * but almost no primaries receives far fewer writes than its peers.</p>
     *
-    * <p>The assertion bounds are asymmetric for Rendezvous (ceiling bounded, floor unbounded —
-    * see {@link #primaryTolerances}).  {@link PureRendezvousConsistentHashFactory} is excluded
-    * since it makes no load-balance guarantees at all.</p>
+    * <p>The assertion bounds are asymmetric for HistoryHinted (ceiling bounded, floor unbounded —
+    * see {@link #primaryTolerances}).</p>
     */
    public void testPrimaryBalance_UniformCapacity() {
       int[][] configs = {
@@ -798,22 +764,19 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
 
          DefaultConsistentHash defCH  = DEFAULT.create(numOwners, numSegments, members, null);
          DefaultConsistentHash synCH  = SYNC.create(numOwners, numSegments, members, null);
-         DefaultConsistentHash purCH  = PURE_RENDEZVOUS.create(numOwners, numSegments, members, null);
-         DefaultConsistentHash renCH  = RENDEZVOUS.create(numOwners, numSegments, members, null);
+         DefaultConsistentHash hisCH  = HISTORY_HINTED.create(numOwners, numSegments, members, null);
 
          for (int i = 0; i < members.size(); i++) {
             Address node = members.get(i);
             int defP = new OwnershipStatistics(defCH, members).getPrimaryOwned(node);
             int synP = new OwnershipStatistics(synCH, members).getPrimaryOwned(node);
-            int purP = new OwnershipStatistics(purCH, members).getPrimaryOwned(node);
-            int renP = new OwnershipStatistics(renCH, members).getPrimaryOwned(node);
+            int hisP = new OwnershipStatistics(hisCH, members).getPrimaryOwned(node);
             // Flag values outside [floor, ceil] with an asterisk
             String defF = defP < floorP || defP > ceilP ? "*" : " ";
             String synF = synP < floorP || synP > ceilP ? "*" : " ";
-            String purF = purP < floorP || purP > ceilP ? "*" : " ";
-            String renF = renP < floorP || renP > ceilP ? "*" : " ";
-            System.out.printf("    node%-3d  %6d%s  %6d%s  %13d%s  %11d%s%n",
-                  i, defP, defF, synP, synF, purP, purF, renP, renF);
+            String hisF = hisP < floorP || hisP > ceilP ? "*" : " ";
+            System.out.printf("    node%-3d  %6d%s  %6d%s  %13d%s%n",
+                  i, defP, defF, synP, synF, hisP, hisF);
          }
          System.out.println();
       }
@@ -935,21 +898,19 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
    private void mdDistRow(String label, int numNodes, int numSegments, int numOwners) {
       List<Address> members = makeNodes(numNodes);
       double ideal = (double) numSegments * numOwners / numNodes;
-      System.out.printf("| %s %s %s %s %s |%n", label,
-            mdStats(DEFAULT,         members, numSegments, numOwners, ideal, false),
-            mdStats(SYNC,            members, numSegments, numOwners, ideal, false),
-            mdStats(PURE_RENDEZVOUS, members, numSegments, numOwners, ideal, false),
-            mdStats(RENDEZVOUS,      members, numSegments, numOwners, ideal, false));
+      System.out.printf("| %s %s %s %s |%n", label,
+            mdStats(DEFAULT,        members, numSegments, numOwners, ideal, false),
+            mdStats(SYNC,           members, numSegments, numOwners, ideal, false),
+            mdStats(HISTORY_HINTED, members, numSegments, numOwners, ideal, false));
    }
 
    private void mdPrimaryDistRow(String label, int numNodes, int numSegments, int numOwners) {
       List<Address> members = makeNodes(numNodes);
       double ideal = (double) numSegments / numNodes;
-      System.out.printf("| %s %s %s %s %s |%n", label,
-            mdStats(DEFAULT,         members, numSegments, numOwners, ideal, true),
-            mdStats(SYNC,            members, numSegments, numOwners, ideal, true),
-            mdStats(PURE_RENDEZVOUS, members, numSegments, numOwners, ideal, true),
-            mdStats(RENDEZVOUS,      members, numSegments, numOwners, ideal, true));
+      System.out.printf("| %s %s %s %s |%n", label,
+            mdStats(DEFAULT,        members, numSegments, numOwners, ideal, true),
+            mdStats(SYNC,           members, numSegments, numOwners, ideal, true),
+            mdStats(HISTORY_HINTED, members, numSegments, numOwners, ideal, true));
    }
 
    /**
@@ -1056,29 +1017,27 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       List<Address> after  = new ArrayList<>(before);
       after.add(Address.random("joiner"));
 
-      // Build both CHs after the join (same approach as the matrix test)
-      DefaultConsistentHash pureBefore = PURE_RENDEZVOUS.create(numOwners, numSegments, before, null);
-      DefaultConsistentHash pureAfter  = PURE_RENDEZVOUS.rebalance(
-            PURE_RENDEZVOUS.updateMembers(pureBefore, after, null));
+      // Build CHs: history-aware (via updateMembers+rebalance) vs fresh create on after-list
+      DefaultConsistentHash hisBefore = HISTORY_HINTED.create(numOwners, numSegments, before, null);
+      DefaultConsistentHash hisAfter  = HISTORY_HINTED.rebalance(
+            HISTORY_HINTED.updateMembers(hisBefore, after, null));
 
-      DefaultConsistentHash renBefore  = RENDEZVOUS.create(numOwners, numSegments, before, null);
-      DefaultConsistentHash renAfter   = RENDEZVOUS.rebalance(
-            RENDEZVOUS.updateMembers(renBefore, after, null));
+      DefaultConsistentHash freshAfter = HISTORY_HINTED.create(numOwners, numSegments, after, null);
 
       // Pre-compute rendezvous rankings for the full *after* member list so we can look up ranks
       @SuppressWarnings("unchecked")
-      List<Address>[] rankings = ((PureRendezvousConsistentHashFactory) PURE_RENDEZVOUS)
+      List<Address>[] rankings = ((HistoryHintedRendezvousConsistentHashFactory) HISTORY_HINTED)
             .computeRankings(numSegments, after, null);
 
       // Segment-level loads in the *after* CHs (for "over-loaded?" context)
-      int[] pureTotalOwned = new int[afterCount];
-      int[] renTotalOwned  = new int[afterCount];
+      int[] hisTotalOwned   = new int[afterCount];
+      int[] freshTotalOwned = new int[afterCount];
       for (int s = 0; s < numSegments; s++) {
-         for (Address a : pureAfter.locateOwnersForSegment(s)) {
-            pureTotalOwned[after.indexOf(a)]++;
+         for (Address a : hisAfter.locateOwnersForSegment(s)) {
+            hisTotalOwned[after.indexOf(a)]++;
          }
-         for (Address a : renAfter.locateOwnersForSegment(s)) {
-            renTotalOwned[after.indexOf(a)]++;
+         for (Address a : freshAfter.locateOwnersForSegment(s)) {
+            freshTotalOwned[after.indexOf(a)]++;
          }
       }
 
@@ -1088,29 +1047,25 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       int ceilPrimary = (int) Math.ceil(idealPrimary);
 
       // Collect summary counters
-      // For segments where Rendezvous evicted a node that Pure kept:
-      //   rankOfEvicted — rendezvous rank (0-based) of the node evicted by Ren's balancer
-      //   rankOfReplacement — rank of the node Ren put in instead
-      // "Good eviction" = evicted rank > replacement rank  (we kicked out a worse-fit node)
-      // "Bad eviction"  = evicted rank < replacement rank  (we kicked out a better-fit node — wasted movement)
-      // "Unnecessary"   = evicted rank < replacement rank AND evicted node was within ideal bounds in pure
+      // For segments where history-aware CH differs from fresh create:
+      //   rankOfEvicted — rendezvous rank (0-based) of the evicted node
+      //   rankOfReplacement — rank of the replacement node
       List<int[]> evictions = new ArrayList<>();   // [evictedRank, replacementRank, isPrimary, segment]
       int primaryEvictions = 0;
       int backupEvictions  = 0;
       int reordersOnly     = 0;  // same set, different primary
-      int pureOnlyChanges  = 0;  // pure moved it but ren didn't (or vice versa — pure baseline)
 
-      // Track which segments each factory changed vs. before-join
-      Set<Integer> pureChanged = new HashSet<>();
-      Set<Integer> renChanged  = new HashSet<>();
+      // Track which segments each version changed vs. before-join
+      Set<Integer> hisChanged   = new HashSet<>();
+      Set<Integer> freshChanged = new HashSet<>();
       for (int s = 0; s < numSegments; s++) {
-         Set<Address> bSet = new HashSet<>(pureBefore.locateOwnersForSegment(s));
-         if (!new HashSet<>(pureAfter.locateOwnersForSegment(s)).equals(bSet)) {
-            pureChanged.add(s);
+         Set<Address> bSet = new HashSet<>(hisBefore.locateOwnersForSegment(s));
+         if (!new HashSet<>(hisAfter.locateOwnersForSegment(s)).equals(bSet)) {
+            hisChanged.add(s);
          }
-         if (!new HashSet<>(renBefore.locateOwnersForSegment(s)).equals(
-               new HashSet<>(renAfter.locateOwnersForSegment(s)))) {
-            renChanged.add(s);
+         if (!new HashSet<>(hisBefore.locateOwnersForSegment(s)).equals(
+               new HashSet<>(freshAfter.locateOwnersForSegment(s)))) {
+            freshChanged.add(s);
          }
       }
 
@@ -1123,103 +1078,88 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       System.out.println();
 
       // --- Section 1: per-node load after rebalance ---
-      System.out.println("-- Per-node ownership after join (pure vs rendezvous) --");
+      System.out.println("-- Per-node ownership after join (history-aware vs fresh create) --");
       System.out.printf("  %-8s  %6s  %6s  %6s  %6s  %s%n",
-            "Node", "pureTot", "renTot", "purePri", "renPri", "Flags");
+            "Node", "hisTot", "freshTot", "hisPri", "freshPri", "Flags");
       System.out.println("  " + "-".repeat(58));
-      int[] purePrimary = new int[afterCount];
-      int[] renPrimary  = new int[afterCount];
+      int[] hisPrimary   = new int[afterCount];
+      int[] freshPrimary = new int[afterCount];
       for (int s = 0; s < numSegments; s++) {
-         purePrimary[after.indexOf(pureAfter.locateOwnersForSegment(s).get(0))]++;
-         renPrimary[after.indexOf(renAfter.locateOwnersForSegment(s).get(0))]++;
+         hisPrimary[after.indexOf(hisAfter.locateOwnersForSegment(s).get(0))]++;
+         freshPrimary[after.indexOf(freshAfter.locateOwnersForSegment(s).get(0))]++;
       }
       for (int i = 0; i < afterCount; i++) {
          String flags = "";
-         if (renTotalOwned[i] > ceilTotal)   flags += " OVER_TOTAL";
-         if (renPrimary[i]    > ceilPrimary) flags += " OVER_PRIMARY";
-         if (renTotalOwned[i] < pureTotalOwned[i] - 1) flags += " UNDER_vs_PURE";
-         System.out.printf("  node%-4d  %6d  %6d  %6d  %6d  %s%n",
-               i, pureTotalOwned[i], renTotalOwned[i], purePrimary[i], renPrimary[i], flags);
+         if (hisTotalOwned[i] > ceilTotal)   flags += " OVER_TOTAL";
+         if (hisPrimary[i]    > ceilPrimary) flags += " OVER_PRIMARY";
+         if (hisTotalOwned[i] < freshTotalOwned[i] - 1) flags += " UNDER_vs_FRESH";
+         System.out.printf("  node%-4d  %6d  %8d  %6d  %8d  %s%n",
+               i, hisTotalOwned[i], freshTotalOwned[i], hisPrimary[i], freshPrimary[i], flags);
       }
       System.out.println();
 
-      // --- Section 2: per-segment diff between Pure and Ren ---
-      System.out.println("-- Segments where Ren differs from Pure (owner set or order) --");
+      // --- Section 2: per-segment diff between history-aware and fresh ---
+      System.out.println("-- Segments where history-aware differs from fresh create --");
       System.out.printf("  %-4s  %-28s  %-28s  %-30s  %s%n",
-            "Seg", "PureOwners[rank]", "RenOwners[rank]", "Evicted→Replacement", "Note");
+            "Seg", "HisOwners[rank]", "FreshOwners[rank]", "Evicted→Replacement", "Note");
       System.out.println("  " + "-".repeat(100));
 
       for (int s = 0; s < numSegments; s++) {
-         List<Address> pureOwners = pureAfter.locateOwnersForSegment(s);
-         List<Address> renOwners  = renAfter.locateOwnersForSegment(s);
-         List<Address> ranking    = rankings[s];
+         List<Address> hisOwners   = hisAfter.locateOwnersForSegment(s);
+         List<Address> freshOwners = freshAfter.locateOwnersForSegment(s);
+         List<Address> ranking     = rankings[s];
 
-         boolean sameSet = new HashSet<>(pureOwners).equals(new HashSet<>(renOwners));
-         boolean sameList = pureOwners.equals(renOwners);
+         boolean sameSet  = new HashSet<>(hisOwners).equals(new HashSet<>(freshOwners));
+         boolean sameList = hisOwners.equals(freshOwners);
 
          if (sameList) continue; // identical — nothing to report
 
-         // Format owner list as "nodeX[rank]"
-         String pureStr = formatOwners(pureOwners, after, ranking);
-         String renStr  = formatOwners(renOwners, after, ranking);
+         String hisStr   = formatOwners(hisOwners, after, ranking);
+         String freshStr = formatOwners(freshOwners, after, ranking);
 
          if (sameSet) {
-            // Same nodes, different order — pure primary-swap, no data movement
             reordersOnly++;
             System.out.printf("  %3d   %-28s  %-28s  %-30s  %s%n",
-                  s, pureStr, renStr, "(reorder only)", "primary swap");
+                  s, hisStr, freshStr, "(reorder only)", "primary swap");
             continue;
          }
 
-         // Find evicted nodes (in pure but not in ren) and replacements (in ren but not in pure)
-         Set<Address> pureSet = new HashSet<>(pureOwners);
-         Set<Address> renSet  = new HashSet<>(renOwners);
-         List<Address> evicted     = new ArrayList<>(pureSet);
-         evicted.removeAll(renSet);
-         List<Address> replacements = new ArrayList<>(renSet);
-         replacements.removeAll(pureSet);
+         Set<Address> hisSet   = new HashSet<>(hisOwners);
+         Set<Address> freshSet = new HashSet<>(freshOwners);
+         List<Address> evicted      = new ArrayList<>(hisSet);
+         evicted.removeAll(freshSet);
+         List<Address> replacements = new ArrayList<>(freshSet);
+         replacements.removeAll(hisSet);
 
          StringBuilder evDetails = new StringBuilder();
          for (Address ev : evicted) {
-            int evRank  = ranking.indexOf(ev);
-            boolean wasPrimary = pureOwners.get(0).equals(ev);
+            int evRank      = ranking.indexOf(ev);
+            boolean wasPrimary = hisOwners.get(0).equals(ev);
             for (Address rep : replacements) {
                int repRank = ranking.indexOf(rep);
                evictions.add(new int[]{evRank, repRank, wasPrimary ? 1 : 0, s});
-               if (wasPrimary) {
-                  primaryEvictions++;
-               } else {
-                  backupEvictions++;
-               }
+               if (wasPrimary) primaryEvictions++;
+               else            backupEvictions++;
                if (evDetails.length() > 0) evDetails.append("; ");
                evDetails.append(String.format("ev[r%d,%s]→rep[r%d]",
                      evRank, wasPrimary ? "PRI" : "bak", repRank));
             }
          }
-         String note = renChanged.contains(s) && !pureChanged.contains(s)
-               ? "Ren-extra-move"
-               : pureChanged.contains(s) && !renChanged.contains(s)
-               ? "Pure-only-move"
+         String note = hisChanged.contains(s) && !freshChanged.contains(s)
+               ? "his-extra-move"
+               : freshChanged.contains(s) && !hisChanged.contains(s)
+               ? "fresh-only-move"
                : "both-moved";
          System.out.printf("  %3d   %-28s  %-28s  %-30s  %s%n",
-               s, pureStr, renStr, evDetails, note);
+               s, hisStr, freshStr, evDetails, note);
       }
       System.out.println();
 
-      // --- Section 2b: joiner rank profile and its relationship to LB evictions ---
-      // The joiner (last node in 'after') gets a rendezvous rank in every segment.
-      // We want to know:
-      //   (a) How many segments does it rank 0, 1, 2, 3, 4, 5+ in?
-      //   (b) For each LB eviction, what rank did the joiner have in that segment?
-      //       If the joiner ranked >= numOwners in an evicted segment, the LB touched a
-      //       segment the joiner had no natural claim to — that is pure variance overhead.
-      //   (c) For over-loaded donors: how many of their excess segments are in segments
-      //       where the joiner ranked < numOwners (joiner-driven) vs >= numOwners (variance)?
+      // --- Section 2b: joiner rank profile ---
       Address joiner = after.get(afterCount - 1);
       int joinerIdx  = afterCount - 1;
 
-      // (a) Joiner rank distribution
-      int[] joinerRankCount = new int[afterCount]; // how many segments joiner ranks at each position
+      int[] joinerRankCount = new int[afterCount];
       for (int s = 0; s < numSegments; s++) {
          int r = rankings[s].indexOf(joiner);
          if (r >= 0 && r < afterCount) joinerRankCount[r]++;
@@ -1227,62 +1167,58 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       System.out.println("-- Joiner (node" + joinerIdx + ") rank distribution across all " + numSegments + " segments --");
       System.out.printf("  %-6s  %6s  %s%n", "Rank", "Count", "Meaning");
       System.out.println("  " + "-".repeat(50));
-      int joinerNaturalClaim = 0; // segments where joiner ranks < numOwners (natural top-N)
+      int joinerNaturalClaim = 0;
       for (int r = 0; r < afterCount; r++) {
          if (joinerRankCount[r] == 0) continue;
-         String meaning = r < numOwners ? "  <-- natural owner (Pure would assign this)" : "";
+         String meaning = r < numOwners ? "  <-- natural owner" : "";
          if (r < numOwners) joinerNaturalClaim += joinerRankCount[r];
          System.out.printf("  %-6d  %6d  %s%n", r, joinerRankCount[r], meaning);
       }
       System.out.printf("  Total natural claim (rank < %d): %d segments%n", numOwners, joinerNaturalClaim);
       System.out.println();
 
-      // (b) For each LB eviction, what was the joiner's rank in that segment?
-      // Bucket evictions into: joiner competed (rank < numOwners) vs joiner absent (rank >= numOwners)
-      System.out.println("-- LB evictions cross-referenced with joiner's rank in that segment --");
+      // (b) LB evictions vs joiner rank
+      System.out.println("-- LB evictions cross-referenced with joiner's rank --");
       System.out.printf("  %-4s  %-20s  %6s  %s%n", "Seg", "Evicted→Rep", "JoinerRank", "Joiner competed?");
       System.out.println("  " + "-".repeat(62));
-      int lbInJoinerFootprint  = 0; // LB eviction in a segment the joiner naturally claims
-      int lbOutsideFootprint   = 0; // LB eviction in a segment the joiner has no natural claim to
+      int lbInJoinerFootprint  = 0;
+      int lbOutsideFootprint   = 0;
       for (int[] ev : evictions) {
          int s = ev[3];
          int joinerRankInSeg = rankings[s].indexOf(joiner);
          boolean competed = joinerRankInSeg < numOwners;
          if (competed) lbInJoinerFootprint++;
          else          lbOutsideFootprint++;
-         // Also look up replacement node's post-swap total ownership to see if it was
-         // genuinely under-loaded or just marginally below the donor
-         List<Address> renOwnersSeg = renAfter.locateOwnersForSegment(s);
-         Set<Address> pureSetSeg    = new HashSet<>(pureAfter.locateOwnersForSegment(s));
+         List<Address> hisOwnersSeg  = hisAfter.locateOwnersForSegment(s);
+         Set<Address>  freshSetSeg   = new HashSet<>(freshAfter.locateOwnersForSegment(s));
          int repOwned = -1;
-         for (Address a : renOwnersSeg) {
-            if (!pureSetSeg.contains(a)) {
-               repOwned = renTotalOwned[after.indexOf(a)];
+         for (Address a : hisOwnersSeg) {
+            if (!freshSetSeg.contains(a)) {
+               repOwned = hisTotalOwned[after.indexOf(a)];
                break;
             }
          }
          System.out.printf("  %3d   ev[r%d]→rep[r%d]  repOwned=%-3d  joinerR=%-3d  %s%n",
                s, ev[0], ev[1], repOwned, joinerRankInSeg,
-               competed ? "YES — joiner natural" : "NO  — pure variance");
+               competed ? "YES — joiner natural" : "NO  — variance");
       }
       System.out.println();
       System.out.printf("  LB evictions inside  joiner's natural footprint (rank<%d): %d%n",
             numOwners, lbInJoinerFootprint);
-      System.out.printf("  LB evictions outside joiner's natural footprint (rank>=%d): %d  <-- pure variance correction%n",
+      System.out.printf("  LB evictions outside joiner's natural footprint (rank>=%d): %d%n",
             numOwners, lbOutsideFootprint);
       System.out.println();
-      // Show histogram of replacement node ownership after swap — tells us whether we filled
-      // genuinely under-loaded nodes or nearly-full ones (marginal gain)
-      System.out.println("  Replacement node ownership after swap (renAfter totals):");
+
+      System.out.println("  Replacement node ownership after swap (hisAfter totals):");
       System.out.printf("  %-10s  %s%n", "repOwned", "Count");
       TreeMap<Integer,Integer> repOwnedBins = new TreeMap<>();
       for (int[] ev : evictions) {
          int s2 = ev[3];
-         List<Address> renOwnersSeg2 = renAfter.locateOwnersForSegment(s2);
-         Set<Address> pureSetSeg2    = new HashSet<>(pureAfter.locateOwnersForSegment(s2));
-         for (Address a : renOwnersSeg2) {
-            if (!pureSetSeg2.contains(a)) {
-               repOwnedBins.merge(renTotalOwned[after.indexOf(a)], 1, Integer::sum);
+         List<Address> hisOwnersSeg2 = hisAfter.locateOwnersForSegment(s2);
+         Set<Address>  freshSetSeg2  = new HashSet<>(freshAfter.locateOwnersForSegment(s2));
+         for (Address a : hisOwnersSeg2) {
+            if (!freshSetSeg2.contains(a)) {
+               repOwnedBins.merge(hisTotalOwned[after.indexOf(a)], 1, Integer::sum);
                break;
             }
          }
@@ -1295,22 +1231,20 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       }
       System.out.println();
 
-      // (c) For each over-loaded donor: breakdown of their load into
-      //     joiner-displaced segments (joiner ranks < numOwners in those segs)
-      //     vs variance-only segments (joiner ranks >= numOwners)
+      // (c) Over-loaded donor breakdown
       System.out.println("-- Over-loaded donor breakdown: joiner-driven load vs variance-only load --");
       System.out.printf("  %-8s  %6s  %8s  %12s  %12s  %s%n",
             "Node", "total", "ideal", "joiner-driven", "variance-only", "excess");
       System.out.println("  " + "-".repeat(70));
       float idealPerNode = (float) numSegments * numOwners / afterCount;
       for (int i = 0; i < afterCount; i++) {
-         int total = pureTotalOwned[i]; // use pure totals — this is what the LB starts from
-         if (total <= (int) Math.ceil(idealPerNode) + 1) continue; // skip non-over-loaded nodes
+         int total = hisTotalOwned[i];
+         if (total <= (int) Math.ceil(idealPerNode) + 1) continue;
          Address node = after.get(i);
          int joinerDriven = 0;
          int varianceOnly = 0;
          for (int s = 0; s < numSegments; s++) {
-            if (!pureAfter.locateOwnersForSegment(s).contains(node)) continue;
+            if (!hisAfter.locateOwnersForSegment(s).contains(node)) continue;
             int joinerRankInSeg = rankings[s].indexOf(joiner);
             if (joinerRankInSeg < numOwners) joinerDriven++;
             else                             varianceOnly++;
@@ -1322,22 +1256,18 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       System.out.println();
 
       // --- Section 3: eviction quality histogram ---
-      // Bin evictions by (evicted_rank - replacement_rank):
-      //   > 0 → "good": evicted a worse-fit node (expected behaviour)
-      //   = 0 → "neutral": same rank (shouldn't happen)
-      //   < 0 → "bad": evicted a BETTER-fit node → unnecessary movement
       System.out.println("-- Eviction quality (evicted_rank - replacement_rank) --");
       System.out.println("  Positive delta = good (kicked out a worse-fit node).");
       System.out.println("  Negative delta = bad  (kicked out a better-fit node — wasted movement).");
-      System.out.println("  Zero delta     = neutral (identical rendezvous fitness).");
+      System.out.println("  Zero delta     = neutral.");
       System.out.println();
 
       TreeMap<Integer, Integer> deltaBins = new TreeMap<>();
-      int goodEvictions = 0;
-      int badEvictions  = 0;
+      int goodEvictions    = 0;
+      int badEvictions     = 0;
       int neutralEvictions = 0;
       for (int[] ev : evictions) {
-         int delta = ev[0] - ev[1];  // evictedRank - replacementRank
+         int delta = ev[0] - ev[1];
          deltaBins.merge(delta, 1, Integer::sum);
          if (delta > 0)      goodEvictions++;
          else if (delta < 0) badEvictions++;
@@ -1357,12 +1287,9 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       }
       System.out.println();
 
-      // --- Section 4: rank of evicted node relative to cluster size ---
-      // In a 20-node cluster each segment ranks all 20 nodes 0..19.
-      // If the load-balancer is evicting nodes in the top half of the ranking (ranks 0..9)
-      // those are well-fitting nodes and the eviction is genuinely harmful.
+      // --- Section 4: rank of evicted node ---
       System.out.println("-- Rank of evicted node (0=best fit, " + (afterCount - 1) + "=worst fit) --");
-      int[] evictedRankBuckets = new int[afterCount]; // index = rank
+      int[] evictedRankBuckets = new int[afterCount];
       for (int[] ev : evictions) {
          if (ev[0] >= 0 && ev[0] < afterCount) evictedRankBuckets[ev[0]]++;
       }
@@ -1374,64 +1301,42 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       }
       System.out.println();
 
-      // --- Section 5: segments that Rendezvous moved but PureRendezvous did NOT ---
-      // These are the "extra" movements caused purely by the load-balancer correction pass.
-      Set<Integer> renExtraChanged = new HashSet<>(renChanged);
-      renExtraChanged.removeAll(pureChanged);
-      System.out.printf("-- Extra segments Rendezvous moved vs PureRendezvous: %d --%n",
-            renExtraChanged.size());
-      System.out.println("  (These are segments whose owner SET was stable for Pure but changed for Ren.)");
-      if (!renExtraChanged.isEmpty()) {
-         List<Integer> sorted = new ArrayList<>(renExtraChanged);
+      // --- Section 5: segments that history-aware moved differently vs fresh ---
+      Set<Integer> hisExtraChanged = new HashSet<>(hisChanged);
+      hisExtraChanged.removeAll(freshChanged);
+      System.out.printf("-- Extra segments history-aware moved vs fresh create: %d --%n",
+            hisExtraChanged.size());
+      if (!hisExtraChanged.isEmpty()) {
+         List<Integer> sorted = new ArrayList<>(hisExtraChanged);
          Collections.sort(sorted);
          for (int s : sorted) {
-            List<Address> beforeOwners = renBefore.locateOwnersForSegment(s);
-            List<Address> pureOwners   = pureAfter.locateOwnersForSegment(s);
-            List<Address> renOwners    = renAfter.locateOwnersForSegment(s);
+            List<Address> beforeOwners = hisBefore.locateOwnersForSegment(s);
+            List<Address> hisOwners    = hisAfter.locateOwnersForSegment(s);
+            List<Address> freshOwners  = freshAfter.locateOwnersForSegment(s);
             List<Address> ranking      = rankings[s];
-            System.out.printf("  seg %3d: before=%s  pure=%s  ren=%s%n",
+            System.out.printf("  seg %3d: before=%s  his=%s  fresh=%s%n",
                   s,
                   formatOwners(beforeOwners, after, ranking),
-                  formatOwners(pureOwners, after, ranking),
-                  formatOwners(renOwners, after, ranking));
+                  formatOwners(hisOwners, after, ranking),
+                  formatOwners(freshOwners, after, ranking));
          }
       }
       System.out.println();
 
-      // --- Section 6: recommendations summary ---
+      // --- Section 6: summary ---
       System.out.println("=================================================================");
-      System.out.println(" ANALYSIS SUMMARY & RECOMMENDATIONS");
+      System.out.println(" ANALYSIS SUMMARY");
       System.out.println("=================================================================");
-      System.out.printf("  Segments moved by Pure: %d   by Ren: %d   (owner-set changes)%n",
-            pureChanged.size(), renChanged.size());
-      System.out.printf("  Ren-extra moves (balancer overhead): %d%n", renExtraChanged.size());
-      System.out.printf("  Reorder-only diffs (no data move):   %d%n", reordersOnly);
+      System.out.printf("  Segments moved by history-aware: %d   by fresh: %d   (owner-set changes)%n",
+            hisChanged.size(), freshChanged.size());
+      System.out.printf("  His-extra moves vs fresh: %d%n", hisExtraChanged.size());
+      System.out.printf("  Reorder-only diffs (no data move): %d%n", reordersOnly);
       System.out.println();
       System.out.println("  Eviction quality:");
       System.out.printf("    Good (evicted worse-fit): %d (%.0f%%)%n",
             goodEvictions, evictions.isEmpty() ? 0.0 : 100.0 * goodEvictions / evictions.size());
       System.out.printf("    Bad  (evicted better-fit): %d (%.0f%%)%n",
             badEvictions, evictions.isEmpty() ? 0.0 : 100.0 * badEvictions / evictions.size());
-      System.out.println();
-      System.out.println("  POSSIBLE IMPROVEMENTS TO EVALUATE:");
-      System.out.println("  [1] Tighten the drain threshold from ceil+1 to strict ceil.");
-      System.out.println("      The current loop fires only when owned > ceil+1, so nodes at ceil+1");
-      System.out.println("      are left over-loaded and force the NEXT topology change to over-correct.");
-      System.out.println("      Changing to owned > ceil would drain more eagerly and reduce cascading");
-      System.out.println("      movement on subsequent joins.");
-      System.out.println();
-      System.out.println("  [2] Limit swaps to segments where the evicted node's rank is >= N/2.");
-      System.out.println("      If a node's rank in a segment is in the top half (rank < N/2) it is");
-      System.out.println("      a natural owner — evicting it wastes movement.  Prefer segments where");
-      System.out.println("      the over-loaded node is already a poor fit.");
-      System.out.println();
-      System.out.println("  [3] Use the joiner's rendezvous ranking directly in the load-balancing pass.");
-      System.out.println("      Rather than draining any over-loaded node, prefer to drain nodes from");
-      System.out.println("      segments where the joiner ranks highly — this makes the correction pass");
-      System.out.println("      agree with what PureRendezvous would have done naturally.");
-      System.out.println();
-      System.out.println("  [4] Skip the redistribution pass entirely for small clusters (N < 10)");
-      System.out.println("      where hash variance is high and the 'ideal' is a rough estimate.");
       System.out.println("=================================================================");
       System.out.println();
    }
