@@ -44,8 +44,6 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
          HistoryHintedRendezvousConsistentHashFactory.getInstance();
    private static final ConsistentHashFactory<DefaultConsistentHash> TOPO_SYNC =
          TopologyAwareSyncConsistentHashFactory.getInstance();
-   private static final ConsistentHashFactory<DefaultConsistentHash> TOPO_RENDEZVOUS =
-         TopologyAwareRendezvousConsistentHashFactory.getInstance();
 
    // ---- Property comparison ----
 
@@ -98,7 +96,7 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
    }
 
    public void testTopologyDiversityComparison() {
-      // 3 sites × 2 nodes, numOwners=2. TopoAware factories must place owners in distinct sites.
+      // 3 sites × 2 nodes, numOwners=2. TopoSync must place owners in distinct sites.
       Address a1 = Address.random("a1", "s1", null, null);
       Address a2 = Address.random("a2", "s1", null, null);
       Address b1 = Address.random("b1", "s2", null, null);
@@ -108,14 +106,11 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       List<Address> members = Arrays.asList(a1, a2, b1, b2, c1, c2);
 
       DefaultConsistentHash topoSync = TOPO_SYNC.create(2, 64, members, null);
-      DefaultConsistentHash topoRendezvous = TOPO_RENDEZVOUS.create(2, 64, members, null);
 
-      for (DefaultConsistentHash ch : List.of(topoSync, topoRendezvous)) {
-         for (int s = 0; s < ch.getNumSegments(); s++) {
-            List<Address> owners = ch.locateOwnersForSegment(s);
-            assertFalse(owners.get(0).getSiteId().equals(owners.get(1).getSiteId()),
-                  ch.getClass().getSimpleName() + " segment " + s + " owners should be in different sites");
-         }
+      for (int s = 0; s < topoSync.getNumSegments(); s++) {
+         List<Address> owners = topoSync.locateOwnersForSegment(s);
+         assertFalse(owners.get(0).getSiteId().equals(owners.get(1).getSiteId()),
+               "TopoSync segment " + s + " owners should be in different sites");
       }
    }
 
@@ -289,42 +284,6 @@ public class ConsistentHashFactoryComparisonTest extends AbstractInfinispanTest 
       }
       assertTrue(passCount >= 8,
             "HistoryHinted should move <= Sync segments for at least 8 of 10 random seeds, but only passed " + passCount);
-   }
-
-   public void testMovement_TopologyAwareVariants() {
-      Address a1 = Address.random("a1", "s1", null, null);
-      Address a2 = Address.random("a2", "s1", null, null);
-      Address a3 = Address.random("a3", "s1", null, null);
-      Address b1 = Address.random("b1", "s2", null, null);
-      Address b2 = Address.random("b2", "s2", null, null);
-      Address b3 = Address.random("b3", "s2", null, null);
-      Address c1 = Address.random("c1", "s3", null, null);
-      Address c2 = Address.random("c2", "s3", null, null);
-      Address c3 = Address.random("c3", "s3", null, null);
-      List<Address> before = Arrays.asList(a1, a2, a3, b1, b2, b3, c1, c2, c3);
-      Address joiner = Address.random("joiner", "s1", null, null);
-      List<Address> after = new ArrayList<>(before);
-      after.add(joiner);
-
-      DefaultConsistentHash topoSyncBefore = TOPO_SYNC.create(3, 256, before, null);
-      DefaultConsistentHash topoSyncAfter = TOPO_SYNC.rebalance(TOPO_SYNC.updateMembers(topoSyncBefore, after, null));
-
-      DefaultConsistentHash topoRenBefore = TOPO_RENDEZVOUS.create(3, 256, before, null);
-      DefaultConsistentHash topoRenAfter = TOPO_RENDEZVOUS.rebalance(TOPO_RENDEZVOUS.updateMembers(topoRenBefore, after, null));
-
-      int syncMoved = countMovedSegments(topoSyncBefore, topoSyncAfter);
-      int renMoved = countMovedSegments(topoRenBefore, topoRenAfter);
-      assertTrue(renMoved <= syncMoved * 1.50 + 256 * 0.10,
-            "TopologyAwareRendezvous moved " + renMoved + ", TopologyAwareSync moved " + syncMoved);
-
-      // Diversity preserved after join for TopoRendezvous
-      for (int s = 0; s < topoRenAfter.getNumSegments(); s++) {
-         List<Address> owners = topoRenAfter.locateOwnersForSegment(s);
-         java.util.Set<String> sites = new java.util.HashSet<>();
-         for (Address a : owners) sites.add(a.getSiteId());
-         assertTrue(sites.size() >= 3,
-               "Segment " + s + " should have owners in 3 distinct sites after join");
-      }
    }
 
    // ---- Movement matrix (informational — always passes) ----

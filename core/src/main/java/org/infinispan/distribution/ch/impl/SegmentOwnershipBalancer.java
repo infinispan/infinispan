@@ -74,7 +74,6 @@ import org.infinispan.remoting.transport.Address;
  * </ol>
  *
  * @see RendezvousConsistentHashFactory
- * @see TopologyAwareRendezvousConsistentHashFactory
  * @since 16.3
  */
 final class SegmentOwnershipBalancer {

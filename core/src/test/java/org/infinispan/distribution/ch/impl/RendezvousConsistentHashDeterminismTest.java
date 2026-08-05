@@ -93,19 +93,6 @@ public class RendezvousConsistentHashDeterminismTest extends AbstractInfinispanT
       assertEquals(ch1, ch2, "Uniform scaling of capacity factors must produce identical CH");
    }
 
-   public void testTopologyAwareVariantIsAlsoDeterministic() {
-      Address A = Address.random("A", "s1", null, null);
-      Address B = Address.random("B", "s2", null, null);
-      Address C = Address.random("C", "s3", null, null);
-      List<Address> members = Arrays.asList(A, B, C);
-
-      ConsistentHashFactory<DefaultConsistentHash> chf = TopologyAwareRendezvousConsistentHashFactory.getInstance();
-      DefaultConsistentHash ch1 = chf.create(2, 64, members, null);
-      DefaultConsistentHash ch2 = chf.create(2, 64, members, null);
-
-      assertEquals(ch1, ch2, "TopologyAwareRendezvous must also be deterministic");
-   }
-
    public void testMemberListWithDifferentUUIDsProducesDifferentCH() {
       // Same count, different UUIDs — should produce different CHs
       Address A1 = Address.random("A1");

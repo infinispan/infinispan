@@ -34,8 +34,6 @@ import org.infinispan.distribution.ch.PersistedConsistentHash;
 import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.PureRendezvousConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.TopologyAwareRendezvousConsistentHashFactory;
-import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.globalstate.ScopedPersistentState;
@@ -159,9 +157,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    /**
     * Returns the effective {@link ConsistentHashFactory} for the current topology operation.
     *
-    * <p>If the configured factory is a {@link PureRendezvousConsistentHashFactory} (or any subclass,
-    * including the topology-aware and greedy variants) and the cluster still contains at least one node older than
-    * {@link NodeVersion#SIXTEEN_THREE}, returns the appropriate Sync fallback instead.</p>
+    * <p>If the configured factory is a {@link PureRendezvousConsistentHashFactory} (or any subclass)
+    * and the cluster still contains at least one node older than {@link NodeVersion#SIXTEEN_THREE},
+    * returns {@link SyncConsistentHashFactory} as a fallback instead.</p>
     *
     * <p>Once all nodes have upgraded, this method returns the configured factory and logs the
     * transition exactly once.</p>
@@ -179,10 +177,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          if (!usingFallbackFactory) {
             usingFallbackFactory = true;
          }
-         ConsistentHashFactory<CH> fallback = (ConsistentHashFactory<CH>) (
-               configured instanceof TopologyAwareRendezvousConsistentHashFactory
-                     ? TopologyAwareSyncConsistentHashFactory.getInstance()
-                     : SyncConsistentHashFactory.getInstance());
+         ConsistentHashFactory<CH> fallback = (ConsistentHashFactory<CH>) SyncConsistentHashFactory.getInstance();
          CLUSTER.debugf("Mixed-version cluster (oldest: %s): using %s fallback for cache %s",
                oldest, fallback.getClass().getSimpleName(), cacheName);
          return fallback;

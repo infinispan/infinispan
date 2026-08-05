@@ -30,25 +30,11 @@ public class RendezvousRollingUpgradeCompatibilityTest extends AbstractInfinispa
             RendezvousConsistentHashFactory.getInstance());
    }
 
-   public void testTopologyAwareFactorySingletonIsInstance() {
-      assertInstanceOf(TopologyAwareRendezvousConsistentHashFactory.class,
-            TopologyAwareRendezvousConsistentHashFactory.getInstance());
-   }
-
-   public void testTopologyAwareFactoryIsSubclassOfRendezvous() {
-      assertInstanceOf(PureRendezvousConsistentHashFactory.class,
-            TopologyAwareRendezvousConsistentHashFactory.getInstance(),
-            "TopologyAwareRendezvous must extend PureRendezvousConsistentHashFactory");
-   }
-
    public void testProtoTypeIdUniqueness() {
-      // IDs 342 and 343 must not collide with any already-registered Core range IDs.
       // The real check is done by ProtoStreamTypeIdsUniquenessTest; this just asserts the
-      // constants are set to their expected values so a future re-allocation is detectable.
+      // constant is set to its expected value so a future re-allocation is detectable.
       assertEquals(1000 + 342,
             org.infinispan.commons.marshall.ProtoStreamTypeIds.RENDEZVOUS_CONSISTENT_HASH_FACTORY);
-      assertEquals(1000 + 343,
-            org.infinispan.commons.marshall.ProtoStreamTypeIds.TOPOLOGY_AWARE_RENDEZVOUS_CONSISTENT_HASH_FACTORY);
    }
 
    // ---- Version constant ----
@@ -98,15 +84,6 @@ public class RendezvousRollingUpgradeCompatibilityTest extends AbstractInfinispa
       ConsistentHashFactory<?> def = DefaultConsistentHashFactory.getInstance();
       assertFalse(sync instanceof RendezvousConsistentHashFactory);
       assertFalse(def instanceof RendezvousConsistentHashFactory);
-   }
-
-   public void testTopologyAwareRendezvousIsInstanceOfRendezvous() {
-      // This is the key instanceof check used by the version guard to select the correct fallback.
-      // TopologyAwareRendezvous extends HistoryHintedRendezvous extends RendezvousConsistentHashFactory
-      // extends PureRendezvous, so the version guard checks against PureRendezvousConsistentHashFactory.
-      assertInstanceOf(PureRendezvousConsistentHashFactory.class,
-            TopologyAwareRendezvousConsistentHashFactory.getInstance(),
-            "TopologyAwareRendezvous must be caught by the PureRendezvousConsistentHashFactory instanceof check");
    }
 
    // ---- Persistent state compatibility ----
