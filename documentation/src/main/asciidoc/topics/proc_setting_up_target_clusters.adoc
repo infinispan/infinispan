@@ -55,4 +55,4 @@ schemas defined on the source cluster will also be present on the target cluster
 
 [role="_additional-resources"]
 .Additional resources
-* link:../../configuration-schema/infinispan-cachestore-remote-config-{schemaversion}.html[Remote cache store configuration schema]
+* link:{configdocroot}infinispan-cachestore-remote-config-{schemaversion}.html[Remote cache store configuration schema]

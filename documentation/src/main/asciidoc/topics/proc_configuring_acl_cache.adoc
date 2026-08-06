@@ -57,4 +57,4 @@ Flushing the ACL caches does not synchronize it cluster-wide.
 
 [role="_additional-resources"]
 .Additional resources
-* link:../../configuration-schema/index.html[{brandname} configuration schema reference]
+* link:{configdocroot}index.html[{brandname} configuration schema reference]
