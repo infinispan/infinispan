@@ -1,6 +1,7 @@
 package org.infinispan.persistence.remote;
 
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -409,7 +410,9 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
       Completable removeCompletable = Flowable.fromPublisher(removePublisher)
             .flatMap(Flowable::fromPublisher, publisherCount)
             .map(RemoteStore::unwrap)
-            .flatMapCompletable(key -> Completable.fromCompletionStage(remoteCache.removeAsync(key)), false, 10);
+            .buffer(configuration.maxBatchSize())
+            .concatMapCompletable(keyList -> Completable.fromCompletionStage(
+                  remoteCache.removeAllAsync(new HashSet<>(keyList))));
 
       Completable putCompletable = Flowable.fromPublisher(writePublisher)
             .flatMap(Flowable::fromPublisher, publisherCount)
