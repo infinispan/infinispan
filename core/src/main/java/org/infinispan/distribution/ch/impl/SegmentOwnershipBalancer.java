@@ -45,9 +45,10 @@ import org.infinispan.remoting.transport.Address;
  *       If no node exceeds {@code ceil(ideal)}, stop.</li>
  *   <li><b>Pass 1 — backup-slot swap</b>: scan every segment where {@code W} is a
  *       <em>backup</em> owner (position ≥ 1). Among all eligible {@code (segment, candidate)}
- *       pairs (candidates not already in the segment and below {@code owned(W) - 1}), choose
- *       the one that maximises {@code delta = W's rank - candidate's rank} (highest net fitness
- *       improvement), breaking ties by largest candidate deficit.</li>
+ *       pairs (candidates not already in the segment and strictly below their own
+ *       {@code ceil(ideal)}), choose the one that maximises
+ *       {@code delta = W's rank - candidate's rank} (highest net fitness improvement),
+ *       breaking ties by largest candidate deficit.</li>
  *   <li>If Pass 1 found nothing (all excess is at position 0),
  *       <b>Pass 2 — primary-vacating swap</b>: scan segments where {@code W} is primary.
  *       Promote the highest-ranked existing backup to primary (free reorder), then give the
@@ -67,9 +68,9 @@ import org.infinispan.remoting.transport.Address;
  * <ol>
  *   <li>Find the node {@code W} with the highest excess {@code primaryOwned(W) - ceil(primaryIdeal(W)) > 0}.
  *       If no node exceeds its primary ceiling, stop.</li>
- *   <li>Scan every segment where {@code W} is primary and look for a backup {@code B} with
- *       {@code primaryOwned(B) < primaryOwned(W) - 1}. Among candidates, choose the one that
- *       ranks highest in the rendezvous order for that segment.</li>
+ *   <li>Scan every segment where {@code W} is primary and look for a backup {@code B} that is
+ *       strictly below its own {@code ceil(primaryIdeal(B))}. Among candidates, choose the one
+ *       that ranks highest in the rendezvous order for that segment.</li>
  *   <li>Swap: {@code B} becomes primary, {@code W} takes {@code B}'s former backup position.</li>
  * </ol>
  *
@@ -261,7 +262,7 @@ final class SegmentOwnershipBalancer {
             for (int rank = 0; rank < ranking.size(); rank++) {
                Address candidate = ranking.get(rank);
                int ci = members.indexOf(candidate);
-               if (owned[ci] >= owned[worstIdx] - 1) continue; // skip if within 1 of worst
+               if (owned[ci] >= (int) Math.ceil(ideal[ci])) continue; // skip if at or above own ceiling
                if (owners.contains(candidate)) continue;
                float deficit = ideal[ci] - owned[ci];
                if (scorer.isBetter(worstRankInSegment, rank, deficit,
@@ -305,7 +306,7 @@ final class SegmentOwnershipBalancer {
             for (int rank = 0; rank < ranking.size(); rank++) {
                Address candidate = ranking.get(rank);
                int ci = members.indexOf(candidate);
-               if (owned[ci] >= owned[worstIdx] - 1) continue;
+               if (owned[ci] >= (int) Math.ceil(ideal[ci])) continue; // skip if at or above own ceiling
                if (owners.contains(candidate)) continue;
                float deficit = ideal[ci] - owned[ci];
                if (scorer.isBetter(worstRankInSegment, rank, deficit,
@@ -405,7 +406,7 @@ final class SegmentOwnershipBalancer {
                Address candidate = ranking.get(rank);
                if (candidate.equals(worstNode)) continue;
                int ci = members.indexOf(candidate);
-               if (owned[ci] >= owned[worstIdx] - 1) continue;
+               if (owned[ci] >= (int) Math.ceil(ideal[ci])) continue; // skip if at or above own ceiling
                int delta = worstRankInSegment - rank;
                float deficit = ideal[ci] - owned[ci];
                if (delta > bestDelta || (delta == bestDelta && deficit > bestDeficit)) {
@@ -481,7 +482,7 @@ final class SegmentOwnershipBalancer {
             for (int b = 1; b < owners.size(); b++) {
                Address backup = owners.get(b);
                int bi = members.indexOf(backup);
-               if (primaryOwned[bi] >= primaryOwned[worstIdx] - 1) continue;
+               if (primaryOwned[bi] >= (int) Math.ceil(primaryIdeal[bi])) continue; // skip if at or above own ceiling
                int rank = ranking.indexOf(backup);
                if (rank < bestRank) {
                   bestRank = rank;

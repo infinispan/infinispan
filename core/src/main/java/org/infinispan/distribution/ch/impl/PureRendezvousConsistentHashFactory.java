@@ -136,9 +136,13 @@ public abstract class PureRendezvousConsistentHashFactory
    }
 
    /**
-    * Computes the rendezvous ranking for each segment.
-    * Score: {@code murmurHash3(segmentIndex, msb, lsb) / capacityFactor(node)}.
-    * Lower score wins. Zero-capacity nodes are excluded.
+    * Computes the rendezvous ranking for each segment using weighted reservoir sampling
+    * (Efraimidis &amp; Spirakis 2006).
+    *
+    * <p>Score: {@code -log(u) / cf} where {@code u = (hash + 1) / 2^32 ∈ (0, 1]} and
+    * {@code cf} is the node's capacity factor. Lower score wins. This gives each node a
+    * probability of winning any given segment exactly proportional to its capacity factor:
+    * {@code P(node i wins) = cf_i / sum(cf_j)}. Zero-capacity nodes are excluded.</p>
     */
    protected List<Address>[] computeRankings(int numSegments, List<Address> members,
                                               Map<Address, Float> capacityFactors) {
@@ -164,9 +168,14 @@ public abstract class PureRendezvousConsistentHashFactory
       for (int s = 0; s < numSegments; s++) {
          for (int i = 0; i < n; i++) {
             int hash = MurmurHash3.hash(new long[]{s, nodeMsb[i], nodeLsb[i]});
-            double rawScore = Integer.toUnsignedLong(hash);
+            // Map the unsigned hash to (0, 1] to avoid log(0).
+            // +1 shifts [0, 2^32-1] to [1, 2^32], then divide by 2^32 gives (0, 1].
+            double u = (Integer.toUnsignedLong(hash) + 1.0) / (1L << 32);
             float cf = capacityFactors != null ? capacityFactors.getOrDefault(eligible.get(i), 1f) : 1f;
-            scores[i] = rawScore / cf;
+            // Weighted rendezvous: score = -log(u) / cf.  The node with the lowest score
+            // wins each segment, and P(node i wins) = cf_i / sum(cf_j) exactly.
+            // (Efraimidis & Spirakis 2006 — exponential-order weighted reservoir sampling)
+            scores[i] = -Math.log(u) / cf;
             order[i] = i;
          }
          final double[] finalScores = scores;
