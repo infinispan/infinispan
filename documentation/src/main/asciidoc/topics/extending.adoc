@@ -3,7 +3,7 @@
 {brandname} can be extended to provide the ability for an end user to add
 additional configurations, operations and components outside of the scope of the ones normally provided by {brandname}.
 
-{brandname} is extended by providing implementations of the link:../../apidocs/org/infinispan/lifecycle/ModuleLifecyle.html[`ModuleLifecycle`]
+{brandname} is extended by providing implementations of the link:{javadocroot}/org/infinispan/lifecycle/ModuleLifecyle.html[`ModuleLifecycle`]
 interface. This interface allows {brandname} to be extended and modified at various stages of its lifecycle.
 
 == Custom Commands

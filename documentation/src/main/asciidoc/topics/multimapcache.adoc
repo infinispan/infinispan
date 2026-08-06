@@ -13,7 +13,7 @@ include::dependencies_maven/multimap.xml[]
 
 == MultimapCache API
 
-link:../../apidocs/org/infinispan/multimap/api/embedded/MultimapCache.html[MultimapCache API] exposes several methods to interact with the Multimap Cache.
+link:{javadocroot}/org/infinispan/multimap/api/embedded/MultimapCache.html[MultimapCache API] exposes several methods to interact with the Multimap Cache.
 These methods are non-blocking in most cases; see
 link:#multimap_limitations[limitations] for more information.
 

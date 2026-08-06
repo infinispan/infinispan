@@ -60,6 +60,6 @@ In addition, the following built-in merge policies are available:
 
 [role="_additional-resources"]
 .Additional resources
-* link:../../apidocs/org/infinispan/xsite/spi/XSiteMergePolicy.html[`XSiteMergePolicy` enum lists all merge polices that {brandname} provides]
-* link:../../apidocs/org/infinispan/xsite/spi/XSiteEntryMergePolicy.html[`XSiteEntryMergePolicy` SPI]
+* link:{javadocroot}/org/infinispan/xsite/spi/XSiteMergePolicy.html[`XSiteMergePolicy` enum lists all merge polices that {brandname} provides]
+* link:{javadocroot}/org/infinispan/xsite/spi/XSiteEntryMergePolicy.html[`XSiteEntryMergePolicy` SPI]
 * link:https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#compareTo-java.lang.String-[java.lang.String#compareTo()]
