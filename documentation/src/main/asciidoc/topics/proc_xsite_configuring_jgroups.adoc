@@ -50,4 +50,4 @@ Other discovery protocols may be used depending on the architecture.
 [role="_additional-resources"]
 .Additional resources
 * link:#ref_relay-xsite[JGroups RELAY2 Stacks]
-* link:../../configuration-schema/index.html[{brandname} configuration schema reference]
+* link:{configdocroot}index.html[{brandname} configuration schema reference]

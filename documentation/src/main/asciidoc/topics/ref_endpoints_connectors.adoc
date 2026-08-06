@@ -115,4 +115,4 @@ include::xml/server_endpoints_limits_rest.xml[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:../../configuration-schema/index.html[{brandname} schema reference]
+* link:{configdocroot}index.html[{brandname} schema reference]

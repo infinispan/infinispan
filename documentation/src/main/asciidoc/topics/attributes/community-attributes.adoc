@@ -148,6 +148,12 @@
 
 :metrics_docs: ../metrics/metrics.html
 
+// Javadoc Root
+:javadocroot: ../../apidocs
+
+// Configuration Root
+:configdocroot: ../../configuration-schema/
+
 //
 // Include topic-specific attributes
 //
