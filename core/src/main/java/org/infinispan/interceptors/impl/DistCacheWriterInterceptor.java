@@ -14,8 +14,6 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionInfo;
@@ -84,20 +82,17 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
       if (!isStoreEnabled(command) || ctx.isInTxScope())
          return invokeNext(ctx, command);
 
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
-         long count = 0;
-         for (Object key : rCommand.getKeys()) {
-            if (!skipNonPrimary(rCtx, key, rCommand) && isProperWriter(rCtx, rCommand, key)) {
-               stage.dependsOn(removeEntry(rCtx, key, keyPartitioner.getSegment(key), rCommand));
-               count++;
-            }
-         }
-         if (getStatisticsEnabled()) {
-            cacheStores.getAndAdd(count);
-         }
-         return delayedValue(stage.freeze(), rv);
-      });
+      return invokeNextThenApply(ctx, command, handleRemoveAllCommandReturn);
+   }
+
+   @Override
+   protected Object handleRemoveAllCommandReturn(InvocationContext rCtx, RemoveAllCommand removeAllCommand, Object rv) {
+      CompletionStage<Long> removeStage = persistenceManager.batchRemove(removeAllCommand, rCtx,
+            ((writeCommand, key) -> !skipNonPrimary(rCtx, key, writeCommand) && isProperWriter(rCtx, writeCommand, key)));
+      if (getStatisticsEnabled()) {
+         removeStage.thenAccept(cacheStores::getAndAdd);
+      }
+      return delayedValue(removeStage, rv);
    }
 
    protected Object handlePutMapCommandReturn(InvocationContext rCtx, PutMapCommand putMapCommand, Object rv) {

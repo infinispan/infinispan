@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
@@ -159,6 +160,29 @@ public class DistSyncStoreNotSharedTest<D extends DistSyncStoreNotSharedTest<D>>
 
       for (int i = 0; i < keys.length; ++i) {
          assertInStores(keys[i], values[i], true);
+      }
+   }
+
+   public void testRemoveAll() throws Exception {
+      c1.putAll(makePutAllTestData());
+
+      for (int i = 0; i < keys.length; ++i) {
+         assertInStores(keys[i], values[i], true);
+      }
+
+      c1.removeAll(Set.of(k1, k2));
+
+      for (Cache<Object, String> c : caches) {
+         DummyInMemoryStore<Object, String> store = TestingUtil.getFirstStore(c);
+         for (String removedKey : new String[]{k1, k2}) {
+            assertNull(c.get(removedKey));
+            assertFalse(store.contains(removedKey), "Store " + c + " should not contain " + removedKey);
+         }
+         for (String keptKey : new String[]{k3, k4}) {
+            if (isOwner(c, keptKey)) {
+               assertTrue(store.contains(keptKey), "Store " + c + " should contain " + keptKey);
+            }
+         }
       }
    }
 
