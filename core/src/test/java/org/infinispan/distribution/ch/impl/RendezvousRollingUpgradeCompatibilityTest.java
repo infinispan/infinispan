@@ -8,8 +8,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import java.util.List;
 
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.MockTransport;
 import org.infinispan.remoting.transport.NodeVersion;
+import org.infinispan.statetransfer.StateTransferManagerImpl;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
@@ -86,6 +91,56 @@ public class RendezvousRollingUpgradeCompatibilityTest extends AbstractInfinispa
       assertFalse(def instanceof PureRendezvousConsistentHashFactory);
    }
 
+   // ---- pickConsistentHashFactory version guard (joiner-side) ----
+
+   /**
+    * When the cluster still contains a node older than 16.3, the joiner must embed
+    * {@link SyncConsistentHashFactory} in {@link org.infinispan.topology.CacheJoinInfo} so that
+    * old coordinators can deserialize the join request.
+    */
+   public void testPickFactoryReturnsSyncWhenOldNodePresent() {
+      var globalConfig = GlobalConfigurationBuilder.defaultClusteredBuilder().build();
+      var config = new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).build();
+      var oldVersion = NodeVersion.from((byte) 16, (byte) 2, (byte) 0);
+      var transport = new FixedVersionTransport(oldVersion);
+
+      ConsistentHashFactory<?> factory = StateTransferManagerImpl.pickConsistentHashFactory(globalConfig, config, transport);
+
+      assertInstanceOf(SyncConsistentHashFactory.class, factory,
+            "Mixed-version cluster (oldest=16.2) must produce SyncConsistentHashFactory, got: " + factory);
+   }
+
+   /**
+    * Once all nodes are at or above 16.3 the joiner must embed
+    * {@link HistoryHintedRendezvousConsistentHashFactory} so the coordinator can activate
+    * the new assignment strategy.
+    */
+   public void testPickFactoryReturnsHistoryHintedWhenAllNodesNew() {
+      var globalConfig = GlobalConfigurationBuilder.defaultClusteredBuilder().build();
+      var config = new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).build();
+      var transport = new FixedVersionTransport(NodeVersion.SIXTEEN_THREE);
+
+      ConsistentHashFactory<?> factory = StateTransferManagerImpl.pickConsistentHashFactory(globalConfig, config, transport);
+
+      assertInstanceOf(HistoryHintedRendezvousConsistentHashFactory.class, factory,
+            "All-new cluster (oldest=16.3) must produce HistoryHintedRendezvousConsistentHashFactory, got: " + factory);
+   }
+
+   /**
+    * When {@code transport} is {@code null} (e.g. called from {@link org.infinispan.test.TestingUtil})
+    * the version guard must be skipped and the factory selected purely by cache mode — i.e.
+    * {@link HistoryHintedRendezvousConsistentHashFactory} for distributed mode.
+    */
+   public void testPickFactoryWithNullTransportSkipsVersionGuard() {
+      var globalConfig = GlobalConfigurationBuilder.defaultClusteredBuilder().build();
+      var config = new ConfigurationBuilder().clustering().cacheMode(CacheMode.DIST_SYNC).build();
+
+      ConsistentHashFactory<?> factory = StateTransferManagerImpl.pickConsistentHashFactory(globalConfig, config, null);
+
+      assertInstanceOf(HistoryHintedRendezvousConsistentHashFactory.class, factory,
+            "null transport must skip version guard and return HistoryHintedRendezvousConsistentHashFactory, got: " + factory);
+   }
+
    // ---- Persistent state compatibility ----
 
    public void testPersistentStateCompatibilityRendezvousProducesSameFormatAsDefault() {
@@ -109,4 +164,20 @@ public class RendezvousRollingUpgradeCompatibilityTest extends AbstractInfinispa
       assertEquals(members, renCH.getMembers());
    }
 
+   // ---- Helpers ----
+
+   /** Stub transport whose {@code getOldestMember()} returns a fixed version. */
+   static class FixedVersionTransport extends MockTransport {
+      private final NodeVersion version;
+
+      FixedVersionTransport(NodeVersion version) {
+         super(Address.random("test"));
+         this.version = version;
+      }
+
+      @Override
+      public NodeVersion getOldestMember() {
+         return version;
+      }
+   }
 }

@@ -330,6 +330,12 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
       if (this.joinInfo == null) {
          this.joinInfo = joinInfo;
+      } else if (!(this.joinInfo.getConsistentHashFactory() instanceof PureRendezvousConsistentHashFactory)
+            && joinInfo.getConsistentHashFactory() instanceof PureRendezvousConsistentHashFactory) {
+         // During coordinator election, nodes report their own CacheJoinInfo. If the first member
+         // recorded a downgraded (Sync) factory but a later member reports HHRCHF, upgrade so that
+         // effectiveConsistentHashFactory() can activate HHRCHF once all nodes reach 16.3+.
+         this.joinInfo = joinInfo;
       }
 
       if (isGracefulStopped())
@@ -1373,6 +1379,16 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
    public void forceRebalance() {
       queueRebalance(getCurrentTopology().getMembers());
+   }
+
+   /** Package-private accessor for tests — returns whether the version-guard fallback is currently active. */
+   boolean isUsingFallbackFactory() {
+      lock.lock();
+      try {
+         return usingFallbackFactory;
+      } finally {
+         lock.unlock();
+      }
    }
 
    /**
