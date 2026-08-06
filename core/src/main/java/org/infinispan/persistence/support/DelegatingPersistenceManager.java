@@ -7,6 +7,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.IntSet;
@@ -192,6 +193,12 @@ public class DelegatingPersistenceManager implements PersistenceManager, Lifecyc
    public CompletionStage<Long> writeMapCommand(PutMapCommand putMapCommand, InvocationContext ctx,
                                                 BiPredicate<? super PutMapCommand, Object> commandKeyPredicate) {
       return persistenceManager.writeMapCommand(putMapCommand, ctx, commandKeyPredicate);
+   }
+
+   @Override
+   public CompletionStage<Long> batchRemove(RemoveAllCommand removeAllCommand, InvocationContext ctx,
+                                            BiPredicate<? super RemoveAllCommand, Object> commandKeyPredicate) {
+      return persistenceManager.batchRemove(removeAllCommand, ctx, commandKeyPredicate);
    }
 
    @Override

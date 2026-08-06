@@ -91,6 +91,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    private volatile boolean usingTransactionalStores;
 
    protected final InvocationSuccessFunction<PutMapCommand> handlePutMapCommandReturn = this::handlePutMapCommandReturn;
+   protected final InvocationSuccessFunction<RemoveAllCommand> handleRemoveAllCommandReturn = this::handleRemoveAllCommandReturn;
    private final InvocationSuccessFunction<AbstractTransactionBoundaryCommand> afterCommit = this::afterCommit;
 
    protected Log getLog() {
@@ -276,20 +277,16 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       if (!isStoreEnabled(command) || ctx.isInTxScope())
          return invokeNext(ctx, command);
 
-      return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
-         long count = 0;
-         for (Object key : rCommand.getKeys()) {
-            if (isProperWriter(rCtx, rCommand, key)) {
-               stage.dependsOn(removeEntry(rCtx, key, keyPartitioner.getSegment(key), rCommand));
-               count++;
-            }
-         }
-         if (getStatisticsEnabled()) {
-            cacheStores.getAndAdd(count);
-         }
-         return delayedValue(stage.freeze(), rv);
-      });
+      return invokeNextThenApply(ctx, command, handleRemoveAllCommandReturn);
+   }
+
+   protected Object handleRemoveAllCommandReturn(InvocationContext rCtx, RemoveAllCommand removeAllCommand, Object rv) {
+      CompletionStage<Long> removeStage = persistenceManager.batchRemove(removeAllCommand, rCtx,
+            ((writeCommand, key) -> isProperWriter(rCtx, writeCommand, key)));
+      if (getStatisticsEnabled()) {
+         removeStage.thenAccept(cacheStores::getAndAdd);
+      }
+      return delayedValue(removeStage, rv);
    }
 
    protected Object handlePutMapCommandReturn(InvocationContext rCtx, PutMapCommand putMapCommand, Object rv) {

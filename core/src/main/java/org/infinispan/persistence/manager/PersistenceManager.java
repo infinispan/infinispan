@@ -7,6 +7,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.IntSet;
@@ -342,6 +343,16 @@ public interface PersistenceManager extends Lifecycle {
     */
    CompletionStage<Long> writeMapCommand(PutMapCommand putMapCommand, InvocationContext ctx,
          BiPredicate<? super PutMapCommand, Object> commandKeyPredicate);
+
+   /**
+    * Removes the keys from a remove all command from the stores using a batch operation.
+    * @param removeAllCommand the remove all command with the keys to remove
+    * @param ctx context to lookup entries
+    * @param commandKeyPredicate predicate to control if a key/command combination should be accepted
+    * @return a stage of how many removes were performed
+    */
+   CompletionStage<Long> batchRemove(RemoveAllCommand removeAllCommand, InvocationContext ctx,
+         BiPredicate<? super RemoveAllCommand, Object> commandKeyPredicate);
 
    /**
     * Writes a batch for the given modifications in the transactional context
