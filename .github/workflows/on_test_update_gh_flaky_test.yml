@@ -45,10 +45,12 @@ jobs:
             GH_JOB_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}"
             GH_TOKEN: ${{ github.token }}
           run: |
-            set +e
+            set -e  # Enable error propagation
             cat target-branch.txt
-            TARGET_BRANCH=$(cat target-branch.txt) .github/scripts/track_flaky_tests.sh
-            true
+            TARGET_BRANCH=$(cat target-branch.txt) .github/scripts/track_flaky_tests.sh || {
+              echo "::warning::Flaky test tracking script failed"
+              exit 0  # Don't fail the workflow, but log the warning
+            }
 
         - name: Get event name
           id: event_name

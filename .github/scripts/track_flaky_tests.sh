@@ -57,19 +57,26 @@ for TEST in "${TESTS[@]}"; do
     ISSUES="$(gh search issues \"${SUMMARY}\" in:title --json number --repo $GITHUB_REPOSITORY || true)"
     API_LIMIT_TIME=120
     if [[ "${ISSUES}" == "" ]]; then
-      echo Error with gh search. Maybe rate limits reached? Wait 120 sec and retry...
+      echo "Error with gh search. Maybe rate limits reached? Waiting 120 sec and retrying..."
       gh api rate_limit
       sleep $API_LIMIT_TIME
-      ISSUES="$(gh search issues \"${SUMMARY}\" in:title --json number --repo $GITHUB_REPOSITORY|| true)"
-      continue
+      ISSUES="$(gh search issues \"${SUMMARY}\" in:title --json number --repo $GITHUB_REPOSITORY || true)"
+      if [[ "${ISSUES}" == "" ]]; then
+        echo "Retry also returned no results for ${SUMMARY}, skipping."
+        continue
+      fi
     fi
     TOTAL_ISSUES=$(echo "${ISSUES}" | jq length)
     if [ ${TOTAL_ISSUES} -gt 1 ]; then
-      echo "Multiple issues for same flaky test: ${SUMMARY}"
-      exit 1
+      echo "Multiple issues for same flaky test: ${SUMMARY}, using most recent"
+      # Pick the open one if any; otherwise pick the most recently updated closed one
+      ISSUE_NUMBER=$(echo "${ISSUES}" | jq -r 'map(select(.state == "open")) | if length > 0 then .[0].number else null end')
+      if [ "${ISSUE_NUMBER}" == "null" ]; then
+        ISSUE_NUMBER=$(echo "${ISSUES}" | jq -r '.[0].number')
+      fi
     fi
 
-      BODY=$(printf "### Target Branch: %s\n### Github Job:%s\n%s" "${TARGET_BRANCH}" "${GH_JOB_URL}" "${STACK_TRACE}")
+    BODY=$(printf "### Target Branch: %s\n### Github Job:%s\n%s" "${TARGET_BRANCH}" "${GH_JOB_URL}" "${STACK_TRACE}")
     if [ ${TOTAL_ISSUES} == 0 ]; then
       echo "Existing issue not found, creating a new one"
       # Create issue and capture the full URL (default output is the URL)
@@ -86,7 +93,12 @@ for TEST in "${TESTS[@]}"; do
       COMMENT_COUNT=$(echo "${ISSUE_DATA}" | jq .comments)
       # Re-open the issue if it was previously resolved
       if [ "$(echo "${ISSUE_DATA}" | jq -r .state)" == 'closed' ]; then
-        gh issue reopen ${ISSUE_NUMBER}
+        if ! gh issue reopen ${ISSUE_NUMBER}; then
+          echo "ERROR: Failed to reopen issue #${ISSUE_NUMBER} for ${SUMMARY}"
+          echo "${ISSUE_NUMBER}\t${SUMMARY}" >> failed-reopens.log
+        else
+          echo "Successfully reopened issue #${ISSUE_NUMBER}"
+        fi
       fi
       gh issue comment ${ISSUE_NUMBER} --body "${BODY}"
     fi
