@@ -11,4 +11,4 @@ documentation.
 
 [role="_additional-resources"]
 .Additional resources
-* link:../../apidocs/jmxComponents.html[{brandname} JMX Components]
+* link:{javadocroot}/jmxComponents.html[{brandname} JMX Components]
