@@ -13,7 +13,9 @@ import java.lang.reflect.Method;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -326,6 +328,35 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       assertEquals(numberOfEntries, cache.size());
       WaitNonBlockingStore<String, Object> store = TestingUtil.getFirstStoreWait(cache);
       for (int i = 0; i < numberOfEntries; ++i) {
+         assertNotNull(store.loadEntry(toStorage(cache, Integer.toString(i))), "Entry for key: " + i + " was null");
+      }
+   }
+
+   public void testRemoveAllBatch() {
+      int numberOfEntries = 100;
+      int entriesToRemove = 50;
+      String cacheName = "testRemoveAllBatch";
+      ConfigurationBuilder cb = getDefaultCacheConfiguration();
+      createCacheStoreConfig(cb.persistence(), cacheName, false);
+      TestingUtil.defineConfiguration(cacheManager, cacheName, cb.build());
+
+      Cache<String, Object> cache = cacheManager.getCache(cacheName);
+      Map<String, Object> entriesMap = IntStream.range(0, numberOfEntries).boxed()
+            .collect(Collectors.toMap(Object::toString, i -> wrap(i.toString(), "Val" + i)));
+      cache.putAll(entriesMap);
+
+      assertEquals(numberOfEntries, cache.size());
+
+      Set<String> keysToRemove = IntStream.range(0, entriesToRemove).mapToObj(Integer::toString)
+            .collect(Collectors.toCollection(HashSet::new));
+      cache.removeAll(keysToRemove);
+
+      assertEquals(numberOfEntries - entriesToRemove, cache.size());
+      WaitNonBlockingStore<String, Object> store = TestingUtil.getFirstStoreWait(cache);
+      for (int i = 0; i < entriesToRemove; ++i) {
+         assertNull(store.loadEntry(toStorage(cache, Integer.toString(i))), "Entry for removed key: " + i + " should be null");
+      }
+      for (int i = entriesToRemove; i < numberOfEntries; ++i) {
          assertNotNull(store.loadEntry(toStorage(cache, Integer.toString(i))), "Entry for key: " + i + " was null");
       }
    }
