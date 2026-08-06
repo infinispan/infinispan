@@ -284,10 +284,15 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    public void removeAll(Set<? extends K> keys) {
       checkNotClosed();
       InfinispanCollections.assertNotNullEntries(keys, "keys");
-      for (K k : keys) {
-         remove(k);
+      if (configuration.isWriteThrough() && jcacheWriter != null) {
+         try {
+            jcacheWriter.deleteAll(new java.util.ArrayList<>(keys));
+         } catch (Exception ex) {
+            throw Exceptions.launderCacheWriterException(ex);
+         }
       }
-      //FIXME implement me
+      cacheWithoutStats.removeAll(keys);
+      stats.incrementCacheRemovals(keys.size());
    }
 
    @Override

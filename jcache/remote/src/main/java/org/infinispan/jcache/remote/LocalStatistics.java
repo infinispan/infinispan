@@ -40,6 +40,10 @@ public class LocalStatistics implements CacheStatisticsMXBean {
       cacheRemovals.add(1);
    }
 
+   public void incrementCacheRemovals(long count) {
+      cacheRemovals.add(count);
+   }
+
    public void incrementCacheEvictions() {
       cacheEvictions.add(1);
    }
