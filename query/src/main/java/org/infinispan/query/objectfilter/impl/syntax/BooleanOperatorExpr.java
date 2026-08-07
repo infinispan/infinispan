@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.infinispan.query.objectfilter.impl.syntax.parser.VirtualExpressionBuilder;
 
 /**
  * An expression that applies a boolean operator (OR, AND) to a list of boolean sub-expressions.
@@ -76,29 +75,24 @@ public abstract class BooleanOperatorExpr implements BooleanExpr {
     * E.g. for MUST(longDescription:'beer'), appends +'beer' instead of +longDescription:'beer'
     */
    protected static void appendFullTextInner(StringBuilder sb, BooleanExpr expr) {
-      if (expr instanceof FullTextOccurExpr) {
-         FullTextOccurExpr occurExpr = (FullTextOccurExpr) expr;
-         sb.append(((VirtualExpressionBuilder.Occur) occurExpr.getOccur()).getOperator());
+      if (expr instanceof FullTextOccurExpr occurExpr) {
+         sb.append(occurExpr.getOccur().getOperator());
          appendFullTextInner(sb, occurExpr.getChild());
-      } else if (expr instanceof FullTextBoostExpr) {
-         FullTextBoostExpr boostExpr = (FullTextBoostExpr) expr;
+      } else if (expr instanceof FullTextBoostExpr boostExpr) {
          appendFullTextInner(sb, boostExpr.getChild());
          sb.append("^").append(boostExpr.getBoost());
-      } else if (expr instanceof FullTextTermExpr) {
-         FullTextTermExpr termExpr = (FullTextTermExpr) expr;
+      } else if (expr instanceof FullTextTermExpr termExpr) {
          sb.append("'").append(termExpr.getTerm(null)).append("'");
          if (termExpr.getFuzzySlop() != null) {
             sb.append("~").append(termExpr.getFuzzySlop());
          }
-      } else if (expr instanceof FullTextRangeExpr) {
-         FullTextRangeExpr rangeExpr = (FullTextRangeExpr) expr;
+      } else if (expr instanceof FullTextRangeExpr rangeExpr) {
          sb.append(rangeExpr.isIncludeLower() ? '[' : '{');
          sb.append(rangeExpr.getLower() == null ? "*" : rangeExpr.getLower());
          sb.append(" TO ");
          sb.append(rangeExpr.getUpper() == null ? "*" : rangeExpr.getUpper());
          sb.append(rangeExpr.isIncludeUpper() ? ']' : '}');
-      } else if (expr instanceof FullTextRegexpExpr) {
-         FullTextRegexpExpr regexpExpr = (FullTextRegexpExpr) expr;
+      } else if (expr instanceof FullTextRegexpExpr regexpExpr) {
          sb.append("/").append(regexpExpr.getRegexp()).append("/");
       } else {
          expr.appendQueryString(sb);

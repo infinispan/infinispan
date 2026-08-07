@@ -38,22 +38,18 @@ final class SumAccumulator extends FieldAccumulator {
          Number value = (Number) val;
          if (fieldType == Double.class || fieldType == Float.class) {
             ((DoubleStat) accRow[outPos]).update(value.doubleValue());
-         } else if (fieldType == Long.class || fieldType == Integer.class || fieldType == Byte.class || fieldType == Short.class) {
-            value = value.longValue();
+         } else if (fieldType == Long.class) {
             Number sum = (Number) accRow[outPos];
-            if (sum != null) {
-               if (fieldType == Long.class) {
-                  value = sum.longValue() + value.longValue();
-               } else if (fieldType == BigInteger.class) {
-                  value = ((BigInteger) sum).add((BigInteger) value);
-               } else if (fieldType == BigDecimal.class) {
-                  value = ((BigDecimal) sum).add((BigDecimal) value);
-               } else {
-                  // byte, short, int
-                  value = sum.intValue() + value.intValue();
-               }
-            }
-            accRow[outPos] = value;
+            accRow[outPos] = sum != null ? sum.longValue() + value.longValue() : value.longValue();
+         } else if (fieldType == Integer.class || fieldType == Byte.class || fieldType == Short.class) {
+            Number sum = (Number) accRow[outPos];
+            accRow[outPos] = sum != null ? sum.intValue() + value.intValue() : value.intValue();
+         } else if (fieldType == BigInteger.class) {
+            BigInteger sum = (BigInteger) accRow[outPos];
+            accRow[outPos] = sum != null ? sum.add((BigInteger) value) : value;
+         } else if (fieldType == BigDecimal.class) {
+            BigDecimal sum = (BigDecimal) accRow[outPos];
+            accRow[outPos] = sum != null ? sum.add((BigDecimal) value) : value;
          }
       }
    }
@@ -84,9 +80,6 @@ final class SumAccumulator extends FieldAccumulator {
       }
       if (fieldType == Double.class || fieldType == Float.class) {
          return Double.class;
-      }
-      if (fieldType == Long.class || fieldType == Integer.class || fieldType == Byte.class || fieldType == Short.class) {
-         return Long.class;
       }
       return fieldType;
    }

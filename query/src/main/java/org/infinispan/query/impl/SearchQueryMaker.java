@@ -1,9 +1,9 @@
-package org.infinispan.query.dsl.embedded.impl;
+package org.infinispan.query.impl;
 
 import static org.infinispan.query.core.impl.Log.CONTAINER;
-import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper.KEY;
-import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper.SCORE;
-import static org.infinispan.query.dsl.embedded.impl.HibernateSearchPropertyHelper.VALUE;
+import static org.infinispan.query.impl.HibernateSearchPropertyHelper.KEY;
+import static org.infinispan.query.impl.HibernateSearchPropertyHelper.SCORE;
+import static org.infinispan.query.impl.HibernateSearchPropertyHelper.VALUE;
 
 import java.io.IOException;
 import java.io.StringReader;

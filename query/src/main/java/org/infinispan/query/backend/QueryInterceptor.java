@@ -348,14 +348,6 @@ public final class QueryInterceptor extends DDAsyncInterceptor {
       return rv;
    }
 
-   public void purgeIndex(Class<?> entityType) {
-      if (searchMapping == null) {
-         return;
-      }
-
-      searchMapping.scope(entityType).workspace().purge();
-   }
-
    /**
     * Removes from the index the entries corresponding to the supplied segments, if the index is local.
     */

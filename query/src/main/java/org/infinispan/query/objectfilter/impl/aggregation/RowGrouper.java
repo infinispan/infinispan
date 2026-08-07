@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Objects;
 
 /**
  * Groups rows by their grouping fields and computes aggregates.
@@ -53,7 +54,7 @@ public final class RowGrouper {
          for (int i = 0; i < n; i++) {
             Object o1 = row[i];
             Object o2 = other.row[i];
-            if (!(o1 == null ? o2 == null : o1.equals(o2))) {
+            if (!(Objects.equals(o1, o2))) {
                return false;
             }
          }
