@@ -54,13 +54,13 @@ for TEST in "${TESTS[@]}"; do
     # Search issues for existing github issue
     # Wait some time for subsequent request to respect API rate limit
     sleep $API_LIMIT_TIME
-    ISSUES="$(gh search issues \"${SUMMARY}\" in:title --json number --repo $GITHUB_REPOSITORY || true)"
+    ISSUES="$(gh search issues \"${SUMMARY}\" in:title --json number,state --repo $GITHUB_REPOSITORY || true)"
     API_LIMIT_TIME=120
     if [[ "${ISSUES}" == "" ]]; then
       echo "Error with gh search. Maybe rate limits reached? Waiting 120 sec and retrying..."
       gh api rate_limit
       sleep $API_LIMIT_TIME
-      ISSUES="$(gh search issues \"${SUMMARY}\" in:title --json number --repo $GITHUB_REPOSITORY || true)"
+      ISSUES="$(gh search issues \"${SUMMARY}\" in:title --json number,state --repo $GITHUB_REPOSITORY || true)"
       if [[ "${ISSUES}" == "" ]]; then
         echo "Retry also returned no results for ${SUMMARY}, skipping."
         continue
@@ -77,7 +77,7 @@ for TEST in "${TESTS[@]}"; do
     fi
 
     BODY=$(printf "### Target Branch: %s\n### Github Job:%s\n%s" "${TARGET_BRANCH}" "${GH_JOB_URL}" "${STACK_TRACE}")
-    if [ ${TOTAL_ISSUES} == 0 ]; then
+    if [ ${TOTAL_ISSUES} -eq 0 ]; then
       echo "Existing issue not found, creating a new one"
       # Create issue and capture the full URL (default output is the URL)
       ISSUE_URL=$(gh issue create --title "${SUMMARY}" --body "${BODY}" --label "kind/flaky test")
