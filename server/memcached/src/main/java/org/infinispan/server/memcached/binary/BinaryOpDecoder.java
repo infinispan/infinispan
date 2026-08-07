@@ -139,7 +139,7 @@ abstract class BinaryOpDecoder extends BinaryDecoder {
                response(header, KEY_NOT_FOUND);
                return CompletableFutures.completedNull();
             } else {
-               long version = ((NumericVersion) metadata.version()).getVersion();
+               long version = ((NumericVersion) e.getMetadata().version()).getVersion();
                if (header.getCas() == version) {
                   return cache.replaceAsync(key, e.getValue(), value, metadata).thenAccept(ignore -> {
                      CAS_HITS.incrementAndGet(statistics);
@@ -317,11 +317,18 @@ abstract class BinaryOpDecoder extends BinaryDecoder {
    protected MemcachedResponse stat(BinaryHeader header, byte[] key) {
       CompletionStage<Void> s = server.getBlockingManager().supplyBlocking(() -> {
          Map<byte[], byte[]> map = statsMap();
-         if (key != null) {
-            if (!map.containsKey(key)) {
+         if (key != null && key.length > 0) {
+            byte[] value = null;
+            for (Map.Entry<byte[], byte[]> e : map.entrySet()) {
+               if (Arrays.equals(e.getKey(), key)) {
+                  value = e.getValue();
+                  break;
+               }
+            }
+            if (value == null) {
                response(header, KEY_NOT_FOUND);
             } else {
-               singleStat(header, new SimpleImmutableEntry<>(key, map.get(key)));
+               singleStat(header, new SimpleImmutableEntry<>(key, value));
             }
          } else {
             for (Map.Entry<byte[], byte[]> e : map.entrySet()) {
