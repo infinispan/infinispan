@@ -184,7 +184,14 @@ public class OverlayLocalConfigurationStorage extends VolatileLocalConfiguration
             if (configuration == null) {
                log.configurationNotFound(config, configurationManager.getDefinedConfigurations());
             } else {
-               configurationMap.put(config, configuration);
+               // Similar to when replicating the configuration in the CONFIG cache, we strip local mutable attributes.
+               // This ensures the caches.xml file will contain the same view as the CONFIG cache.
+               // The mutable local attributes are stored in the persistent state of the node.
+               Configuration persisted = new ConfigurationBuilder()
+                     .read(configuration)
+                     .build(false);
+               ConfigurationUtil.resetLocalMutableAttributes(persisted);
+               configurationMap.put(config, persisted);
             }
          }
          try (ConfigurationWriter writer = ConfigurationWriter.to(new FileOutputStream(temp)).clearTextSecrets(true).prettyPrint(true).build()) {
