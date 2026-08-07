@@ -17,6 +17,15 @@ import org.opentest4j.AssertionFailedError;
  **/
 public class AeshTestShell implements Shell {
    private final StringBuilder bufferBuilder = new StringBuilder();
+   private final String readLineResponse;
+
+   public AeshTestShell() {
+      this(null);
+   }
+
+   public AeshTestShell(String readLineResponse) {
+      this.readLineResponse = readLineResponse;
+   }
 
 
    @Override
@@ -41,12 +50,12 @@ public class AeshTestShell implements Shell {
 
    @Override
    public String readLine() {
-      return null;
+      return readLineResponse;
    }
 
    @Override
    public String readLine(Prompt prompt) {
-      return null;
+      return readLineResponse;
    }
 
    @Override

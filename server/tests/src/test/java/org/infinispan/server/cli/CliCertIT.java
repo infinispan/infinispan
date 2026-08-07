@@ -9,11 +9,14 @@ import org.infinispan.cli.commands.CLI;
 import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.AeshTestConnection;
+import org.infinispan.server.test.core.CliTerminal;
 import org.infinispan.server.test.core.InfinispanServerDriver;
+import org.infinispan.server.test.core.ProcessCliTerminal;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.jupiter.InfinispanServerExtension;
 import org.infinispan.server.test.jupiter.InfinispanServerExtensionBuilder;
 import org.infinispan.testing.Testing;
+import org.infinispan.testing.jupiter.tags.Cli;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -23,6 +26,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 14.0
  **/
+@Cli
 public class CliCertIT {
 
    @RegisterExtension
@@ -48,11 +52,20 @@ public class CliCertIT {
       Util.recursiveFileRemove(workingDir);
    }
 
+   private CliTerminal createTerminal(String... cliArgs) {
+      String cliPath = System.getProperty("infinispan.cli.bin");
+      if (cliPath != null) {
+         return new ProcessCliTerminal(cliPath, workingDir.getAbsolutePath(), cliArgs);
+      }
+      AeshTestConnection terminal = new AeshTestConnection();
+      CLI.main(new AeshDelegatingShell(terminal), properties, cliArgs);
+      return terminal;
+   }
+
    @Test
    public void cliClientCert() {
       InfinispanServerDriver driver = SERVERS.getServerDriver();
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties,
+      try (CliTerminal terminal = createTerminal(
                "-t",
                driver.getCertificateFile("ca.pfx").getAbsolutePath(),
                "-s",
@@ -64,7 +77,7 @@ public class CliCertIT {
                "--hostname-verifier",
                ".*",
                "-c",
-               "https://" + hostAddress() + ":11222");
+               "https://" + hostAddress() + ":11222")) {
          terminal.assertContains("//containers/default]>");
          terminal.clear();
       }
@@ -73,8 +86,7 @@ public class CliCertIT {
    @Test
    public void connectClientCert() {
       InfinispanServerDriver driver = SERVERS.getServerDriver();
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties);
+      try (CliTerminal terminal = createTerminal()) {
          terminal.assertContains("[disconnected]");
          terminal.send(String.format("connect -t %s -s %s -k %s -w %s --hostname-verifier=.* https://%s:11222",
                driver.getCertificateFile("ca.pfx").getAbsolutePath(),

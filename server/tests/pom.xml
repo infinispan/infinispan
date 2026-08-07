@@ -384,5 +384,37 @@
             </plugins>
          </build>
       </profile>
+      <profile>
+         <id>native</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <build>
+            <plugins>
+               <plugin>
+                  <artifactId>maven-failsafe-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>default</id>
+                        <phase>none</phase>
+                     </execution>
+                     <execution>
+                        <id>native-cli</id>
+                        <goals>
+                           <goal>integration-test</goal>
+                           <goal>verify</goal>
+                        </goals>
+                        <configuration>
+                           <groups>cli</groups>
+                           <excludedGroups combine.self="override"/>
+                           <argLine>${forkJvmArgs} ${testjvm.jdkSpecificArgs} ${test.driverArgs} -Djdk.attach.allowAttachSelf=true -Dinfinispan.cli.bin=${project.basedir}/../../quarkus/cli/target/${infinispan.brand.short-name}-cli</argLine>
+                           <reportNameSuffix>native-cli</reportNameSuffix>
+                        </configuration>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
    </profiles>
 </project>

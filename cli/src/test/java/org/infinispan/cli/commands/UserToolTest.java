@@ -1,4 +1,4 @@
-package org.infinispan.cli.user;
+package org.infinispan.cli.commands;
 
 import static org.infinispan.testing.Testing.tmpDirectory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -13,7 +13,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Properties;
 
+import org.infinispan.cli.user.UserTool;
 import org.infinispan.commons.util.Util;
+import org.infinispan.testing.jupiter.tags.Cli;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.wildfly.common.iteration.CodePointIterator;
@@ -28,6 +30,7 @@ import org.wildfly.security.password.spec.PasswordSpec;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 11.0
  **/
+@Cli
 public class UserToolTest {
    private static File serverDirectory;
    private static File confDirectory;

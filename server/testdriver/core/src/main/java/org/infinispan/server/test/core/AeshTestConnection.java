@@ -2,7 +2,6 @@ package org.infinispan.server.test.core;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.aesh.terminal.Attributes;
@@ -14,13 +13,11 @@ import org.aesh.terminal.tty.Signal;
 import org.aesh.terminal.tty.Size;
 import org.aesh.terminal.utils.Config;
 import org.aesh.terminal.utils.Parser;
-import org.infinispan.testing.Eventually;
-import org.opentest4j.AssertionFailedError;
 
 /**
  * @author <a href="mailto:stale.pedersen@jboss.org">Ståle W. Pedersen</a>
  */
-public class AeshTestConnection implements Connection, AutoCloseable {
+public class AeshTestConnection extends CliTerminal implements Connection {
 
    private Consumer<Size> sizeHandler;
    private Consumer<Signal> signalHandler;
@@ -28,7 +25,6 @@ public class AeshTestConnection implements Connection, AutoCloseable {
    private final Consumer<int[]> stdOutHandler;
    private Consumer<Void> closeHandler;
 
-   private final StringBuilder bufferBuilder;
    private final Size size;
    private Attributes attributes;
 
@@ -47,7 +43,6 @@ public class AeshTestConnection implements Connection, AutoCloseable {
    }
 
    public AeshTestConnection(Size size, boolean stripAnsiCodes) {
-      bufferBuilder = new StringBuilder();
       stdOutHandler = ints -> {
          if (stripAnsiCodes)
             bufferBuilder.append(Parser.stripAwayAnsiCodes(Parser.fromCodePoints(ints)));
@@ -61,15 +56,6 @@ public class AeshTestConnection implements Connection, AutoCloseable {
          this.size = size;
 
       attributes = new Attributes();
-   }
-
-   public void clear() {
-      if (!bufferBuilder.isEmpty())
-         bufferBuilder.delete(0, bufferBuilder.length());
-   }
-
-   public String getOutputBuffer() {
-      return bufferBuilder.toString();
    }
 
    @Override
@@ -223,25 +209,8 @@ public class AeshTestConnection implements Connection, AutoCloseable {
       return true;
    }
 
-   public void assertEquals(String expected) {
-      Eventually.eventually(
-            () -> new AssertionFailedError("Expected output was not equal to expected string after timeout", expected, bufferBuilder.toString()),
-            () -> expected.contentEquals(bufferBuilder), 10_000, 50, TimeUnit.MILLISECONDS);
-   }
-
+   @Override
    public void send(String data) {
       doSend(data + Config.getLineSeparator());
-   }
-
-   public void assertContains(String expected) {
-      Eventually.eventually(
-            () -> new AssertionFailedError("Expected output did not contain expected string after timeout", expected, bufferBuilder.toString()),
-            () -> bufferBuilder.toString().contains(expected), 10_000, 50, TimeUnit.MILLISECONDS);
-   }
-
-   public void assertNotContains(String unexpected) {
-      Eventually.eventually(
-            () -> new AssertionFailedError("Expected output should not contain expected string after timeout", unexpected, bufferBuilder.toString()),
-            () -> !bufferBuilder.toString().contains(unexpected), 10_000, 50, TimeUnit.MILLISECONDS);
    }
 }

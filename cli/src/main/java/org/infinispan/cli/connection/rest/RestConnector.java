@@ -3,10 +3,10 @@ package org.infinispan.cli.connection.rest;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.infinispan.cli.Context;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.connection.Connector;
 import org.infinispan.cli.impl.SSLContextSettings;
@@ -21,12 +21,12 @@ import org.kohsuke.MetaInfServices;
  **/
 @MetaInfServices
 public class RestConnector implements Connector {
-   private final Pattern HOST_PORT = Pattern.compile("(\\[[0-9A-Fa-f:]+\\]|[^:/?#]*)(?::(\\d*))");
+   private final Pattern HOST_PORT = Pattern.compile("(\\[[0-9A-Fa-f:]+]|[^:/?#]*):(\\d*)");
 
    @Override
-   public Connection getConnection(Properties properties, String connectionString, SSLContextSettings sslContextSettings) {
+   public Connection getConnection(Context context, String connectionString, SSLContextSettings sslContextSettings) {
       try {
-         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().withProperties(properties);
+         RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().withProperties(context.properties());
          if (connectionString == null || connectionString.isEmpty() || "-".equals(connectionString)) {
             builder.addServer().host("localhost").port(11222);
          } else {
@@ -62,7 +62,7 @@ public class RestConnector implements Connector {
             }
          }
          builder.header("User-Agent", Version.getBrandName() + " CLI " + Version.getBrandVersion());
-         return new RestConnection(builder);
+         return new RestConnection(context, builder);
       } catch (Throwable e) {
          return null;
       }

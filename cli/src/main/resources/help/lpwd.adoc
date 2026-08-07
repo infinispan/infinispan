@@ -1,0 +1,18 @@
+LPWD(1)
+======
+:doctype: manpage
+
+
+NAME
+----
+lpwd - prints the current local working directory.
+
+
+SYNOPSIS
+--------
+*lpwd*
+
+
+SEE ALSO
+--------
+lcd(1)
