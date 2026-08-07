@@ -257,7 +257,7 @@ public final class Util {
    /**
     * Instantiates a class by first attempting a static <i>factory method</i> named <code>getInstance()</code> on the class
     * and then falling back to an empty constructor.
-        * Any exceptions encountered are wrapped in a {@link CacheConfigurationException} and rethrown.
+    * Any exceptions encountered are wrapped in a {@link CacheConfigurationException} and rethrown.
     *
     * @param clazz class to instantiate
     * @return an instance of the class
@@ -316,10 +316,10 @@ public final class Util {
     *
     * @param classname class to instantiate
     * @return an instance of classname
-    * @throws ClassNotFoundException if the class cannot be loaded
-    * @throws InstantiationException if the class cannot be instantiated
-    * @throws IllegalAccessException if the class cannot be accessed
-    * @throws NoSuchMethodException if the class does not have a static <code>getInstance()</code> method
+    * @throws ClassNotFoundException    if the class cannot be loaded
+    * @throws InstantiationException    if the class cannot be instantiated
+    * @throws IllegalAccessException    if the class cannot be accessed
+    * @throws NoSuchMethodException     if the class does not have a static <code>getInstance()</code> method
     * @throws InvocationTargetException if the class cannot be instantiated
     */
    public static <T> T getInstanceStrict(String classname, ClassLoader cl) throws ClassNotFoundException, InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
@@ -696,6 +696,7 @@ public final class Util {
    /**
     * Returns whether the provided integer is a power of two or not. That is any number that is divisible by
     * two even if negative.
+    *
     * @param n the number to test
     * @return whether the number is a power of two or not.
     */
@@ -1042,7 +1043,7 @@ public final class Util {
       } else if (klass == File.class) {
          return new File(value);
       } else if (klass.isEnum()) {
-         return parseEnum((Class)klass, value);
+         return parseEnum((Class) klass, value);
       } else if (klass == Properties.class) {
          try {
             Properties props = new Properties();
@@ -1089,7 +1090,7 @@ public final class Util {
       if (rootMessage != null) {
          messages.add(rootMessage);
       }
-      for(Throwable suppressed : t.getSuppressed()) {
+      for (Throwable suppressed : t.getSuppressed()) {
          messages.add(suppressed.getMessage());
       }
       return String.join("\n    ", messages);
@@ -1139,6 +1140,14 @@ public final class Util {
       int aLen = a.length;
       T[] ret = Arrays.copyOf(a, aLen + 1);
       ret[aLen] = b;
+      return ret;
+   }
+
+   public static <T> T[] concat(T[] a, T... b) {
+      int aLen = a.length;
+      int bLen = b.length;
+      T[] ret = Arrays.copyOf(a, aLen + bLen);
+      System.arraycopy(b, 0, ret, aLen, bLen);
       return ret;
    }
 

@@ -313,4 +313,10 @@ public interface Messages {
 
    @Message("Unsupported protocol '%s'. Only 'http' and 'https' are supported.")
    CommandException unsupportedProtocol(String protocol);
+
+   @Message("Skipping dependency '%s': already present in lib")
+   String skippingExistingDependency(String artifactId);
+
+   @Message("Installing dependency '%s'")
+   String installingDependency(String gav);
 }
