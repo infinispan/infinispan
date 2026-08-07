@@ -19,6 +19,8 @@ import org.infinispan.container.versioning.irac.IracVersionGenerator;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.HistoryHintedRendezvousConsistentHashFactory;
+import org.infinispan.distribution.ch.impl.PureRendezvousConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncReplicatedConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.TopologyAwareSyncConsistentHashFactory;
@@ -40,6 +42,8 @@ import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.persistence.manager.PreloadManager;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.NodeVersion;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.CacheTopologyHandler;
@@ -101,7 +105,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             0.0f :
             configuration.clustering().hash().capacityFactor();
 
-      CacheJoinInfo joinInfo = new CacheJoinInfo(pickConsistentHashFactory(globalConfiguration, configuration),
+      CacheJoinInfo joinInfo = new CacheJoinInfo(pickConsistentHashFactory(globalConfiguration, configuration, rpcManager.getTransport()),
             configuration.clustering().hash().numSegments(),
             configuration.clustering().hash().numOwners(),
             configuration.clustering().stateTransfer().timeout(),
@@ -134,9 +138,28 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    /**
-    * If no ConsistentHashFactory was explicitly configured, we choose a suitable one based on cache mode.
+    * If no ConsistentHashFactory was explicitly configured, choose a suitable one based on cache
+    * mode.  Delegates to {@link #pickConsistentHashFactory(GlobalConfiguration, Configuration, Transport)}
+    * with a {@code null} transport (no version guard applied).
     */
    public static ConsistentHashFactory pickConsistentHashFactory(GlobalConfiguration globalConfiguration, Configuration configuration) {
+      return pickConsistentHashFactory(globalConfiguration, configuration, null);
+   }
+
+   /**
+    * If no ConsistentHashFactory was explicitly configured, choose a suitable one based on cache
+    * mode.
+    *
+    * <p>When {@code transport} is provided and the selected factory is a
+    * {@link PureRendezvousConsistentHashFactory} subclass, a version guard is applied: if the
+    * cluster still contains at least one node older than {@link NodeVersion#SIXTEEN_THREE}, the
+    * {@link CacheJoinInfo} must not embed the new factory because old coordinators cannot
+    * deserialize it. In that case {@link SyncConsistentHashFactory} is substituted so the join
+    * request is safe to serialize to any cluster member.</p>
+    */
+   public static ConsistentHashFactory pickConsistentHashFactory(GlobalConfiguration globalConfiguration,
+                                                                  Configuration configuration,
+                                                                  Transport transport) {
       PrivateCacheConfiguration privateCacheConfiguration = configuration.module(PrivateCacheConfiguration.class);
       ConsistentHashFactory factory = privateCacheConfiguration != null ? privateCacheConfiguration.consistentHashFactory() : null;
       if (factory == null) {
@@ -146,7 +169,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
                if (globalConfiguration.transport().hasTopologyInfo()) {
                   factory = TopologyAwareSyncConsistentHashFactory.getInstance();
                } else {
-                  factory = SyncConsistentHashFactory.getInstance();
+                  factory = HistoryHintedRendezvousConsistentHashFactory.getInstance();
                }
             } else if (cacheMode.isReplicated() || cacheMode.isInvalidation()) {
                factory = SyncReplicatedConsistentHashFactory.getInstance();
@@ -155,6 +178,19 @@ public class StateTransferManagerImpl implements StateTransferManager {
             }
          }
       }
+
+      // Rolling-upgrade guard: if the factory requires 16.3+ but the cluster still contains
+      // older nodes, substitute SyncConsistentHashFactory so the CacheJoinInfo can be
+      // deserialized by old coordinators.
+      if (transport != null && factory instanceof PureRendezvousConsistentHashFactory) {
+         NodeVersion oldest = transport.getOldestMember();
+         if (oldest.lessThan(NodeVersion.SIXTEEN_THREE)) {
+            log.debugf("Mixed-version cluster (oldest: %s): sending SyncConsistentHashFactory in CacheJoinInfo " +
+                       "to remain compatible with old coordinator", oldest);
+            factory = SyncConsistentHashFactory.getInstance();
+         }
+      }
+
       return factory;
    }
 
