@@ -34,9 +34,10 @@ $(document).ready(function() {
     dchooser.append('<option value="/titles/upgrading/upgrading.html">Upgrading deployments</option>');
     dchooser.append('</optgroup>');
     dchooser.append('<optgroup label="Integrations">');
+    dchooser.append('<option value="/titles/hibernate/hibernate.html">Hibernate second-level caching (2LC)</option>');
+    dchooser.append('<option value="/titles/jcache/jcache.html">JCache (JSR-107)</option>');
     dchooser.append('<option value="/titles/spring_boot/starter.html">Spring Boot Starter</option>');
     dchooser.append('<option value="/titles/spring/spring.html">Spring Cache and Spring Sessions</option>');
-    dchooser.append('<option value="/titles/hibernate/hibernate.html">Hibernate second-level caching (2LC)</option>');
     dchooser.append('<option value="/titles/mcp_server/mcp_server.html">MCP Server</option>');
     dchooser.append('</optgroup>');
     dchooser.append('<optgroup label="Architecture">');
