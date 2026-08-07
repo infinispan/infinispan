@@ -12,6 +12,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -113,6 +114,19 @@ public class ConcurrentLoadAndEvictTest extends SingleCacheManagerTest {
 
       @Override
       public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+         if (enabled) {
+            log.trace("Wait for evict to give go ahead...");
+            if (!evictLatch.await(60000, TimeUnit.MILLISECONDS))
+               throw new TimeoutException("Didn't see get after 60 seconds!");
+         }
+         return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, throwable) -> {
+            log.trace("After get, now let evict go through");
+            if (enabled) getLatch.countDown();
+         });
+      }
+
+      @Override
+      public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
          if (enabled) {
             log.trace("Wait for evict to give go ahead...");
             if (!evictLatch.await(60000, TimeUnit.MILLISECONDS))
