@@ -1,12 +1,13 @@
 [id='token-security-realms_{context}']
 = Token realms
 
-Token realms use external services to validate tokens and require providers
-that are compatible with RFC-7662 (OAuth2 Token Introspection), such as
-{keycloak}.
+Token realms validate bearer tokens using one of the following strategies:
+
+* OAuth2 Token Introspection (RFC-7662), via an external service such as {keycloak}
+* JWT Validation (RFC-7519)
 
 [discrete]
-== Token realm configuration
+== Token realm with OAuth2 introspection validation
 
 .XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]
@@ -49,3 +50,90 @@ include::json/server_token_realm_oauth_tls.json[]
 include::yaml/server_token_realm_oauth_tls.yaml[]
 ----
 
+[discrete]
+== Token realm with JWT validation
+
+{brandname} can validate JWT tokens locally (RFC-7519) without calling an external introspection endpoint.
+The `sub` claim is used as the principal identity by default, but you can change this with the `principal-claim` attribute.
+
+The `jwt` element within the `token-realm` specifies that tokens should be validated as JWTs.
+The following attributes control validation:
+
+* `issuer`: a list of strings representing the issuers supported by this configuration.
+During validation, JWT tokens must have an `iss` claim that contains one of the values defined here.
+When an issuer is configured and no `public-key` is provided, {brandname} automatically fetches the signing keys from the issuer's OIDC discovery endpoint (`\{issuer\}/.well-known/openid-configuration`).
+The keys are cached and periodically refreshed based on the `jku-timeout` setting.
+* `audience`: a list of strings representing the audiences supported by this configuration.
+During validation, JWT tokens must have an `aud` claim that contains one of the values defined here.
+* `public-key`: a public key in PEM format.
+During validation, if a public key is provided, the signature is verified using the key you provide here.
+* `client-ssl-context`: the name of a security realm that provides a truststore for SSL/TLS connections to the issuer's JWKS endpoint.
+Required when the issuer uses HTTPS.
+* `jku-timeout`: the cache duration for JWKS keys fetched from the issuer.
+After this timeout, keys are refreshed on the next validation request.
+The default value is two minutes.
+* `connection-timeout`: the timeout for connections to the JWKS endpoint.
+The default value is two seconds.
+* `read-timeout`: the read timeout for the JWKS endpoint.
+The default value is two seconds.
+
+The JWT validator performs the following checks to determine the validity of a JWT:
+
+* Expiration checks based on the values of the `exp` and `nbf` claims
+* Signature checks based on the public key provided via the `public-key` attribute or fetched from the issuer's JWKS endpoint
+
+IMPORTANT: It is strongly recommended that you use signed JWTs to guarantee authenticity of tokens and make sure they have not been tampered with.
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/server_token_realm_jwt.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_token_realm_jwt.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_token_realm_jwt.yaml[]
+----
+
+[discrete]
+== Token realm with JWT validation and TLS
+
+When the OIDC provider uses HTTPS, configure a `client-ssl-context` that references a security realm with an appropriate truststore.
+
+.XML
+[source,xml,options="nowrap",subs=attributes+,role="primary"]
+----
+include::xml/server_token_realm_jwt_tls.xml[]
+----
+
+.JSON
+[source,json,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::json/server_token_realm_jwt_tls.json[]
+----
+
+.YAML
+[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+----
+include::yaml/server_token_realm_jwt_tls.yaml[]
+----
+
+[discrete]
+== Configuring {keycloak} for JWT validation
+
+To use JWT validation with {keycloak}:
+
+. Set the `issuer` attribute to the realm URL, for example `\https://keycloak-host:8443/realms/my-realm`.
+. Set the `audience` attribute to match the audience claim in the tokens issued by {keycloak}, typically `account`.
+. Set `principal-claim` to `sub` (the default {keycloak} subject identifier) or `preferred_username` depending on which claim you want to use as the principal identity.
+. If {keycloak} uses HTTPS, configure a `client-ssl-context` with a truststore that contains the {keycloak} server certificate or its certificate authority.
+
+{brandname} automatically discovers the JWKS endpoint from {keycloak}'s OIDC discovery document and fetches the signing keys.
+Keys are cached and refreshed automatically when they expire or when {keycloak} rotates its signing keys.

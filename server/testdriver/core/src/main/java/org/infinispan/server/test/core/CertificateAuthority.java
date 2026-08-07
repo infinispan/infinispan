@@ -100,7 +100,7 @@ public class CertificateAuthority {
       return getCertificate(name, null);
    }
 
-   public X509CertificateChainAndSigningKey getCertificate(String name, InetAddress host) {
+   public X509CertificateChainAndSigningKey getCertificate(String name, InetAddress host, String... extraDnsNames) {
       return certificates.computeIfAbsent(name, n -> {
          KeyPair keyPair = keyPairGenerator.generateKeyPair();
          PrivateKey signingKey = keyPair.getPrivate();
@@ -109,6 +109,9 @@ public class CertificateAuthority {
          List<GeneralName> sANs = new ArrayList<>();
          sANs.add(new GeneralName.DNSName("infinispan.test"));
          sANs.add(new GeneralName.DNSName("localhost"));
+         for (String dns : extraDnsNames) {
+            sANs.add(new GeneralName.DNSName(dns));
+         }
          if (host != null) {
             byte[] address = host.getAddress();
             while (address[3] != -1) {

@@ -61,6 +61,7 @@ public class TokenRealmConfiguration extends ConfigurationElement<TokenRealmConf
    public SecurityRealm build(SecurityConfiguration security, RealmConfiguration realm, SecurityDomain.Builder domainBuilder, Properties properties) {
       TokenSecurityRealm.Builder tokenRealmBuilder = TokenSecurityRealm.builder();
       tokenRealmBuilder.validator(oauth2Configuration().isModified() ? oauth2Configuration.getValidator(security, realm) : jwtConfiguration.getValidator(security, realm));
+      attributes.attribute(PRINCIPAL_CLAIM).apply(tokenRealmBuilder::principalClaimName);
       TokenSecurityRealm securityRealm = tokenRealmBuilder.build();
       domainBuilder.setRoleDecoder(new KeycloakRoleDecoder());
       return securityRealm;
