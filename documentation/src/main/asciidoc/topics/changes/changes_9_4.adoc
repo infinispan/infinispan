@@ -37,7 +37,7 @@ The WebSocket endpoint has been unmaintained for several years. It has been remo
 Since the Hot Rod client was overhauled in 9.2, the way the connection pool configuration is handled has changed.
 Infinispan 9.4 introduces a new naming scheme for the connection pool properties which deprecates the old _commons-pool_
 names. For a complete reference of the available configuration options for the properties file please refer to
-link:../../apidocs/org/infinispan/client/hotrod/configuration/package-summary.html#package.description[remote client configuration] javadoc.
+link:{javadocroot}/org/infinispan/client/hotrod/configuration/package-summary.html#package.description[remote client configuration] javadoc.
 
 ==== Server thread pools
 The threads that handle the child Netty event loops have been renamed from *-ServerWorker to *-ServerIO
