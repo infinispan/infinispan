@@ -180,7 +180,7 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
       }
 
       if (queryDefinition.getFirstResult() != 0 || queryDefinition.isCustomMaxResults()) {
-         throw CONTAINER.deleteStatementsCannotUsePaging();
+         throw CONTAINER.statementCannotUsePaging();
       }
 
       try {

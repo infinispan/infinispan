@@ -189,6 +189,93 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
    }
 
    @Override
+   public Void visitUpdateStatement(IckleParser.UpdateStatementContext ctx) {
+      resultBuilder.setStatementType(IckleParsingResult.StatementType.UPDATE);
+
+      if (ctx.updateClause() != null) {
+         visit(ctx.updateClause());
+      }
+
+      if (ctx.updateOperations() != null) {
+         visit(ctx.updateOperations());
+      }
+
+      if (ctx.whereClause() != null) {
+         visit(ctx.whereClause());
+      }
+
+      return null;
+   }
+
+   @Override
+   public Object visitUpdateOperation(IckleParser.UpdateOperationContext ctx) {
+      IckleParsingResult.UpdateOperationType opType;
+      String pathText;
+      IckleParser.UpdateValueContext valueCtx;
+
+      if (ctx.set_key() != null) {
+         opType = IckleParsingResult.UpdateOperationType.SET;
+         pathText = ctx.setAssignment().path().getText();
+         valueCtx = ctx.setAssignment().updateValue();
+      } else if (ctx.add_key() != null) {
+         opType = IckleParsingResult.UpdateOperationType.ADD;
+         pathText = ctx.collectionAssignment().path().getText();
+         valueCtx = ctx.collectionAssignment().updateValue();
+      } else {
+         opType = IckleParsingResult.UpdateOperationType.REMOVE;
+         pathText = ctx.collectionAssignment().path().getText();
+         valueCtx = ctx.collectionAssignment().updateValue();
+      }
+
+      String[] propertyPath = pathText.split("\\.");
+      List<Object> values = parseUpdateValues(valueCtx);
+
+      resultBuilder.addUpdateOperation(
+            new IckleParsingResult.UpdateOperation(opType, propertyPath, values));
+
+      return null;
+   }
+
+   private List<Object> parseUpdateValues(IckleParser.UpdateValueContext ctx) {
+      List<Object> values = new ArrayList<>();
+      for (IckleParser.ConstantContext constCtx : ctx.constant()) {
+         values.add(parseConstantValue(constCtx));
+      }
+      return values;
+   }
+
+   private Object parseConstantValue(IckleParser.ConstantContext ctx) {
+      if (ctx.NULL() != null) {
+         return null;
+      }
+      if (ctx.booleanLiteral() != null) {
+         return ctx.booleanLiteral().TRUE() != null;
+      }
+      if (ctx.parameterSpecification() != null) {
+         String paramText = ctx.parameterSpecification().getText();
+         return parameterStringValue(paramText);
+      }
+      if (ctx.stringLiteral() != null) {
+         String text = ctx.stringLiteral().getText();
+         if (text.startsWith("'") && text.endsWith("'")) {
+            text = text.substring(1, text.length() - 1);
+            text = text.replace("''", "'");
+         } else if (text.startsWith("\"") && text.endsWith("\"")) {
+            text = text.substring(1, text.length() - 1);
+         }
+         return text;
+      }
+      if (ctx.signedNumericLiteral() != null) {
+         String numText = ctx.signedNumericLiteral().getText();
+         if (numText.contains(".") || numText.contains("e") || numText.contains("E")) {
+            return Double.parseDouble(numText);
+         }
+         return Long.parseLong(numText);
+      }
+      return ctx.getText();
+   }
+
+   @Override
    public Object visitMainEntityPersisterReference(IckleParser.MainEntityPersisterReferenceContext ctx) {
       this.targetTypeName = ctx.entityName().getText();
       this.targetEntityMetadata = this.propertyHelper.getEntityMetadata(this.targetTypeName);
