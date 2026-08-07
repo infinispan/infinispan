@@ -29,6 +29,7 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -90,6 +91,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    private volatile boolean usingTransactionalStores;
 
    protected final InvocationSuccessFunction<PutMapCommand> handlePutMapCommandReturn = this::handlePutMapCommandReturn;
+   protected final InvocationSuccessFunction<RemoveAllCommand> handleRemoveAllCommandReturn = this::handleRemoveAllCommandReturn;
    private final InvocationSuccessFunction<AbstractTransactionBoundaryCommand> afterCommit = this::afterCommit;
 
    protected Log getLog() {
@@ -268,6 +270,23 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
          return invokeNext(ctx, command);
 
       return invokeNextThenApply(ctx, command, handlePutMapCommandReturn);
+   }
+
+   @Override
+   public Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command) throws Throwable {
+      if (!isStoreEnabled(command) || ctx.isInTxScope())
+         return invokeNext(ctx, command);
+
+      return invokeNextThenApply(ctx, command, handleRemoveAllCommandReturn);
+   }
+
+   protected Object handleRemoveAllCommandReturn(InvocationContext rCtx, RemoveAllCommand removeAllCommand, Object rv) {
+      CompletionStage<Long> removeStage = persistenceManager.batchRemove(removeAllCommand, rCtx,
+            ((writeCommand, key) -> isProperWriter(rCtx, writeCommand, key)));
+      if (getStatisticsEnabled()) {
+         removeStage.thenAccept(cacheStores::getAndAdd);
+      }
+      return delayedValue(removeStage, rv);
    }
 
    protected Object handlePutMapCommandReturn(InvocationContext rCtx, PutMapCommand putMapCommand, Object rv) {

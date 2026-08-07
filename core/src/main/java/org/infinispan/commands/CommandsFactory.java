@@ -59,6 +59,7 @@ import org.infinispan.commands.triangle.BackupNoopCommand;
 import org.infinispan.commands.triangle.MultiEntriesFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.MultiKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.triangle.PutMapBackupWriteCommand;
+import org.infinispan.commands.triangle.RemoveAllBackupWriteCommand;
 import org.infinispan.commands.triangle.SingleKeyBackupWriteCommand;
 import org.infinispan.commands.triangle.SingleKeyFunctionalBackupWriteCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -76,6 +77,7 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
@@ -329,6 +331,14 @@ public interface CommandsFactory {
    PutMapCommand buildPutMapCommand(Map<?, ?> map, Metadata metadata, long flagsBitSet);
 
    /**
+    * Builds a RemoveAllCommand
+    * @param keys keys to remove
+    * @param flagsBitSet Command flags provided by cache
+    * @return a RemoveAllCommand
+    */
+   RemoveAllCommand buildRemoveAllCommand(Collection<?> keys, long flagsBitSet);
+
+   /**
     * Builds a ClearCommand
     * @param flagsBitSet Command flags provided by cache
     * @return a ClearCommand
@@ -578,6 +588,8 @@ public interface CommandsFactory {
    <K, V, T> SingleKeyFunctionalBackupWriteCommand buildSingleKeyBackupWriteCommand(WriteOnlyKeyValueCommand<K, V, T> command, long sequence, int segmentId);
 
    PutMapBackupWriteCommand buildPutMapBackupWriteCommand(PutMapCommand command, Collection<Object> keys, long sequence, int segmentId);
+
+   RemoveAllBackupWriteCommand buildRemoveAllBackupWriteCommand(RemoveAllCommand command, Collection<Object> keys, long sequence, int segmentId);
 
    <K, V, T> MultiEntriesFunctionalBackupWriteCommand buildMultiEntriesFunctionalBackupWriteCommand(
          WriteOnlyManyEntriesCommand<K, V, T> command, Collection<Object> keys, long sequence, int segmentId);

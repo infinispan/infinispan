@@ -11,6 +11,7 @@ import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
@@ -76,6 +77,24 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
       return invokeNextThenApply(ctx, command, handlePutMapCommandReturn);
    }
 
+   @Override
+   public Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command) throws Throwable {
+      if (!isStoreEnabled(command) || ctx.isInTxScope())
+         return invokeNext(ctx, command);
+
+      return invokeNextThenApply(ctx, command, handleRemoveAllCommandReturn);
+   }
+
+   @Override
+   protected Object handleRemoveAllCommandReturn(InvocationContext rCtx, RemoveAllCommand removeAllCommand, Object rv) {
+      CompletionStage<Long> removeStage = persistenceManager.batchRemove(removeAllCommand, rCtx,
+            ((writeCommand, key) -> !skipNonPrimary(rCtx, key, writeCommand) && isProperWriter(rCtx, writeCommand, key)));
+      if (getStatisticsEnabled()) {
+         removeStage.thenAccept(cacheStores::getAndAdd);
+      }
+      return delayedValue(removeStage, rv);
+   }
+
    protected Object handlePutMapCommandReturn(InvocationContext rCtx, PutMapCommand putMapCommand, Object rv) {
       CompletionStage<Long> putMapStage = persistenceManager.writeMapCommand(putMapCommand, rCtx,
             ((writeCommand, key) -> !skipNonPrimary(rCtx, key, writeCommand) && isProperWriter(rCtx, writeCommand, key)));
@@ -88,6 +107,10 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    private boolean skipNonPrimary(InvocationContext rCtx, Object key, PutMapCommand command) {
       // In non-tx mode, a node may receive the same forwarded PutMapCommand many times - but each time
       // it must write only the keys locked on the primary owner that forwarded the rCommand
+      return isUsingLockDelegation && command.isForwarded() && !dm.getCacheTopology().getDistribution(key).primary().equals(rCtx.getOrigin());
+   }
+
+   private boolean skipNonPrimary(InvocationContext rCtx, Object key, RemoveAllCommand command) {
       return isUsingLockDelegation && command.isForwarded() && !dm.getCacheTopology().getDistribution(key).primary().equals(rCtx.getOrigin());
    }
 

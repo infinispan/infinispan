@@ -33,6 +33,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.TimeoutException;
@@ -1253,6 +1254,54 @@ public class PersistenceManagerImpl implements PersistenceManager {
       Flowable<MVCCEntry<Object, Object>> mvccEntryFlowable = entriesFromCommand(putMapCommand, ctx, (c, k, e) ->
          commandKeyPredicate.test(c, k));
       return batchOperation(mvccEntryFlowable, ctx, NonBlockingStore::batch);
+   }
+
+   @Override
+   public CompletionStage<Long> batchRemove(RemoveAllCommand removeAllCommand, InvocationContext ctx,
+         BiPredicate<? super RemoveAllCommand, Object> commandKeyPredicate) {
+      List<Object> keysToRemove = new ArrayList<>();
+      for (Object key : removeAllCommand.getAffectedKeys()) {
+         if (commandKeyPredicate.test(removeAllCommand, key)) {
+            keysToRemove.add(key);
+         }
+      }
+      if (keysToRemove.isEmpty()) {
+         return CompletableFuture.completedFuture(0L);
+      }
+      long removeCount = keysToRemove.size();
+      boolean skipShared = !ctx.isOriginLocal()
+            || removeAllCommand.hasAnyFlag(FlagBitSets.SKIP_SHARED_CACHE_STORE);
+
+      return Completable.using(
+            this::acquireReadLock,
+            ignore -> {
+               if (!checkStoreAvailability()) {
+                  return Completable.complete();
+               }
+               if (log.isTraceEnabled()) {
+                  log.trace("Batch removing from stores");
+               }
+               return Flowable.fromIterable(stores)
+                     .filter(storeStatus -> !storeStatus.hasCharacteristic(Characteristic.READ_ONLY)
+                           && !(skipShared && storeStatus.config.shared()))
+                     .flatMapCompletable(storeStatus -> {
+                        boolean segmented = storeStatus.config.segmented();
+                        Flowable<Object> keyFlowable = Flowable.fromIterable(keysToRemove);
+                        Flowable<NonBlockingStore.SegmentedPublisher<Object>> removeFlowable;
+                        if (segmented) {
+                           removeFlowable = keyFlowable
+                                 .groupBy(keyPartitioner::getSegment)
+                                 .map(SegmentPublisherWrapper::wrap);
+                        } else {
+                           removeFlowable = Flowable.just(
+                                 SingleSegmentPublisher.singleSegment(keyFlowable));
+                        }
+                        return Completable.fromCompletionStage(storeStatus.store().batch(
+                              segmentCount(segmented), removeFlowable, Flowable.empty()));
+                     });
+            },
+            this::releaseReadLock
+      ).toCompletionStage(null).thenApply(ignored -> removeCount);
    }
 
    @Override

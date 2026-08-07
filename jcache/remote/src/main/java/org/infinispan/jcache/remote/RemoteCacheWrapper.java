@@ -253,6 +253,11 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
+   public CompletableFuture<Void> removeAllAsync(Set<? extends K> keys) {
+      return delegate.removeAllAsync(keys);
+   }
+
+   @Override
    public void removeClientListener(Object listener) {
       delegate.removeClientListener(listener);
    }

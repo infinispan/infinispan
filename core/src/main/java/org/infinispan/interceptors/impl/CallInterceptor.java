@@ -58,6 +58,7 @@ import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
@@ -502,6 +503,31 @@ public class CallInterceptor extends BaseAsyncInterceptor implements Visitor {
       }
 
       return delayedValue(aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : null, previousValues);
+   }
+
+   @Override
+   public Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command) {
+      AggregateCompletionStage<Void> aggregateCompletionStage;
+      if (cacheNotifier.hasListener(CacheEntryRemoved.class)) {
+         aggregateCompletionStage = CompletionStages.aggregateCompletionStage();
+      } else {
+         aggregateCompletionStage = null;
+      }
+      for (Object key : command.getKeys()) {
+         MVCCEntry<Object, Object> contextEntry = lookupMvccEntryMaybeNull(ctx, key);
+         if (contextEntry != null) {
+            Object previousValue = contextEntry.getValue();
+            if (aggregateCompletionStage != null && previousValue != null) {
+               aggregateCompletionStage.dependsOn(cacheNotifier.notifyCacheEntryRemoved(key, previousValue,
+                     contextEntry.getMetadata(), true, ctx, command));
+            }
+            contextEntry.setRemoved(true);
+            contextEntry.setChanged(true);
+            contextEntry.setValue(null);
+            updateStoreFlags(command, contextEntry);
+         }
+      }
+      return delayedNull(aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : null);
    }
 
    private static MVCCEntry<Object, Object> lookupMvccEntryMaybeNull(InvocationContext ctx, Object key) {

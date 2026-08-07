@@ -11,6 +11,7 @@ import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
 import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.remoting.responses.ValidResponse;
@@ -29,6 +30,12 @@ public final class TriangleFunctionsUtil {
    public static PutMapCommand copy(PutMapCommand command, Collection<Object> keys) {
       PutMapCommand copy = new PutMapCommand(command);
       copy.setMap(filterEntries(command.getMap(), keys));
+      return copy;
+   }
+
+   public static RemoveAllCommand copy(RemoveAllCommand command, Collection<Object> keys) {
+      RemoveAllCommand copy = new RemoveAllCommand(command);
+      copy.setKeys(new ArrayList<>(keys));
       return copy;
    }
 

@@ -42,6 +42,7 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveAllCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -173,6 +174,19 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
             handleRemoteManyKeysCommand(ctx, command,
                   PutMapCommand::isForwarded,
                   commandsFactory::buildPutMapBackupWriteCommand);
+   }
+
+   @Override
+   public Object visitRemoveAllCommand(InvocationContext ctx, RemoveAllCommand command) throws Throwable {
+      return ctx.isOriginLocal() ?
+            handleLocalManyKeysCommand(ctx, command,
+                  TriangleFunctionsUtil::copy,
+                  TriangleFunctionsUtil::voidMerge,
+                  () -> null,
+                  commandsFactory::buildRemoveAllBackupWriteCommand) :
+            handleRemoteManyKeysCommand(ctx, command,
+                  RemoveAllCommand::isForwarded,
+                  commandsFactory::buildRemoveAllBackupWriteCommand);
    }
 
    @Override
