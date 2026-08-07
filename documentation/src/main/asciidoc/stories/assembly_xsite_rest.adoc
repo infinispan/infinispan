@@ -3,8 +3,8 @@
 = Performing cross-site operations with the REST API
 {brandname} Server provides a REST endpoint that exposes methods for performing cross-site operations.
 
-include::{topics}/ref_rest_xsite.adoc[leveloffset=+1]
-include::{topics}/ref_rest_xsite_cache_managers.adoc[leveloffset=+1]
+include::../topics/ref_rest_xsite.adoc[leveloffset=+1]
+include::../topics/ref_rest_xsite_cache_managers.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

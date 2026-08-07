@@ -8,7 +8,7 @@ In fact this use alone is probably the reason many users use {brandname}.
 However {brandname} can provide many more benefits that are not immediately apparent.
 Since {brandname} is usually used in a cluster of machines, it also provides features that can help utilize the entire cluster for performing the desired workload.
 
-include::{topics}/execute_grid.adoc[leveloffset=+1]
+include::../topics/execute_grid.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

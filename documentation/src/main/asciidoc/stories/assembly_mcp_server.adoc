@@ -25,11 +25,11 @@ bin\server.bat -Dorg.infinispan.feature.mcp=true
 
 The {brandname} CLI also provides a stdio transport bridge that allows local MCP clients to communicate with the server.
 
-include::{topics}/proc_mcp_cli_stdio.adoc[leveloffset=+1]
-include::{topics}/con_mcp_tools.adoc[leveloffset=+1]
-include::{topics}/con_mcp_resources.adoc[leveloffset=+1]
-include::{topics}/con_mcp_resourcetemplates.adoc[leveloffset=+1]
-include::{topics}/con_mcp_prompts.adoc[leveloffset=+1]
+include::../topics/proc_mcp_cli_stdio.adoc[leveloffset=+1]
+include::../topics/con_mcp_tools.adoc[leveloffset=+1]
+include::../topics/con_mcp_resources.adoc[leveloffset=+1]
+include::../topics/con_mcp_resourcetemplates.adoc[leveloffset=+1]
+include::../topics/con_mcp_prompts.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

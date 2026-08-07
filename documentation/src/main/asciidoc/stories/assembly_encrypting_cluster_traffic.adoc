@@ -7,11 +7,11 @@ You can also configure {brandname} clusters to perform certificate authenticatio
 
 //Server only
 ifdef::remote_caches[]
-include::{topics}/proc_securing_cluster_transport.adoc[leveloffset=+1]
+include::../topics/proc_securing_cluster_transport.adoc[leveloffset=+1]
 endif::remote_caches[]
-include::{topics}/con_jgroups_encrypt.adoc[leveloffset=+1]
-include::{topics}/proc_configuring_jgroups_asym_encrypt.adoc[leveloffset=+1]
-include::{topics}/proc_configuring_jgroups_sym_encrypt.adoc[leveloffset=+1]
+include::../topics/con_jgroups_encrypt.adoc[leveloffset=+1]
+include::../topics/proc_configuring_jgroups_asym_encrypt.adoc[leveloffset=+1]
+include::../topics/proc_configuring_jgroups_sym_encrypt.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

@@ -4,10 +4,10 @@
 {brandname} servers provide link:http://en.wikipedia.org/wiki/Representational_State_Transfer[RESTful] HTTP
 access to data through a REST endpoint built on https://github.com/netty/netty[Netty].
 
-include::{topics}/ref_rest_security.adoc[leveloffset=+1]
-include::{topics}/ref_rest_protocols.adoc[leveloffset=+1]
-include::{topics}/ref_rest_data_formats.adoc[leveloffset=+1]
-include::{topics}/ref_rest_cors.adoc[leveloffset=+1]
+include::../topics/ref_rest_security.adoc[leveloffset=+1]
+include::../topics/ref_rest_protocols.adoc[leveloffset=+1]
+include::../topics/ref_rest_data_formats.adoc[leveloffset=+1]
+include::../topics/ref_rest_cors.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

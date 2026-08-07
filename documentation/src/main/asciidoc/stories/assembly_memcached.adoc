@@ -6,11 +6,11 @@ The {brandname} server distribution contains a server module that implements the
 
 The Memcached endpoint is enabled by default on the single-port endpoint. Memcached client connections will automatically be detected and routed to the internal connector.
 
-include::{topics}/con_memcached_client_encoding.adoc[leveloffset=+1]
-include::{topics}/con_memcached_protocol_detection.adoc[leveloffset=+1]
-include::{topics}/con_memcached_security.adoc[leveloffset=+1]
-include::{topics}/ref_memcached_flush_all.adoc[leveloffset=+2]
-include::{topics}/ref_memcached_unsupported.adoc[leveloffset=+1]
+include::../topics/con_memcached_client_encoding.adoc[leveloffset=+1]
+include::../topics/con_memcached_protocol_detection.adoc[leveloffset=+1]
+include::../topics/con_memcached_security.adoc[leveloffset=+1]
+include::../topics/ref_memcached_flush_all.adoc[leveloffset=+2]
+include::../topics/ref_memcached_unsupported.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

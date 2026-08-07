@@ -4,7 +4,7 @@
 
 {brandname} provides an experimental API for interacting with your data which takes advantage of the functional programming additions and improved asynchronous programming capabilities available since Java 8.
 
-include::{topics}/functional_api.adoc[leveloffset=+1]
+include::../topics/functional_api.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

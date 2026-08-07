@@ -4,7 +4,7 @@
 
 Store session data for Spring applications in {brandname} caches and independently of the container.
 
-include::{topics}/proc_externalizing_sessions_spring.adoc[leveloffset=+1]
+include::../topics/proc_externalizing_sessions_spring.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

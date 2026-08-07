@@ -8,9 +8,9 @@ communicate with each other to backup data.
 * Start the {brandname} CLI.
 * Connect to a running {brandname} cluster.
 
-include::{topics}/proc_cli_xsite_sites.adoc[leveloffset=+1]
-include::{topics}/proc_cli_xsite_state_transfer_mode.adoc[leveloffset=+1]
-include::{topics}/proc_cli_xsite_push.adoc[leveloffset=+1]
+include::../topics/proc_cli_xsite_sites.adoc[leveloffset=+1]
+include::../topics/proc_cli_xsite_state_transfer_mode.adoc[leveloffset=+1]
+include::../topics/proc_cli_xsite_push.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

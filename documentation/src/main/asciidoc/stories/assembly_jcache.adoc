@@ -17,10 +17,10 @@ For new projects, consider using the {brandname} native caching API or other act
 ====
 
 
-include::{topics}/ref_jcache_dependencies.adoc[leveloffset=+1]
-include::{topics}/proc_jcache_creating_caches.adoc[leveloffset=+1]
-include::{topics}/con_jcache_read_write_through.adoc[leveloffset=+1]
-include::{topics}/con_jcache_store_behavior.adoc[leveloffset=+1]
+include::../topics/ref_jcache_dependencies.adoc[leveloffset=+1]
+include::../topics/proc_jcache_creating_caches.adoc[leveloffset=+1]
+include::../topics/con_jcache_read_write_through.adoc[leveloffset=+1]
+include::../topics/con_jcache_store_behavior.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

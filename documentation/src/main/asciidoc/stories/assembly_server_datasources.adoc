@@ -4,9 +4,9 @@
 
 Optimize connection pooling and performance for JDBC database connections by adding managed datasources to your {brandname} Server configuration.
 
-include::{topics}/proc_server_configuring_datasources.adoc[leveloffset=+1]
-include::{topics}/proc_configuring_caches_jndi_names.adoc[leveloffset=+1]
-include::{topics}/ref_server_connection_pool_properties.adoc[leveloffset=+1]
+include::../topics/proc_server_configuring_datasources.adoc[leveloffset=+1]
+include::../topics/proc_configuring_caches_jndi_names.adoc[leveloffset=+1]
+include::../topics/ref_server_connection_pool_properties.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

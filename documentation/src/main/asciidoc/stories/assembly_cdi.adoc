@@ -8,10 +8,10 @@ Dependency Injection) programming model and allows you to:
 * Configure cache managers.
 * Receive cache and cache manager level events.
 
-include::{topics}/ref_cdi_dependencies.adoc[leveloffset=+1]
-include::{topics}/proc_cdi_injecting_embedded.adoc[leveloffset=+1]
-include::{topics}/proc_cdi_injecting_remote.adoc[leveloffset=+1]
-include::{topics}/proc_cdi_cache_events.adoc[leveloffset=+1]
+include::../topics/ref_cdi_dependencies.adoc[leveloffset=+1]
+include::../topics/proc_cdi_injecting_embedded.adoc[leveloffset=+1]
+include::../topics/proc_cdi_injecting_remote.adoc[leveloffset=+1]
+include::../topics/proc_cdi_cache_events.adoc[leveloffset=+1]
 
 
 // Restore the parent context.

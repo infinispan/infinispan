@@ -9,11 +9,11 @@ For this reason you should always create remote caches dynamically with the foll
 * {brandname} Command Line Interface (CLI)
 * Hot Rod or HTTP clients
 
-include::{topics}/con_default_cache_manager.adoc[leveloffset=+1]
-include::{topics}/proc_creating_caches_console.adoc[leveloffset=+1]
-include::{topics}/proc_creating_caches_cli.adoc[leveloffset=+1]
-include::{topics}/proc_creating_caches_hotrod.adoc[leveloffset=+1]
-include::{topics}/proc_creating_caches_rest.adoc[leveloffset=+1]
+include::../topics/con_default_cache_manager.adoc[leveloffset=+1]
+include::../topics/proc_creating_caches_console.adoc[leveloffset=+1]
+include::../topics/proc_creating_caches_cli.adoc[leveloffset=+1]
+include::../topics/proc_creating_caches_hotrod.adoc[leveloffset=+1]
+include::../topics/proc_creating_caches_rest.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

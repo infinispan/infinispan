@@ -8,7 +8,7 @@ The CLI provides the means for the management of the Raft-backed internal compon
 * Start the {brandname} CLI.
 * Connect to a running {brandname} cluster.
 
-include::{topics}/proc_cli_raft_membership.adoc[leveloffset=+1]
+include::../topics/proc_cli_raft_membership.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

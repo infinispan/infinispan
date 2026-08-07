@@ -8,8 +8,8 @@ count of objects.
 * Start the {brandname} CLI.
 * Connect to a running {brandname} cluster.
 
-include::{topics}/proc_cli_creating_counters.adoc[leveloffset=+1]
-include::{topics}/proc_cli_adding_counter_deltas.adoc[leveloffset=+1]
+include::../topics/proc_cli_creating_counters.adoc[leveloffset=+1]
+include::../topics/proc_cli_adding_counter_deltas.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

@@ -15,45 +15,45 @@ Data overflow::
 Using eviction and passivation techniques ensures that {brandname} keeps only
 frequently used data in-memory and writes older entries to persistent storage.
 
-include::{topics}/con_segmented_cache_stores.adoc[leveloffset=+1]
-include::{topics}/con_shared_cache_stores.adoc[leveloffset=+1]
-include::{topics}/con_transactions_with_cache_stores.adoc[leveloffset=+1]
-include::{topics}/con_write_through.adoc[leveloffset=+1]
-include::{topics}/con_write_behind.adoc[leveloffset=+1]
-include::{topics}/con_passivation.adoc[leveloffset=+1]
-include::{topics}/con_how_passivation_works.adoc[leveloffset=+2]
+include::../topics/con_segmented_cache_stores.adoc[leveloffset=+1]
+include::../topics/con_shared_cache_stores.adoc[leveloffset=+1]
+include::../topics/con_transactions_with_cache_stores.adoc[leveloffset=+1]
+include::../topics/con_write_through.adoc[leveloffset=+1]
+include::../topics/con_write_behind.adoc[leveloffset=+1]
+include::../topics/con_passivation.adoc[leveloffset=+1]
+include::../topics/con_how_passivation_works.adoc[leveloffset=+2]
 
-include::{topics}/con_global_persistent_location.adoc[leveloffset=+1]
-include::{topics}/proc_configuring_global_persistent_location.adoc[leveloffset=+2]
-include::{topics}/con_file_based_cache_stores.adoc[leveloffset=+1]
-include::{topics}/proc_configuring_file_stores.adoc[leveloffset=+2]
+include::../topics/con_global_persistent_location.adoc[leveloffset=+1]
+include::../topics/proc_configuring_global_persistent_location.adoc[leveloffset=+2]
+include::../topics/con_file_based_cache_stores.adoc[leveloffset=+1]
+include::../topics/proc_configuring_file_stores.adoc[leveloffset=+2]
 ò
 //JDBC connection factories
-include::{topics}/con_cache_store_jdbc_connection_factories.adoc[leveloffset=+1]
-include::{topics}/proc_server_configuring_datasources.adoc[leveloffset=+1]
-include::{topics}/proc_configuring_caches_jndi_names.adoc[leveloffset=+2]
-include::{topics}/ref_server_connection_pool_properties.adoc[leveloffset=+2]
-include::{topics}/proc_configuring_jdbc_agroal_properties.adoc[leveloffset=+1]
+include::../topics/con_cache_store_jdbc_connection_factories.adoc[leveloffset=+1]
+include::../topics/proc_server_configuring_datasources.adoc[leveloffset=+1]
+include::../topics/proc_configuring_caches_jndi_names.adoc[leveloffset=+2]
+include::../topics/ref_server_connection_pool_properties.adoc[leveloffset=+2]
+include::../topics/proc_configuring_jdbc_agroal_properties.adoc[leveloffset=+1]
 
 //SQL cache stores
-include::{topics}/con_cache_store_sql.adoc[leveloffset=+1]
-include::{topics}/con_cache_store_sql_data_types.adoc[leveloffset=+2]
-include::{topics}/con_cache_store_sql_composites.adoc[leveloffset=+3]
-include::{topics}/con_cache_store_sql_embedded_keys.adoc[leveloffset=+3]
-include::{topics}/ref_cache_store_sql_protobuf_types.adoc[leveloffset=+3]
-include::{topics}/proc_configuring_sql_stores_table.adoc[leveloffset=+2]
-include::{topics}/proc_configuring_sql_stores_query.adoc[leveloffset=+2]
-include::{topics}/ref_sql_store_query_configuration.adoc[leveloffset=+3]
-include::{topics}/ref_sql_store_troubleshooting.adoc[leveloffset=+2]
+include::../topics/con_cache_store_sql.adoc[leveloffset=+1]
+include::../topics/con_cache_store_sql_data_types.adoc[leveloffset=+2]
+include::../topics/con_cache_store_sql_composites.adoc[leveloffset=+3]
+include::../topics/con_cache_store_sql_embedded_keys.adoc[leveloffset=+3]
+include::../topics/ref_cache_store_sql_protobuf_types.adoc[leveloffset=+3]
+include::../topics/proc_configuring_sql_stores_table.adoc[leveloffset=+2]
+include::../topics/proc_configuring_sql_stores_query.adoc[leveloffset=+2]
+include::../topics/ref_sql_store_query_configuration.adoc[leveloffset=+3]
+include::../topics/ref_sql_store_troubleshooting.adoc[leveloffset=+2]
 
 //JDBC string based cache stores
-include::{topics}/con_cache_store_jdbc.adoc[leveloffset=+1]
-include::{topics}/proc_configuring_jdbc_cache_stores.adoc[leveloffset=+2]
+include::../topics/con_cache_store_jdbc.adoc[leveloffset=+1]
+include::../topics/proc_configuring_jdbc_cache_stores.adoc[leveloffset=+2]
 
 //Other cache store implementations
-include::{topics}/ref_cache_store_rocksdb.adoc[leveloffset=+1]
-include::{topics}/ref_cache_store_remote.adoc[leveloffset=+1]
-include::{topics}/ref_cache_store_cluster.adoc[leveloffset=+1]
+include::../topics/ref_cache_store_rocksdb.adoc[leveloffset=+1]
+include::../topics/ref_cache_store_remote.adoc[leveloffset=+1]
+include::../topics/ref_cache_store_cluster.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

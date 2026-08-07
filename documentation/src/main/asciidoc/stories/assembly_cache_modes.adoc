@@ -8,12 +8,12 @@
 * Optimizing databases by decreasing the volume of write operations.
 * Providing resiliency and durability for consistent data across clusters.
 
-include::{topics}/con_cache_interface.adoc[leveloffset=+1]
-include::{topics}/con_cache_manager.adoc[leveloffset=+1]
-include::{topics}/ref_cache_modes.adoc[leveloffset=+1]
-include::{topics}/ref_cache_modes_comparison.adoc[leveloffset=+2]
-include::{topics}/con_local_caches.adoc[leveloffset=+1]
-include::{topics}/con_simple_caches.adoc[leveloffset=+2]
+include::../topics/con_cache_interface.adoc[leveloffset=+1]
+include::../topics/con_cache_manager.adoc[leveloffset=+1]
+include::../topics/ref_cache_modes.adoc[leveloffset=+1]
+include::../topics/ref_cache_modes_comparison.adoc[leveloffset=+2]
+include::../topics/con_local_caches.adoc[leveloffset=+1]
+include::../topics/con_simple_caches.adoc[leveloffset=+2]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
