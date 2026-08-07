@@ -42,7 +42,7 @@ public class TrustStoreRealmConfigurationBuilder implements RealmProviderBuilder
    }
 
    @Override
-   public int compareTo(RealmProviderBuilder o) {
-      return -1; // Must be the first
+   public int sortOrder() {
+      return SORT_FIRST;
    }
 }
