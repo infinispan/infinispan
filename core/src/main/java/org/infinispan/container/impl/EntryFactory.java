@@ -89,7 +89,7 @@ import org.infinispan.topology.CacheTopology;
  */
 public interface EntryFactory {
    /**
-    * Use to synchronize multiple {@link #wrapEntryForReading(InvocationContext, Object, int, boolean, boolean, CompletionStage)}
+    * Use to synchronize multiple {@link #wrapEntryForReading(InvocationContext, Object, int, boolean, boolean, boolean, CompletionStage)}
     * or {@link #wrapEntryForWriting(InvocationContext, Object, int, boolean, boolean, CompletionStage)} calls.
     *
     * <p>The basic pattern is:</p>
@@ -128,12 +128,13 @@ public interface EntryFactory {
     * @param segment segment for the key
     * @param isOwner true if this node is current owner in readCH (or we ignore CH)
     * @param hasLock true if the invoker already has the lock for this key
+    * @param peek if true, skips expiration and eviction updates and may return expired entries
     * @param previousStage if wrapping can't be performed synchronously, only access the invocation context
     *                      from another thread after this stage is complete
     * @return stage that when complete the value should be in the context
     */
    CompletionStage<Void> wrapEntryForReading(InvocationContext ctx, Object key, int segment, boolean isOwner,
-                                             boolean hasLock, CompletionStage<Void> previousStage);
+                                             boolean hasLock, boolean peek, CompletionStage<Void> previousStage);
 
    /**
     * Insert an entry that exists in the data container into the context.

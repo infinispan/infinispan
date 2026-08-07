@@ -288,6 +288,23 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    MetadataValue<V> getWithMetadata(K key);
 
    /**
+    * Retrieves the {@link MetadataValue} associated to the supplied key without affecting expiration or eviction.
+    * Unlike {@link #getWithMetadata(Object)}, this method does not reset the max-idle timer or update the eviction
+    * access order, making it suitable for inspecting an entry's value and expiration metadata without altering its
+    * lifecycle.
+    * <p>
+    * Entries that have already exceeded their max-idle or lifespan may still be returned if they have not yet been
+    * removed by the expiration reaper. However, entries that have been evicted will not be returned.
+    *
+    * @param key the key whose associated value is to be returned
+    * @return the metadata value to which the specified key is mapped, or {@code null} if no mapping exists
+    * @since 16.3
+    */
+   default MetadataValue<V> peek(K key) {
+      return withFlags(Flag.PEEK).getWithMetadata(key);
+   }
+
+   /**
     * Asynchronously returns the {@link MetadataValue} associated to the supplied key param, or null if it doesn't exist.
     */
    CompletableFuture<MetadataValue<V>> getWithMetadataAsync(K key);
