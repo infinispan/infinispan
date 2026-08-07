@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,6 +27,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.server.resp.commands.list.blocking.AbstractBlockingPop;
+import org.infinispan.server.resp.commands.list.blocking.BLMOVEM;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -36,6 +38,11 @@ import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.ArrayOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.ProtocolKeyword;
 
 /**
  * Class for blocking commands tests.
@@ -99,7 +106,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
    }
 
    protected final <T> RedisFuture<T> registerListener(Cache<Object, Object> cache, Supplier<RedisFuture<T>> redisOp) {
-      Predicate<Object> p = l -> l instanceof AbstractBlockingPop.PubSubListener || l instanceof RespBxPOPTest.FailingListener;
+      Predicate<Object> p = l -> l instanceof AbstractBlockingPop.PubSubListener || l instanceof BLMOVEM.MoveListener || l instanceof RespBxPOPTest.FailingListener;
       CacheNotifierImpl<?, ?> cni = (CacheNotifierImpl<?, ?>) TestingUtil.extractComponent(cache, CacheNotifier.class);
       long pre = cni.getListeners().stream().filter(p).count();
       RedisFuture<T> rf = redisOp.get();
@@ -119,7 +126,7 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
       CacheNotifierImpl<?, ?> cni = (CacheNotifierImpl<?, ?>) TestingUtil.extractComponent(cache, CacheNotifier.class);
       // Check listener is unregistered
       eventually(() -> cni.getListeners().stream().noneMatch(
-         l -> l instanceof AbstractBlockingPop.PubSubListener || l instanceof RespBxPOPTest.FailingListener));
+         l -> l instanceof AbstractBlockingPop.PubSubListener || l instanceof BLMOVEM.MoveListener || l instanceof RespBxPOPTest.FailingListener));
    }
 
    @Test
@@ -681,5 +688,202 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
       String key = "blmpop-string";
       RedisCommands<String, String> redis = redisConnection.sync();
       assertWrongType(() -> redis.set(key, "something"), () -> redis.blmpop(0, LMPopArgs.Builder.left().count(1), key));
+   }
+
+   // BLMOVEM tests
+
+   private static final ProtocolKeyword BLMOVEM_CMD = new ProtocolKeyword() {
+      private final byte[] bytes = "BLMOVEM".getBytes(StandardCharsets.US_ASCII);
+
+      @Override
+      public byte[] getBytes() {
+         return bytes;
+      }
+
+      @Override
+      public String name() {
+         return "BLMOVEM";
+      }
+   };
+
+   @SuppressWarnings("unchecked")
+   private RedisFuture<List<Object>> blmovemAsync(long timeout, String source, String dest,
+                                                   String srcDir, String dstDir, String... extraArgs) {
+      RedisAsyncCommands<String, String> async = newConnection().async();
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      CommandArgs<String, String> args = new CommandArgs<>(codec)
+            .addKey(source).addKey(dest)
+            .add(srcDir).add(dstDir)
+            .add(String.valueOf(timeout));
+      for (String arg : extraArgs) {
+         args.add(arg);
+      }
+      return registerListener(() -> async.dispatch(BLMOVEM_CMD, new ArrayOutput<>(codec), args));
+   }
+
+   @SuppressWarnings("unchecked")
+   private List<String> toStringList(List<Object> raw) {
+      if (raw == null) return null;
+      return raw.stream().map(o -> (String) o).toList();
+   }
+
+   public void testBLMOVEM() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      try {
+         var cf = blmovemAsync(0, "blmm-src", "blmm-dst",
+               isRight() ? "RIGHT" : "LEFT", isRight() ? "LEFT" : "RIGHT");
+         redis.rpush("blmm-src", "a", "b", "c");
+         List<String> result = toStringList(cf.get(10, TimeUnit.SECONDS));
+         String expected = isRight() ? "c" : "a";
+         assertThat(result).containsExactly(expected);
+         assertThat(redis.lrange("blmm-dst", 0, -1)).containsExactly(expected);
+      } finally {
+         verifyListenerUnregistered();
+      }
+   }
+
+   public void testBLMOVEMWithExistingData() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.rpush("blmm-exist-src", "a", "b", "c");
+      try {
+         RedisAsyncCommands<String, String> async = newConnection().async();
+         RedisCodec<String, String> codec = StringCodec.UTF8;
+         CommandArgs<String, String> args = new CommandArgs<>(codec)
+               .addKey("blmm-exist-src").addKey("blmm-exist-dst")
+               .add("LEFT").add("RIGHT")
+               .add("0");
+         RedisFuture<List<Object>> cf = async.dispatch(BLMOVEM_CMD, new ArrayOutput<>(codec), args);
+         List<String> result = toStringList(cf.get(10, TimeUnit.SECONDS));
+         assertThat(result).containsExactly("a");
+         assertThat(redis.lrange("blmm-exist-src", 0, -1)).containsExactly("b", "c");
+         assertThat(redis.lrange("blmm-exist-dst", 0, -1)).containsExactly("a");
+      } finally {
+         verifyListenerUnregistered();
+      }
+   }
+
+   public void testBLMOVEMTimeout() throws Exception {
+      try {
+         RedisAsyncCommands<String, String> async = newConnection().async();
+         RedisCodec<String, String> codec = StringCodec.UTF8;
+         CommandArgs<String, String> args = new CommandArgs<>(codec)
+               .addKey("blmm-to-src").addKey("blmm-to-dst")
+               .add("LEFT").add("RIGHT")
+               .add("1");
+         RedisFuture<List<Object>> cf = registerListener(() ->
+               async.dispatch(BLMOVEM_CMD, new ArrayOutput<>(codec), args));
+         timeService.advance(TimeUnit.SECONDS.toMillis(2));
+         eventually(cf::isDone);
+         assertThat(cf.get()).isNull();
+      } finally {
+         verifyListenerUnregistered();
+      }
+   }
+
+   public void testBLMOVEMCount() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      try {
+         var cf = blmovemAsync(0, "blmm-cnt-src", "blmm-cnt-dst",
+               "LEFT", "RIGHT", "COUNT", "3", "OBO");
+         redis.rpush("blmm-cnt-src", "a", "b", "c", "d", "e");
+         List<String> result = toStringList(cf.get(10, TimeUnit.SECONDS));
+         assertThat(result).containsExactly("a", "b", "c");
+         assertThat(redis.lrange("blmm-cnt-src", 0, -1)).containsExactly("d", "e");
+         assertThat(redis.lrange("blmm-cnt-dst", 0, -1)).containsExactly("a", "b", "c");
+      } finally {
+         verifyListenerUnregistered();
+      }
+   }
+
+   public void testBLMOVEMNegativeTimeout() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      assertThatThrownBy(() -> redis.dispatch(BLMOVEM_CMD, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey("s").addKey("d").add("LEFT").add("RIGHT").add("-1")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR value is out of range, must be positive");
+   }
+
+   public void testBLMOVEMCountPartialUnblock() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      try {
+         var cf = blmovemAsync(0, "blmm-partial-src", "blmm-partial-dst",
+               "LEFT", "RIGHT", "COUNT", "5", "BULK");
+         redis.rpush("blmm-partial-src", "a", "b");
+         List<String> result = toStringList(cf.get(10, TimeUnit.SECONDS));
+         assertThat(result).containsExactly("a", "b");
+         assertThat(redis.lrange("blmm-partial-dst", 0, -1)).containsExactly("a", "b");
+      } finally {
+         verifyListenerUnregistered();
+      }
+   }
+
+   public void testBLMOVEMExactlyBlocksUntilEnough() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      try {
+         var cf = blmovemAsync(0, "blmm-exact-src", "blmm-exact-dst",
+               "LEFT", "RIGHT", "EXACTLY", "3", "BULK");
+
+         redis.rpush("blmm-exact-src", "1", "2");
+         // Not enough yet: should stay blocked, source unchanged
+         assertThat(cf.isDone()).isFalse();
+         eventually(() -> redis.lrange("blmm-exact-src", 0, -1).size() == 2);
+         assertThat(redis.exists("blmm-exact-dst")).isEqualTo(0);
+
+         redis.rpush("blmm-exact-src", "3");
+         List<String> result = toStringList(cf.get(10, TimeUnit.SECONDS));
+         assertThat(result).containsExactly("1", "2", "3");
+         assertThat(redis.lrange("blmm-exact-dst", 0, -1)).containsExactly("1", "2", "3");
+         assertThat(redis.exists("blmm-exact-src")).isEqualTo(0);
+      } finally {
+         verifyListenerUnregistered();
+      }
+   }
+
+   public void testBLMOVEMExactlyWokenByLinsert() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.rpush("blmm-ins-src", "1", "2");
+      try {
+         var cf = blmovemAsync(0, "blmm-ins-src", "blmm-ins-dst",
+               "LEFT", "RIGHT", "EXACTLY", "3", "BULK");
+
+         redis.linsert("blmm-ins-src", true, "1", "0");
+         List<String> result = toStringList(cf.get(10, TimeUnit.SECONDS));
+         assertThat(result).containsExactly("0", "1", "2");
+         assertThat(redis.lrange("blmm-ins-dst", 0, -1)).containsExactly("0", "1", "2");
+         assertThat(redis.exists("blmm-ins-src")).isEqualTo(0);
+      } finally {
+         verifyListenerUnregistered();
+      }
+   }
+
+   public void testBLMOVEMExactlyWokenByLmove() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.rpush("blmm-lm-src", "1", "2");
+      redis.rpush("blmm-lm-feed", "9");
+      try {
+         var cf = blmovemAsync(0, "blmm-lm-src", "blmm-lm-dst",
+               "LEFT", "RIGHT", "EXACTLY", "3", "BULK");
+
+         redis.lmove("blmm-lm-feed", "blmm-lm-src", io.lettuce.core.LMoveArgs.Builder.leftRight());
+         List<String> result = toStringList(cf.get(10, TimeUnit.SECONDS));
+         assertThat(result).containsExactly("1", "2", "9");
+         assertThat(redis.lrange("blmm-lm-dst", 0, -1)).containsExactly("1", "2", "9");
+         assertThat(redis.exists("blmm-lm-src")).isEqualTo(0);
+      } finally {
+         verifyListenerUnregistered();
+      }
+   }
+
+   public void testBLMOVEMInsideMulti() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      redis.multi();
+      redis.dispatch(BLMOVEM_CMD, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey("blmm-multi-src").addKey("blmm-multi-dst")
+                  .add("LEFT").add("RIGHT").add("0").add("EXACTLY").add("3").add("BULK"));
+      io.lettuce.core.TransactionResult execResult = redis.exec();
+      assertThat(execResult).hasSize(1);
+      assertThat((Object) execResult.get(0)).isNull();
    }
 }
