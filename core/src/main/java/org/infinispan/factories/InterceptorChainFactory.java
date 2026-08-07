@@ -42,6 +42,7 @@ import org.infinispan.interceptors.impl.PassivationCacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.PassivationClusteredCacheLoaderInterceptor;
 import org.infinispan.interceptors.impl.PassivationWriterInterceptor;
 import org.infinispan.interceptors.impl.PessimisticTxIracLocalInterceptor;
+import org.infinispan.interceptors.impl.SegmentHashInterceptor;
 import org.infinispan.interceptors.impl.TransactionalExceptionEvictionInterceptor;
 import org.infinispan.interceptors.impl.TransactionalStoreInterceptor;
 import org.infinispan.interceptors.impl.TxInterceptor;
@@ -248,6 +249,12 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          //local caches not involved in Cross Site Replication
          interceptorChain.appendInterceptor(
                createInterceptor(new NonTxIracRemoteSiteInterceptor(needsVersionAwareComponents), NonTxIracRemoteSiteInterceptor.class), false);
+      }
+
+      if (cacheMode.isClustered() && configuration.clustering().partitionHandling().resolveConflictsOnMerge()
+            && configuration.persistence().stores().stream().noneMatch(StoreConfiguration::shared)) {
+         interceptorChain.appendInterceptor(
+               createInterceptor(new SegmentHashInterceptor(), SegmentHashInterceptor.class), false);
       }
 
       AsyncInterceptor callInterceptor = createInterceptor(new CallInterceptor(), CallInterceptor.class);

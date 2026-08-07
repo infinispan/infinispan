@@ -16,6 +16,7 @@ import java.util.stream.IntStream;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.conflict.GetBucketHashesCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commands.statetransfer.StateResponseCommand;
 import org.infinispan.commands.topology.TopologyUpdateCommand;
@@ -180,7 +181,7 @@ public class OperationsDuringMergeConflictTest extends BaseMergePolicyTest {
 
       @Override
       public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
-         if (command instanceof StateResponseCommand)
+         if (command instanceof StateResponseCommand || command instanceof GetBucketHashesCommand)
             awaitLatch(latch);
          delegate.handle(command, reply, order);
       }
