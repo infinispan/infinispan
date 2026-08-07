@@ -454,7 +454,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    @Override
    public CompletionStage<ManagerStatusResponse> handleStatusRequest(int viewId) {
       // As long as we have an older view, we can still process topologies from the old coordinator
-      return withView(viewId, getGlobalTimeout(), MILLISECONDS).thenApply(ignored -> {
+      return blockingManager.thenApplyBlocking(withView(viewId, getGlobalTimeout(), MILLISECONDS), ignored -> {
          Map<String, CacheStatusResponse> caches = new HashMap<>();
          synchronized (runningCaches) {
             latestStatusResponseViewId = viewId;
@@ -509,7 +509,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
          log.debugf("Sending cluster status response for view %d", viewId);
          return new ManagerStatusResponse(caches, gcr.getClusterTopologyManager().isRebalancingEnabled());
-      });
+      }, "LocalTopologyManager.handleStatusRequest-" + viewId);
    }
 
    @Override
