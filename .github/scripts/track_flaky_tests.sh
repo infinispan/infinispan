@@ -67,14 +67,6 @@ for TEST in "${TESTS[@]}"; do
       fi
     fi
     TOTAL_ISSUES=$(echo "${ISSUES}" | jq length)
-    if [ ${TOTAL_ISSUES} -gt 1 ]; then
-      echo "Multiple issues for same flaky test: ${SUMMARY}, using most recent"
-      # Pick the open one if any; otherwise pick the most recently updated closed one
-      ISSUE_NUMBER=$(echo "${ISSUES}" | jq -r 'map(select(.state == "open")) | if length > 0 then .[0].number else null end')
-      if [ "${ISSUE_NUMBER}" == "null" ]; then
-        ISSUE_NUMBER=$(echo "${ISSUES}" | jq -r '.[0].number')
-      fi
-    fi
 
     BODY=$(printf "### Target Branch: %s\n### Github Job:%s\n%s" "${TARGET_BRANCH}" "${GH_JOB_URL}" "${STACK_TRACE}")
     if [ ${TOTAL_ISSUES} -eq 0 ]; then
@@ -87,7 +79,11 @@ for TEST in "${TESTS[@]}"; do
       gh api -X PATCH "/repos/${GITHUB_REPOSITORY}/issues/${ISSUE_NUMBER}" --field type=Bug
       COMMENT_COUNT=0
     else
-      ISSUE_NUMBER=$(echo "${ISSUES}" | jq -r '.[0].number')
+      # Pick the open one if any; otherwise pick the first one
+      ISSUE_NUMBER=$(echo "${ISSUES}" | jq -r 'map(select(.state == "open")) | if length > 0 then .[0].number else null end')
+      if [ "${ISSUE_NUMBER}" == "null" ]; then
+        ISSUE_NUMBER=$(echo "${ISSUES}" | jq -r '.[0].number')
+      fi
       # Fetch issue data to check state and get comment count in a single API call
       ISSUE_DATA=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${ISSUE_NUMBER}")
       COMMENT_COUNT=$(echo "${ISSUE_DATA}" | jq .comments)
