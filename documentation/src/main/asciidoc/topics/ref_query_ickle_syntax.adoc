@@ -304,3 +304,39 @@ Invoke the `Query.executeStatement()` method to execute DELETE statements.
 [role="_additional-resources"]
 .Additional resources
 * link:../../apidocs/org/infinispan/query/dsl/Query.html#executeStatement()[org.infinispan.query.dsl.Query.executeStatement()]
+
+== UPDATE statements
+
+You can update entities in {brandname} caches with the following syntax:
+
+[source,sql,tile="Update Query in Ickle"]
+----
+UPDATE FROM <entityName> SET <field> = <value> [, SET <field> = <value>]* [WHERE condition]
+----
+
+* Reference only single entities with `<entityName>`. UPDATE queries cannot use joins.
+* WHERE conditions are optional.
+* Use `SET` to assign a new value to a field.
+* Use `ADD` to add values to a collection field.
+* Use `REMOVE` to remove values from a collection field.
+
+Values can be:
+
+* A single constant: `SET name = 'John'`
+* A list of constants in parentheses: `ADD tags = ('new', 'updated')`
+* A list of constants in square brackets: `ADD tags = ['new', 'updated']`
+
+UPDATE queries cannot use any of the following:
+
+* Projections with SELECT statements
+* Grouping and aggregation
+* ORDER BY clauses
+
+[TIP]
+====
+Invoke the `Query.executeStatement()` method to execute UPDATE statements.
+====
+
+[role="_additional-resources"]
+.Additional resources
+* link:../../apidocs/org/infinispan/query/dsl/Query.html#executeStatement()[org.infinispan.query.dsl.Query.executeStatement()]

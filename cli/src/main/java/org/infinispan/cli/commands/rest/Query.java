@@ -38,6 +38,14 @@ public class Query extends RestCliCommand {
 
    @Override
    protected CompletionStage<RestResponse> exec(ContextAwareCommandInvocation invocation, RestClient client, Resource resource) {
-      return client.cache(cache != null ? cache : CacheResource.cacheName(resource)).query(query, maxResults, offset);
+      String cacheName = cache != null ? cache : CacheResource.cacheName(resource);
+      String trimmed = query.stripLeading().toUpperCase();
+      if (trimmed.startsWith("DELETE")) {
+         return client.cache(cacheName).deleteByQuery(query, false);
+      }
+      if (trimmed.startsWith("UPDATE")) {
+         return client.cache(cacheName).updateByQuery(query, false);
+      }
+      return client.cache(cacheName).query(query, maxResults, offset);
    }
 }

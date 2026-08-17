@@ -52,8 +52,9 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
    private int firstResult = 0;
 
    public DistributedIndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache,
-                                      LocalQueryStatistics queryStatistics, int defaultMaxResults, Integer knn) {
-      super(queryDefinition, cache, queryStatistics);
+                                      LocalQueryStatistics queryStatistics, int defaultMaxResults, Integer knn,
+                                      List<IckleParsingResult.UpdateOperation> updateOperations) {
+      super(queryDefinition, cache, queryStatistics, updateOperations);
       this.invoker = new ClusteredQueryInvoker(cache, queryStatistics);
       this.knn = knn;
       this.maxResults = (knn == null) ? defaultMaxResults : knn;
@@ -174,13 +175,18 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
 
    @Override
    public int executeStatement() {
-      // at the moment the only supported statement is DELETE
-      if (queryDefinition.getStatementType() != IckleParsingResult.StatementType.DELETE) {
+      if (queryDefinition.getStatementType() != IckleParsingResult.StatementType.DELETE
+            && queryDefinition.getStatementType() != IckleParsingResult.StatementType.UPDATE) {
          throw CONTAINER.unsupportedStatement();
       }
 
       if (queryDefinition.getFirstResult() != 0 || queryDefinition.isCustomMaxResults()) {
          throw CONTAINER.statementCannotUsePaging();
+      }
+
+      if (queryDefinition.getStatementType() == IckleParsingResult.StatementType.UPDATE) {
+         queryDefinition.initialize(cache);
+         return super.executeStatement();
       }
 
       try {

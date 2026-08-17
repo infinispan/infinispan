@@ -341,6 +341,14 @@ public interface RestCacheClient {
    CompletionStage<RestResponse> deleteByQuery(String query, boolean local);
 
    /**
+    * Updates by Ickle-query
+    *
+    * @param query the ickle query
+    * @param local if true, query is restricted to the data present in the node that process the request.
+    */
+   CompletionStage<RestResponse> updateByQuery(String query, boolean local);
+
+   /**
     * Executes an Ickle-query
     *
     * @param query      the ickle query

@@ -742,7 +742,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
          QueryDefinition queryDefinition = new QueryDefinition(queryString, ickleParsingResult.getStatementType(),
                getQueryEngineProvider(), defaultMaxResults);
          queryDefinition.setNamedParameters(namedParameters);
-         return new DistributedIndexedQueryImpl<>(queryDefinition, cache, queryStatistics, defaultMaxResults, searchQuery.knn());
+         return new DistributedIndexedQueryImpl<>(queryDefinition, cache, queryStatistics, defaultMaxResults, searchQuery.knn(), ickleParsingResult.getUpdateOperations());
       }
       return new IndexedQueryImpl<>(queryString, ickleParsingResult.getStatementType(), searchQuery, cache,
             queryStatistics, defaultMaxResults, ickleParsingResult.getUpdateOperations());
