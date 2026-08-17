@@ -104,6 +104,7 @@ public class RocksDBStore<K, V> implements NonBlockingStore<K, V> {
 
    @Override
    public CompletionStage<Void> start(InitializationContext ctx) {
+      RocksDB.loadLibrary();
       this.configuration = ctx.getConfiguration();
       this.ctx = ctx;
       this.timeService = ctx.getTimeService();
