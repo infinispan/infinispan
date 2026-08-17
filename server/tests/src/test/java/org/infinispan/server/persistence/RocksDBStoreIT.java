@@ -31,7 +31,9 @@ public class RocksDBStoreIT {
       String config = String.format("""
             <distributed-cache name="%s">
                <persistence>
-                  <rocksdb-store xmlns="urn:infinispan:config:store:rocksdb:%s"/>
+                  <rocksdb-store xmlns="urn:infinispan:config:store:rocksdb:%s">
+                     <property name="database.max_total_wal_size">1000000</property>
+                  </rocksdb-store>
                </persistence>
             </distributed-cache>""", cacheName, Version.getMajorMinor());
       RemoteCache<String, String> cache = SERVERS.hotrod().withServerConfiguration(new StringConfiguration(config)).create();
