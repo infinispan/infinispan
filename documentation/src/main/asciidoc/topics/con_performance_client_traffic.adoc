@@ -7,3 +7,11 @@ When sizing remote {brandname} clusters, you need to calculate the number and si
 There are many different factors that affect latency and determine response times.
 For example, the size of the key/value pair affects the response time for remote caches.
 Other factors that affect remote cache performance include the number of requests per second that the cluster receives, the number of clients, as well as the ratio of read operations to write operations.
+
+[NOTE]
+====
+The Hot Rod Java client does not apply backpressure on the submission of operations.
+The client bounds the data buffered for the network connection but does not slow down or block callers when a server accepts requests slowly.
+If your application submits writes faster than a slow or overloaded server can consume them, pending operations accumulate in the JVM memory.
+Size the client heap accordingly and, where possible, limit the rate at which your application issues write operations.
+====

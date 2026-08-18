@@ -448,6 +448,17 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
       super.channelInactive(ctx);
    }
 
+   @Override
+   public void channelWritabilityChanged(ChannelHandlerContext ctx) {
+      Channel ch = ctx.channel();
+      if (ch.isWritable()) {
+         OperationChannel oc = ch.attr(OperationChannel.OPERATION_CHANNEL_ATTRIBUTE_KEY).get();
+         if (oc != null)
+            oc.channelWritabilityChanged();
+      }
+      ctx.fireChannelWritabilityChanged();
+   }
+
    void failoverClientListeners() {
       for (byte[] listenerId : listeners) {
          dispatcher.getClientListenerNotifier().failoverClientListener(listenerId);

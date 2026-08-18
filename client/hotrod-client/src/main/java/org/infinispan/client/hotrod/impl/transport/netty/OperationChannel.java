@@ -155,6 +155,23 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
    }
 
    /**
+    * Resumes sending queued operations after the underlying channel has become writable again.
+    *
+    * <p>
+    * While the channel is not writable, draining of pending operations is suspended so that the connection's outbound buffer
+    * stays bounded. However, operations are still inserted in an unbounded queue.
+    * </p>
+    */
+   public void channelWritabilityChanged() {
+      Channel channel = this.channel;
+      if (channel == null)
+         return;
+
+      // To avoid reentrancy in the writable callback during a flush.
+      channel.eventLoop().execute(SEND_OPERATIONS);
+   }
+
+   /**
     * Allows sending a command directly without enqueuing. Note that this method should only be invoked after
     * the channel has been started and notified via the {@link ActivationHandler#ACTIVATION_EVENT} and after all netty
     * channel handlers have been {@link io.netty.channel.ChannelInboundHandler#channelActive(ChannelHandlerContext)}.
@@ -178,6 +195,16 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
       channel.writeAndFlush(buffer, channel.voidPromise());
    }
 
+   /**
+    * Submits an operation to be sent asynchronously over this channel.
+    *
+    * <p>
+    * This method applies no write backpressure to the caller: it neither blocks nor rejects the operation, and there is
+    * no bound on the number of pending operations. A caller that submits operations faster than the server can consume
+    * them causes unbounded growth of pending operations in client memory.
+    *
+    * @param operation the operation to send; must not be {@code null}
+    */
    public void sendOperation(HotRodOperation<?> operation) {
       queue.offer(operation);
       Channel channel = this.channel;
@@ -216,7 +243,9 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
    private void sendOperations() {
       Channel channel = this.channel;
       assert channel == null || channel.eventLoop().inEventLoop();
-      if (!acceptingRequests || queue.isEmpty() || channel == null) {
+      // Stop draining into the channel's outbound (direct) buffer while it is backed up.
+      // This bounds off-heap usage only; queued operations remain on the heap (no caller backpressure).
+      if (!acceptingRequests || queue.isEmpty() || channel == null || !channel.isWritable()) {
          return;
       }
 
@@ -228,15 +257,16 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
       queue.drain(this, 256);
       if (buffer != null && buffer.isReadable()) {
          log.tracef("Flushing commands to channel %s", channel);
-         channel.writeAndFlush(buffer, channel.voidPromise());
+         ByteBuf bb = buffer;
          buffer = null;
+         channel.writeAndFlush(bb, channel.voidPromise());
       }
       if (log.isTraceEnabled()) {
          log.tracef("Queue size after: %s", queue.size());
       }
       // If Queue wasn't empty try to send again, but note this is sent on eventLoop so other operations can
       // barge in between our calls
-      if (!queue.isEmpty()) {
+      if (!queue.isEmpty() && channel.isWritable()) {
          log.tracef("Resubmitting as more operations in queue after sending");
          channel.eventLoop().execute(SEND_OPERATIONS);
       }
