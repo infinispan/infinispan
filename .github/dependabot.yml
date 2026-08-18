@@ -17,9 +17,26 @@ updates:
       - dependency-name: "*"
         update-types: [ "version-update:semver-major" ]
     groups:
+      netty-vertx-quarkus:
+        patterns:
+          - "io.netty:*"
+          - "io.vertx:*"
+          - "io.quarkus:*"
+        update-types:
+          - "patch"
+      graalvm:
+        patterns:
+          - "org.graalvm.sdk:*"
+        update-types:
+          - "patch"
       patch-updates:
         patterns:
           - "*"
+        exclude-patterns:
+          - "io.netty:*"
+          - "io.vertx:*"
+          - "io.quarkus:*"
+          - "org.graalvm.sdk:*"
         update-types:
           - "patch"
   - package-ecosystem: github-actions
