@@ -281,6 +281,8 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                   if (receivedOpCode == HotRodConstants.ERROR_RESPONSE) {
                      try {
                         codec.checkForErrorsInResponseStatus(in, cacheName, receivedMessageId, status, channel.remoteAddress());
+                     } catch (Signal signal) {
+                        throw signal;
                      } catch (Throwable t) {
                         if (operation != null && operation.asCompletableFuture().isDone()) {
                            HOTROD.delayedServerError(operation, channel.remoteAddress(), t);
