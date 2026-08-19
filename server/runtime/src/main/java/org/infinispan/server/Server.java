@@ -807,6 +807,11 @@ public class Server extends BaseServerManagement implements AutoCloseable {
    }
 
    @Override
+   public boolean isManaged() {
+      return Boolean.parseBoolean(System.getenv("MANAGED_ENV"));
+   }
+
+   @Override
    public CompletionStage<Void> flushSecurityCaches() {
       return SecurityActions.getClusterExecutor(cacheManager)
             .submitConsumer(ecm -> {

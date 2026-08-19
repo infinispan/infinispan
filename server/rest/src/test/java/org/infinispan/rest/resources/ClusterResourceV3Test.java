@@ -4,6 +4,7 @@ import static io.netty.handler.codec.http.HttpHeaderNames.ACCEPT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON_TYPE;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.infinispan.rest.resources.ClusterResource.CACHE_MANAGER_STATUS;
+import static org.infinispan.rest.resources.ClusterResource.MANAGED;
 import static org.infinispan.rest.resources.ClusterResource.MEMBERS;
 import static org.infinispan.rest.resources.ClusterResource.NODE_ADDRESS;
 import static org.infinispan.rest.resources.ClusterResource.PHYSICAL_ADDRESSES;
@@ -74,6 +75,7 @@ public class ClusterResourceV3Test extends AbstractRestResourceTest {
       assertEquals("RUNNING", members.get(0).at(CACHE_MANAGER_STATUS).asString());
       assertFalse(members.get(0).at(PHYSICAL_ADDRESSES).asString().isEmpty());
       assertFalse(clusterMembership.at(ROLLING_UPGRADE).asBoolean());
+      assertFalse(clusterMembership.at(MANAGED).asBoolean());
    }
 
    @Test

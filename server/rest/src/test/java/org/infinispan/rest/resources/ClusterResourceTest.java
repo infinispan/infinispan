@@ -4,6 +4,7 @@ import static org.infinispan.client.rest.configuration.Protocol.HTTP_11;
 import static org.infinispan.client.rest.configuration.Protocol.HTTP_20;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.infinispan.rest.resources.ClusterResource.CACHE_MANAGER_STATUS;
+import static org.infinispan.rest.resources.ClusterResource.MANAGED;
 import static org.infinispan.rest.resources.ClusterResource.MEMBERS;
 import static org.infinispan.rest.resources.ClusterResource.NODE_ADDRESS;
 import static org.infinispan.rest.resources.ClusterResource.PHYSICAL_ADDRESSES;
@@ -71,5 +72,6 @@ public class ClusterResourceTest extends AbstractRestResourceTest {
       assertEquals("RUNNING", members.get(0).at(CACHE_MANAGER_STATUS).asString());
       assertFalse(members.get(0).at(PHYSICAL_ADDRESSES).asString().isEmpty());
       assertFalse(clusterMembership.at(ROLLING_UPGRADE).asBoolean());
+      assertFalse(clusterMembership.at(MANAGED).asBoolean());
    }
 }
