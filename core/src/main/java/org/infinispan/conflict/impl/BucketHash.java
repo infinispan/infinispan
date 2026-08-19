@@ -19,11 +19,4 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.BUCKET_HASH)
 public record BucketHash(int segmentId, int bucketId, long hash, int entryCount) {
 
-   /**
-    * Returns {@code true} if this hash matches another, meaning both the
-    * XOR hash and entry count agree.
-    */
-   public boolean matches(BucketHash other) {
-      return other != null && this.hash == other.hash && this.entryCount == other.entryCount;
-   }
 }

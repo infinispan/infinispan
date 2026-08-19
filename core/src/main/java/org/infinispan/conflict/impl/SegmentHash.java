@@ -18,11 +18,4 @@ import org.infinispan.protostream.annotations.ProtoTypeId;
 @ProtoTypeId(ProtoStreamTypeIds.SEGMENT_HASH)
 public record SegmentHash(int segmentId, long hash, int entryCount) {
 
-   /**
-    * Returns {@code true} if this hash matches another, meaning both the
-    * XOR hash and entry count agree.
-    */
-   public boolean matches(SegmentHash other) {
-      return other != null && this.hash == other.hash && this.entryCount == other.entryCount;
-   }
 }

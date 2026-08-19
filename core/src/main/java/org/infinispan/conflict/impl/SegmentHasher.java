@@ -52,6 +52,7 @@ public class SegmentHasher {
     * Computes per-bucket hashes for all entries in a segment.
     */
    public List<BucketHash> computeBucketHashes(int segmentId, int bucketCount) {
+      assert bucketCount > 0 && (bucketCount & (bucketCount - 1)) == 0 : "bucketCount must be a power of 2, got " + bucketCount;
       long[] hashes = new long[bucketCount];
       int[] counts = new int[bucketCount];
       Iterator<InternalCacheEntry<?, ?>> it = cast(dataContainer.iterator(IntSets.immutableSet(segmentId)));
@@ -105,6 +106,7 @@ public class SegmentHasher {
     * Determines which bucket a key belongs to.
     */
    public int bucketForKey(Object key, int bucketCount) {
+      assert bucketCount > 0 && (bucketCount & (bucketCount - 1)) == 0 : "bucketCount must be a power of 2, got " + bucketCount;
       try {
          byte[] keyBytes = marshaller.objectToByteBuffer(key);
          long keyHash = MurmurHash3.MurmurHash3_x64_64(keyBytes, HASH_SEED);
@@ -138,6 +140,7 @@ public class SegmentHasher {
    }
 
    public static int computeBucket(Object key, int bucketCount, Marshaller marshaller) {
+      assert bucketCount > 0 && (bucketCount & (bucketCount - 1)) == 0 : "bucketCount must be a power of 2, got " + bucketCount;
       return (int) (hashObject(key, marshaller) & (bucketCount - 1));
    }
 

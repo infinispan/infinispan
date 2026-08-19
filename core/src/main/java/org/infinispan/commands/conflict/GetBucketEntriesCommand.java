@@ -1,33 +1,39 @@
 package org.infinispan.commands.conflict;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
+import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.conflict.impl.SegmentHasher;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.impl.InternalDataContainer;
+import org.infinispan.context.Flag;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.marshall.protostream.impl.WrappedMessages;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
+import org.infinispan.reactive.publisher.impl.LocalPublisherManager;
 import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.util.ByteString;
+
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * RPC command that requests entries from specific buckets within a segment.
  * Used by the conflict manager to fetch only the entries from mismatched buckets
  * rather than all entries in the segment.
+ * <p>
+ * Uses {@link LocalPublisherManager} so that non-shared stores are included in the
+ * results alongside in-memory entries.
  */
 @ProtoTypeId(ProtoStreamTypeIds.GET_BUCKET_ENTRIES_COMMAND)
 public class GetBucketEntriesCommand extends BaseRpcCommand implements TopologyAffectedCommand {
@@ -79,21 +85,22 @@ public class GetBucketEntriesCommand extends BaseRpcCommand implements TopologyA
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public CompletionStage<?> invokeAsync(ComponentRegistry registry) throws Throwable {
-      InternalDataContainer<?, ?> dataContainer = registry.getInternalDataContainer().running();
+      LocalPublisherManager<Object, Object> lpm =
+            (LocalPublisherManager<Object, Object>) registry.getLocalPublisherManager().running();
       boolean allBuckets = bucketIds.size() >= bucketCount;
-      SegmentHasher hasher = allBuckets ? null
-            : new SegmentHasher(dataContainer, registry.getInternalMarshaller());
+      Marshaller marshaller = allBuckets ? null : registry.getInternalMarshaller();
 
-      List<CacheEntry<?, ?>> result = new ArrayList<>();
-      Iterator<InternalCacheEntry<?, ?>> it = cast(dataContainer.iterator(IntSets.immutableSet(segmentId)));
-      while (it.hasNext()) {
-         InternalCacheEntry<?, ?> entry = it.next();
-         if (allBuckets || bucketIds.contains(hasher.bucketForKey(entry.getKey(), bucketCount))) {
-            result.add(entry);
-         }
-      }
-      return CompletableFuture.completedFuture(result);
+      long flags = EnumUtil.bitSetOf(Flag.STATE_TRANSFER_PROGRESS);
+      return Flowable.fromPublisher(
+                  lpm.entryPublisher(
+                        IntSets.immutableSet(segmentId), null, null,
+                        flags, DeliveryGuarantee.AT_MOST_ONCE, Function.identity())
+                     .publisherWithoutSegments())
+            .filter(entry -> allBuckets || bucketIds.contains(SegmentHasher.computeBucket(entry.getKey(), bucketCount, marshaller)))
+            .collect(ArrayList::new, List::add)
+            .toCompletionStage();
    }
 
    @Override
@@ -104,11 +111,6 @@ public class GetBucketEntriesCommand extends BaseRpcCommand implements TopologyA
    @Override
    public NodeVersion supportedSince() {
       return NodeVersion.SIXTEEN;
-   }
-
-   @SuppressWarnings("unchecked")
-   private static Iterator<InternalCacheEntry<?, ?>> cast(Iterator<? extends InternalCacheEntry<?, ?>> it) {
-      return (Iterator<InternalCacheEntry<?, ?>>) (Iterator<?>) it;
    }
 
    @Override

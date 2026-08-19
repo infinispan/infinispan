@@ -94,7 +94,7 @@ public class SegmentHashTrackerTest extends AbstractInfinispanTest {
       List<BucketHash> hashesOrder2 = tracker.getBucketHashes(0);
 
       for (int b = 0; b < BUCKET_COUNT; b++) {
-         assertTrue(hashesOrder1.get(b).matches(hashesOrder2.get(b)));
+         assertTrue(hashesOrder1.get(b).equals(hashesOrder2.get(b)));
       }
    }
 
@@ -170,7 +170,7 @@ public class SegmentHashTrackerTest extends AbstractInfinispanTest {
       List<BucketHash> hashes2 = tracker2.getBucketHashes(0);
 
       for (int b = 0; b < BUCKET_COUNT; b++) {
-         assertTrue(hashes1.get(b).matches(hashes2.get(b)));
+         assertTrue(hashes1.get(b).equals(hashes2.get(b)));
       }
    }
 
@@ -191,7 +191,7 @@ public class SegmentHashTrackerTest extends AbstractInfinispanTest {
       List<BucketHash> hashes2 = tracker2.getBucketHashes(0);
 
       for (int b = 0; b < BUCKET_COUNT; b++) {
-         assertTrue(hashes1.get(b).matches(hashes2.get(b)));
+         assertTrue(hashes1.get(b).equals(hashes2.get(b)));
       }
    }
 
