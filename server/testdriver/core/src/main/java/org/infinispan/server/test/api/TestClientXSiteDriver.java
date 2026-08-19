@@ -12,6 +12,14 @@ import org.infinispan.counter.api.CounterManager;
 public interface TestClientXSiteDriver {
 
    /**
+    * CLI to a specific site
+    *
+    * @param siteName the name of the site
+    * @return {@link CliTestDriver} instance
+    */
+   CliTestDriver cli(String siteName);
+
+   /**
     * Get the HotRod instance for hotrod api operations
     *
     * @return {@link HotRodTestClientDriver} instance
@@ -36,6 +44,7 @@ public interface TestClientXSiteDriver {
 
    /**
     * Returns
+    *
     * @param siteName
     * @return
     */

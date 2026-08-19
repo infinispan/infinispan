@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.counter.api.CounterManager;
+import org.infinispan.server.test.api.CliTestDriver;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.MemcachedTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
@@ -76,6 +77,11 @@ public class InfinispanXSiteServerExtension extends AbstractServerExtension impl
                   stopTestServer(extensionContext, server);
                server.afterListeners();
             });
+   }
+
+   @Override
+   public CliTestDriver cli(String siteName) {
+      return testClients.get(siteName).cli();
    }
 
    @Override

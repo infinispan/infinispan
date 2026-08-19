@@ -8,55 +8,36 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Properties;
 import java.util.stream.Collectors;
 
-import org.infinispan.cli.commands.CLI;
-import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.commons.util.Util;
-import org.infinispan.server.test.core.AeshTestConnection;
-import org.infinispan.testing.Testing;
-import org.junit.jupiter.api.AfterAll;
+import org.infinispan.server.test.core.CliConnection;
 import org.junit.jupiter.api.BeforeAll;
 
 /**
  * @since 13.0
  */
 public class ClusterMigrationDynamicStoreCliIT extends ClusterMigrationDynamicStoreIT {
-
-   private static Path workingDir;
-   private static Properties properties;
-
    private static String configTemplateJson;
    private static final String REMOTE_STORE_CFG_FILE = "remote-store.json";
 
    @BeforeAll
    public static void setup() {
-      workingDir = Path.of(Testing.tmpDirectory(ClusterMigrationDynamicStoreCliIT.class));
-      Util.recursiveFileRemove(workingDir);
-      properties = new Properties(System.getProperties());
-      properties.put("cli.dir", workingDir.toAbsolutePath());
       try (InputStream is = ClusterMigrationDynamicStoreCliIT.class.getResourceAsStream("/cli/" + REMOTE_STORE_CFG_FILE)) {
          assertNotNull(is);
          try (InputStreamReader isr = new InputStreamReader(is)) {
             BufferedReader reader = new BufferedReader(isr);
             configTemplateJson = reader.lines().collect(Collectors.joining(System.lineSeparator()));
          }
-         Files.createDirectories(workingDir);
+
       } catch (IOException e) {
          throw new IllegalStateException(e);
       }
    }
 
-   @AfterAll
-   public static void teardown() {
-      Util.recursiveFileRemove(workingDir);
-   }
-
    @Override
    protected void connectTargetCluster(String cacheName) {
-      Path cacheConfig = workingDir.resolve(cacheName);
+      Path cacheConfig = source.driver.getRootDir().toPath().resolve(cacheName);
       try {
          String cfg = configTemplateJson;
          cfg = cfg.replace("127.0.0.1", source.driver.getServerAddress(0).getHostAddress());
@@ -66,66 +47,37 @@ public class ClusterMigrationDynamicStoreCliIT extends ClusterMigrationDynamicSt
       } catch (IOException e) {
          throw new RuntimeException(e);
       }
+      CliConnection connection = target.cli().connect();
+      connection.send("migrate cluster connect --file=" + cacheConfig + " --cache=" + cacheName);
+      connection.clear();
+      connection.send("migrate cluster source-connection --cache=" + cacheName);
+      connection.assertContains("remote-store");
 
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties);
-         connectToCluster(terminal, target);
-         terminal.assertContains("//containers/default]>");
-         terminal.clear();
-         terminal.send("migrate cluster connect --file=" + cacheConfig + " --cache=" + cacheName);
-         terminal.clear();
-         terminal.send("migrate cluster source-connection --cache=" + cacheName);
-         terminal.assertContains("remote-store");
-      }
    }
 
    @Override
    protected void assertSourceConnected(String cacheName) {
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties);
-         connectToCluster(terminal, target);
-         terminal.assertContains("//containers/default]>");
-         terminal.clear();
-         terminal.send("migrate cluster source-connection --cache=" + cacheName);
-         terminal.assertContains("remote-store");
-      }
+      CliConnection connection = target.cli().connect();
+      connection.send("migrate cluster source-connection --cache=" + cacheName);
+      connection.assertContains("remote-store");
    }
 
    @Override
    protected void assertSourceDisconnected(String cacheName) {
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties);
-         connectToCluster(terminal, target);
-         terminal.assertContains("//containers/default]>");
-         terminal.clear();
-         terminal.send("migrate cluster source-connection --cache=" + cacheName);
-         terminal.assertContains("Not Found");
-      }
+      CliConnection connection = target.cli().connect();
+      connection.send("migrate cluster source-connection --cache=" + cacheName);
+      connection.assertContains("Not Found");
    }
 
    @Override
    protected void migrate(String cacheName, RestClient client) {
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties);
-         connectToCluster(terminal, target);
-         terminal.assertContains("//containers/default]>");
-         terminal.clear();
-         terminal.send("migrate cluster synchronize --cache=" + cacheName);
-      }
+      CliConnection connection = target.cli().connect();
+      connection.send("migrate cluster synchronize --cache=" + cacheName);
    }
 
    @Override
    protected void disconnectSource(String cacheName, RestClient client) {
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties);
-         connectToCluster(terminal, target);
-         terminal.assertContains("//containers/default]>");
-         terminal.clear();
-         terminal.send("migrate cluster disconnect --cache=" + cacheName);
-      }
-   }
-
-   private void connectToCluster(AeshTestConnection terminal, Cluster cluster) {
-      terminal.send("connect " + cluster.driver.getServerAddress(0).getHostAddress() + ":" + cluster.getSinglePort(0));
+      CliConnection connection = target.cli().connect();
+      connection.send("migrate cluster disconnect --cache=" + cacheName);
    }
 }

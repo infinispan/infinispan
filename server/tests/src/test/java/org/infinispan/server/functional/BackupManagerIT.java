@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandles;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,7 +34,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
@@ -42,8 +42,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.zip.ZipFile;
 
-import org.infinispan.cli.commands.CLI;
-import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.multimap.MultimapCacheManager;
 import org.infinispan.client.hotrod.multimap.RemoteMultimapCache;
@@ -58,10 +56,11 @@ import org.infinispan.client.rest.RestTaskClient;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.counter.api.Storage;
-import org.infinispan.server.test.core.AeshTestConnection;
+import org.infinispan.server.test.core.CliConnection;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.testing.Testing;
 import org.junit.jupiter.api.AfterAll;
@@ -81,7 +80,7 @@ import net.spy.memcached.MemcachedClient;
  */
 public class BackupManagerIT extends AbstractMultiClusterIT {
 
-   static final File WORKING_DIR = new File(Testing.tmpDirectory(BackupManagerIT.class));
+   static final File WORKING_DIR = new File(Testing.tmpDirectory(MethodHandles.lookup().lookupClass()));
    static final int NUM_ENTRIES = 10;
    static final String MULTIMAP_CACHE = "multimap-cache";
 
@@ -91,6 +90,7 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
    @BeforeAll
    public static void setup() {
+      Util.recursiveFileRemove(WORKING_DIR);
       WORKING_DIR.mkdirs();
    }
 
@@ -281,11 +281,11 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       startSourceCluster();
       String backupName = "partial-backup";
       String fileName = backupName + ".zip";
-      try (AeshTestConnection t = cli(source)) {
-         t.send("backup create --templates=* -n " + backupName);
-         // Ensure that the backup has finished before stopping the source cluster
-         t.send("backup get --no-content " + backupName);
-      }
+      CliConnection t = source.cli().connect();
+      t.send("backup create --templates=* -n " + backupName);
+      // Ensure that the backup has finished before stopping the source cluster
+      t.send("backup get --no-content " + backupName);
+      cliWait(t);
       source.driver.syncFilesFromServer(0, "data");
       Path createdBackup = source.driver.getRootDir().toPath().resolve("0/data/backups").resolve(backupName).resolve(fileName);
       try (ZipFile zip = new ZipFile(createdBackup.toFile())) {
@@ -296,12 +296,23 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       Files.delete(createdBackup);
    }
 
+   /**
+    * When sending to an AeshTestConnection, it does not wait for command completion.
+    * Use the version command as a way to determine that previous commands have executed
+    */
+   static void cliWait(CliConnection t) {
+      t.clear();
+      t.send("version");
+      t.assertContains(Version.getVersion());
+   }
+
    private void assertResourceDoesntExist(ZipFile zip, String... types) {
       for (String type : types) {
          String dir = zipResourceDir(type);
          assertNull(zip.getEntry(dir));
       }
    }
+
    private String zipResourceDir(String type) {
       return "containers/default/" + type;
    }
@@ -317,12 +328,13 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       File serverBackupDir = new File(source.driver.syncFilesToServer(0, localBackupDir.getAbsolutePath()));
       source.driver.syncFilesToServer(1, localBackupDir.getAbsolutePath());
 
-      try (AeshTestConnection t = cli(source)) {
-         t.clear();
-         t.send(format("backup create -d %s -n %s", serverBackupDir.getPath(), backupName));
-         // Ensure that the backup has finished before stopping the source cluster
-         t.send("backup get --no-content " + backupName);
-      }
+      CliConnection t = source.cli().connect();
+      t.clear();
+      t.send(format("backup create -d %s -n %s", serverBackupDir.getPath(), backupName));
+      // Ensure that the backup has finished before stopping the source cluster
+      t.send("backup get --no-content " + backupName);
+      cliWait(t);
+
       localBackupDir = new File(source.driver.syncFilesFromServer(0, serverBackupDir.getAbsolutePath()));
       if (!localBackupDir.getName().equals("custom-dir")) {
          localBackupDir = new File(localBackupDir, "custom-dir");
@@ -335,17 +347,17 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       startSourceCluster();
       String backupName = "server-backup";
       String fileName = backupName + ".zip";
-      try (AeshTestConnection t = cli(source)) {
-         t.send("create cache --template=org.infinispan.DIST_SYNC backupCache");
-         t.send("cd caches/backupCache");
-         t.send("put k1 v1");
-         t.send("ls");
-         t.assertContains("k1");
-         t.clear();
-         t.send("backup create -n " + backupName);
-         // Ensure that the backup has finished before stopping the source cluster
-         t.send("backup get --no-content " + backupName);
-      }
+      CliConnection t = source.cli().connect();
+      t.send("create cache --template=org.infinispan.DIST_SYNC backupCache");
+      t.send("cd caches/backupCache");
+      t.send("put k1 v1");
+      t.send("ls");
+      t.assertContains("k1");
+      t.clear();
+      t.send("backup create -n " + backupName);
+      // Ensure that the backup has finished before stopping the source cluster
+      t.send("backup get --no-content " + backupName);
+      cliWait(t);
 
       source.driver.syncFilesFromServer(0, "data");
 
@@ -355,12 +367,11 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
       Path createdBackup = source.driver.getRootDir().toPath().resolve("0/data/backups").resolve(backupName).resolve(fileName);
       createdBackup = Paths.get(target.driver.syncFilesToServer(0, createdBackup.toString()));
 
-      try (AeshTestConnection t = cli(target)) {
-         t.send("backup restore " + createdBackup);
-         Thread.sleep(1000);
-         t.send("ls caches/backupCache");
-         t.assertContains("k1");
-      }
+      t = target.cli().connect();
+      t.send("backup restore " + createdBackup);
+      Thread.sleep(1000);
+      t.send("ls caches/backupCache");
+      t.assertContains("k1");
       Files.deleteIfExists(createdBackup);
    }
 
@@ -368,43 +379,31 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
    public void testCLIBackupUpload() throws Exception {
       startSourceCluster();
       Path createdBackup;
-      try (AeshTestConnection t = cli(source)) {
-         t.send("create cache --template=org.infinispan.DIST_SYNC backupCache");
-         t.send("cd caches/backupCache");
-         t.send("put k1 v1");
-         t.send("ls");
-         t.assertContains("k1");
-         t.clear();
-         String backupName = "example backup";
-         t.send(format("backup create -n '%s'", backupName));
-         t.send(format("backup get '%s'", backupName));
-         Thread.sleep(1000);
-         t.send(format("backup delete '%s'", backupName));
-         String fileName = backupName + ".zip";
-         createdBackup = Paths.get(System.getProperty("user.dir")).resolve(fileName);
-      }
+      CliConnection t = source.cli().connect();
+      t.send("create cache --template=org.infinispan.DIST_SYNC backupCache");
+      t.send("cd caches/backupCache");
+      t.send("put k1 v1");
+      t.send("ls");
+      t.assertContains("k1");
+      t.clear();
+      String backupName = "example backup";
+      t.send(format("backup create -n '%s'", backupName));
+      t.send(format("backup get '%s'", backupName));
+      Thread.sleep(1000);
+      t.send(format("backup delete '%s'", backupName));
+      String fileName = backupName + ".zip";
+      createdBackup = Paths.get(System.getProperty("user.dir")).resolve(fileName);
 
       stopSourceCluster();
       startTargetCluster();
 
-      try (AeshTestConnection t = cli(target)) {
-         t.send(format("backup restore -u '%s'", createdBackup));
-         Thread.sleep(1000);
-         t.send("ls caches/backupCache");
-         t.assertContains("k1");
-      }
-      Files.delete(createdBackup);
-   }
+      t = target.cli().connect();
+      t.send(format("backup restore -u '%s'", createdBackup));
+      Thread.sleep(1000);
+      t.send("ls caches/backupCache");
+      t.assertContains("k1");
 
-   private AeshTestConnection cli(Cluster cluster) {
-      AeshTestConnection t = new AeshTestConnection();
-      CLI.main(new AeshDelegatingShell(t), new Properties());
-      String host = cluster.driver.getServerAddress(0).getHostAddress();
-      int port = cluster.driver.getServerSocket(0, 11222).getPort();
-      t.send(format("connect %s:%d", host, port));
-      t.assertContains("//containers/default]>");
-      t.clear();
-      return t;
+      Files.delete(createdBackup);
    }
 
    private static RestResponse awaitOk(Supplier<CompletionStage<RestResponse>> request) {
@@ -606,12 +605,12 @@ public class BackupManagerIT extends AbstractMultiClusterIT {
 
    private void createCounter(String name, String type, Storage storage, RestClient client, long delta) {
       String config = format("""
-         {
-             "%s":{
-                 "initial-value":0,
-                 "storage":"%s"
-             }
-         }""", type, storage.toString());
+            {
+                "%s":{
+                    "initial-value":0,
+                    "storage":"%s"
+                }
+            }""", type, storage.toString());
       RestCounterClient counterClient = client.counter(name);
       assertStatus(OK, counterClient.create(RestEntity.create(MediaType.APPLICATION_JSON, config)));
       if (delta != 0) {

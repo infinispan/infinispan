@@ -4,6 +4,7 @@ import java.net.InetAddress;
 
 import org.infinispan.client.hotrod.RemoteCacheContainer;
 import org.infinispan.counter.api.CounterManager;
+import org.infinispan.server.test.api.CliTestDriver;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.JmxTestClient;
 import org.infinispan.server.test.api.MemcachedTestClientDriver;
@@ -75,6 +76,11 @@ public class InfinispanServerExtension extends AbstractServerExtension implement
 
    public void assumeContainerMode() {
       Assumptions.assumeTrue(getServerDriver() instanceof ContainerInfinispanServerDriver, "Requires CONTAINER mode");
+   }
+
+   @Override
+   public CliTestDriver cli() {
+      return testClient.cli();
    }
 
    @Override

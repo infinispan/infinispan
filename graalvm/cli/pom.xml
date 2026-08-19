@@ -149,6 +149,7 @@
                                 <buildArg>--enable-native-access=ALL-UNNAMED</buildArg>
                                 <buildArg>--enable-url-protocols=http,https</buildArg>
                                 <buildArg>--enable-monitoring=heapdump,threaddump</buildArg>
+                                <!--disabled because of a bug during mvn install -->
                                 <buildArg>--enable-sbom=false</buildArg>
                                 <buildArg>--initialize-at-run-time=org.aesh.terminal.tty.impl.WinConsoleNative,org.aesh.terminal.tty.impl.WinSysTerminal</buildArg>
                                 <buildArg>-H:+UnlockExperimentalVMOptions</buildArg>
