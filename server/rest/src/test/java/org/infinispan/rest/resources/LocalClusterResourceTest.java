@@ -5,6 +5,7 @@ import static org.infinispan.rest.resources.AbstractRestResourceTest.ADMIN;
 import static org.infinispan.rest.resources.AbstractRestResourceTest.REALM;
 import static org.infinispan.rest.resources.AbstractRestResourceTest.USER;
 import static org.infinispan.rest.resources.ClusterResource.CACHE_MANAGER_STATUS;
+import static org.infinispan.rest.resources.ClusterResource.MANAGED;
 import static org.infinispan.rest.resources.ClusterResource.MEMBERS;
 import static org.infinispan.rest.resources.ClusterResource.NODE_ADDRESS;
 import static org.infinispan.rest.resources.ClusterResource.PHYSICAL_ADDRESSES;
@@ -86,6 +87,7 @@ public class LocalClusterResourceTest extends SingleCacheManagerTest {
       Assertions.assertThat(localMember.at(CACHE_MANAGER_STATUS).asString()).isEqualTo("RUNNING");
       Assertions.assertThat(localMember.at(PHYSICAL_ADDRESSES).asString()).isEqualTo("local");
       Assertions.assertThat(clusterMembership.at(ROLLING_UPGRADE).asBoolean()).isFalse();
+      Assertions.assertThat(clusterMembership.at(MANAGED).asBoolean()).isFalse();
    }
 
    @Test

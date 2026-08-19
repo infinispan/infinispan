@@ -51,6 +51,7 @@ public class ClusterResource implements ResourceHandler {
    protected static final String CACHE_MANAGER_STATUS = "cache_manager_status";
    protected static final String MEMBERS = "members";
    protected static final String ROLLING_UPGRADE = "rolling_upgrade";
+   protected static final String MANAGED = "managed";
 
    private final InvocationHelper invocationHelper;
    private final BackupManager backupManager;
@@ -221,7 +222,8 @@ public class ClusterResource implements ResourceHandler {
                  Json members = Json.make(clusterInfos.values());
                  Json membershipJson = Json.object(
                          MEMBERS, members,
-                         ROLLING_UPGRADE, ClusterResource.isRollingUpgrade(clusterInfos));
+                         ROLLING_UPGRADE, ClusterResource.isRollingUpgrade(clusterInfos),
+                         MANAGED, invocationHelper.getServer().isManaged());
                  return addEntityAsJson(membershipJson, invocationHelper.newResponse(request), pretty).build();
               });
    }
