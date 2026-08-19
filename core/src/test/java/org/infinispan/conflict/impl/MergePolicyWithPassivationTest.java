@@ -39,7 +39,8 @@ public class MergePolicyWithPassivationTest extends BaseMergePolicyTest {
    protected void customizeCacheConfiguration(ConfigurationBuilder dcc) {
       dcc.persistence()
             .passivation(true)
-            .addStore(DummyInMemoryStoreConfigurationBuilder.class);
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+                  .purgeOnStartup(true);
       dcc.memory().maxCount(MAX_COUNT);
    }
 

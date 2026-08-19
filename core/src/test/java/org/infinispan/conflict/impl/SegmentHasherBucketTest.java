@@ -130,9 +130,9 @@ public class SegmentHasherBucketTest extends AbstractInfinispanTest {
       List<BucketHash> order3 = hasher.computeBucketHashes(0, 32);
 
       for (int i = 0; i < 32; i++) {
-         assertTrue(order1.get(i).matches(order2.get(i)),
+         assertTrue(order1.get(i).equals(order2.get(i)),
                "Bucket " + i + " should match across orderings");
-         assertTrue(order2.get(i).matches(order3.get(i)),
+         assertTrue(order2.get(i).equals(order3.get(i)),
                "Bucket " + i + " should match across orderings");
       }
    }
@@ -168,7 +168,7 @@ public class SegmentHasherBucketTest extends AbstractInfinispanTest {
       List<BucketHash> bucketHashes = hasher.computeBucketHashes(0, 32);
       SegmentHash derivedHash = SegmentHasher.deriveSegmentHash(0, bucketHashes);
 
-      assertTrue(directHash.matches(derivedHash),
+      assertTrue(directHash.equals(derivedHash),
             "Derived segment hash should match direct computation");
    }
 
@@ -180,7 +180,7 @@ public class SegmentHasherBucketTest extends AbstractInfinispanTest {
       List<BucketHash> bucketHashes = hasher.computeBucketHashes(0, 32);
       SegmentHash derivedHash = SegmentHasher.deriveSegmentHash(0, bucketHashes);
 
-      assertTrue(directHash.matches(derivedHash));
+      assertTrue(directHash.equals(derivedHash));
       assertEquals(0L, derivedHash.hash());
       assertEquals(0, derivedHash.entryCount());
    }
@@ -191,10 +191,10 @@ public class SegmentHasherBucketTest extends AbstractInfinispanTest {
       BucketHash h3 = new BucketHash(0, 5, 12345L, 11);
       BucketHash h4 = new BucketHash(0, 5, 99999L, 10);
 
-      assertTrue(h1.matches(h2));
-      assertTrue(!h1.matches(h3));
-      assertTrue(!h1.matches(h4));
-      assertTrue(!h1.matches(null));
+      assertTrue(h1.equals(h2));
+      assertTrue(!h1.equals(h3));
+      assertTrue(!h1.equals(h4));
+      assertTrue(!h1.equals(null));
    }
 
    @SuppressWarnings("unchecked")

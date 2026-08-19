@@ -93,9 +93,9 @@ public class SegmentHasherTest extends AbstractInfinispanTest {
       setupSegment(0, e2, e3, e1);
       SegmentHash hashOrder3 = hasher.computeHash(0);
 
-      assertTrue(hashOrder1.matches(hashOrder2));
-      assertTrue(hashOrder2.matches(hashOrder3));
-      assertTrue(hashOrder1.matches(hashOrder3));
+      assertTrue(hashOrder1.equals(hashOrder2));
+      assertTrue(hashOrder2.equals(hashOrder3));
+      assertTrue(hashOrder1.equals(hashOrder3));
    }
 
    public void testDifferentValuesProduceDifferentHashes() {
@@ -106,7 +106,7 @@ public class SegmentHasherTest extends AbstractInfinispanTest {
       SegmentHash hash2 = hasher.computeHash(0);
 
       // Same key, different value - hashes should differ
-      assertTrue(!hash1.matches(hash2));
+      assertTrue(!hash1.equals(hash2));
    }
 
    public void testDifferentEntryCountsDetected() {
@@ -126,10 +126,10 @@ public class SegmentHasherTest extends AbstractInfinispanTest {
       SegmentHash h3 = new SegmentHash(0, 12345L, 11); // different count
       SegmentHash h4 = new SegmentHash(0, 99999L, 10); // different hash
 
-      assertTrue(h1.matches(h2));
-      assertTrue(!h1.matches(h3));
-      assertTrue(!h1.matches(h4));
-      assertTrue(!h1.matches(null));
+      assertTrue(h1.equals(h2));
+      assertTrue(!h1.equals(h3));
+      assertTrue(!h1.equals(h4));
+      assertTrue(!h1.equals(null));
    }
 
    @SuppressWarnings("unchecked")

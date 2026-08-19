@@ -34,6 +34,8 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.conflict.EntryMergePolicy;
@@ -184,8 +186,7 @@ import jakarta.transaction.TransactionManager;
  *       associativity, avoiding a second pass.</li>
  *   <li><strong>Batched RPCs.</strong> Instead of one RPC per segment per node, a single
  *       {@link GetBucketHashesCommand} is sent per remote node covering all segments. This
- *       reduces RPC count from {@code segments × remoteNodes} to {@code remoteNodes} (typically
- *       1–2).</li>
+ *       reduces RPC count from {@code segments × remoteNodes} to {@code remoteNodes}.</li>
  *   <li><strong>Small segment threshold.</strong> Segments with ≤ {@value #SMALL_SEGMENT_THRESHOLD}
  *       entries skip per-bucket narrowing entirely. When a segment is small, the cost of key
  *       marshalling for {@code bucketForKey()} exceeds the savings from transferring fewer
@@ -427,6 +428,8 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
          if (log.isTraceEnabled())
             log.tracef("Cache %s segment %s fetching entries from %d mismatched buckets: %s",
                   cacheName, segmentId, mismatchedBuckets.size(), mismatchedBuckets);
+         // onErrorResumeNext fires at most once — if getReplicasForBucketsAsync fails, fall back
+         // to a full segment fetch for this segment only.
          return Flowable.fromCompletionStage(
                      getReplicasForBucketsAsync(segmentId, mismatchedBuckets, topology))
                .concatMapIterable(list -> list)
@@ -779,20 +782,18 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
             return CompletableFuture.completedFuture(result);
          }
 
-         List<CompletableFuture<Void>> rpcFutures = new ArrayList<>();
+         AggregateCompletionStage<Void> aggregateStage = CompletionStages.aggregateCompletionStage();
          for (Map.Entry<Address, IntSet> entry : remoteOwnerSegments.entrySet()) {
             Address remoteAddr = entry.getKey();
             GetBucketHashesCommand cmd = commandsFactory.buildGetBucketHashesCommand(
                   topology.getTopologyId(), entry.getValue(), bucketCount);
-            CompletableFuture<Void> rpcFuture = rpcManager.invokeCommand(
-                        List.of(remoteAddr), cmd,
+            CompletionStage<Void> rpcFuture = rpcManager.invokeCommand(
+                        remoteAddr, cmd,
                         MapResponseCollector.ignoreLeavers(1),
                         rpcManager.getSyncRpcOptions())
-                  .toCompletableFuture()
                   .thenAccept(responseMap -> {
-                     Response rsp = responseMap.get(remoteAddr);
-                     if (!(rsp instanceof SuccessfulResponse)) return;
-                     List<BucketHash> remoteBuckets = (List<BucketHash>) ((SuccessfulResponse<?>) rsp).getResponseValue();
+                     if (!(responseMap.get(remoteAddr) instanceof SuccessfulResponse sr)) return;
+                     List<BucketHash> remoteBuckets = (List<BucketHash>) sr.getResponseValue();
                      if (remoteBuckets == null) return;
 
                      synchronized (result) {
@@ -803,10 +804,10 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
                         }
                      }
                   });
-            rpcFutures.add(rpcFuture);
+            aggregateStage.dependsOn(rpcFuture);
          }
 
-         return CompletableFuture.allOf(rpcFutures.toArray(CompletableFuture[]::new))
+         return aggregateStage.freeze()
                .thenApply(v -> {
                   if (log.isTraceEnabled())
                      log.tracef("Cache %s prefetched bucket hashes for %d segments from %d remote nodes",
@@ -859,7 +860,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
          maxEntries = Math.max(maxEntries, sh.entryCount());
          if (referenceHash == null) {
             referenceHash = sh;
-         } else if (!referenceHash.matches(sh)) {
+         } else if (!referenceHash.equals(sh)) {
             segmentMismatch = true;
          }
       }
@@ -885,7 +886,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       for (int b = 0; b < bucketCount; b++) {
          BucketHash ref = allBucketLists.get(0).get(b);
          for (int i = 1; i < allBucketLists.size(); i++) {
-            if (!ref.matches(allBucketLists.get(i).get(b))) {
+            if (!ref.equals(allBucketLists.get(i).get(b))) {
                mismatched.set(b);
                break;
             }
@@ -908,6 +909,8 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
          int segmentId, IntSet bucketIds, LocalizedCacheTopology topology) {
       List<Address> writeOwners = topology.getSegmentDistribution(segmentId).writeOwners();
       boolean allBuckets = bucketIds.size() >= bucketCount;
+      // keyReplicaMap is filled locally (synchronously) before the RPC is issued, and then
+      // exclusively written by the single thenApply continuation — no concurrent access.
       Map<K, Map<Address, CacheEntry<K, V>>> keyReplicaMap = new HashMap<>();
 
       if (writeOwners.contains(localAddress)) {
@@ -933,10 +936,9 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       return rpcManager.invokeCommand(remoteOwners, cmd, collector, rpcManager.getSyncRpcOptions())
             .thenApply(responseMap -> {
                for (Map.Entry<Address, Response> rspEntry : responseMap.entrySet()) {
-                  Response rsp = rspEntry.getValue();
-                  if (!(rsp instanceof SuccessfulResponse))
+                  if (!(rspEntry.getValue() instanceof SuccessfulResponse sr))
                      throw new CacheException("Unexpected response from " + rspEntry.getKey());
-                  List<CacheEntry<K, V>> entries = (List) ((SuccessfulResponse<?>) rsp).getResponseValue();
+                  List<CacheEntry<K, V>> entries = (List) sr.getResponseValue();
                   for (CacheEntry<K, V> entry : entries) {
                      addToReplicaMap(keyReplicaMap, rspEntry.getKey(), entry, writeOwners);
                   }
