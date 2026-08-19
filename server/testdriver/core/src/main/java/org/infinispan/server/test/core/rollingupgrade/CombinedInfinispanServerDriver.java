@@ -62,7 +62,7 @@ public class CombinedInfinispanServerDriver implements InfinispanServerDriver {
 
    @Override
    public File getRootDir() {
-      throw new UnsupportedOperationException();
+      return fromDriver.getRootDir();
    }
 
    @Override

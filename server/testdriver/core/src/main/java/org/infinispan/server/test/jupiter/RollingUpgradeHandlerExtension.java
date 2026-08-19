@@ -4,6 +4,7 @@ import java.net.InetAddress;
 
 import org.infinispan.client.hotrod.RemoteCacheContainer;
 import org.infinispan.counter.api.CounterManager;
+import org.infinispan.server.test.api.CliTestDriver;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.JmxTestClient;
 import org.infinispan.server.test.api.MemcachedTestClientDriver;
@@ -114,6 +115,11 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
    @Override
    public boolean isContainerized() {
       return true;
+   }
+
+   @Override
+   public CliTestDriver cli() {
+      return testClient.cli();
    }
 
    @Override

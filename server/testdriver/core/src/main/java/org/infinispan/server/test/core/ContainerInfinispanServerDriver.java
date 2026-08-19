@@ -50,6 +50,7 @@ import javax.management.remote.rmi.RMIServer;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.archivers.zip.UnixStat;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.util.OS;
 import org.infinispan.commons.util.StringPropertyReplacer;
@@ -683,7 +684,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                Path relativize = parent.relativize(dir);
                TarArchiveEntry entry = new TarArchiveEntry(dir.toFile(), relativize.toString());
-               entry.setMode(040777);
+               entry.setMode(UnixStat.DIR_FLAG | 0777); // rwxrwxrwx
                tar.putArchiveEntry(entry);
                tar.closeArchiveEntry();
                return FileVisitResult.CONTINUE;
@@ -693,7 +694,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                Path relativize = parent.relativize(file);
                TarArchiveEntry entry = new TarArchiveEntry(file.toFile(), relativize.toString());
-               entry.setMode(0100666);
+               entry.setMode(UnixStat.FILE_FLAG | 0666); // rw-rw-rw-
                tar.putArchiveEntry(entry);
                try (InputStream is = Files.newInputStream(file)) {
                   for (int b = is.read(); b >= 0; b = is.read()) {

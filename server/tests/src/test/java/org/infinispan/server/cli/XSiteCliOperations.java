@@ -4,30 +4,21 @@ import static org.infinispan.commons.internal.InternalCacheNames.SCRIPT_CACHE_NA
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.LON;
 import static org.infinispan.server.test.core.InfinispanServerTestConfiguration.NYC;
 
-import java.io.File;
 import java.util.List;
-import java.util.Properties;
-import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.aesh.terminal.utils.Config;
-import org.infinispan.cli.commands.CLI;
-import org.infinispan.cli.impl.AeshDelegatingShell;
-import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.XSiteStateTransferMode;
 import org.infinispan.server.functional.XSiteIT;
 import org.infinispan.server.test.api.TestClientXSiteDriver;
-import org.infinispan.server.test.core.AeshTestConnection;
+import org.infinispan.server.test.core.CliConnection;
 import org.infinispan.server.test.jupiter.InfinispanServer;
-import org.infinispan.testing.Testing;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -41,50 +32,29 @@ public class XSiteCliOperations {
    @InfinispanServer(XSiteIT.class)
    public static TestClientXSiteDriver SERVERS;
 
-   private static File workingDir;
-   private static Properties properties;
-
-   @BeforeAll
-   public static void setup() {
-      workingDir = new File(Testing.tmpDirectory(XSiteCliOperations.class));
-      Util.recursiveFileRemove(workingDir);
-      //noinspection ResultOfMethodCallIgnored
-      workingDir.mkdirs();
-      properties = new Properties(System.getProperties());
-      properties.put("cli.dir", workingDir.getAbsolutePath());
-   }
-
-   @AfterAll
-   public static void teardown() {
-      Util.recursiveFileRemove(workingDir);
-   }
-
    @Test
    public void testSiteView() {
-      doWithTerminal(terminal -> {
-         connect(terminal, LON);
+      CliConnection connection = SERVERS.cli(LON).connect();
 
-         terminal.send("site name");
-         terminal.assertContains(LON);
-         terminal.clear();
+      connection.send("site name");
+      connection.assertContains(LON);
+      connection.clear();
 
-         terminal.send("site view");
-         terminal.assertContains(LON);
-         terminal.assertContains(NYC);
-         terminal.clear();
+      connection.send("site view");
+      connection.assertContains(LON);
+      connection.assertContains(NYC);
+      connection.clear();
 
-         disconnect(terminal);
-         connect(terminal, NYC);
+      connection = SERVERS.cli(NYC).connect();
 
-         terminal.send("site name");
-         terminal.assertContains(NYC);
-         terminal.clear();
+      connection.send("site name");
+      connection.assertContains(NYC);
+      connection.clear();
 
-         terminal.send("site view");
-         terminal.assertContains(LON);
-         terminal.assertContains(NYC);
-         terminal.clear();
-      });
+      connection.send("site view");
+      connection.assertContains(LON);
+      connection.assertContains(NYC);
+      connection.clear();
    }
 
    @Test
@@ -100,92 +70,88 @@ public class XSiteCliOperations {
             .administration()
             .createCache("st-mode", builder.build());
 
-      doWithTerminal(terminal -> {
-         connect(terminal, LON);
+      CliConnection connection = SERVERS.cli(LON).connect();
 
-         //make sure --site is required
-         terminal.send("site state-transfer-mode get");
-         terminal.assertContains("Option: --site is required for this command.");
-         terminal.clear();
+      //make sure --site is required
+      connection.send("site state-transfer-mode get");
+      connection.assertContains("Option: --site is required for this command.");
+      connection.clear();
 
-         //check command invoked in the wrong context
-         terminal.send("site state-transfer-mode get --site=" + NYC);
-         terminal.assertContains("Command invoked from the wrong context");
-         terminal.clear();
+      //check command invoked in the wrong context
+      connection.send("site state-transfer-mode get --site=" + NYC);
+      connection.assertContains("Command invoked from the wrong context");
+      connection.clear();
 
-         //check non xsite cache
-         terminal.send("cd caches/" + SCRIPT_CACHE_NAME);
-         terminal.clear();
-         terminal.send("site state-transfer-mode get --site=" + NYC);
-         terminal.assertContains("Not Found: Cache '" + SCRIPT_CACHE_NAME + "' does not have backup sites.");
-         terminal.clear();
+      //check non xsite cache
+      connection.send("cd caches/" + SCRIPT_CACHE_NAME);
+      connection.clear();
+      connection.send("site state-transfer-mode get --site=" + NYC);
+      connection.assertContains("Not Found: Cache '" + SCRIPT_CACHE_NAME + "' does not have backup sites.");
+      connection.clear();
 
-         //check if --cache overrides the context
-         terminal.send("site state-transfer-mode get --cache=st-mode --site=" + NYC);
-         terminal.assertContains("AUTO");
-         terminal.clear();
+      //check if --cache overrides the context
+      connection.send("site state-transfer-mode get --cache=st-mode --site=" + NYC);
+      connection.assertContains("AUTO");
+      connection.clear();
 
-         //check if --cache is not required
-         terminal.send("cd ../st-mode");
-         terminal.clear();
-         terminal.send("site state-transfer-mode get --site=" + NYC);
-         terminal.assertContains("AUTO");
-         terminal.clear();
+      //check if --cache is not required
+      connection.send("cd ../st-mode");
+      connection.clear();
+      connection.send("site state-transfer-mode get --site=" + NYC);
+      connection.assertContains("AUTO");
+      connection.clear();
 
-         //check invalid site
-         terminal.send("site state-transfer-mode get --site=NOT_A_SITE");
-         terminal.assertContains("Not Found: Cache 'st-mode' does not backup to site 'NOT_A_SITE'");
-         terminal.clear();
+      //check invalid site
+      connection.send("site state-transfer-mode get --site=NOT_A_SITE");
+      connection.assertContains("Not Found: Cache 'st-mode' does not backup to site 'NOT_A_SITE'");
+      connection.clear();
 
-         //check set!
-         terminal.send("site state-transfer-mode set --mode=MANUAL --site=" + NYC);
-         terminal.clear();
-         terminal.send("site state-transfer-mode get --site=" + NYC);
-         terminal.assertContains("MANUAL");
-         terminal.clear();
+      //check set!
+      connection.send("site state-transfer-mode set --mode=MANUAL --site=" + NYC);
+      connection.clear();
+      connection.send("site state-transfer-mode get --site=" + NYC);
+      connection.assertContains("MANUAL");
+      connection.clear();
 
-         //check invalid mode
-         terminal.send("site state-transfer-mode set --mode=ABC --site=" + NYC);
-         terminal.assertContains("No enum constant org.infinispan.client.rest.XSiteStateTransferMode.ABC");
-         terminal.clear();
-      });
+      //check invalid mode
+      connection.send("site state-transfer-mode set --mode=ABC --site=" + NYC);
+      connection.assertContains("No enum constant org.infinispan.client.rest.XSiteStateTransferMode.ABC");
+      connection.clear();
    }
 
    @Test
    public void testRelayNodeInfo() {
-      doWithTerminal(terminal -> {
-         connect(terminal, LON);
+      CliConnection connection = SERVERS.cli(LON).connect();
 
-         terminal.send("site is-relay-node");
-         terminal.assertContains("true");
-         terminal.clear();
+      connection.send("site is-relay-node");
+      connection.assertContains("true");
+      connection.clear();
 
-         // max_site_master is 100 so the relay-nodes is the same as cluster_members
-         // method has side effects, invoke before "site relay-nodes"
-         List<String> view = extractView(terminal);
+      // max_site_master is 100 so the relay-nodes is the same as cluster_members
+      // method has side effects, invoke before "site relay-nodes"
+      List<String> view = extractView(connection);
 
-         terminal.send("site relay-nodes");
+      connection.send("site relay-nodes");
 
-         view.forEach(terminal::assertContains);
+      view.forEach(connection::assertContains);
 
-         terminal.clear();
-      });
+      connection.clear();
    }
 
-   private void connect(AeshTestConnection terminal, String site) {
+   private void connect(CliConnection terminal, String site) {
       // connect
       terminal.send("connect " + SERVERS.hostAndPort(site));
       terminal.assertContains("//containers/default]>");
       terminal.clear();
    }
 
-   private void disconnect(AeshTestConnection terminal) {
+   private void disconnect(CliConnection terminal) {
       // connect
       terminal.send("disconnect");
       terminal.clear();
    }
 
-   private static List<String> extractView(AeshTestConnection terminal) {
+   private static List<String> extractView(CliConnection terminal) {
       terminal.send("describe");
       // make sure the command succeed
       terminal.assertContains("//containers/default");
@@ -203,12 +169,5 @@ public class XSiteCliOperations {
       }
       terminal.clear();
       throw new IllegalStateException("Unable to find 'cluster_members' in:\n" + allOutput);
-   }
-
-   private void doWithTerminal(Consumer<AeshTestConnection> consumer) {
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), properties);
-         consumer.accept(terminal);
-      }
    }
 }

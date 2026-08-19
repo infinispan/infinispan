@@ -22,11 +22,18 @@ public interface TestClientDriver {
    String addScript(RemoteCacheContainer remoteCacheManager, String script);
 
    /**
-    * If the driver is being ran with a container that is running the server as opposed to in a separate process or
+    * If the driver is being run with a container that is running the server as opposed to in a separate process or
     * in memory.
     * @return Whether this driver is currently being used in a container
     */
    boolean isContainerized();
+
+   /**
+    * Get the CLI instance for CLI operations
+    *
+    * @return {@link CliTestDriver} instance
+    */
+   CliTestDriver cli();
 
    /**
     * Get the HotRod instance for hotrod api operations

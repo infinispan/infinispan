@@ -28,6 +28,7 @@ import org.infinispan.client.rest.RestClient;
 import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.counter.api.CounterManager;
+import org.infinispan.server.test.api.CliTestDriver;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.JmxTestClient;
 import org.infinispan.server.test.api.MemcachedTestClientDriver;
@@ -75,6 +76,10 @@ public class TestClient {
          throw new IllegalStateException("Operation not supported before test starts");
       }
       return testServer.getDriver();
+   }
+
+   public CliTestDriver cli() {
+      return new CliTestDriver(testServer.getDriver(), this);
    }
 
    public HotRodTestClientDriver hotrod() {
@@ -139,10 +144,11 @@ public class TestClient {
       }
    }
 
-   public void initResources() {
+   public TestClient initResources() {
       resources = new ArrayList<>();
       hotrodCacheMap = new HashMap<>();
       restCacheMap = new HashMap<>();
+      return this;
    }
 
    public String addScript(RemoteCacheContainer remoteCacheManager, String script) {

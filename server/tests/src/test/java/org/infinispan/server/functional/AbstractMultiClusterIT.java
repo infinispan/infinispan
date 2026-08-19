@@ -20,6 +20,7 @@ import org.infinispan.client.rest.configuration.ServerConfigurationBuilder;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.server.test.api.CliTestDriver;
 import org.infinispan.server.test.core.AbstractInfinispanServerDriver;
 import org.infinispan.server.test.core.CertificateAuthority;
 import org.infinispan.server.test.core.Common;
@@ -161,5 +162,9 @@ abstract class AbstractMultiClusterIT {
             return RestClient.forConfiguration(configurationBuilder.build());
          });
       }
+
+       public CliTestDriver cli() {
+         return new CliTestDriver(driver);
+       }
    }
 }

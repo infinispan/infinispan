@@ -4,15 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-import java.util.Properties;
-
-import org.infinispan.cli.commands.CLI;
-import org.infinispan.cli.impl.AeshDelegatingShell;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.infinispan.server.test.api.TestClientDriver;
-import org.infinispan.server.test.core.AeshTestConnection;
+import org.infinispan.server.test.core.CliConnection;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.persistence.Database;
 import org.infinispan.server.test.jupiter.InfinispanServer;
@@ -93,16 +89,11 @@ public class ManagedConnectionOperations {
    @ParameterizedTest
    @ArgumentsSource(Common.DatabaseProvider.class)
    public void testDataSourceCLI(Database database) {
-      try (AeshTestConnection terminal = new AeshTestConnection()) {
-         CLI.main(new AeshDelegatingShell(terminal), new Properties());
-         terminal.send("connect " + SERVERS.getServerAddress(0).getHostAddress() + ":11222");
-         terminal.assertContains("//containers/default]>");
-         terminal.clear();
-         terminal.send("server datasource ls");
-         terminal.assertContains(database.getType());
-         terminal.clear();
-         terminal.send("server datasource test " + database.getType());
-         terminal.assertContains("ISPN012502: Connection to data source '" + database.getType()+ "' successful");
-      }
+      CliConnection connection = SERVERS.cli().connect();
+      connection.send("server datasource ls");
+      connection.assertContains(database.getType());
+      connection.clear();
+      connection.send("server datasource test " + database.getType());
+      connection.assertContains("ISPN012502: Connection to data source '" + database.getType() + "' successful");
    }
 }
