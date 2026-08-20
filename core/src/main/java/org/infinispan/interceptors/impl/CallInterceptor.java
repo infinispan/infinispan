@@ -216,9 +216,34 @@ public class CallInterceptor extends DDAsyncInterceptor {
          response = null;
       }
       e.setChanged(true);
+      reincarnateIfMortalUpdate(e, metadata);
       updateStoreFlags(command, e);
       // Return the expected value when retrying a putIfAbsent command (i.e. null)
       return delayedValue(stage, response);
+   }
+
+   /**
+    * Resets the creation timestamp of an updated mortal entry so that a modified lifespan takes effect when the value
+    * is persisted to a store. This mirrors the reincarnation the data container performs for in-place updates (see
+    * {@link org.infinispan.container.impl.InternalEntryFactory#update}); without it the store keeps the expiry computed
+    * from the original write and the reaper purges the entry too early (ISPN-17915).
+    * <p>
+    * The condition matches the container exactly: only mortal entries ({@code lifespan > 0}) whose metadata allows
+    * updating the creation timestamp are reset. Freshly created entries - including state transfer, x-site and IRAC
+    * writes of a key that is not yet present - report {@link CacheEntry#isCreated()} and keep the timestamp assigned
+    * (or supplied) when they are committed. Note that the container discards the supplied timestamp when it updates an
+    * existing key (see {@link org.infinispan.container.impl.AbstractInternalDataContainer#put}), so resetting it here
+    * for updates keeps the store consistent with the container.
+    */
+   private void reincarnateIfMortalUpdate(MVCCEntry<?, ?> e) {
+      reincarnateIfMortalUpdate(e, e.getMetadata());
+   }
+
+   private void reincarnateIfMortalUpdate(MVCCEntry<?, ?> e, Metadata metadata) {
+      if (e.isChanged() && !e.isRemoved() && !e.isCreated() && e.getLifespan() > 0
+            && (metadata == null || metadata.updateCreationTimestamp())) {
+         e.setCreated(timeService.wallClockTime());
+      }
    }
 
    @Override
@@ -337,6 +362,7 @@ public class CallInterceptor extends DDAsyncInterceptor {
                expectedValue == null ? prevValue : expectedValue, prevMetadata, true, ctx, command);
 
          Metadatas.updateMetadata(e, newMetadata);
+         reincarnateIfMortalUpdate(e, newMetadata);
 
          updateStoreFlags(command, e);
 
@@ -383,6 +409,7 @@ public class CallInterceptor extends DDAsyncInterceptor {
             e.setChanged(true);
             e.setValue(newValue);
             Metadatas.updateMetadata(e, metadata);
+            reincarnateIfMortalUpdate(e, metadata);
          } else {
             // remove when new value is null
             stage = cacheNotifier.notifyCacheEntryRemoved(key, oldValue, e.getMetadata(), true, ctx, command);
@@ -496,6 +523,7 @@ public class CallInterceptor extends DDAsyncInterceptor {
             contextEntry.setValue(newValue);
             Metadatas.updateMetadata(contextEntry, metadata);
             contextEntry.setChanged(true);
+            reincarnateIfMortalUpdate(contextEntry, metadata);
 
             updateStoreFlags(command, contextEntry);
          }
@@ -827,6 +855,7 @@ public class CallInterceptor extends DDAsyncInterceptor {
          entry.updatePreviousValue();
          ret = mutation.apply(rw);
       }
+      reincarnateIfMortalUpdate(entry);
       Function function = command.getFunction();
       if (function != null) {
          ret = function.apply(rw);
@@ -882,6 +911,7 @@ public class CallInterceptor extends DDAsyncInterceptor {
                entry.updatePreviousValue();
                ret = mutation.apply(rw);
             }
+            reincarnateIfMortalUpdate(entry);
             ro = rw;
          }
          if (function != null) {
@@ -903,6 +933,7 @@ public class CallInterceptor extends DDAsyncInterceptor {
       // should we leak this to stats in write-only commands? we do that for events anyway...
       boolean exists = e.getValue() != null;
       command.getConsumer().accept(EntryViews.writeOnly(e, command.getValueDataConversion()));
+      reincarnateIfMortalUpdate(e);
       // The effective result of retried command is not safe; we'll go to backup anyway
       if (!e.isChanged() && !command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.fail();
@@ -957,6 +988,7 @@ public class CallInterceptor extends DDAsyncInterceptor {
          // These are the only flags that should be changed with EntryViews.readWrite
          e.setChanged(copy.isChanged());
          e.setRemoved(copy.isRemoved());
+         reincarnateIfMortalUpdate(e);
       }
       // The effective result of retried command is not safe; we'll go to backup anyway
       if (!e.isChanged() && !hasCommandRetry) {
@@ -984,6 +1016,7 @@ public class CallInterceptor extends DDAsyncInterceptor {
       EntryViews.AccessLoggingReadWriteView view = EntryViews.readWrite(e, command.getKeyDataConversion(),
             command.getValueDataConversion());
       ret = snapshot(command.getFunction().apply(view));
+      reincarnateIfMortalUpdate(e);
       // The effective result of retried command is not safe; we'll go to backup anyway
       if (!e.isChanged() && !command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.fail();
@@ -1001,6 +1034,7 @@ public class CallInterceptor extends DDAsyncInterceptor {
          updateStoreFlags(command, cacheEntry);
          Object decodedValue = valueDataConversion.fromStorage(entry.getValue());
          command.getBiConsumer().accept(decodedValue, EntryViews.writeOnly(cacheEntry, valueDataConversion));
+         reincarnateIfMortalUpdate(cacheEntry);
       }
       return null;
    }
@@ -1016,6 +1050,7 @@ public class CallInterceptor extends DDAsyncInterceptor {
       Object decodedArgument = valueDataConversion.fromStorage(command.getArgument());
       boolean exists = e.getValue() != null;
       command.getBiConsumer().accept(decodedArgument, EntryViews.writeOnly(e, valueDataConversion));
+      reincarnateIfMortalUpdate(e);
       // The effective result of retried command is not safe; we'll go to backup anyway
       if (!e.isChanged() && !command.hasAnyFlag(FlagBitSets.COMMAND_RETRY)) {
          command.fail();
@@ -1032,6 +1067,7 @@ public class CallInterceptor extends DDAsyncInterceptor {
          MVCCEntry<Object, Object> cacheEntry = lookupMvccEntry(ctx, k);
          updateStoreFlags(command, cacheEntry);
          consumer.accept(EntryViews.writeOnly(cacheEntry, valueDataConversion));
+         reincarnateIfMortalUpdate(cacheEntry);
       }
       return null;
    }
@@ -1055,6 +1091,7 @@ public class CallInterceptor extends DDAsyncInterceptor {
          EntryViews.AccessLoggingReadWriteView<?, ?> view = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);
          Object r = snapshot(function.apply(view));
          returns.add(skipStats ? r : StatsEnvelope.create(r, entry, exists, view.isRead()));
+         reincarnateIfMortalUpdate(entry);
          updateStoreFlags(command, entry);
       });
       return returns;
@@ -1075,6 +1112,7 @@ public class CallInterceptor extends DDAsyncInterceptor {
          EntryViews.AccessLoggingReadWriteView<?, ?> view = EntryViews.readWrite(entry, keyDataConversion, valueDataConversion);
          Object r = snapshot(biFunction.apply(decodedArgument, view));
          returns.add(skipStats ? r : StatsEnvelope.create(r, entry, exists, view.isRead()));
+         reincarnateIfMortalUpdate(entry);
          updateStoreFlags(command, entry);
       });
       return returns;
