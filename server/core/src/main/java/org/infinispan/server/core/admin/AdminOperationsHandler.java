@@ -9,7 +9,9 @@ import java.util.concurrent.CompletionStage;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.manager.spi.TaskEngine;
