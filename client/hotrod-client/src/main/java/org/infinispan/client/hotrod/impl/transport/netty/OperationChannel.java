@@ -242,10 +242,9 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
 
    private void sendOperations() {
       Channel channel = this.channel;
-      assert channel == null || channel.eventLoop().inEventLoop();
       // Stop draining into the channel's outbound (direct) buffer while it is backed up.
       // This bounds off-heap usage only; queued operations remain on the heap (no caller backpressure).
-      if (!acceptingRequests || queue.isEmpty() || channel == null || !channel.isWritable()) {
+      if (!acceptingRequests || queue.isEmpty() || channel == null || !channel.isWritable() || !channel.eventLoop().inEventLoop()) {
          return;
       }
 
