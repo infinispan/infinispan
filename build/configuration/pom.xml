@@ -93,7 +93,7 @@
       <version.insights>2.0.4</version.insights>
       <version.io.agroal>2.8.2</version.io.agroal>
       <version.io.lettuce>6.8.2.RELEASE</version.io.lettuce>
-      <version.vertx>4.5.28</version.vertx>
+      <version.vertx>4.5.32</version.vertx>
       <version.io.mashona>1.1.0</version.io.mashona>
       <version.jackson>2.22.1</version.jackson>
       <version.jackson.annotations>2.22</version.jackson.annotations>
@@ -130,7 +130,7 @@
       <version.micrometer>1.16.5</version.micrometer>
       <version.mockito>5.23.0</version.mockito>
       <version.nashorn>15.7</version.nashorn>
-      <version.netty>4.1.135.Final</version.netty>
+      <version.netty>4.1.137.Final</version.netty>
       <version.netty.incubator.iouring>0.0.26.Final</version.netty.incubator.iouring>
       <version.openjdk.jmh>1.37</version.openjdk.jmh>
       <version.org.wildfly.arquillian>5.1.0.Final</version.org.wildfly.arquillian>
@@ -150,7 +150,7 @@
       <version.hdrhistogram>2.2.2</version.hdrhistogram>
       <version.latencyutils>2.0.3</version.latencyutils>
 
-      <version.quarkus>3.27.4</version.quarkus>
+      <version.quarkus>3.27.5.1</version.quarkus>
       <version.graalvm>25.0.3</version.graalvm>
       <version.jandex>3.5.3</version.jandex>
 
