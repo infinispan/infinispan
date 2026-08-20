@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -49,6 +50,10 @@ import org.infinispan.container.impl.InternalDataContainer;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.functional.FunctionalMap.ReadWriteMap;
+import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
+import org.infinispan.functional.MetaParam;
+import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -455,6 +460,112 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
       assertEquals(maxIdleMillis, ice.getMaxIdle());
       if (lifespanMillis > -1) assert ice.getCreated() > -1 : "Lifespan is set but created time is not";
       if (maxIdleMillis > -1) assert ice.getLastUsed() > -1 : "Max idle is set but last used is not";
+   }
+
+   public void testUpdateResetsLifespanPut() {
+      doTestUpdateResetsLifespan("testUpdateResetsLifespanPut",
+            cache -> cache.put("k", wrap("k", "v2"), 5, TimeUnit.SECONDS));
+   }
+
+   public void testUpdateResetsLifespanReplace() {
+      doTestUpdateResetsLifespan("testUpdateResetsLifespanReplace",
+            cache -> cache.replace("k", wrap("k", "v2"), 5, TimeUnit.SECONDS));
+   }
+
+   public void testUpdateResetsLifespanReplaceConditional() {
+      doTestUpdateResetsLifespan("testUpdateResetsLifespanReplaceConditional",
+            cache -> cache.replace("k", wrap("k", "v1"), wrap("k", "v2"), 5, TimeUnit.SECONDS));
+   }
+
+   public void testUpdateResetsLifespanPutAll() {
+      doTestUpdateResetsLifespan("testUpdateResetsLifespanPutAll",
+            cache -> cache.putAll(Map.of("k", wrap("k", "v2")), 5, TimeUnit.SECONDS));
+   }
+
+   public void testUpdateResetsLifespanCompute() {
+      doTestUpdateResetsLifespan("testUpdateResetsLifespanCompute",
+            cache -> cache.compute("k", (k, v) -> wrap("k", "v2"), 5, TimeUnit.SECONDS));
+   }
+
+   public void testUpdateResetsLifespanComputeIfPresent() {
+      doTestUpdateResetsLifespan("testUpdateResetsLifespanComputeIfPresent",
+            cache -> cache.computeIfPresent("k", (k, v) -> wrap("k", "v2"), 5, TimeUnit.SECONDS));
+   }
+
+   public void testUpdateResetsLifespanMerge() {
+      doTestUpdateResetsLifespan("testUpdateResetsLifespanMerge",
+            cache -> cache.merge("k", wrap("k", "v2"), (oldValue, newValue) -> newValue, 5, TimeUnit.SECONDS));
+   }
+
+   public void testUpdateResetsLifespanWriteOnlyEval() {
+      doTestUpdateResetsLifespan("testUpdateResetsLifespanWriteOnlyEval", cache -> {
+         WriteOnlyMap<String, Object> wo = FunctionalMapImpl.create(cache.getAdvancedCache()).toWriteOnlyMap();
+         CompletionStages.join(wo.eval("k", view ->
+               view.set(wrap("k", "v2"), new MetaParam.MetaLifespan(TimeUnit.SECONDS.toMillis(5)))));
+      });
+   }
+
+   public void testUpdateResetsLifespanReadWriteEval() {
+      doTestUpdateResetsLifespan("testUpdateResetsLifespanReadWriteEval", cache -> {
+         ReadWriteMap<String, Object> rw = FunctionalMapImpl.create(cache.getAdvancedCache()).toReadWriteMap();
+         CompletionStages.join(rw.eval("k", view -> {
+            view.set(wrap("k", "v2"), new MetaParam.MetaLifespan(TimeUnit.SECONDS.toMillis(5)));
+            return null;
+         }));
+      });
+   }
+
+   public void testUpdateResetsLifespanWriteOnlyEvalMany() {
+      doTestUpdateResetsLifespan("testUpdateResetsLifespanWriteOnlyEvalMany", cache -> {
+         WriteOnlyMap<String, Object> wo = FunctionalMapImpl.create(cache.getAdvancedCache()).toWriteOnlyMap();
+         CompletionStages.join(wo.evalMany(Map.of("k", wrap("k", "v2")), (v, view) ->
+               view.set(v, new MetaParam.MetaLifespan(TimeUnit.SECONDS.toMillis(5)))));
+      });
+   }
+
+   /**
+    * ISPN-17915: updating an existing entry with a fresh lifespan must reset the expiration timestamp that is persisted
+    * in the store. If the store keeps the expiry computed from the original write, the reaper (or the expiry check when
+    * loading) discards the still-valid entry. The update is driven through {@code updateOp} so that every write
+    * operation capable of modifying an existing mortal entry is exercised against each store implementation.
+    */
+   private void doTestUpdateResetsLifespan(String cacheName, Consumer<Cache<String, Object>> updateOp) {
+      ConfigurationBuilder cb = getDefaultCacheConfiguration();
+      if (cb.clustering().cacheMode() != CacheMode.LOCAL) {
+         // Driving expiration manually with a ControlledTimeService only behaves deterministically in LOCAL mode
+         return;
+      }
+      // Disable the automatic reaper, expiration is driven manually with the controlled time service.
+      cb.expiration().wakeUpInterval(Long.MAX_VALUE);
+      createCacheStoreConfig(cb.persistence(), cacheName, false);
+      TestingUtil.defineConfiguration(cacheManager, cacheName, cb.build());
+
+      TestingUtil.replaceComponent(cacheManager, TimeService.class, timeService, true);
+
+      Cache<String, Object> cache = cacheManager.getCache(cacheName);
+
+      // Write the entry with a 5 second lifespan.
+      cache.put("k", wrap("k", "v1"), 5, TimeUnit.SECONDS);
+
+      // Let 3 seconds elapse, the entry is still alive.
+      timeService.advance(TimeUnit.SECONDS.toMillis(3));
+      assertNotNull(cache.get("k"));
+
+      // Update the entry with a fresh 5 second lifespan; this must reset the persisted expiry to now + 5s.
+      updateOp.accept(cache);
+      assertEquals("v2", unwrap(cache.get("k")));
+
+      // Advance another 3 seconds: 6s have elapsed since the original write (which would have expired at 5s) but only
+      // 3s since the update (which expires at 8s), so the entry must still be alive.
+      timeService.advance(TimeUnit.SECONDS.toMillis(3));
+
+      // Run the reaper against the store and drop the in-memory copy so the read has to consult the persisted expiry.
+      PersistenceManager pm = TestingUtil.extractComponent(cache, PersistenceManager.class);
+      CompletionStages.join(pm.purgeExpired());
+      cache.getAdvancedCache().getDataContainer().clear();
+
+      assertNotNull("Entry should still be alive because the update reset its lifespan", cache.get("k"));
+      assertEquals("v2", unwrap(cache.get("k")));
    }
 
    @SurvivesRestarts
