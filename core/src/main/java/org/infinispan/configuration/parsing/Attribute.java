@@ -207,6 +207,7 @@ public enum Attribute {
     THREAD_POOL_SIZE,
     TIMEOUT,
     TOMBSTONE_MAP_SIZE,
+    TOP_K,
     TOTAL_ORDER_EXECUTOR,
     TOUCH,
     TRANSACTION_MANAGER_LOOKUP_CLASS("transaction-manager-lookup"),
