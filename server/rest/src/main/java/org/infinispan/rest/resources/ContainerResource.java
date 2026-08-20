@@ -121,17 +121,17 @@ public class ContainerResource implements ResourceHandler {
             .handleWith(this::getHealthStatus)
 
             // Config
-            .invocation().methods(GET).deprecated().path("/v2/cache-managers/{name}/cache-configs").handleWith(this::getAllCachesConfiguration)
-            .invocation().methods(GET).deprecated().path("/v2/cache-managers/{name}/cache-configs/templates").handleWith(this::getAllCachesConfigurationTemplates)
+            .invocation().methods(GET).deprecated().path("/v2/cache-managers/{name}/cache-configs").permission(AuthorizationPermission.ADMIN).handleWith(this::getAllCachesConfiguration)
+            .invocation().methods(GET).deprecated().path("/v2/cache-managers/{name}/cache-configs/templates").permission(AuthorizationPermission.ADMIN).handleWith(this::getAllCachesConfigurationTemplates)
             .invocation().methods(POST).deprecated().path("/v2/cache-managers/{name}/config").withAction("toJSON").handleWith(this::convertToJson)
 
-            .invocation().methods(GET).path("/v2/container/cache-configs").handleWith(this::getAllCachesConfiguration)
-            .invocation().methods(GET).path("/v2/container/cache-configs/templates").handleWith(this::getAllCachesConfigurationTemplates)
+            .invocation().methods(GET).path("/v2/container/cache-configs").permission(AuthorizationPermission.ADMIN).handleWith(this::getAllCachesConfiguration)
+            .invocation().methods(GET).path("/v2/container/cache-configs/templates").permission(AuthorizationPermission.ADMIN).handleWith(this::getAllCachesConfigurationTemplates)
             .invocation().methods(POST).path("/v2/container/cache-configs/config").withAction("toJSON").handleWith(this::convertToJson)
 
             // Cache Manager config
-            .invocation().methods(GET).deprecated().path("/v2/cache-managers/{name}/config").handleWith(this::getConfig)
-            .invocation().methods(GET).path("/v2/container/config").handleWith(this::getConfig)
+            .invocation().methods(GET).deprecated().path("/v2/cache-managers/{name}/config").permission(AuthorizationPermission.ADMIN).handleWith(this::getConfig)
+            .invocation().methods(GET).path("/v2/container/config").permission(AuthorizationPermission.ADMIN).handleWith(this::getConfig)
 
             // Mutable global configuration attributes
             .invocation().methods(GET).path("/v2/container/config").withAction("get-mutable-attributes")

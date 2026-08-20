@@ -9,7 +9,9 @@ import java.util.concurrent.CompletionStage;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.tasks.Task;
 import org.infinispan.tasks.TaskContext;
 import org.infinispan.tasks.manager.spi.TaskEngine;
@@ -45,6 +47,7 @@ public abstract class AdminOperationsHandler implements TaskEngine {
    public <T> CompletionStage<T> runTask(String taskName, TaskContext context, BlockingManager blockingManager) {
       AdminServerTask<T> task = tasks.get(taskName);
       Subject subject = context.getSubject().orElse(Security.getSubject());
+      SecurityActions.checkPermission(context.getCacheManager(), AuthorizationPermission.ADMIN);
       return blockingManager.supplyBlocking(() -> {
          try {
             return Security.doAs(subject, () -> task.execute(context));
