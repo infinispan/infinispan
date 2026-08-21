@@ -23,6 +23,7 @@ import java.util.function.Consumer;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -845,6 +846,15 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       }
 
       @Override
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+         assertNotNull(stateTransferLock);
+         log.tracef("Waiting for topology %d before executing %s", expectedTopologyId, command);
+         stateTransferLock.topologyFuture(expectedTopologyId).toCompletableFuture().get(10, TimeUnit.SECONDS);
+         assertEquals(expectedTopologyId, distributionManager.getCacheTopology().getTopologyId());
+         return invokeNext(ctx, command);
+      }
+
+      @Override
       public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
          assertNotNull(stateTransferLock);
          log.tracef("Waiting for topology %d before executing %s", expectedTopologyId, command);
@@ -858,6 +868,12 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
       private final AtomicBoolean hit = new AtomicBoolean();
 
       @Override
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+         hit.set(true);
+         throw new IllegalStateException("Did not expect the command to be executed on node " + cache.getCacheManager().getAddress());
+      }
+
+      @Override
       public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
          hit.set(true);
          throw new IllegalStateException("Did not expect the command to be executed on node " + cache.getCacheManager().getAddress());
@@ -869,6 +885,15 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
    }
 
    static class AssertNoRetryInterceptor extends DDAsyncInterceptor {
+      @Override
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
+         assertFalse(command.hasAnyFlag(FlagBitSets.COMMAND_RETRY));
+         return invokeNextAndExceptionally(ctx, command, (rCtx, rCommand, t) -> {
+            assertFalse(t instanceof OutdatedTopologyException);
+            throw t;
+         });
+      }
+
       @Override
       public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
          assertFalse(command.hasAnyFlag(FlagBitSets.COMMAND_RETRY));

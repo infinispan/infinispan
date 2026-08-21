@@ -59,6 +59,7 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
       cache = getCache();
       CacheNotifier mockNotifier = mock(CacheNotifier.class, i -> CompletableFutures.completedNull());
       doReturn(true).when(mockNotifier).hasListener(any());
+      doReturn(true).when(mockNotifier).hasVisitedListener();
       TestingUtil.replaceComponent(cache, CacheNotifier.class, mockNotifier, true);
    }
 

@@ -23,6 +23,8 @@ import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.TxReadOnlyKeyCommand;
 import org.infinispan.commands.functional.TxReadOnlyManyCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.EntryView.ReadEntryView;
@@ -30,6 +32,7 @@ import org.infinispan.functional.EntryView.WriteEntryView;
 import org.infinispan.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
+import org.infinispan.interceptors.Skip;
 import org.infinispan.interceptors.impl.CallInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
@@ -327,6 +330,18 @@ public abstract class AbstractFunctionalOpTest extends AbstractFunctionalTest {
 
       public static VisitableCommand getCurrent() {
          return current.get();
+      }
+
+      @Skip
+      @Override
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
+         throw new UnsupportedOperationException("Get commands should not reach CommandCachingInterceptor");
+      }
+
+      @Skip
+      @Override
+      public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
+         throw new UnsupportedOperationException("Get commands should not reach CommandCachingInterceptor");
       }
 
       @Override

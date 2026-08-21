@@ -117,7 +117,9 @@ public class ClusteredGetCommand extends BaseClusteredReadCommand implements Seg
       InvocationContextFactory icf = componentRegistry.getInvocationContextFactory().running();
       InvocationContext invocationContext = icf.createRemoteInvocationContextForCommand(command, getOrigin());
       AsyncInterceptorChain invoker = componentRegistry.getInterceptorChain().running();
-      return invoker.invokeAsync(invocationContext, command)
+      // Route through the optimized get chain so interceptors excluded via @Skip (e.g. batching, non-tx locking)
+      // are bypassed for remote gets just as they are for local gets.
+      return invoker.invokeGetCacheEntryAsync(invocationContext, command)
             .thenApply(rv -> {
                if (log.isTraceEnabled()) log.tracef("Return value for key=%s is %s", key, rv);
                //this might happen if the value was fetched from a cache loader

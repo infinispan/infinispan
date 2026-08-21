@@ -17,7 +17,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.DDAsyncInterceptor;
-import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -45,7 +44,7 @@ public class InDoubtWithCommitFailsTest extends AbstractRecoveryTest {
             .clustering().l1().disable().stateTransfer().fetchInMemoryState(false);
       createCluster(configuration, 2);
       waitForClusterToForm();
-      extractInterceptorChain(advancedCache(1)).addInterceptorBefore(new ForceFailureInterceptor(), InvocationContextInterceptor.class);
+      extractInterceptorChain(advancedCache(1)).addInterceptor(new ForceFailureInterceptor(), 0);
    }
 
    public void testRecoveryInfoListCommit() throws Exception {

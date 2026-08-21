@@ -3,7 +3,6 @@ package org.infinispan.test.hibernate.cache.commons.util;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -15,10 +14,12 @@ import java.util.function.BooleanSupplier;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseCustomAsyncInterceptor;
 import org.infinispan.interceptors.InvocationFinallyAction;
-import org.infinispan.interceptors.impl.InvocationContextInterceptor;
+import org.infinispan.interceptors.Skip;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -34,8 +35,8 @@ public class ExpectingInterceptor extends BaseCustomAsyncInterceptor {
          return self;
       }
       ExpectingInterceptor ei = new ExpectingInterceptor();
-      // We are adding this after ICI because we want to handle silent failures, too
-      assertTrue(extractInterceptorChain(cache).addInterceptorAfter(ei, InvocationContextInterceptor.class));
+      // We add this at the head of the chain so that we observe every command, including silent failures
+      extractInterceptorChain(cache).addInterceptor(ei, 0);
       return ei;
    }
 
@@ -59,6 +60,18 @@ public class ExpectingInterceptor extends BaseCustomAsyncInterceptor {
       StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
       StackTraceElement ste = stackTrace[3];
       return ste.getFileName() + ":" + ste.getLineNumber();
+   }
+
+   @Skip
+   @Override
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
+      throw new UnsupportedOperationException("Get commands should not reach ExpectingInterceptor");
+   }
+
+   @Skip
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
+      throw new UnsupportedOperationException("Get commands should not reach ExpectingInterceptor");
    }
 
    @Override

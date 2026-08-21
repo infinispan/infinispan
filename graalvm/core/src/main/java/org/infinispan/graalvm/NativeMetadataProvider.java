@@ -235,7 +235,12 @@ public class NativeMetadataProvider implements org.infinispan.commons.graalvm.Na
                   org.infinispan.persistence.spi.NonBlockingStore.class
             )
             .addImplementations(true, false,
-                  org.infinispan.util.logging.events.Messages.class,
+                  org.infinispan.util.logging.events.Messages.class
+            )
+            // Register interceptor methods for reflection: AsyncInterceptorChainImpl.rebuildInterceptors()
+            // introspects visitGetKeyValueCommand/visitGetCacheEntryCommand (and the @Skip annotation) to
+            // build the optimized get chain, so the declared methods must be reflectively available.
+            .addImplementations(true, true,
                   org.infinispan.interceptors.AsyncInterceptor.class
             )
             .addImplementation(false, true,

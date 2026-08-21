@@ -1445,7 +1445,7 @@ public class StateConsumerImpl implements StateConsumer {
       return interceptorChain.invokeAsync(ctx, invalidateCmd)
                              .handle((ignored, throwable) -> {
                                 if (throwable != null && !(throwable instanceof IllegalLifecycleStateException)) {
-                                   // Ignore shutdown-related errors, because InvocationContextInterceptor starts
+                                   // Ignore shutdown-related errors, because AsyncInterceptorChain starts
                                    // rejecting commands before any component is stopped
                                    log.failedToInvalidateKeys(throwable);
                                 }
