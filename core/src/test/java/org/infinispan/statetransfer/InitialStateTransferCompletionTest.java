@@ -21,7 +21,6 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -70,7 +69,7 @@ public class InitialStateTransferCompletionTest extends MultipleCacheManagersTes
 
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
       TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals,
-            new CountInterceptor(ignoreFurtherStateTransfer, transferredKeys), TestCacheManagerFactory.InterceptorPosition.BEFORE, InvocationContextInterceptor.class);
+            new CountInterceptor(ignoreFurtherStateTransfer, transferredKeys), TestCacheManagerFactory.InterceptorPosition.FIRST, null);
 
       // add the third member
       log.trace("Adding new member ...");

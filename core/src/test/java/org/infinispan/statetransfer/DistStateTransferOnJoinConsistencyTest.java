@@ -24,7 +24,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -148,7 +147,7 @@ public class DistStateTransferOnJoinConsistencyTest extends MultipleCacheManager
       final CountDownLatch applyStateStartedLatch = new CountDownLatch(1);
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
       TestCacheManagerFactory.addInterceptor(global, TestCacheManagerFactory.DEFAULT_CACHE_NAME::equals,
-            new LatchInterceptor(applyStateStartedLatch, applyStateProceedLatch), TestCacheManagerFactory.InterceptorPosition.BEFORE, InvocationContextInterceptor.class);
+            new LatchInterceptor(applyStateStartedLatch, applyStateProceedLatch), TestCacheManagerFactory.InterceptorPosition.FIRST, null);
 
       log.info("Adding a new node ..");
       addClusterEnabledCacheManager(global, builder);

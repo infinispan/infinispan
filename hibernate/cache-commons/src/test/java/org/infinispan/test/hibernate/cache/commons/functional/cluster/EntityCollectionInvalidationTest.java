@@ -30,6 +30,7 @@ import org.hibernate.testing.orm.junit.JiraKey;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.util.Util;
@@ -546,6 +547,27 @@ public class EntityCollectionInvalidationTest extends DualNodeTest {
             throw e;
          } finally {
             return super.visitGetKeyValueCommand(ctx, command);
+         }
+      }
+
+      @Override
+      public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+         try {
+            Phaser phaser;
+            Thread thread;
+            synchronized (this) {
+               phaser = this.phaser;
+               thread = this.thread;
+            }
+            if (phaser != null && Thread.currentThread() == thread) {
+               arriveAndAwait(phaser);
+               arriveAndAwait(phaser);
+            }
+         } catch (Exception e) {
+            failure.set(e);
+            throw e;
+         } finally {
+            return super.visitGetCacheEntryCommand(ctx, command);
          }
       }
    }

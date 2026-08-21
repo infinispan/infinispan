@@ -14,7 +14,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.tm.EmbeddedTransaction;
@@ -46,8 +45,8 @@ public class CommitFailsTest extends AbstractRecoveryTest {
 
       failureInterceptor0 = new InDoubtWithCommitFailsTest.ForceFailureInterceptor();
       failureInterceptor1 = new InDoubtWithCommitFailsTest.ForceFailureInterceptor();
-      extractInterceptorChain(advancedCache(0)).addInterceptorAfter(failureInterceptor0, InvocationContextInterceptor.class);
-      extractInterceptorChain(advancedCache(1)).addInterceptorAfter(failureInterceptor1, InvocationContextInterceptor.class);
+      extractInterceptorChain(advancedCache(0)).addInterceptor(failureInterceptor0, 0);
+      extractInterceptorChain(advancedCache(1)).addInterceptor(failureInterceptor1, 0);
    }
 
    @BeforeMethod

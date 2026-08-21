@@ -3,7 +3,6 @@ package org.infinispan.context;
 import static org.infinispan.test.TestingUtil.extractInterceptorChain;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
@@ -12,7 +11,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestDataSCI;
@@ -46,7 +44,7 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
    public void testContentsOfContext() throws Exception {
       Cache<Key, String> c = cacheManager.getCache();
       ContextExtractingInterceptor cex = new ContextExtractingInterceptor();
-      assertTrue(extractInterceptorChain(c).addInterceptorAfter(cex, InvocationContextInterceptor.class));
+      extractInterceptorChain(c).addInterceptor(cex, 0);
 
       c.put(new Key("k"), "v");
 

@@ -131,6 +131,13 @@ public interface CacheNotifier<K, V> extends DataConversionAwareListenable<K, V>
     */
    boolean hasListener(Class<? extends Annotation> annotationClass);
 
+   /**
+    * Optimized form of {@link #hasListener(Class)} specifically for
+    * {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited} since it is most affected by latency
+    * @return true if there is a listener mapped to the visited annotation, otherwise false
+    */
+   boolean hasVisitedListener();
+
    boolean hasListeners();
 
    Set<Object> getListeners();

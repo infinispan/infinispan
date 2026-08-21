@@ -19,7 +19,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.interceptors.BaseAsyncInterceptor;
-import org.infinispan.interceptors.impl.InvocationContextInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -131,7 +130,7 @@ public class ConcurrentCacheStartupTest extends MultipleCacheManagersTest {
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
       TestCacheManagerFactory.addInterceptor(gcb, delayedCache::equals,
             new StateTransferLatchInterceptor(started, proceed),
-            TestCacheManagerFactory.InterceptorPosition.BEFORE, InvocationContextInterceptor.class);
+            TestCacheManagerFactory.InterceptorPosition.FIRST, null);
 
       TransportFlags flags = new TransportFlags();
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(false,

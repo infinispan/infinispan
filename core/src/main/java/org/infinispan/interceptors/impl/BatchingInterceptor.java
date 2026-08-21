@@ -2,6 +2,8 @@ package org.infinispan.interceptors.impl;
 
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.IracPutKeyValueCommand;
@@ -12,6 +14,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.DDAsyncInterceptor;
+import org.infinispan.interceptors.Skip;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -31,6 +34,20 @@ public class BatchingInterceptor extends DDAsyncInterceptor {
    @Inject InvocationContextFactory invocationContextFactory;
 
    private static final Log log = LogFactory.getLog(BatchingInterceptor.class);
+
+   // Get commands never need batching and use the optimized get chain, which skips this interceptor. Reaching these
+   // methods means a get was routed through the regular chain by mistake, so fail loudly to catch the regression.
+   @Skip
+   @Override
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) {
+      throw new UnsupportedOperationException("Get commands should not reach BatchingInterceptor");
+   }
+
+   @Skip
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) {
+      throw new UnsupportedOperationException("Get commands should not reach BatchingInterceptor");
+   }
 
    @Override
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) {

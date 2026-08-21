@@ -19,7 +19,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.SingleKeyNonTxInvocationContext;
-import org.infinispan.interceptors.BaseAsyncInterceptor;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.interceptors.InvocationStage;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestException;
@@ -48,6 +48,7 @@ public class CacheMgmtInterceptorTest extends AbstractInfinispanTest {
 
       interceptor = new CacheMgmtInterceptor();
       interceptor.setNextInterceptor(nextInterceptor);
+      interceptor.setNextGetKeyValueInterceptor(nextInterceptor);
       TestingUtil.inject(interceptor, timeService);
       interceptor.start();
       interceptor.setStatisticsEnabled(true);
@@ -233,14 +234,24 @@ public class CacheMgmtInterceptorTest extends AbstractInfinispanTest {
       });
    }
 
-   static class ControlledNextInterceptor extends BaseAsyncInterceptor {
+   static class ControlledNextInterceptor extends DDAsyncInterceptor {
 
       CompletableFuture<Object> lastReturnValue;
 
       @Override
-      public Object visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable {
+      protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
          lastReturnValue = new CompletableFuture<>();
          return asyncValue(lastReturnValue);
+      }
+
+      @Override
+      public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+         return handleDefault(ctx, command);
+      }
+
+      @Override
+      public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+         return handleDefault(ctx, command);
       }
 
       public void completeLastInvocation(Object value) {

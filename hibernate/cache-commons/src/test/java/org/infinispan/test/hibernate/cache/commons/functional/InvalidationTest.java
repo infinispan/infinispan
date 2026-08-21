@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.hibernate.PessimisticLockException;
 import org.hibernate.testing.orm.junit.JiraKey;
 import org.infinispan.AdvancedCache;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.hibernate.cache.commons.InfinispanBaseRegion;
@@ -272,6 +273,21 @@ public class InvalidationTest extends SingleNodeTest {
             arriveAndAwait(phaser, 2000);
          }
          return super.visitGetKeyValueCommand(ctx, command);
+      }
+
+      @Override
+      public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+         Phaser phaser;
+         Thread thread;
+         synchronized (this) {
+            phaser = this.phaser;
+            thread = this.thread;
+         }
+         if (phaser != null && Thread.currentThread() == thread) {
+            arriveAndAwait(phaser, 2000);
+            arriveAndAwait(phaser, 2000);
+         }
+         return super.visitGetCacheEntryCommand(ctx, command);
       }
    }
 }

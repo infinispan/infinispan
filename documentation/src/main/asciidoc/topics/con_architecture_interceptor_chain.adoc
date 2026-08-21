@@ -105,7 +105,6 @@ abstract class DDAsyncInterceptor extends BaseAsyncInterceptor {
   methods via double-dispatch.
 }
 
-class InvocationContextInterceptor extends DDAsyncInterceptor
 class TxInterceptor extends DDAsyncInterceptor
 class NotificationInterceptor extends DDAsyncInterceptor
 class CallInterceptor extends DDAsyncInterceptor
@@ -139,58 +138,54 @@ The typical ordering is:
 |Order |Interceptor |Responsibility
 
 |1
-|`InvocationContextInterceptor`
-|Creates and initializes the invocation context for the operation.
-
-|2
 |`IsMarshallableInterceptor`
 |Verifies that keys and values can be serialized.
 
-|3
+|2
 |`BatchingInterceptor`
 |Handles manual batch demarcation.
 
-|4
+|3
 |`TxInterceptor`
 |Manages transaction enlistment, prepare, commit, and rollback.
 
-|5
+|4
 |`NotificationInterceptor`
 |Fires cache event notifications to registered listeners.
 
-|6
+|5
 |`VersionInterceptor`
 |Manages entry versioning for optimistic locking.
 
-|7
+|6
 |`*LockingInterceptor`
 |Acquires and releases locks. The specific implementation depends on the transaction mode (pessimistic or optimistic).
 
-|8
+|7
 |`EntryWrappingInterceptor`
 |Wraps cache entries for transactional isolation.
 
-|9
+|8
 |`*DistributionInterceptor`
 |Routes commands to the correct owners in distributed and replicated modes.
 
-|10
+|9
 |`StateTransferInterceptor`
 |Coordinates operations during topology changes and state transfer.
 
-|11
+|10
 |`CacheLoaderInterceptor`
 |Loads entries from persistent stores on cache miss.
 
-|12
+|11
 |`CacheWriterInterceptor`
 |Writes entries to persistent stores after mutation.
 
-|13
+|12
 |`*BackupInterceptor`
 |Replicates operations to remote sites for cross-site replication.
 
-|14
+|13
 |`CallInterceptor`
 |Executes the actual cache operation on the data container. Always last in the chain.
 |===
