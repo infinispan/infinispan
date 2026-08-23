@@ -16,30 +16,37 @@ TIP: An alternative for clusters in multiple data centers is cross-site replicat
 [discrete]
 == Server hinting configuration
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_hinting.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/server_hinting.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/server_hinting.yaml[]
 ----
 
-.GlobalConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+GlobalConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/ServerHinting.java[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{javadocroot}/org/infinispan/configuration/global/TransportConfigurationBuilder.html[org.infinispan.configuration.global.TransportConfigurationBuilder]

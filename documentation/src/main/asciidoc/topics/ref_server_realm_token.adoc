@@ -8,44 +8,56 @@ that are compatible with RFC-7662 (OAuth2 Token Introspection), such as
 [discrete]
 == Token realm configuration
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_token_realm_oauth.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/server_token_realm_oauth.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/server_token_realm_oauth.yaml[]
 ----
 
+====
 If the `introspection-url` uses HTTPS, it may be necessary to define a link:{server_docs}#configuring-encryption[server identity] containing an appropriate truststore and reference it in the `oauth2-introspection.client-ssl-context` configuration attribute.
 
 [discrete]
 == Token realm configuration with TLS
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_token_realm_oauth_tls.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/server_token_realm_oauth_tls.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/server_token_realm_oauth_tls.yaml[]
 ----
 
+====

@@ -31,24 +31,30 @@ capabilities.
 The following {brandname} Server configuration creates endpoints on separate socket bindings with dedicated security realms
 and disabling administrative access on the `public` endpoint:
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_endpoints_custom.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/server_endpoints_custom.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/server_endpoints_custom.yaml[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{server_docs}#server-interfaces[Network interfaces and socket bindings]

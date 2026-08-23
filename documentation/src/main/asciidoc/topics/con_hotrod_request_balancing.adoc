@@ -17,18 +17,23 @@ include::code_examples/RequestBalancing.java[]
 
 You can use custom `FailoverRequestBalancingStrategy` implementations if you add your class in the Hot Rod client configuration.
 
-.ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+ConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodCustomRequestBalancing.java[]
 ----
 
-.hotrod-client.properties
-[source,options="nowrap",subs=attributes+,role="secondary"]
+hotrod-client.properties::
++
+[source,options="nowrap",subs=attributes+]
 ----
 include::properties/hotrod-custom-balancing.properties[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{javadocroot}/org/infinispan/client/hotrod/FailoverRequestBalancingStrategy.html[org.infinispan.client.hotrod.FailoverRequestBalancingStrategy]

@@ -18,44 +18,56 @@ For example, if you add **LON** as a backup for **NYC** you should also add **NY
 
 The following example shows the "customers" cache configuration for the **LON** cluster:
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/xsite_backup_nyc.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/xsite_backup_nyc.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/xsite_backup_nyc.yaml[]
 ----
 
+====
 The following example shows the "customers" cache configuration for the **NYC** cluster:
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/xsite_backup_lon.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/xsite_backup_lon.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/xsite_backup_lon.yaml[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{configdocroot}index.html[{brandname} configuration schema reference]

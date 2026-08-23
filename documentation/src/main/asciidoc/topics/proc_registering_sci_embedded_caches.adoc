@@ -25,14 +25,19 @@ You must then manually register all other implementations.
 +
 . Manually register `SerializationContextInitializer` implementations either programmatically or declaratively, as in the following examples:
 
-.Declarative
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Declarative::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/protostream_marshaller.xml[]
 ----
 
-.Programmatic
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+Programmatic::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/ProtoStreamMarshaller.java[]
 ----
+====

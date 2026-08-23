@@ -27,20 +27,26 @@ or equivalently, its subnet mask `255.255.255.0`, which has 24 leading 1-bits.
 In the following configuration, {brandname} Server accepts connections only from addresses in the `192.168.0.0/16` and `10.0.0.0/8` CIDR blocks.
 {brandname} Server rejects all other connections.
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_ipfilter.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/server_ipfilter.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/server_ipfilter.yaml[]
 ----
+====

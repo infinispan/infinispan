@@ -13,18 +13,23 @@ You should use Java serialization only if there is a strict requirement to do so
 . Configure {brandname} to use `JavaSerializationMarshaller`.
 . Add your Java classes to the deserialization allowlist.
 
-.Declarative
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Declarative::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/serialization_marshaller.xml[]
 ----
 
-.Programmatic
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+Programmatic::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/SerializationMarshaller.java[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{jdkdocroot}/java/io/Serializable.html[Serializable]

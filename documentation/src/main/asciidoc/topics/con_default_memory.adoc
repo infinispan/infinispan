@@ -5,20 +5,26 @@ By default {brandname} stores cache entries as objects in the JVM heap.
 Over time, as applications add entries, the size of caches can exceed the amount of memory that is available to the JVM.
 Likewise, if {brandname} is not the primary data store, then entries become out of date which means your caches contain stale data.
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/default_memory.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/default_memory.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/default_memory.yaml[]
 ----
+====

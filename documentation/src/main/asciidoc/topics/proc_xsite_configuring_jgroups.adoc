@@ -21,24 +21,30 @@ The following configuration shows a JGroups RELAY2 stack that:
 * Specifies a maximum of 1000 nodes in the cluster that can send cross-site replication requests.
 * Specifies the names of all backup locations that participate in cross-site replication.
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/jgroups_relay.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/jgroups_relay.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/jgroups_relay.yaml[]
 ----
 
+====
 <1> Change the default port to 7900 to avoid conflict with the cluster communication.
 <2> Replaces discovery `MPING` (only works with IP multicast, not available between networks) with `TCPPING`.
 `TCPPING` requires a comma separated list of hosts using the format `ip[port]`.

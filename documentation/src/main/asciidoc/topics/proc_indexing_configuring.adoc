@@ -51,18 +51,23 @@ include::protobuf/library.proto[]
 
 * Specify the fully qualified name (FQN) of each class that includes the `@Indexed` annotation.
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/indexing_entities_proto.xml[]
 ----
 
-.ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+ConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/IndexBasicConfiguration.java[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{javadocroot}/org/infinispan/configuration/cache/IndexingConfigurationBuilder.html[`org.infinispan.configuration.cache.IndexingConfigurationBuilder`]

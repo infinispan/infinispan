@@ -78,9 +78,36 @@
           <groupId>org.infinispan</groupId>
           <artifactId>infinispan-server-resp</artifactId>
        </dependency>
+       <dependency>
+          <groupId>rubygems</groupId>
+          <artifactId>asciidoctor-tabs</artifactId>
+          <version>${version.asciidoctor.tabs}</version>
+          <type>gem</type>
+       </dependency>
     </dependencies>
 
+    <repositories>
+        <repository>
+            <id>mavengems</id>
+            <url>mavengem:https://rubygems.org</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>mavengems</id>
+            <url>mavengem:https://rubygems.org</url>
+        </pluginRepository>
+    </pluginRepositories>
+
     <build>
+        <extensions>
+            <extension>
+                <groupId>org.jruby.maven</groupId>
+                <artifactId>mavengem-wagon</artifactId>
+                <version>2.0.3</version>
+            </extension>
+        </extensions>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -184,11 +211,32 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>de.saumya.mojo</groupId>
+                <artifactId>gem-maven-plugin</artifactId>
+                <version>2.0.1</version>
+                <executions>
+                    <execution>
+                        <id>install-gems</id>
+                        <goals>
+                            <goal>initialize</goal>
+                        </goals>
+                        <phase>initialize</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <jrubyVersion>${version.jruby}</jrubyVersion>
+                    <gemHome>${project.build.directory}/gems</gemHome>
+                    <gemPath>${project.build.directory}/gems</gemPath>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.asciidoctor</groupId>
                 <artifactId>asciidoctor-maven-plugin</artifactId>
                 <configuration>
+                    <gemPath>${project.build.directory}/gems</gemPath>
                     <requires>
                         <require>asciidoctor-diagram</require>
+                        <require>asciidoctor-tabs</require>
                     </requires>
                     <logHandler>
                         <failIf>
@@ -206,11 +254,6 @@
                         <groupId>org.jruby</groupId>
                         <artifactId>jruby-complete</artifactId>
                         <version>${version.jruby}</version>
-                    </dependency>
-                    <dependency>
-                      <groupId>com.bmuschko</groupId>
-                      <artifactId>asciidoctorj-tabbed-code-extension</artifactId>
-                      <version>${version.asciidoctorj.tabbed.code}</version>
                     </dependency>
                     <dependency>
                       <groupId>org.asciidoctor</groupId>
@@ -238,7 +281,6 @@
                             <relativeBaseDir>true</relativeBaseDir>
                             <sourceDocumentExtensions>
                                 <sourceDocumentExtension>asciidoc</sourceDocumentExtension>
-                                <sourceDocumentExtension>asciidoctorj-tabbed-code-extension</sourceDocumentExtension>
                             </sourceDocumentExtensions>
                             <attributes>
                                 <idprefix />

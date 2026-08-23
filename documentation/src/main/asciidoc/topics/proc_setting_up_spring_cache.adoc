@@ -34,30 +34,37 @@ include::properties/hotrod-client-remote.properties[]
 [discrete]
 == Spring Cache dependencies
 
-.Remote caches Spring 6
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Remote caches Spring 6::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::dependencies_maven/spring6_cache_remote.xml[]
 ----
 
-.Remote caches Spring 7
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+Remote caches Spring 7::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::dependencies_maven/spring7_cache_remote.xml[]
 ----
 
-.Embedded caches Spring 6
-[source,xml,options="nowrap",subs=attributes+,role="secondary"]
+Embedded caches Spring 6::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::dependencies_maven/spring6_cache_embedded.xml[]
 ----
 
-.Embedded caches Spring 7
-[source,xml,options="nowrap",subs=attributes+,role="secondary"]
+Embedded caches Spring 7::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::dependencies_maven/spring7_cache_embedded.xml[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{hotrod_docs}#configuring-hotrod-java-clients_hotrod-client-configuration[Configuring Hot Rod Client connections]

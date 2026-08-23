@@ -12,14 +12,19 @@ Hot Rod Java clients can provide statistics that include remote cache and near-c
 [discrete]
 == Hot Rod Java client statistics
 
-.ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+ConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodClientStatistics.java[]
 ----
 
-.hotrod-client.properties
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+hotrod-client.properties::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::properties/hotrod-client-statistics.properties[]
 ----
+====

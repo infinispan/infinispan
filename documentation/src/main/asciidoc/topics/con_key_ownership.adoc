@@ -48,18 +48,23 @@ select this algorithm in a distributed cache.
 
 You can configure `ConsistentHashFactory` implementations, including custom ones, with embedded caches only.
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/hashing_configuration.xml[]
 ----
 
-.ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+ConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HashingConfiguration.java[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{javadocroot}/org/infinispan/distribution/ch/KeyPartitioner.html[KeyPartitioner]

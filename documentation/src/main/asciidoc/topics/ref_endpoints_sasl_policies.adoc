@@ -44,20 +44,26 @@ Configure cache authorization and then set `<no-anonymous value=false />` to all
 
 In the following configuration the Hot Rod endpoint uses the `GSSAPI` mechanism for authentication because it is the only mechanism that complies with all SASL policies:
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/hotrod_connector_policies.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/hotrod_connector_policies.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/hotrod_connector_policies.yaml[]
 ----
+====

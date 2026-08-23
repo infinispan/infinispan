@@ -7,24 +7,30 @@ explicitly.
 The default endpoint configuration, using the default property security realm, implicitly enables all the protocol connectors
 (Hot Rod, REST, RESP, Memcached).
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_endpoints_default.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/server_endpoints_default.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/server_endpoints_default.yaml[]
 ----
 
+====
 Enable specific protocol connectors using explicit declaration.
 
 [%autowidth,cols="1,1",stripes=even]
@@ -53,45 +59,57 @@ Enable specific protocol connectors using explicit declaration.
 Expose a single endpoint with only the REST and Hot Rod connectors on the `default` socket binding with the `default`
 security realm:
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_endpoints_rest_hotrod.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/server_endpoints_rest_hotrod.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/server_endpoints_rest_hotrod.yaml[]
 ----
 
+====
 Expose a REST connector on the `default` socket binding with the `default` security realm and a RESP connector on the
 `resp` socket binding with the `none` security realm:
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_endpoints_rest_resp.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/server_endpoints_rest_resp.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/server_endpoints_rest_resp.yaml[]
 ----
 
+====
 == Endpoint request limits
 
 Endpoints, by default, impose a `10MB` limit on request sizes. 

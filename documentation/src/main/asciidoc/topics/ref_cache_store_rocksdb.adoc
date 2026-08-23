@@ -91,36 +91,44 @@ significantly increases cache store start time.
 [discrete]
 == RocksDB cache store configuration
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/persistence_rocksdb_store.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/persistence_rocksdb_store.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/persistence_rocksdb_store.yaml[]
 ----
 
-.ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+ConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/ConfigRocksDb.java[]
 ----
 
-.ConfigurationBuilder with properties
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+ConfigurationBuilder with properties::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/ConfigRocksDbProperties.java[]
 ----
 
+====
 .Reference
 
 * link:{configdocroot}infinispan-cachestore-rocksdb-config-{schemaversion}.html[RocksDB cache store configuration schema]

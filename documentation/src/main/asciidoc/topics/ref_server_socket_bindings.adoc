@@ -33,20 +33,26 @@ include::xml/server_network_socket_bindings.xml[]
 
 The following example configuration adds an `interface` declaration named "private" and a `socket-binding` declaration that binds {brandname} Server to the private IP address:
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_socket_binding_private.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/server_socket_binding_private.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/server_socket_binding_private.yaml[]
 ----
+====

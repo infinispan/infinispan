@@ -24,18 +24,23 @@ With embedded caches, {brandname} provides two APIs that let you execute code in
 If you want to run an operation on a single node, a group of nodes, or all nodes in a certain geographic region, then you should use clustered execution.
 If you want to run an operation that guarantees a correct result for your entire data set, then using distributed streams is a more effective option.
 
-.Cluster execution
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Cluster execution::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/ClusterExecutor.java[]
 ----
 
-.CacheStream
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+CacheStream::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/Stream.java[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{javadocroot}/org/infinispan/manager/ClusterExecutor.html[org.infinispan.manager.ClusterExecutor]

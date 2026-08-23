@@ -12,17 +12,22 @@ Add the `@EnableCaching` annotation to one of your configuration classes and the
 
 . Enable cache annotations in your application context in one of the following ways:
 +
-.Declarative
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Declarative::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/spring_annotation_driven.xml[]
 ----
+Programmatic::
 +
-.Programmatic
-[source,java,options=nowrap,subs=attributes+,role="secondary"]
+[source,java,options=nowrap,subs=attributes+]
 ----
 include::code_examples/SpringEnableCaching.java[]
 ----
+
+====
 
 . Annotate methods with `@Cacheable` to cache return values.
 +
