@@ -6,42 +6,51 @@
 
 * Specify authentication mechanisms with the `saslMechanism()` method from the `AuthenticationConfigurationBuilder` class or with the `infinispan.client.hotrod.sasl_mechanism` property.
 
-.SCRAM
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+SCRAM::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodScram.java[]
 ----
 
-.DIGEST
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+DIGEST::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodDigest.java[]
 ----
 
-.PLAIN
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+PLAIN::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodPlain.java[]
 ----
 
-.OAUTHBEARER
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+OAUTHBEARER::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodOAuthBearer.java[]
 ----
 
-.EXTERNAL
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+EXTERNAL::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodExternal.java[]
 ----
 
-.GSSAPI
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+GSSAPI::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodGSSAPI.java[]
 ----
 
+====
 [discrete]
 == Basic Callback Handler
 

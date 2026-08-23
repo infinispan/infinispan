@@ -74,20 +74,26 @@ This reference gets all `memberOf` attributes from the user's entry, extracts th
 
 == LDAP realm configuration reference
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_ldap_realm.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/server_ldap_realm.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/server_ldap_realm.yaml[]
 ----
+====

@@ -18,28 +18,36 @@ register MBeans in custom MBeanServer instances.
 [discrete]
 == JMX MBean server lookup configuration
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/jmx_mbean_server_lookup.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/jmx_mbean_server_lookup.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/jmx_mbean_server_lookup.yaml[]
 ----
 
 ifdef::embedded_caches[]
-.GlobalConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+GlobalConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/JmxMBeanServerLookup.java[]
 ----
+
 endif::embedded_caches[]
+====

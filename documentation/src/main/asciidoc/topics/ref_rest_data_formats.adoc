@@ -133,8 +133,11 @@ curl -u user:password -X POST --data-binary @./schema.proto http://127.0.0.1:112
 
 When writing JSON documents, a special field *__type_* must be present in the document to identity the Protobuf _Message_  that corresponds to the document.
 
-.Person.proto
-[source,protobuf,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Person.proto::
++
+[source,protobuf,options="nowrap",subs=attributes+]
 ----
 message Person  {
   required string name = 1;
@@ -142,8 +145,9 @@ message Person  {
 }
 ----
 
-.Person.json
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+Person.json::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 {
    "_type": "Person",
@@ -151,3 +155,4 @@ message Person  {
    "age": 32
 }
 ----
+====

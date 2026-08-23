@@ -22,30 +22,37 @@ The following points also apply to `ClusterCacheLoader`:
 [discrete]
 == Cluster cache loader configuration
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/persistence_cluster_loader.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/persistence_cluster_loader.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/persistence_cluster_loader.yaml[]
 ----
 
-.ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+ConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/PersistenceClusterLoader.java[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{configdocroot}infinispan-config-{schemaversion}.html[{brandname} configuration schema]

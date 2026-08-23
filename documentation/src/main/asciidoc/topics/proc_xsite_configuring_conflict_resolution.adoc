@@ -19,47 +19,59 @@ Find all {brandname} algorithms and their descriptions in the `org.infinispan.xs
 
 The following example configuration uses the `ALWAYS_REMOVE` algorithm that deletes conflicting entries from both sites:
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/xsite_resolver_provided.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/xsite_resolver_provided.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/xsite_resolver_provided.yaml[]
 ----
 
+====
 [discrete]
 == Custom conflict resolution algorithms
 
 If you create a custom `XSiteEntryMergePolicy` implementation, you can specify the fully qualified class name as the merge policy.
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/xsite_resolver_custom.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/xsite_resolver_custom.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/xsite_resolver_custom.yaml[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{javadocroot}/org/infinispan/xsite/spi/XSiteEntryMergePolicy.html[org.infinispan.xsite.spi.XSiteEntryMergePolicy]

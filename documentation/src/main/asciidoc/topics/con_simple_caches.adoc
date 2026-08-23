@@ -15,20 +15,26 @@ If you configure a capability that is not compatible with a simple cache, {brand
 [discrete]
 == Simple cache configuration
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/simple_cache.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/simple_cache.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/simple_cache.yaml[]
 ----
+====

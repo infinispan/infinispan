@@ -11,8 +11,11 @@ Do one of the following:
 * Invoke the `getSearchStatistics()` or `getClusteredSearchStatistics()` methods for embedded caches.
 * Use `GET` requests to obtain statistics for remote caches from the REST API.
 
-.Embedded caches
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Embedded caches::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 // Statistics for the local cluster member
 SearchStatistics statistics = Search.getSearchStatistics(cache);
@@ -20,8 +23,10 @@ SearchStatistics statistics = Search.getSearchStatistics(cache);
 // Consolidated statistics for the whole cluster
 CompletionStage<SearchStatisticsSnapshot> statistics = Search.getClusteredSearchStatistics(cache)
 ----
-.Remote caches
-[source,options="nowrap",subs=attributes+,role="secondary"]
+Remote caches::
++
+[source,options="nowrap",subs=attributes+]
 ----
 GET /rest/v2/caches/{cacheName}/search/stats
 ----
+====

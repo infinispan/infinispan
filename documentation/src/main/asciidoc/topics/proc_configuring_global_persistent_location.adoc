@@ -51,30 +51,37 @@ In this case {brandname} uses `/opt/data/global/state` as the global persistent 
 [discrete]
 == Global persistent location configuration
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/global_persistent_location.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/global_persistent_location.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/global_persistent_location.yaml[]
 ----
 
-.GlobalConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+GlobalConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/GlobalPersistentLocation.java[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{configdocroot}index.html[{brandname} configuration schema]

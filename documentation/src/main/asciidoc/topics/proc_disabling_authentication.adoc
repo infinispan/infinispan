@@ -11,20 +11,26 @@ When you disable user authentication you should also disable authorization in yo
 . Remove any `authorization` elements from the `security` configuration for the `cache-container` and each cache configuration.
 . Save the changes to your configuration.
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_authentication_disabled.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/server_authentication_disabled.json[]
 ----
 
-.YAML
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::yaml/server_authentication_disabled.yaml[]
 ----
+====

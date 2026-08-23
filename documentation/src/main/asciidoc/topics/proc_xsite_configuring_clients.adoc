@@ -3,18 +3,23 @@
 
 Configure Hot Rod clients to use {brandname} clusters at different sites.
 
-.hotrod-client.properties
-[source,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+hotrod-client.properties::
++
+[source,options="nowrap",subs=attributes+]
 ----
 include::properties/hotrod-client-cross-site.properties[]
 ----
 
-.ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+ConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/CrossSiteAddClusters.java[]
 ----
 
+====
 [TIP]
 ====
 Use the following methods to switch Hot Rod clients to the default cluster or to a cluster at a different site:

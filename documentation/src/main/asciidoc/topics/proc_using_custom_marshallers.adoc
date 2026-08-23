@@ -14,18 +14,23 @@ link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html#initialize(or
 . Configure {brandname} to use your marshaller.
 . Add your Java classes to the deserialization allowlist.
 
-.Declarative
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Declarative::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/custom_marshaller.xml[]
 ----
 
-.Programmatic
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+Programmatic::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/CustomMarshaller.java[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html[org.infinispan.commons.marshall.Marshaller]

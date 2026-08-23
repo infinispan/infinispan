@@ -21,24 +21,30 @@ To apply any global tracing configuration changes, stop the server and repeat th
 == Tracing configuration
 {brandname} applies the tracing configuration globally to all caches.
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/tracing_cache_container.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/tracing_cache_container.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/tracing_cache_container.yaml[]
 ----
 
+====
 == Further Tracing Options
 
 To configure further tracing options it is possible to pass system properties or to set environment variables to the {brandname} server at startup

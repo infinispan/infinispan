@@ -34,32 +34,42 @@ Another benefit is that {brandname} Server responds to client requests more quic
 
 By default, the Hot Rod client uses the intelligence that you configure globally for all {brandname} clusters.
 
-.ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+ConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodClientIntelligence.java[]
 ----
 
-.hotrod-client.properties
-[source,options="nowrap",subs=attributes+,role="secondary"]
+hotrod-client.properties::
++
+[source,options="nowrap",subs=attributes+]
 ----
 include::properties/hotrod-client-intelligence.properties[]
 ----
 
+====
 When you configure the Hot Rod client to use multiple {brandname} clusters, you can use different intelligence for each cluster.
 
-.ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+ConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodClientIntelligenceCluster.java[]
 ----
 
-.hotrod-client.properties
-[source,options="nowrap",subs=attributes+,role="secondary"]
+hotrod-client.properties::
++
+[source,options="nowrap",subs=attributes+]
 ----
 include::properties/hotrod-client-intelligence-cluster.properties[]
 ----
 
+====
 
 [discrete]
 == Failed Server Timeout
@@ -72,18 +82,23 @@ To avoid such a situation, you can use the `serverFailureTimeout` setting that c
 {brandname} will try to reconnect to the server after the defined timeout. If the server is still unreachable, it is marked as failed again and the connection will be re-attempted after the defined timeout.
 You can disable reconnection attempts by setting the `serverFailureTimeout` value to `-1`.
 
-.ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+ConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodClientFailedServerTimeout.java[]
 ----
 
-.hotrod-client.properties
-[source,options="nowrap",subs=attributes+,role="secondary"]
+hotrod-client.properties::
++
+[source,options="nowrap",subs=attributes+]
 ----
 include::properties/hotrod-client-failed-server-timeout.properties[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{javadocroot}/org/infinispan/client/hotrod/configuration/ClientIntelligence.html[org.infinispan.client.hotrod.configuration.ClientIntelligence]

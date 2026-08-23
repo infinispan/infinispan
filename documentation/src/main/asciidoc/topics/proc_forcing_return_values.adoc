@@ -16,20 +16,25 @@ You can, however, change the default behavior so your invocations return previou
 
 * Configure Hot Rod clients so method calls return previous values for keys in one of the following ways:
 
-.FORCE_RETURN_VALUE flag
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+FORCE_RETURN_VALUE flag::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodForceReturn.java[]
 ----
 
-.Per-cache
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+Per-cache::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodForceReturnPerCache.java[]
 ----
 
-.hotrod-client.properties
-[source,options="nowrap",subs=attributes+,role="secondary"]
+hotrod-client.properties::
++
+[source,options="nowrap",subs=attributes+]
 ----
 # Use the "*" wildcard in the cache name to return previous values
 # for all caches that start with the "somecaches" string.
@@ -37,6 +42,7 @@ include::code_examples/HotRodForceReturnPerCache.java[]
 infinispan.client.hotrod.cache.somecaches*.force_return_values = true
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{javadocroot}/org/infinispan/client/hotrod/Flag.html#FORCE_RETURN_VALUE[org.infinispan.client.hotrod.Flag]

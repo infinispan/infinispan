@@ -46,8 +46,11 @@ The following changes apply to the Infinispan 13 configuration schemas:
 
 If you are upgrading to Infinispan 13 from a previous version, and your caches include any configuration with the `soft-index-file-store` element, you should convert that configuration to use the `file-store` element instead.
 
-.Infinispan 12.1 and earlier
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Infinispan 12.1 and earlier::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 <persistence>
   <soft-index-file-store xmlns="urn:infinispan:config:soft-index:12.1">
@@ -57,8 +60,9 @@ If you are upgrading to Infinispan 13 from a previous version, and your caches i
 </persistence>
 ----
 
-.Infinispan 13 and later
-[source,xml,options="nowrap",subs=attributes+,role="secondary"]
+Infinispan 13 and later::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 <persistence>
   <file-store>
@@ -68,10 +72,14 @@ If you are upgrading to Infinispan 13 from a previous version, and your caches i
 </persistence>
 ----
 
+====
 ===== Programmatic
 
-.Infinispan 12.1 and earlier
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Infinispan 12.1 and earlier::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 ConfigurationBuilder b = new ConfigurationBuilder()
    .persistence()
@@ -80,8 +88,9 @@ ConfigurationBuilder b = new ConfigurationBuilder()
         .dataLocation("testCache/data");
 ----
 
-.Infinispan 13 and later
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+Infinispan 13 and later::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 ConfigurationBuilder b = new ConfigurationBuilder()
    .persistence()
@@ -90,12 +99,16 @@ ConfigurationBuilder b = new ConfigurationBuilder()
         .dataLocation("testCache/data");
 ----
 
+====
 ==== Migrating Single File Stores
 
 To use `SingleFileStore` as a file-based cache store with Infinispan 13 or later, do one of the following:
 
-.Declarative
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Declarative::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 <persistence passivation="false">
   <single-file-store shared="false"
@@ -104,14 +117,16 @@ To use `SingleFileStore` as a file-based cache store with Infinispan 13 or later
 </persistence>
 ----
 
-.Programmatic
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+Programmatic::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 ConfigurationBuilder b = new ConfigurationBuilder()
    .persistence()
       .addSingleFileStore();
 ----
 
+====
 However, Infinispan does not recommend using `SingleFileStore`.
 Instead you should use `SoftIndexFileStore` for file-based cache stores because it offers better scalability.
 
@@ -121,19 +136,24 @@ Find out more details about configuring file-based cache stores in the _Configur
 
 The `currentNumberOfEntries` statistics now return `-1` by default as the calculation is expensive. Accurate values can be restored using the following configuration:
 
-.Declarative
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Declarative::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 <cache-container>
   <metrics accurate-size="true"/>
 </cache-container>
 ----
 
-.Programmatic
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+Programmatic::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 GlobalConfigurationBuilder b = new GlobalConfigurationBuilder()
    .metrics()
      .accurateSize(true);
 ----
 
+====

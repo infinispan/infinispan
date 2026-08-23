@@ -8,20 +8,26 @@ Add aliases to caches to access them using different names.
 The `aliases` attribute of a cache configuration is updatable at runtime. Reassign aliases to different caches to quickly switch cache contents.
 ====
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/cache_aliases.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/cache_aliases.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/cache_aliases.yaml[]
 ----
+====

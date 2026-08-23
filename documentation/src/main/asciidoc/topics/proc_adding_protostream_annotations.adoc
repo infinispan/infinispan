@@ -17,32 +17,42 @@ The resulting schema contains only those five fields and only those five fields 
 
 The following `Author.java` and `Book.java` examples show Java classes annotated with `@ProtoField` and `@ProtoFactory`:
 
-.Author.java
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Author.java::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/Author.java[]
 ----
 
-.Book.java
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+Book.java::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/Book.java[]
 ----
 
+====
 The following `Language.java` example shows a Java enum annotated with `@ProtoEnumValue` along with the corresponding Protobuf schema:
 
-.Language.java
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Language.java::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/Language.java[]
 ----
 
-.Language.proto
-[source,proto,options="nowrap",subs=attributes+,role="secondary"]
+Language.proto::
++
+[source,proto,options="nowrap",subs=attributes+]
 ----
 include::protobuf/language.proto[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{protostreamdocroot}/org/infinispan/protostream/annotations/ProtoField.html[org.infinispan.protostream.annotations.ProtoField]

@@ -8,14 +8,19 @@ Provide the locations of {brandname} clusters in Hot Rod client configuration.
 +
 If you want to define a cluster as default, so that clients always attempt to connect to it first, then define a server list with the `addServers("<host_name>:<port>; <host_name>:<port>")` method.
 
-.Multiple cluster connections
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Multiple cluster connections::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodAddCluster.java[]
 ----
 
-.Default server list with a failover cluster
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+Default server list with a failover cluster::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodDefaultCluster.java[]
 ----
+====

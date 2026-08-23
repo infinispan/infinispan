@@ -14,14 +14,17 @@ include::properties/example_agroal.properties[]
 +
 . Configure {brandname} to use your properties file with the `properties-file` attribute or the `PooledConnectionFactoryConfiguration.propertyFile()` method.
 +
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 <connection-pool properties-file="path/to/agroal.properties"/>
 ----
+JSON::
 +
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+[source,json,options="nowrap",subs=attributes+]
 ----
 "persistence": {
   "connection-pool": {
@@ -29,20 +32,24 @@ include::properties/example_agroal.properties[]
   }
 }
 ----
+
+YAML::
 +
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 persistence:
   connectionPool:
     propertiesFile: path/to/agroal.properties
 ----
+
+ConfigurationBuilder::
 +
-.ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+[source,java,options="nowrap",subs=attributes+]
 ----
 .connectionPool().propertyFile("path/to/agroal.properties")
 ----
+
+====
 
 [role="_additional-resources"]
 .Additional resources

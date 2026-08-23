@@ -16,18 +16,23 @@ You can find code examples for other Hot Rod clients in the link:{code_tutorials
 * Invoke the `remoteCache()` method as part of your the `ConfigurationBuilder`.
 * Set the `configuration` or `configuration_uri` properties in the `hotrod-client.properties` file on your classpath.
 
-.ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+ConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodCreatePerCache.java[]
 ----
 
-.hotrod-client.properties
-[source,options="nowrap",subs=attributes+,role="secondary"]
+hotrod-client.properties::
++
+[source,options="nowrap",subs=attributes+]
 ----
 include::properties/hotrod-client-cache-configuration.properties[]
 ----
 
+====
 [IMPORTANT]
 ====
 If the name of your remote cache contains the `.` character, you must enclose it in square brackets when using `hotrod-client.properties` files.

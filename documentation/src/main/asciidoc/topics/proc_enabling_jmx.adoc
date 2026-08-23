@@ -22,28 +22,36 @@ When you use JMX Mbeans for collecting statistics from a remote {brandname} serv
 [discrete]
 == JMX configuration
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/jmx_enabled_cache_container.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/jmx_enabled_cache_container.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/jmx_enabled_cache_container.yaml[]
 ----
 
 ifdef::embedded_caches[]
-.GlobalConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+GlobalConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/JmxGlobalConfigurationBuilder.java[]
 ----
+
 endif::embedded_caches[]
+====

@@ -41,24 +41,30 @@ These trust stores should be configured with an empty password: `password=""`.
 [discrete]
 == Client certificate authentication configuration
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_client_certificate_authn.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/server_client_certificate_authn.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/server_client_certificate_authn.yaml[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{hotrod_docs}#configuring-hotrod-encryption_hotrod-client-configuration[Configuring Hot Rod client encryption]

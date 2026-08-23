@@ -44,17 +44,22 @@ include::dependencies_maven/persistence_sql_store.xml[]
 . Open your {brandname} configuration for editing.
 . Add a SQL table cache store.
 +
-.Declarative
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Declarative::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 table-jdbc-store xmlns="urn:infinispan:config:store:sql:{schemaversion}"
 ----
+Programmatic::
 +
-.Programmatic
-[source,xml,options="nowrap",subs=attributes+,role="secondary"]
+[source,xml,options="nowrap",subs=attributes+]
 ----
 persistence().addStore(TableJdbcStoreConfigurationBuilder.class)
 ----
+
+====
 
 . Specify the database dialect with either `dialect=""` or `dialect()`, for example `dialect="H2"` or `dialect="postgres"`.
 . Configure the SQL cache store with the properties you require, for example:
@@ -76,30 +81,37 @@ persistence().addStore(TableJdbcStoreConfigurationBuilder.class)
 
 The following example loads a distributed cache from a database table named "books" using composite values defined in a Protobuf schema:
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/persistence_sql_table.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/persistence_sql_table.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/persistence_sql_table.yaml[]
 ----
 
-.ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+ConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/PersistenceSqlTable.java[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{encoding_docs}[Cache encoding and marshalling: Generate Protobuf schema and register them with {brandname}]

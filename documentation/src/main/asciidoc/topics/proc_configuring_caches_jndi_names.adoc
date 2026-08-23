@@ -18,20 +18,26 @@ When you add a managed datasource to {brandname} Server you can add the JNDI nam
 [discrete]
 == JNDI name in cache configuration
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/persistence_jdbc_jndi_name.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/persistence_jdbc_jndi_name.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/persistence_jdbc_jndi_name.yaml[]
 ----
+====

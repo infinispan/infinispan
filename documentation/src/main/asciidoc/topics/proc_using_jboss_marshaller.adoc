@@ -8,14 +8,19 @@ JBoss Marshalling is a serialization-based marshalling library and was the defau
 . Configure {brandname} to use the `GenericJBossMarshaller`.
 . Add your Java classes to the deserialization allowlist.
 
-.Declarative
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Declarative::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/jboss_user_marshaller.xml[]
 ----
 
-.Programmatic
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+Programmatic::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/GenericJBossMarshaller.java[]
 ----
+====

@@ -16,26 +16,33 @@ If your applications require a specific number of nodes in the cluster before ca
 [discrete]
 == Initial cluster size configuration
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/initial_cluster_size.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/initial_cluster_size.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/initial_cluster_size.yaml[]
 ----
 
-.ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+ConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/InitialClusterSize.java[]
 ----
+====

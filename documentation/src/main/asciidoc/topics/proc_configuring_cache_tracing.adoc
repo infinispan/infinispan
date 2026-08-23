@@ -25,24 +25,30 @@ not only cache scope.
 [discrete]
 == Enable/disable tracing for a given cache
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/tracing_cache_config.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/tracing_cache_config.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/tracing_cache_config.yaml[]
 ----
 
+====
 [discrete]
 == Enable/disable tracing at runtime
 
@@ -51,20 +57,25 @@ it means it can be changed at runtime without the need to restart the Infinispan
 
 To change a mutable attribute both HotRod and REST APIs can be used.
 
-.HotRod
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+HotRod::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 remoteCacheManager.administration()
    .updateConfigurationAttribute(CACHE_A, "tracing.enabled", "false");
 ----
 
-.REST
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+REST::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 restClient.cache(CACHE_A)
    .updateConfigurationAttribute("tracing.enabled", "false");
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{rest_docs}#rest_v2_cache_mutable_attribute_set[Updating cache configuration attributes]

@@ -23,18 +23,23 @@ As an alternative to providing trust stores, you can use shared system certifica
 . If you also configure client verification, do the following:
 .. Add the keystore to the client configuration with the `keyStoreFileName()` and `keyStorePassword()` methods or corresponding properties.
 
-.ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+ConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/HotRodClientTLS.java[]
 ----
 
-.hotrod-client.properties
-[source,options="nowrap",subs=attributes+,role="secondary"]
+hotrod-client.properties::
++
+[source,options="nowrap",subs=attributes+]
 ----
 include::properties/hotrod-client-tls.properties[]
 ----
 
+====
 See xref:server-setup/java_client_server_setup.adoc#tls[Server Setup] to startup a server.
 
 [role="_additional-resources"]

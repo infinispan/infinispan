@@ -31,24 +31,30 @@ You should disable the ACL cache only if you disable authorization.
 [discrete]
 == ACL cache configuration
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/authorization_acl_cache.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/authorization_acl_cache.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/authorization_acl_cache.yaml[]
 ----
 
+====
 == Flushing ACL caches
 
 It is possible to flush the ACL cache using the `GlobalSecurityManager` MBean, accessible over JMX.

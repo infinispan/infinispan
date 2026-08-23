@@ -12,14 +12,18 @@ The deserialization allow list applies to the Cache Manager so your Java classes
 
 * Add Java classes to the deserialization allow list in the {brandname} configuration or in system properties.
 
-.Declarative
-[source,java,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Declarative::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::xml/deserialization_allowlist.xml[]
 ----
 
-.System properties
-[source,options="nowrap",subs=attributes+,role="secondary"]
+System properties::
++
+[source,options="nowrap",subs=attributes+]
 ----
 // Specify a comma-separated list of fully qualified class names
 -Dinfinispan.deserialization.allowlist.classes=java.time.Instant,com.myclass.Entity
@@ -27,3 +31,4 @@ include::xml/deserialization_allowlist.xml[]
 // Specify a regular expression to match classes
 -Dinfinispan.deserialization.allowlist.regexps=.*
 ----
+====

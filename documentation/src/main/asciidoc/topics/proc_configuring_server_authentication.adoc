@@ -33,20 +33,26 @@ For example, if you explicitly declare a `hotrod-connector` you must also declar
 
 The following configuration specifies SASL mechanisms for the Hot Rod endpoint to use for authentication:
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_authentication_mechanisms.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/server_authentication_mechanisms.json[]
 ----
 
-.YAML
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::yaml/server_authentication_mechanisms.yaml[]
 ----
+====

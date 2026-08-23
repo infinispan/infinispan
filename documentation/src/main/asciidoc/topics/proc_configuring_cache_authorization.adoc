@@ -22,44 +22,56 @@ You can implicitly add all roles defined in the Cache Manager or explicitly defi
 
 The following configuration implicitly adds every role defined in the Cache Manager:
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/authorization_roles_implicit.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/authorization_roles_implicit.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/authorization_roles_implicit.yaml[]
 ----
 
+====
 [discrete]
 == Explicit role configuration
 
 The following configuration explicitly adds a subset of roles defined in the Cache Manager.
 In this case {brandname} denies cache operations for any users that do not have one of the configured roles.
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/authorization_roles_explicit.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/authorization_roles_explicit.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/authorization_roles_explicit.yaml[]
 ----
+====

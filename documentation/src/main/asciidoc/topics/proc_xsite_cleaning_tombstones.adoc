@@ -18,24 +18,30 @@ Likewise, if the number of tombstones is less than this number then {brandname} 
 [discrete]
 == Tombstone cleanup task configuration
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/xsite_tombstone_cleanup.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/xsite_tombstone_cleanup.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/xsite_tombstone_cleanup.yaml[]
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{configdocroot}index.html[{brandname} configuration schema reference]

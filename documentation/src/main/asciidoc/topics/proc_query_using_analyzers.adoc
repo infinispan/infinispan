@@ -8,14 +8,19 @@ You specify analyzer definitions with the `@Text` annotation in your Java classe
 . Annotate the property with the `@Text` annotation to indicate that its value is analyzed.
 . Use the `analyzer` attribute to specify the desired analyzer that you want to use for indexing and searching.
 
-.Protobuf schema
-[source,protobuf,options="nowrap",role="primary"]
+[tabs]
+====
+Protobuf schema::
++
+[source,protobuf,options="nowrap"]
 ----
 include::protobuf/testentity.proto[]
 ----
 
-.Java classes
-[source,java,options="nowrap",role="secondary"]
+Java classes::
++
+[source,java,options="nowrap"]
 ----
 include::code_examples/AnalyzerDefinitions.java[]
 ----
+====

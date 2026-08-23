@@ -29,30 +29,37 @@ write to the cache and the write to the cache store is as small as possible.
 [discrete]
 == Write-behind configuration
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/persistence_write_behind.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/persistence_write_behind.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/persistence_write_behind.yaml[]
 ----
 
-.ConfigurationBuilder
-[source,java,options="nowrap",subs=attributes+,role="secondary"]
+ConfigurationBuilder::
++
+[source,java,options="nowrap",subs=attributes+]
 ----
 include::code_examples/PersistenceWriteBehind.java[]
 ----
 
+====
 [discrete]
 == Failing silently
 

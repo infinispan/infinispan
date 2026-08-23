@@ -17,8 +17,11 @@ Shared cache stores ensure that only the primary owner write to persistent stora
 Purging deletes data, which is not typically the desired behavior for persistent storage.
 ====
 
-.Local cache store
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Local cache store::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 <persistence>
   <store shared="false"
@@ -26,8 +29,9 @@ Purging deletes data, which is not typically the desired behavior for persistent
 </persistence>
 ----
 
-.Shared cache store
-[source,xml,options="nowrap",subs=attributes+,role="secondary"]
+Shared cache store::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 <persistence>
   <store shared="true"
@@ -35,6 +39,7 @@ Purging deletes data, which is not typically the desired behavior for persistent
 </persistence>
 ----
 
+====
 [role="_additional-resources"]
 .Additional resources
 * link:{configdocroot}index.html[{brandname} Configuration Schema]

@@ -51,18 +51,23 @@ Additional options that are appended __after__ all other options.
 Each variable is independently overridable.
 For example, to change only the memory settings without affecting the base or network configuration:
 
-.Linux
-[source,shell,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Linux::
++
+[source,shell,options="nowrap",subs=attributes+]
 ----
 export JAVA_OPTS_MEMORY="-XX:MetaspaceSize=128M -Xms512m -Xmx2g"
 ----
 
-.Windows
-[source,shell,options="nowrap",subs=attributes+,role="secondary"]
+Windows::
++
+[source,shell,options="nowrap",subs=attributes+]
 ----
 set "JAVA_OPTS_MEMORY=-XX:MetaspaceSize=128M -Xms512m -Xmx2g"
 ----
 
+====
 [IMPORTANT]
 ====
 If you are running {brandname} in a container, do not set `-Xmx` or `-Xms`, but use the `-XX:InitialRAMPercentage`, `-XX:MinRAMPercentage` and `-XX:MaxRAMPercentage` options instead, since the values are automatically calculated based on the container size.
@@ -75,18 +80,23 @@ Override the `JAVA_OPTS_MEMORY` variable instead if you need to adjust memory se
 Setting the `JAVA_OPTS` environment variable completely overrides all category variables and uses only the specified value.
 This provides backward compatibility but requires you to include all necessary JVM options.
 
-.Linux
-[source,shell,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Linux::
++
+[source,shell,options="nowrap",subs=attributes+]
 ----
 export JAVA_OPTS="-Djava.awt.headless=true -XX:+ExitOnOutOfMemoryError -Xmx1024M"
 ----
 
-.Windows
-[source,shell,options="nowrap",subs=attributes+,role="secondary"]
+Windows::
++
+[source,shell,options="nowrap",subs=attributes+]
 ----
 set "JAVA_OPTS=-Djava.awt.headless=true -XX:+ExitOnOutOfMemoryError -Xmx1024M"
 ----
 
+====
 [discrete]
 == Editing the configuration file
 
@@ -144,18 +154,23 @@ G1 is the default garbage collector and provides a good balance of throughput an
 It targets pause times under 200ms by default, which you can adjust with `-XX:MaxGCPauseMillis`.
 G1 is a generational collector that works well for heaps up to tens of gigabytes.
 
-.Linux
-[source,shell,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Linux::
++
+[source,shell,options="nowrap",subs=attributes+]
 ----
 export JAVA_OPTS_MEMORY="-XX:+UseG1GC -XX:MaxGCPauseMillis=150 -XX:MetaspaceSize=64M -Xms512m -Xmx4g"
 ----
 
-.Windows
-[source,shell,options="nowrap",subs=attributes+,role="secondary"]
+Windows::
++
+[source,shell,options="nowrap",subs=attributes+]
 ----
 set "JAVA_OPTS_MEMORY=-XX:+UseG1GC -XX:MaxGCPauseMillis=150 -XX:MetaspaceSize=64M -Xms512m -Xmx4g"
 ----
 
+====
 === ZGC
 
 ZGC is a low-latency garbage collector designed for applications that require sub-millisecond pause times regardless of heap size.
@@ -165,18 +180,23 @@ You only need `-XX:+UseZGC` to enable it.
 
 Choose ZGC when your workload requires consistently low latency, such as latency-sensitive services or deployments with large heaps.
 
-.Linux
-[source,shell,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Linux::
++
+[source,shell,options="nowrap",subs=attributes+]
 ----
 export JAVA_OPTS_MEMORY="-XX:+UseZGC -XX:MetaspaceSize=64M -Xms1g -Xmx8g"
 ----
 
-.Windows
-[source,shell,options="nowrap",subs=attributes+,role="secondary"]
+Windows::
++
+[source,shell,options="nowrap",subs=attributes+]
 ----
 set "JAVA_OPTS_MEMORY=-XX:+UseZGC -XX:MetaspaceSize=64M -Xms1g -Xmx8g"
 ----
 
+====
 === Shenandoah
 
 Shenandoah is a low-latency garbage collector with sub-millisecond pause times, similar to ZGC.
@@ -190,35 +210,45 @@ Choose Shenandoah for low-latency workloads, particularly on OpenJDK-based distr
 Shenandoah is available in OpenJDK builds but is not included in Oracle JDK distributions.
 ====
 
-.Linux
-[source,shell,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Linux::
++
+[source,shell,options="nowrap",subs=attributes+]
 ----
 export JAVA_OPTS_MEMORY="-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational -XX:MetaspaceSize=64M -Xms1g -Xmx8g"
 ----
 
-.Windows
-[source,shell,options="nowrap",subs=attributes+,role="secondary"]
+Windows::
++
+[source,shell,options="nowrap",subs=attributes+]
 ----
 set "JAVA_OPTS_MEMORY=-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational -XX:MetaspaceSize=64M -Xms1g -Xmx8g"
 ----
 
+====
 == Garbage Collection Logging
 
 {brandname} automatically enables garbage collection logs to the `$ISPN_HOME/server/log` directory.
 Disable the logs by setting the `GC_LOG` environment variable to `false` before launching the server.
 
-.Linux
-[source,shell,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Linux::
++
+[source,shell,options="nowrap",subs=attributes+]
 ----
 export GC_LOG="false"
 ----
 
-.Windows
-[source,shell,options="nowrap",subs=attributes+,role="secondary"]
+Windows::
++
+[source,shell,options="nowrap",subs=attributes+]
 ----
 set "GC_LOG=false"
 ----
 
+====
 == Heap Dump on OutOfMemoryError
 
 {brandname} enables automatic heap dumps on `OutOfMemoryError` to the `$ISPN_HOME/server/log` directory.
@@ -226,18 +256,23 @@ Heap dumps are useful for troubleshooting memory issues. You can use tools such 
 https://visualvm.github.io/[VisualVM] or https://eclipse.dev/mat/[Eclipse Memory Analyzer] to inspect heap dumps.
 Disable heap dumps by setting the `HEAP_DUMP` environment variable to `false` before launching the server.
 
-.Linux
-[source,shell,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+Linux::
++
+[source,shell,options="nowrap",subs=attributes+]
 ----
 export HEAP_DUMP="false"
 ----
 
-.Windows
-[source,shell,options="nowrap",subs=attributes+,role="secondary"]
+Windows::
++
+[source,shell,options="nowrap",subs=attributes+]
 ----
 set "HEAP_DUMP=false"
 ----
 
+====
 [WARNING]
 ====
 Heap dumps are snapshots of the in-memory data you have stored in {brandname} caches and may therefore contain

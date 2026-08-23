@@ -3,6 +3,7 @@ $(document).ready(function() {
     let path = document.location.pathname;
     let version = path.substring(prefix.length, path.indexOf("/", prefix.length));
 
+    $('#toctitle').before('<div id="tocheader"><a href="https://infinispan.org/documentation/"><img src="https://infinispan.org/assets/images/infinispan-logo.png" alt="Infinispan"></a></div>');
     $('#toctitle').before('<select id="dchooser"></select>');
     let dchooser = $('#dchooser');
     dchooser.append('<option>Documentation index</option>');
@@ -16,12 +17,19 @@ $(document).ready(function() {
     dchooser.append('<option value="/titles/security/security.html">Security guide</option>');
     dchooser.append('<option value="/titles/embedding/embedding.html">Embedding Infinispan caches</option>');
     dchooser.append('<option value="/titles/rest/rest.html">REST API</option>');
-    dchooser.append('<option value="/titles/hotrod_java/hotrod_java.html">Hot Rod Java clients</option>');
     dchooser.append('<option value="/titles/hotrod_protocol/hotrod_protocol.html">Hot Rod protocol reference</option>');
     dchooser.append('<option value="/titles/memcached/memcached.html">Memcached protocol endpoint</option>');
     dchooser.append('<option value="/titles/resp/resp-endpoint.html">RESP protocol endpoint</option>');
     dchooser.append('<option value="/titles/changes/changes.html">Changes between versions</option>');
     dchooser.append('<option value="/titles/contributing/contributing.html">Contributor&rsquo;s guide</option>');
+    dchooser.append('</optgroup>');
+    dchooser.append('<optgroup label="Hot Rod Clients">');
+    dchooser.append('<option value="/docs/hotrod-clients/dotnet/latest/dotnet_client.html">C#</option>');
+    dchooser.append('<option value="/docs/hotrod-clients/cpp/latest/cpp_client.html">C++</option>');
+    dchooser.append('<option value="/docs/hotrod-clients/go/latest/go_client.html">Go</option>');
+    dchooser.append('<option value="/titles/hotrod_java/hotrod_java.html">Java</option>');
+    dchooser.append('<option value="/docs/hotrod-clients/js/latest/js_client.html">Javascript</option>');
+    dchooser.append('<option value="https://github.com/infinispan/python-client">Python</option>');
     dchooser.append('</optgroup>');
     dchooser.append('<optgroup label="Operations">');
     dchooser.append('<option value="/titles/server/server.html">Server</option>');

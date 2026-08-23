@@ -7,24 +7,30 @@ For example, this can be used to authenticate users via a client certificate, an
 [discrete]
 == Aggregate realm configuration
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_aggregate_realm.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/server_aggregate_realm.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/server_aggregate_realm.yaml[]
 ----
 
+====
 == Name rewriters
 
 Principal names may have different forms, depending on the security realm type:
@@ -39,68 +45,86 @@ Names must be normalized to a common form when using the aggregate realm using o
 
 The `case-principal-transformer` transforms a name to all uppercase or all lowercase letters.
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_case_principal_transformer.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/server_case_principal_transformer.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/server_case_principal_transformer.yaml[]
 ----
 
+====
 === Common Name Principal Transformer
 
 The `common-name-principal-transformer` extracts the first `CN` element from a `DN` used by LDAP or Certificates.
 For example, given a principal in the form `CN=app1,CN=serviceA,OU=applications,DC=infinispan,DC=org`, the following
 configuration will extract `app1` as the principal.
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_common_name_principal_transformer.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/server_common_name_principal_transformer.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/server_common_name_principal_transformer.yaml[]
 ----
 
+====
 === Regex Principal Transformer
 
 The `regex-principal-transformer` can perform find and replace using a regular expression.
 The example shows how to extract the local-part from a `user@domain.com` identifier.
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs=attributes+]
 ----
 include::xml/server_regex_principal_transformer.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs=attributes+]
 ----
 include::json/server_regex_principal_transformer.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs=attributes+]
 ----
 include::yaml/server_regex_principal_transformer.yaml[]
 ----
 
+====
