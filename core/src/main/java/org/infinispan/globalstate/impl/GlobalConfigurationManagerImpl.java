@@ -5,6 +5,7 @@ import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.lang.invoke.MethodHandles;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -221,36 +222,66 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
          CompletionStages.join(getOrCreateTemplate(name, configuration, adminFlags));
       });
 
+      // Stored any failed operations for retry.
+      Map<String, Configuration> failed = new HashMap<>();
+
       // Create the caches: define the configurations and collect the cache names.
       persistedCaches.forEach((name, configuration) -> {
          ensurePersistenceCompatibility(name, configuration);
          ScopedState key = new ScopedState(ScopeType.CACHE.toString(), name);
-         // The cache configuration was permanent, it still needs to be
-         ScopedState cacheKey = new ScopedState(CACHE_SCOPE, name);
-         // Skip putIfAbsentAsync RPC if the entry already exists from state transfer
-         if (getStateCache().containsKey(cacheKey)) {
-            // Entry already exists in state cache, no need for RPC
+         // Skip an unnecessary putIfAbsent and registration operation.
+         if (getStateCache().containsKey(key)) {
+            persistedCacheNames.add(name);
             return;
          }
-         CompletionStages.join(createCacheInternal(name, null, configuration, adminFlags)
-               .thenCompose(r -> {
-                  if (!(r instanceof CacheState state))
-                     return CompletableFutures.completedNull();
+         Object existing;
+         try {
+            // The cache configuration was permanent, it still needs to be re-asserted.
+            existing = CompletionStages.join(createCacheInternal(name, null, configuration, adminFlags));
+         } catch (Exception e) {
+            // Re-asserting configuration into the CONFIG cache failed, e.g., a blimp in the network timed out.
+            // Startup must continue, the configuration is valid and persisted locally in this node.
+            // The CONFIG cache might not have the configuration defined in it, though.
+            CONFIG.failedToReAssertCacheConfiguration(name, e);
+            failed.put(name, configuration);
+            CompletionStages.join(configSequencer.orderOnKey(key, () -> concurrentUpdates.contains(key)
+                  ? CompletableFutures.completedNull()
+                  : createConfigurationLocally(name, null, configuration, adminFlags)));
+            persistedCacheNames.add(name);
+            return;
+         }
 
-                  Configuration remoteConf = buildConfiguration(name, state.getConfiguration(), false);
-                  ensurePersistenceCompatibility(name, configuration, remoteConf);
-                  return configSequencer.orderOnKey(key, () -> {
-                     // The listener already applied a value at least as recent as `r`, or removed the configuration.
-                     // Do not overwrite the cluster decision.
-                     if (concurrentUpdates.contains(key))
-                        return CompletableFutures.completedNull();
+         // A returned value means that this or other node registered the cache configuration, and it is compatible.
+         if (existing instanceof CacheState state) {
+            Configuration remoteConf = buildConfiguration(name, state.getConfiguration(), false);
+            ensurePersistenceCompatibility(name, configuration, remoteConf);
+            CompletionStages.join(configSequencer.orderOnKey(key, () -> {
+               // The listener already applied a value at least as recent as state, or removed the configuration.
+               // Do not overwrite the cluster decision.
+               if (concurrentUpdates.contains(key))
+                  return CompletableFutures.completedNull();
 
-                     return createConfigurationLocally(name, state);
-                  });
-               }));
+               return createConfigurationLocally(name, state);
+            }));
+         }
          persistedCacheNames.add(name);
       });
       concurrentUpdates = null;
+
+      // A single catch-up pass over the caches that failed to re-assert.
+      // Each one is retried once, and only while it is still absent from the cluster CONFIG.
+      // A retry that still fails leaves the cache defined locally and accepted as possibly under-replicated until it is re-asserted again.
+      failed.forEach((name, configuration) -> {
+         ScopedState cacheKey = new ScopedState(ScopeType.CACHE.toString(), name);
+         if (getStateCache().containsKey(cacheKey))
+            return;
+
+         try {
+            CompletionStages.join(createCacheInternal(name, null, configuration, adminFlags));
+         } catch (Exception e) {
+            CONFIG.failedToReAssertCacheConfiguration(name, e);
+         }
+      });
 
       // Start the caches after the configuration is defined.
       Set<String> allUserCaches = new HashSet<>(staticCacheNames);
@@ -365,12 +396,11 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    private CompletionStage<Void> startCacheLocally(String name, CacheState state) {
-      CompletionStage<Void> cs = createCacheLocally(name, state);
-      // Zero capacity nodes have to wait for a non-zero capacity node to start the cache.
-      // Do not wait for the start, otherwise the entry stays held in the sequencer and blocks the listener.
-      return configurationManager.getGlobalConfiguration().isZeroCapacityNode()
-            ? CompletableFutures.completedNull()
-            : cs;
+      // Define the configuration and register the cache synchronously, but do not wait for the cache to start.
+      // Waiting would hold the entry in the sequencer and gate the CONFIG write acknowledgement on this cache's initial state transfer.
+      // The start and its initial state transfer proceed asynchronously.
+      createCacheLocally(name, state);
+      return CompletableFutures.completedNull();
    }
 
    private void ensureClusterCompatibility(String name, CacheState state, Map<String, Configuration> configs) {

@@ -41,8 +41,9 @@ public interface EmbeddedCacheManagerAdmin extends CacheContainerAdmin<EmbeddedC
 
    /**
     * Creates a cache across the cluster. The cache will survive topology changes, e.g. when a new node joins the cluster,
-    * it will automatically be created there. This method will wait for the cache to be created on all nodes before
-    * returning.
+    * it will automatically be created there. This method returns once the configuration has been defined across the
+    * cluster and the cache has been started on the originating node; on the other nodes the configuration is defined
+    * synchronously, while their cache instances start asynchronously.
     *
     * @param name the name of the cache
     * @param configuration the configuration to use. It must be a clustered configuration (e.g. distributed)
@@ -57,8 +58,9 @@ public interface EmbeddedCacheManagerAdmin extends CacheContainerAdmin<EmbeddedC
    /**
     * Retrieves an existing cache or creates one across the cluster using the specified configuration.
     * The cache will survive topology changes, e.g. when a new node joins the cluster,
-    * it will automatically be created there. This method will wait for the cache to be created on all nodes before
-    * returning.
+    * it will automatically be created there. This method returns once the configuration has been defined across the
+    * cluster and the cache has been started on the originating node; on the other nodes the configuration is defined
+    * synchronously, while their cache instances start asynchronously.
     *
     * @param name the name of the cache
     * @param configuration the configuration to use. It must be a clustered configuration (e.g. distributed)

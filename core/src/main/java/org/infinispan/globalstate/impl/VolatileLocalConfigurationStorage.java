@@ -7,10 +7,10 @@ import java.lang.invoke.MethodHandles;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.ConfigurationManager;
@@ -94,16 +94,15 @@ public class VolatileLocalConfigurationStorage implements LocalConfigurationStor
 
    @Override
    public CompletionStage<Void> createCache(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-      // Ensure the cache is started
-      return defineCacheConfiguration(name, template, configuration, flags)
-            .thenCompose(ignore -> blockingManager.<Void>supplyBlocking(() -> {
-               try {
-                  SecurityActions.getCache(cacheManager, name);
-               } catch (CacheException cacheException) {
-                  log.cannotObtainFailedCache(name, cacheException);
-               }
+      // Define the configuration and start the cache asynchronously.
+      // Register the configuration before starting the cache so the cache manager can find it.
+      CompletionStage<Void> dcc = defineCacheConfiguration(name, template, configuration, flags);
+      CompletionStage<Void> cc = SecurityActions.createCache(cacheManager, name, blockingManager)
+            .exceptionally(t -> {
+               log.cannotObtainFailedCache(name, CompletableFutures.extractException(t));
                return null;
-            }, name));
+            });
+      return CompletableFuture.allOf(dcc.toCompletableFuture(), cc.toCompletableFuture());
    }
 
    @Override

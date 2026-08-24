@@ -54,6 +54,9 @@ include::code_examples/CreateCache.java[]
 
 The preceding operation also automatically creates caches on any nodes that subsequently join the cluster.
 
+The `createCache()` method returns once the cache is ready on the node where you invoke it.
+Other nodes in the cluster finish starting the cache in the background.
+
 Caches that you create with the `createCache()` method are ephemeral by default. If the entire cluster shuts down, the cache is not automatically created again when it restarts.
 
 .`PERMANENT` flag

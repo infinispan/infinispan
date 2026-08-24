@@ -8,6 +8,8 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.InternalCache;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.CacheEntry;
@@ -23,6 +25,7 @@ import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.security.impl.SecureCacheImpl;
+import org.infinispan.util.concurrent.BlockingManager;
 
 /**
  * @since 15.0
@@ -199,5 +202,22 @@ public class SecurityActions {
       if (java.security.Security.getProvider(provider.getName()) == null) {
          java.security.Security.insertProviderAt(provider, 1);
       }
+   }
+
+   /**
+    * Registers and starts the named cache under a privileged context, without gating the caller on the
+    * cache's initial state transfer. The cache is registered synchronously, so
+    * {@link EmbeddedCacheManager#cacheExists(String)} reports it as soon as this method returns.
+    *
+    * @param cacheManager the cache manager on which to create the cache.
+    * @param cacheName the name of the cache to create; its configuration must already be defined.
+    * @param blockingManager the blocking manager used to offload the cache start.
+    * @return a stage that completes when the cache has started, or completes exceptionally if the start fails.
+    * @throws CacheConfigurationException if no configuration is defined for {@code cacheName}, or it is a template.
+    * @throws SecurityException if authorization is enabled for the cache and the subject lacks {@code LIFECYCLE}.
+    * @throws IllegalLifecycleStateException if the cache manager is stopping or stopped.
+    */
+   public static CompletionStage<Void> createCache(EmbeddedCacheManager cacheManager, String cacheName, BlockingManager blockingManager) {
+      return doPrivileged(new CreateCacheAction(cacheManager, cacheName, blockingManager));
    }
 }
