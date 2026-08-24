@@ -2,6 +2,7 @@ package org.infinispan.conflict.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLongArray;
 
@@ -33,7 +34,7 @@ public class SegmentHashTracker {
    // Incremented before each resetSegment call. getBucketHashes() checks this before and after
    // reading a segment; if the value changed a concurrent reset raced the read and the snapshot
    // is unreliable — the caller falls back to a full segment fetch.
-   private volatile int resetVersion;
+   private final AtomicInteger resetVersion = new AtomicInteger();
 
    @Start
    public void start() {
@@ -112,7 +113,7 @@ public class SegmentHashTracker {
    public void resetSegment(int segment) {
       // Increment version before zeroing so any concurrent getBucketHashes() that began
       // before this reset will detect the change and discard its partial snapshot.
-      resetVersion++;
+      resetVersion.incrementAndGet();
       for (int b = 0; b < bucketCount; b++) {
          bucketHashes[segment].set(b, 0);
          bucketCounts[segment].set(b, 0);
@@ -131,12 +132,12 @@ public class SegmentHashTracker {
     * full segment fetch).
     */
    public List<BucketHash> getBucketHashes(int segment) {
-      int versionBefore = resetVersion;
+      int versionBefore = resetVersion.get();
       List<BucketHash> result = new ArrayList<>(bucketCount);
       for (int b = 0; b < bucketCount; b++) {
          result.add(new BucketHash(segment, b, bucketHashes[segment].get(b), bucketCounts[segment].get(b)));
       }
-      if (resetVersion != versionBefore) return null;
+      if (resetVersion.get() != versionBefore) return null;
       return result;
    }
 

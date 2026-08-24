@@ -304,7 +304,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
       this.running = true;
       if (log.isTraceEnabled())
-         log.tracef("Cache %s starting %s. isRunning=%s", cacheName, getClass().getSimpleName(), !running);
+         log.tracef("Cache %s starting %s. isRunning=%s", cacheName, getClass().getSimpleName(), running);
    }
 
    @Stop
@@ -312,7 +312,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       this.running = false;
       synchronized (versionRequestMap) {
          if (log.isTraceEnabled())
-            log.tracef("Cache %s stopping %s. isRunning=%s", getClass().getSimpleName(), cacheName, running);
+            log.tracef("Cache %s stopping %s. isRunning=%s", cacheName, getClass().getSimpleName(), running);
          cancelVersionRequests();
          versionRequestMap.clear();
       }
@@ -724,6 +724,8 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    }
 
    private static boolean hasConflict(Map<?, ?> map) {
+      // Map being empty means we weren't able to retrieve the remote hashes and thus we must treat it as
+      // a conflict and thus require retrieving all remote entries.
       if (map.isEmpty()) return true;
       Object first = null;
       for (Object v : map.values()) {

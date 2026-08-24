@@ -211,14 +211,26 @@ end note
 AS -> CM: resolveConflicts(\ntopology, preferredNodes)
 activate CM
 
-loop for each segment
-  CM -> SR: getAllReplicasForSegment(seg)
-  activate SR
-  SR -> SR: Fetch entries from\nall write owners
-  SR --> CM: Map<Address, CacheEntry>
-  deactivate SR
+CM -> SR: prefetch bucket hashes\n(one batched RPC per node)
+activate SR
+SR --> CM: List<BucketHash>\nper node
+deactivate SR
 
-  CM -> CM: Filter: keep only entries\nwhere replicas disagree
+loop for each segment
+  CM -> CM: Compare segment hashes\n(derived from bucket hashes)
+
+  alt all replicas match
+    CM -> CM: Skip segment\n(zero entry transfer)
+  else hashes differ
+    CM -> CM: Identify mismatched buckets
+    CM -> SR: getReplicasForBuckets(\nseg, mismatchedBuckets)
+    activate SR
+    SR -> SR: Fetch entries only from\nmismatched buckets
+    SR --> CM: Map<Address, CacheEntry>
+    deactivate SR
+
+    CM -> CM: Filter: keep only entries\nwhere replicas disagree
+  end
 end
 
 == Conflict Resolution ==
@@ -258,13 +270,110 @@ The partition with the highest topology ID is designated the _preferred partitio
 . *Conflict resolution topology* — A special `CONFLICT_RESOLUTION` phase topology is installed with a consistent hash that is the union of all distinct read consistent hashes from each partition.
 This ensures every node can access every segment during conflict detection.
 
-. *Conflict detection* — The `ConflictManager` iterates through each segment and fetches all replica values from their respective owners using the `StateReceiver`.
+. *Conflict detection* — The `ConflictManager` compares a compact hash summary of each segment across all replicas before transferring any entries.
+Only segments whose hashes disagree are inspected further, and within those segments only the entries from buckets that differ are fetched from their owners using the `StateReceiver`.
 Entries where replicas disagree are identified as conflicts.
+See <<architecture-partition-hash-detection_{context}>> for details.
 
 . *Merge policy application* — For each conflict, the configured `EntryMergePolicy` determines the winning value.
 The `preferredEntry` comes from the preferred partition; `otherEntries` contains values from other partitions.
 
 . *Completion* — A stable `NO_REBALANCE` topology is installed, the cache returns to `AVAILABLE` mode, and a standard rebalance is queued to restore the correct number of replicas.
+
+[id="architecture-partition-hash-detection_{context}"]
+== Hash-based conflict detection
+
+Transferring every entry from every owner during conflict detection is expensive, and in the common case most segments are identical across partitions.
+To avoid unnecessary network traffic, {brandname} compares compact hash summaries first and fetches actual entries only where replicas disagree.
+
+Each owner summarizes its data with an order-independent hash.
+Every entry contributes `MurmurHash3(keyBytes) XOR MurmurHash3(valueBytes)`, computed from the marshalled key and value (metadata is not included).
+Because XOR is commutative and associative, all the entry hashes for a segment can be combined into a single _segment hash_ regardless of iteration order.
+A matching segment hash and entry count on every owner means the segment is identical and can be skipped without transferring a single entry.
+
+To narrow detection further, each segment is subdivided into a fixed number of _buckets_.
+An entry's bucket is derived solely from its key (`MurmurHash3(keyBytes)` masked to the bucket count), so the same key always maps to the same bucket on every owner.
+The segment hash is the XOR of its bucket hashes, so both levels of comparison are available from a single summary.
+
+Detection proceeds in three levels, falling back to a full fetch if any step fails:
+
+[plantuml, target=architecture-partition-hash-detection, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+start
+
+:Prefetch bucket hashes from all owners
+(one batched RPC per remote node);
+
+if (Segment hashes match\non all owners?) then (yes)
+  :Skip segment
+  (zero entry transfer);
+  stop
+else (no)
+  if (Small segment?) then (yes)
+    :Fetch all entries in segment;
+  else (no)
+    :Compare bucket hashes;
+    :Fetch entries only from
+    mismatched buckets;
+  endif
+  :Filter to entries where
+  replicas disagree;
+  :Apply merge policy;
+  stop
+endif
+
+@enduml
+....
+
+. *Segment comparison* — When conflict resolution starts, the `ConflictManager` prefetches bucket hashes with a single batched `GetBucketHashesCommand` per remote node covering every segment that node owns, and computes the local hashes in bulk.
+Comparison is then a purely local operation with no further RPCs.
+Segments whose hash and entry count match on every owner are skipped entirely.
+
+. *Bucket comparison* — For a segment that does not match, the owner-by-owner bucket hashes identify exactly which buckets differ.
+Small segments skip this step, because for them the cost of hashing keys to locate buckets outweighs the savings from transferring fewer entries.
+
+. *Selective entry fetch* — A `GetBucketEntriesCommand` fetches entries only from the mismatched buckets of each owner.
+These entries flow into the same consistency filter and `EntryMergePolicy` pipeline used by the full-fetch path, so conflict resolution behaves identically from this point on.
+
+If any step fails, such as an RPC error or an unexpected response, detection falls back to fetching all entries for the segment.
+The optimization is fail-safe: it can reduce traffic but never changes the outcome of conflict resolution.
+
+The number of buckets per segment is set through the partition-handling configuration (`hashBuckets`), which must be a power of two and defaults to 32.
+More buckets narrow the fetch more finely when only a few keys differ, at the cost of a slightly larger hash summary.
+
+== Maintaining segment hashes
+
+Recomputing segment hashes on demand would be costly on large caches, because it requires iterating the data container and any configured non-shared stores to hash every entry.
+Instead, {brandname} maintains the per-bucket hashes and entry counts incrementally as the cache is modified, so the summary is almost free to read when a merge occurs.
+
+The `SegmentHashInterceptor` sits low in the interceptor chain, below the cache store interceptor, and updates the running totals on the return path of each successful write command.
+Because XOR is its own inverse, every mutation is a single atomic XOR against the affected bucket:
+
+[cols="2,4"]
+|===
+|Mutation |Update
+
+|New entry
+|XOR in the new entry hash and increment the bucket count.
+
+|Removed entry
+|XOR out the old entry hash and decrement the bucket count.
+
+|Updated entry
+|XOR out the old hash and XOR in the new hash; the count is unchanged.
+|===
+
+Transactional writes apply their updates at commit time rather than per command.
+When entries leave the data container without being deleted from the cache, such as eviction to a store, the totals are left untouched because the entry still exists.
+When a cache has no store configured, an eviction callback XORs the evicted entry out, since the entry is truly gone.
+Removing a segment resets its totals to zero, and a `ClearCommand` resets every owned segment.
+
+Hash tracking is active only for clustered caches that resolve conflicts on merge and do not use a shared store.
+When it is disabled, or when a live update races a segment reset, conflict detection falls back to computing hashes on demand or to the full-fetch path, preserving correctness in every case.
 
 == Merge policies
 
