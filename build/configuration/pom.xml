@@ -165,10 +165,10 @@
       <version.spring.boot3>3.5.14</version.spring.boot3>
       <!-- Spring 7, Spring Boot 4 versions -->
       <version.spring7>7.0.7</version.spring7>
-      <version.spring.boot4>4.1.0</version.spring.boot4>
+      <version.spring.boot4>4.1.1</version.spring.boot4>
       <version.spring.session4>4.0.3</version.spring.session4>
 
-      <version.swagger-ui-dist>5.32.13</version.swagger-ui-dist>
+      <version.swagger-ui-dist>5.32.14</version.swagger-ui-dist>
       <version.xstream>1.4.21</version.xstream>
 
       <!-- Plugin dependencies -->
@@ -212,7 +212,7 @@
       <version.org.wildfly.galleon-plugins>7.4.0.Final</version.org.wildfly.galleon-plugins>
       <version.pmd.plugin>3.28.0</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>9.2.0</version.owasp-dependency-check-plugin>
-      <version.spotbugs.plugin>4.10.3.0</version.spotbugs.plugin>
+      <version.spotbugs.plugin>4.10.4.0</version.spotbugs.plugin>
       <version.openapi.generator>7.24.0</version.openapi.generator>
       <version.weld-servlet>5.1.7.Final</version.weld-servlet>
 
