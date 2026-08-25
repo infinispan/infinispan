@@ -1,20 +1,23 @@
-[id='getting-started']
 :context: getting-started
-= Getting Started with {brandname} CLI
+
+[id='getting-started']
+= Getting started with {brandname} CLI
+
+[role="_abstract"]
 The command line interface (CLI) lets you remotely connect to {brandname} Server to access data and perform administrative functions.
 Complete the following procedures to learn basic CLI usage such as creating users, connecting to {brandname}, and navigating resources.
 
-include::{topics}/proc_cli_installing_native.adoc[leveloffset=+1]
-include::{topics}/proc_cli_user_create.adoc[leveloffset=+1]
-include::{topics}/proc_cli_user_grant_roles.adoc[leveloffset=+1]
-include::{topics}/proc_cli_user_groups.adoc[leveloffset=+1]
-include::{topics}/ref_default_user_roles.adoc[leveloffset=+1]
-include::{topics}/proc_cli_connecting.adoc[leveloffset=+1]
-include::{topics}/proc_cli_connecting_container.adoc[leveloffset=+1]
-include::{topics}/proc_cli_navigating.adoc[leveloffset=+1]
-include::{topics}/ref_cli_resource_tree.adoc[leveloffset=+2]
-include::{topics}/proc_shutting_down_servers.adoc[leveloffset=+1]
-include::{topics}/con_restarting_clusters.adoc[leveloffset=+2]
+include::../topics/proc_cli_installing_native.adoc[leveloffset=+1]
+include::../topics/proc_cli_user_create.adoc[leveloffset=+1]
+include::../topics/proc_cli_user_grant_roles.adoc[leveloffset=+1]
+include::../topics/proc_cli_user_groups.adoc[leveloffset=+1]
+include::../topics/ref_default_user_roles.adoc[leveloffset=+1]
+include::../topics/proc_cli_connecting.adoc[leveloffset=+1]
+include::../topics/proc_cli_connecting_container.adoc[leveloffset=+1]
+include::../topics/proc_cli_navigating.adoc[leveloffset=+1]
+include::../topics/ref_cli_resource_tree.adoc[leveloffset=+2]
+include::../topics/proc_shutting_down_servers.adoc[leveloffset=+1]
+include::../topics/con_restarting_clusters.adoc[leveloffset=+2]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

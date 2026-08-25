@@ -43,9 +43,9 @@ OK
 127.0.0.1:11222> quit
 ----
 
-include::{topics}/proc_server_configuring_resp.adoc[leveloffset=+1]
-include::{topics}/proc_server_resp_databases.adoc[leveloffset=+1]
-include::{topics}/proc_server_resp_differences.adoc[leveloffset=+1]
+include::../topics/proc_server_configuring_resp.adoc[leveloffset=+1]
+include::../topics/proc_server_resp_databases.adoc[leveloffset=+1]
+include::../topics/proc_server_resp_differences.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

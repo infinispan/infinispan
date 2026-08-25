@@ -8,7 +8,7 @@ This means you can use {brandname} to store data from `Session` or `EntityManage
 The link:https://docs.jboss.org/hibernate/orm/6.6/introduction/html_single/Hibernate_Introduction.html#second-level-cache[Second-Level Caching] chapter in the Hibernate ORM User Guide contains complete information about 2LC.
 This guide provides details about using {brandname} as second-level cache provider with Hibernate.
 
-include::{topics}/ref_hibernate_second_level_cache.adoc[leveloffset=+0]
+include::../topics/ref_hibernate_second_level_cache.adoc[leveloffset=+0]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

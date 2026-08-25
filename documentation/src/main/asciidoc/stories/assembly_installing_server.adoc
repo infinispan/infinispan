@@ -1,11 +1,14 @@
-[id='server_install']
 :context: installing_server
+
+[id='server_install']
 = Installing {brandname} Server
+
+[role="_abstract"]
 Download the {brandname} server distribution and extract it to any directory on your host.
 
-include::{topics}/ref_server_requirements.adoc[leveloffset=+1]
-include::{topics}/proc_downloading_server.adoc[leveloffset=+1]
-include::{topics}/proc_installing_server.adoc[leveloffset=+1]
+include::../topics/ref_server_requirements.adoc[leveloffset=+1]
+include::../topics/proc_downloading_server.adoc[leveloffset=+1]
+include::../topics/proc_installing_server.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

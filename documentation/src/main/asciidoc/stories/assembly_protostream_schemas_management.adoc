@@ -7,9 +7,9 @@ Schemas are registered in the {brandname} server and/or client so that ProtoStre
 knows how to interpret data in the caches.
 
 // Let's see here
-include::{topics}/proc_schemas_hotrod.adoc[leveloffset=+1]
-include::{topics}/proc_schemas_console.adoc[leveloffset=+1]
-include::{topics}/ref_rest_protobuf.adoc[leveloffset=+2]
+include::../topics/proc_schemas_hotrod.adoc[leveloffset=+1]
+include::../topics/proc_schemas_console.adoc[leveloffset=+1]
+include::../topics/ref_rest_protobuf.adoc[leveloffset=+2]
 
 
 // Restore the parent context.

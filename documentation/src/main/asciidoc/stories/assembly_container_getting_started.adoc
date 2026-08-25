@@ -3,4 +3,4 @@
 = Getting started with the {brandname} Server Container Image
 
 //Overview
-include::{topics}/ref_server_container.adoc[leveloffset=+1]
+include::../topics/ref_server_container.adoc[leveloffset=+1]

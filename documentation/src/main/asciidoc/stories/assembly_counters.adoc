@@ -4,7 +4,7 @@
 
 {brandname} provides counters that record the count of objects and are distributed across all nodes in a cluster.
 
-include::{topics}/counters.adoc[leveloffset=+1]
+include::../topics/counters.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

@@ -3,7 +3,7 @@
 Create backup archives in `.zip` format that you can download or store on
 {brandname} Server.
 
-.Prerequisites
+.Prerequisite
 
 Backup archives should reflect the most recent cluster state. For this reason
 you should ensure the cluster is no longer accepting write requests before you

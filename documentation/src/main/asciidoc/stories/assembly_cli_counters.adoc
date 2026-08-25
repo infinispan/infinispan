@@ -1,15 +1,17 @@
-[id='counters']
 :context: cli
-= Working with Counters
-Counters provide atomic increment and decrement operations that record the
-count of objects.
 
-.Prerequisites
+[id='counters']
+= Working with counters
+
+[role="_abstract"]
+Counters provide atomic increment and decrement operations that record the count of objects.
+
+== Prerequisites
 * Start the {brandname} CLI.
 * Connect to a running {brandname} cluster.
 
-include::{topics}/proc_cli_creating_counters.adoc[leveloffset=+1]
-include::{topics}/proc_cli_adding_counter_deltas.adoc[leveloffset=+1]
+include::../topics/proc_cli_creating_counters.adoc[leveloffset=+1]
+include::../topics/proc_cli_adding_counter_deltas.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

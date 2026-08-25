@@ -9,7 +9,7 @@
 * Write skews can be detected and handled
 * Internal locks can be striped
 
-include::{topics}/locking.adoc[leveloffset=+1]
+include::../topics/locking.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

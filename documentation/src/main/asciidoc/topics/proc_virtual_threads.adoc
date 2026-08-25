@@ -13,7 +13,7 @@ To work around this problem, virtual threads can be disabled as described in the
 A common starting point for `<value>` on low-CPU systems is `4`.
 ====
 
-include::{topics}/proc_disable_virtual_threads.adoc[leveloffset=+1]
+include::../topics/proc_disable_virtual_threads.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

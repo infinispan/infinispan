@@ -8,7 +8,7 @@ The effects of data corruption range from lower customer satisfaction to costly 
 
 {brandname} can carry out ACID (atomicity, consistency, isolation, durability) transactions to ensure the cache state is consistent.
 
-include::{topics}/transactions.adoc[leveloffset=+1]
+include::../topics/transactions.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

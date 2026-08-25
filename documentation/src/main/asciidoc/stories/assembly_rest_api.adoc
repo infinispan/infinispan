@@ -13,8 +13,8 @@ However, when some operations are processed successfully, they return an HTTP st
 == Creating and Managing Caches
 Create and manage {brandname} caches and perform operations on data.
 
-include::{topics}/ref_rest_caches.adoc[leveloffset=+2]
-include::{topics}/ref_rest_caches_query.adoc[leveloffset=+2]
+include::../topics/ref_rest_caches.adoc[leveloffset=+2]
+include::../topics/ref_rest_caches_query.adoc[leveloffset=+2]
 
 [id='rest_v2_xsite_cache']
 === Cross-Site Operations with Caches
@@ -25,32 +25,32 @@ ifdef::community[]
 See link:{xsite_docs}[Cross Site replication] for more details about this feature.
 endif::community[]
 
-include::{topics}/ref_rest_xsite.adoc[leveloffset=+3]
+include::../topics/ref_rest_xsite.adoc[leveloffset=+3]
 
 [id='rest_v2_rolling_upgrades']
 === Rolling Upgrades
 Perform rolling upgrades of cache data between {brandname} clusters
 
-include::{topics}/ref_rest_rolling.adoc[leveloffset=+3]
+include::../topics/ref_rest_rolling.adoc[leveloffset=+3]
 
 [id='rest_v2_counters']
 == Creating and Managing Counters
 Create, delete, and modify counters via the REST API.
 
-include::{topics}/ref_rest_counters.adoc[leveloffset=+2]
+include::../topics/ref_rest_counters.adoc[leveloffset=+2]
 
 [id='rest_v2_protobuf_schemas']
 == Working with Protobuf Schemas
 Create and manage Protobuf schemas, `.proto` files, via the {brandname} REST
 API.
 
-include::{topics}/ref_rest_protobuf.adoc[leveloffset=+2]
+include::../topics/ref_rest_protobuf.adoc[leveloffset=+2]
 
 [id='rest_v2_cache_managers']
 == Working with Cache Managers
 Interact with {brandname} Cache Managers to get cluster and usage statistics.
 
-include::{topics}/ref_rest_cache_managers.adoc[leveloffset=+2]
+include::../topics/ref_rest_cache_managers.adoc[leveloffset=+2]
 
 
 [id='rest_v2_xsite_cache_manager']
@@ -58,48 +58,48 @@ include::{topics}/ref_rest_cache_managers.adoc[leveloffset=+2]
 Perform cross-site operations with Cache Managers to apply the operations to
 all caches.
 
-include::{topics}/ref_rest_xsite_cache_managers.adoc[leveloffset=+3]
+include::../topics/ref_rest_xsite_cache_managers.adoc[leveloffset=+3]
 
 
 [id='rest_v2_server']
 == Working with {brandname} Servers
 Monitor and manage {brandname} server instances.
 
-include::{topics}/ref_rest_servers.adoc[leveloffset=+2]
+include::../topics/ref_rest_servers.adoc[leveloffset=+2]
 
 
 [id='rest_v2_cluster']
 == Working with {brandname} Clusters
 Monitor and perform administrative tasks on {brandname} clusters.
 
-include::{topics}/ref_rest_clusters.adoc[leveloffset=+2]
+include::../topics/ref_rest_clusters.adoc[leveloffset=+2]
 
 
 [id='rest_v2_logging']
 == {brandname} Server logging configuration
 View and modify the logging configuration on {brandname} clusters at runtime.
 
-include::{topics}/ref_rest_logging.adoc[leveloffset=+2]
+include::../topics/ref_rest_logging.adoc[leveloffset=+2]
 
 
 [[rest_v2_tasks]]
 == Using Server Tasks
 Retrieve, execute, and upload {brandname} server tasks.
 
-include::{topics}/ref_rest_server_tasks.adoc[leveloffset=+2]
+include::../topics/ref_rest_server_tasks.adoc[leveloffset=+2]
 
 
 [id='rest_v2_security']
 == Working with {brandname} Security
 View and modify security information.
 
-include::{topics}/ref_rest_server_security.adoc[leveloffset=+2]
+include::../topics/ref_rest_server_security.adoc[leveloffset=+2]
 
 [id='rest_v2_tracing_propagation']
 == Enabling Tracing Propagation
 Tracing with {brandname} Server and REST API lets you monitor and analyze the flow of requests and track the execution path across different components.
 
-include::{topics}/ref_rest_server_tracing_propagation.adoc[leveloffset=+2]
+include::../topics/ref_rest_server_tracing_propagation.adoc[leveloffset=+2]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

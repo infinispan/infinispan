@@ -1,7 +1,7 @@
 [id='interceptors']
 :context: dev
 
-include::{topics}/interceptors.adoc[leveloffset=+0]
+include::../topics/interceptors.adoc[leveloffset=+0]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

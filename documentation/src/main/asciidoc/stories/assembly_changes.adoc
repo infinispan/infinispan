@@ -1,9 +1,12 @@
-[id='upgrading']
 :context: upgrading
-= {brandname} Version Details
+
+[id='upgrading']
+= {brandname} version details
+
+[role="_abstract"]
 Learn about changes in {brandname} versions before you upgrade.
 
-include::{topics}/changes.adoc[leveloffset=+0]
+include::../topics/changes.adoc[leveloffset=+0]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

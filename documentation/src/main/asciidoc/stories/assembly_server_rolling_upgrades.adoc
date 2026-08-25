@@ -4,8 +4,8 @@
 Perform rolling upgrades of your {brandname} clusters to change between
 versions without downtime or data loss and migrate data over the Hot Rod protocol.
 
-include::{topics}/proc_setting_up_target_clusters.adoc[leveloffset=+1]
-include::{topics}/proc_synchronizing_data_target_clusters.adoc[leveloffset=+1]
+include::../topics/proc_setting_up_target_clusters.adoc[leveloffset=+1]
+include::../topics/proc_synchronizing_data_target_clusters.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

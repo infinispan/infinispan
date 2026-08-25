@@ -1,7 +1,7 @@
 [id='hotrod_protocol']
 :context: hotrod
 
-include::{topics}/hotrod_protocol.adoc[leveloffset=+0]
+include::../topics/hotrod_protocol.adoc[leveloffset=+0]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

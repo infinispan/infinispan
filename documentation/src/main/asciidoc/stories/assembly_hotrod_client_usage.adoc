@@ -2,12 +2,12 @@
 :context: hotrod-client-usage
 = Basic Usage
 
-include::{topics}/proc_adding_hotrod_client_dependencies.adoc[leveloffset=+1]
-include::{topics}/proc_run_simplest_setup.adoc[leveloffset=+1]
-include::{topics}/proc_run_auth_setup.adoc[leveloffset=+1]
-include::{topics}/proc_hotrod_client_multi_cluster.adoc[leveloffset=+1]
-include::{topics}/proc_hotrod_client_properties.adoc[leveloffset=+1]
-include::{topics}/proc_configuring_hotrod_encryption.adoc[leveloffset=+1]
+include::../topics/proc_adding_hotrod_client_dependencies.adoc[leveloffset=+1]
+include::../topics/proc_run_simplest_setup.adoc[leveloffset=+1]
+include::../topics/proc_run_auth_setup.adoc[leveloffset=+1]
+include::../topics/proc_hotrod_client_multi_cluster.adoc[leveloffset=+1]
+include::../topics/proc_hotrod_client_properties.adoc[leveloffset=+1]
+include::../topics/proc_configuring_hotrod_encryption.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

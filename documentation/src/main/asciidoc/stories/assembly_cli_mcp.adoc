@@ -1,9 +1,12 @@
-[id='cli_mcp']
 :context: cli
-= MCP Stdio Transport Bridge
+
+[id='cli_mcp']
+= MCP stdio transport bridge
+
+[role="_abstract"]
 Use the {brandname} CLI as an MCP stdio transport bridge to connect local MCP clients to {brandname} Server.
 
-include::{topics}/proc_mcp_cli_stdio.adoc[leveloffset=+1]
+include::../topics/proc_mcp_cli_stdio.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]
