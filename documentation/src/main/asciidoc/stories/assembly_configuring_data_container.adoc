@@ -1,7 +1,9 @@
-[id='configuring-memory-usage']
 :context: configuring-memory-usage
+
+[id='configuring-memory-usage']
 = Configuring JVM memory usage
 
+[role="_abstract"]
 Control how {brandname} stores data in JVM memory by:
 
 * Managing JVM memory usage with eviction that automatically removes data from caches.

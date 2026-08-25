@@ -1,4 +1,5 @@
-= Using the CLI as an MCP stdio transport bridge
+[id='using_cli_as_an_mcp_stdio_transport_bridge']
+= Using the CLI as an MCP STDIO transport bridge
 
 [WARNING]
 ====
@@ -6,7 +7,7 @@ The MCP feature is *experimental* and must be explicitly enabled.
 Start {brandname} Server with `-Dorg.infinispan.feature.mcp=true` before using the CLI MCP bridge.
 ====
 
-The {brandname} CLI provides a stdio transport bridge that allows MCP clients to communicate with a running {brandname} server.
+The {brandname} CLI provides a STDIO transport bridge that allows MCP clients to communicate with a running {brandname} server.
 The bridge reads JSON-RPC messages from standard input, forwards them to the server's MCP endpoint, and writes responses to standard output.
 
 This is the recommended way to connect local MCP clients, such as link:https://claude.ai/download[Claude Desktop], link:https://claude.com/claude-code[Claude Code], link:https://cursor.com[Cursor], or link:https://github.com/features/copilot[GitHub Copilot], to an {brandname} server.
@@ -18,7 +19,7 @@ This is the recommended way to connect local MCP clients, such as link:https://c
 
 == CLI command
 
-The `mcp` command starts the stdio transport bridge.
+The `mcp` command starts the STDIO transport bridge.
 You can specify the server connection as a URL, a bookmark name, or the special value `local` which connects to `http://localhost:11222` without authentication.
 
 .Syntax
@@ -47,7 +48,7 @@ bin/infinispan-cli mcp mybookmark
 
 == Configuring MCP clients
 
-MCP clients that support the stdio transport can be configured to use the {brandname} CLI as a bridge.
+MCP clients that support the STDIO transport can be configured to use the {brandname} CLI as a bridge.
 The client launches the CLI process and communicates with it through standard input and output.
 
 === Claude Code
@@ -100,7 +101,7 @@ Add the following to your Cursor MCP configuration (`.cursor/mcp.json`):
 
 === Other MCP clients
 
-Any MCP client that supports the stdio transport can use the {brandname} CLI bridge.
+Any MCP client that supports the STDIO transport can use the {brandname} CLI bridge.
 Configure the client to launch the CLI with the `mcp` command and the appropriate connection argument.
 
 == Connecting to secured servers

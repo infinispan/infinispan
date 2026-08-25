@@ -1,10 +1,13 @@
-[id='user_commands']
 :context: cli
+
+[id='user_commands']
 = Manipulating users in Property Realms
+
+[role="_abstract"]
 Property Realms use property files to store user passwords and groups.
 Use the CLI to create, modify, remove, describe and list users and groups.
 
-.Prerequisites
+== Prerequisites
 * Start the {brandname} CLI.
 
 include::../topics/proc_cli_user_create.adoc[leveloffset=+1]

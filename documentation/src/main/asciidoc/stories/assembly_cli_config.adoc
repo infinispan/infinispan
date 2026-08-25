@@ -1,6 +1,9 @@
-[id='cli_config']
 :context: cli
+
+[id='cli_config']
 = Configuring the {brandname} CLI
+
+[role="_abstract"]
 Define configuration properties for the {brandname} CLI.
 
 include::../topics/proc_cli_configuring_startup_properties.adoc[leveloffset=+1]

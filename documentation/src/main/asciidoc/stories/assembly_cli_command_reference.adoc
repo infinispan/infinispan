@@ -1,6 +1,9 @@
-[id='command_reference']
 :context: cli
-= Command Reference
+
+[id='command_reference']
+= Command reference
+
+[role="_abstract"]
 Review manual pages for {brandname} CLI commands.
 
 [TIP]

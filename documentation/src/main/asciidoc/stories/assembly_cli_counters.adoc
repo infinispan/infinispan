@@ -1,10 +1,12 @@
-[id='counters']
 :context: cli
-= Working with Counters
-Counters provide atomic increment and decrement operations that record the
-count of objects.
 
-.Prerequisites
+[id='counters']
+= Working with counters
+
+[role="_abstract"]
+Counters provide atomic increment and decrement operations that record the count of objects.
+
+== Prerequisites
 * Start the {brandname} CLI.
 * Connect to a running {brandname} cluster.
 

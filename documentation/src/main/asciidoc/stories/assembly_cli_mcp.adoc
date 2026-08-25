@@ -1,7 +1,10 @@
-[id='cli_mcp']
 :context: cli
-= MCP Stdio Transport Bridge
-Use the {brandname} CLI as an MCP stdio transport bridge to connect local MCP clients to {brandname} Server.
+
+[id='cli_mcp']
+= MCP STDIO transport bridge
+
+[role="_abstract"]
+Use the {brandname} CLI as an MCP STDIO transport bridge to connect local MCP clients to {brandname} Server.
 
 include::../topics/proc_mcp_cli_stdio.adoc[leveloffset=+1]
 
