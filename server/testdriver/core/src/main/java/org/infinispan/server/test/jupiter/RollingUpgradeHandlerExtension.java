@@ -13,11 +13,14 @@ import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
+import org.infinispan.server.test.core.TestSetupUtil;
 import org.infinispan.server.test.core.compatibility.Compatibility;
 import org.infinispan.server.test.core.rollingupgrade.CombinedInfinispanServerDriver;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfigurationBuilder;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeHandler;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeVersion;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.jboss.shrinkwrap.api.Archive;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.extension.AfterEachCallback;
@@ -26,10 +29,17 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 public class RollingUpgradeHandlerExtension extends AbstractServerExtension implements BeforeEachCallback,
       AfterEachCallback, TestClientDriver {
+   private static final Log log = LogFactory.getLog(RollingUpgradeHandlerExtension.class);
+
    private final RollingUpgradeConfigurationBuilder configurationBuilder;
    private RollingUpgradeHandler handler;
    private TestServer testServer;
    private TestClient testClient;
+   // These suites run the entire functional test suite against a single shared mixed-version cluster.
+   // If that cluster stops responding the remaining tests would otherwise all fail with identical
+   // timeouts. Once a failure is confirmed to be caused by an unresponsive cluster we set this flag so
+   // subsequent tests are skipped instead, keeping the first genuine failure while removing the noise.
+   private boolean clusterUnresponsive;
 
    public RollingUpgradeHandlerExtension(RollingUpgradeConfigurationBuilder configurationBuilder) {
       this.configurationBuilder = configurationBuilder;
@@ -97,13 +107,50 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
    @Override
    public void beforeEach(ExtensionContext context) {
       Assumptions.assumeFalse(Compatibility.INSTANCE.isCompatibilitySkip(handler.getConfiguration(), context.getRequiredTestClass().getName(), context.getRequiredTestMethod().getName()));
+      // A previous test already confirmed the shared cluster is unresponsive; skip the rest of the
+      // suite rather than piling up identical timeout failures.
+      Assumptions.assumeFalse(clusterUnresponsive,
+            "Skipping - rolling upgrade cluster is not responding, see earlier failure");
       this.testClient = new TestClient(testServer);
       startTestClient(context, testClient);
    }
 
    @Override
    public void afterEach(ExtensionContext extensionContext) {
-      testClient.clearResources();
+      try {
+         // When a test fails for a real reason (not an assumption based skip) probe the shared cluster.
+         // If it is no longer responding we treat the failure as the start of an outage and mark the
+         // cluster so subsequent tests are skipped instead of repeating the same timeout failure. A
+         // genuine assertion failure leaves the cluster healthy, so the probe passes and later tests
+         // still run normally.
+         if (!clusterUnresponsive && isRealFailure(extensionContext) && !isClusterResponsive()) {
+            clusterUnresponsive = true;
+            log.warnf("Rolling upgrade cluster '%s' is not responding after a test failure; " +
+                  "remaining suite tests will be skipped", handler.getConfiguration().name());
+         }
+      } finally {
+         testClient.clearResources();
+      }
+   }
+
+   private static boolean isRealFailure(ExtensionContext context) {
+      return context.getExecutionException()
+            .filter(t -> !TestSetupUtil.isAssumptionViolated(t))
+            .isPresent();
+   }
+
+   /**
+    * Probes the shared mixed-version cluster using the same predicate the handler uses to gate each
+    * upgrade step (a synchronous Hot Rod get plus a server count check). Any exception, including the
+    * client socket timeout, is treated as the cluster being unresponsive.
+    */
+   private boolean isClusterResponsive() {
+      try {
+         return handler.getConfiguration().isValidServerState().test(handler);
+      } catch (Exception e) {
+         log.debugf(e, "Rolling upgrade cluster health probe failed");
+         return false;
+      }
    }
 
    @Override
