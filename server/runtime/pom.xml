@@ -404,6 +404,7 @@
                </properties>
                <systemPropertyVariables>
                   <server.output.dir>${server.output.dir}</server.output.dir>
+                  <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                </systemPropertyVariables>
             </configuration>
          </plugin>

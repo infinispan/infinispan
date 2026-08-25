@@ -13,6 +13,7 @@ import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.server.configuration.endpoint.EndpointsConfigurationBuilder;
+import org.infinispan.server.configuration.security.RealmConfigurationBuilder;
 import org.infinispan.server.configuration.security.SecurityConfiguration;
 import org.infinispan.server.configuration.security.SecurityConfigurationBuilder;
 import org.infinispan.server.configuration.security.ServerTransportConfigurationBuilder;
@@ -102,6 +103,14 @@ public class ServerConfigurationBuilder implements Builder<ServerConfiguration> 
    public Builder<?> read(ServerConfiguration template, Combine combine) {
       // Do nothing
       return this;
+   }
+
+   public String[] namedGroupsForRealm(String realmName) {
+      RealmConfigurationBuilder realm = security.realms().getRealm(realmName);
+      if (realm != null) {
+         return realm.serverIdentitiesConfiguration().sslConfiguration().engine().enabledNamedGroups();
+      }
+      return null;
    }
 
    public Supplier<SSLContext> serverSSLContextSupplier(String sslContextName) {

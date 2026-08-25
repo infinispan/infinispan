@@ -5,7 +5,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.infinispan.commons.jdkspecific.CallerId;
@@ -47,10 +49,14 @@ public record Compatibility(List<CompatibilityEntry> compatibility) {
    }
 
    public CompatibilityEntry compatibilityEntry(RollingUpgradeConfiguration configuration) {
-      return compatibility.stream()
+      Map<String, String> mergedProperties = new HashMap<>();
+      compatibility.stream()
             .filter(e -> e.matchesVersions(configuration.fromVersion().version(), configuration.toVersion().version()))
-            .findFirst()
-            .orElse(CompatibilityEntry.EMPTY);
+            .forEach(e -> mergedProperties.putAll(e.properties()));
+      if (mergedProperties.isEmpty()) {
+         return CompatibilityEntry.EMPTY;
+      }
+      return new CompatibilityEntry(null, null, mergedProperties, Collections.emptyList());
    }
 
    public static void main(String[] args) throws Exception {

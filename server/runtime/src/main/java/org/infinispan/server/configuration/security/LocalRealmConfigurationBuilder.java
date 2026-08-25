@@ -42,7 +42,7 @@ public class LocalRealmConfigurationBuilder implements RealmProviderBuilder<Loca
    }
 
    @Override
-   public int compareTo(RealmProviderBuilder o) {
-      return 0; // Irrelevant
+   public int sortOrder() {
+      return SORT_LAST;
    }
 }

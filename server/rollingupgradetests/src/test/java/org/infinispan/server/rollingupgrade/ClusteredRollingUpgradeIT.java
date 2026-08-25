@@ -14,6 +14,7 @@ import org.infinispan.server.functional.hotrod.HotRodCounterOperations;
 import org.infinispan.server.functional.hotrod.HotRodFlagCacheOperations;
 import org.infinispan.server.functional.hotrod.HotRodListenerWithDslFilter;
 import org.infinispan.server.functional.hotrod.HotRodMultiMapOperations;
+import org.infinispan.server.functional.hotrod.HotRodPeekOperations;
 import org.infinispan.server.functional.hotrod.HotRodTransactionalCacheOperations;
 import org.infinispan.server.functional.hotrod.IgnoreCaches;
 import org.infinispan.server.functional.memcached.MemcachedOperations;
@@ -30,6 +31,7 @@ import org.infinispan.server.functional.rest.RestContainerListenerTest;
 import org.infinispan.server.functional.rest.RestGlobalConfigurationTest;
 import org.infinispan.server.functional.rest.RestLoggingResource;
 import org.infinispan.server.functional.rest.RestOperations;
+import org.infinispan.server.functional.rest.RestPeekOperations;
 import org.infinispan.server.functional.rest.RestProtobufResourceTest;
 import org.infinispan.server.functional.rest.RestRouter;
 import org.infinispan.server.functional.rest.RestServerResource;
@@ -56,6 +58,7 @@ import org.junit.platform.suite.api.Suite;
       HotRodAdmin.class,
       HotRodCounterOperations.class,
       HotRodMultiMapOperations.class,
+      HotRodPeekOperations.class,
       HotRodTransactionalCacheOperations.class,
       HotRodCacheEvents.class,
       HotRodCacheQueries.class,
@@ -78,6 +81,7 @@ import org.junit.platform.suite.api.Suite;
       RespTransactionTest.class,
       RestContainerListenerTest.class,
       RestGlobalConfigurationTest.class,
+      RestPeekOperations.class,
       RestProtobufResourceTest.class,
 })
 public class ClusteredRollingUpgradeIT extends InfinispanSuite {

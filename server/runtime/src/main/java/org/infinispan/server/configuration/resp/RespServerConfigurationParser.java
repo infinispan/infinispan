@@ -177,6 +177,7 @@ public class RespServerConfigurationParser implements ConfigurationParser {
          throw Server.log.encryptionWithoutSecurityRealm();
       } else {
          encryption.realm(securityRealmName).sslContext(serverBuilder.serverSSLContextSupplier(securityRealmName));
+         encryption.namedGroups(serverBuilder.namedGroupsForRealm(securityRealmName));
       }
 
       ParseUtils.requireNoContent(reader);

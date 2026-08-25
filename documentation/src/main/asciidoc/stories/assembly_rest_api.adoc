@@ -22,7 +22,7 @@ Perform cross-site replication operations with the {brandname} REST API.
 
 //Community content
 ifdef::community[]
-See link:../xsite/xsite.html[Cross Site replication] for more details about this feature.
+See link:{xsite_docs}[Cross Site replication] for more details about this feature.
 endif::community[]
 
 include::../topics/ref_rest_xsite.adoc[leveloffset=+3]

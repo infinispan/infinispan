@@ -13,3 +13,6 @@ server:
                 - "TLSv1.3"
               enabledCiphersuites: "TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256"
               enabledCiphersuitesTls13: "TLS_AES_256_GCM_SHA384"
+              enabledNamedGroups":
+                - "X25519MLKEM768"
+                - "x25519"

@@ -60,7 +60,23 @@ public enum Flag implements org.infinispan.api.common.Flag {
     * It will skip client listeners to be notified.
     * @since 9.4.15
     */
-   SKIP_LISTENER_NOTIFICATION(0x0020)
+   SKIP_LISTENER_NOTIFICATION(0x0020),
+   /**
+    * Skips updating the last access time of a cache entry, preventing both the max-idle expiration timer from being
+    * reset and the eviction access order from being updated. This allows inspecting an entry without affecting its
+    * expiration or eviction lifecycle.
+    * <p>
+    * This flag affects the following methods:
+    * <ul>
+    *    <li>{@link RemoteCache#get(Object)}</li>
+    *    <li>{@link RemoteCache#getVersioned(Object)}</li>
+    *    <li>{@link RemoteCache#getWithMetadata(Object)}</li>
+    * </ul>
+    * <p>
+    * Users should prefer {@link RemoteCache#peek(Object)} over using this flag directly.
+    * @since 16.3
+    */
+   PEEK(0x0040)
    ;
 
    private final int flagInt;

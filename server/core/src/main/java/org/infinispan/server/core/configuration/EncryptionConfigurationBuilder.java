@@ -59,6 +59,13 @@ public class EncryptionConfigurationBuilder implements Builder<EncryptionConfigu
       return this;
    }
 
+   public EncryptionConfigurationBuilder namedGroups(String[] groups) {
+      if (groups != null) {
+         ssl.namedGroups(groups);
+      }
+      return this;
+   }
+
    @Override
    public EncryptionConfiguration create() {
       List<SniConfiguration> snis = sniConfigurations.stream().map(SniConfigurationBuilder::create).collect(toList());

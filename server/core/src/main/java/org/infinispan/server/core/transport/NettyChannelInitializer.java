@@ -82,7 +82,12 @@ public class NettyChannelInitializer<A extends ProtocolServerConfiguration> impl
       if (transport != null) {
          pipeline.addLast("stats", new StatsChannelHandler(transport));
          if (mapping != null) {
-            pipeline.addLast("sni", new SniHandler(mapping));
+            String[] namedGroups = server.getConfiguration().ssl().namedGroups();
+            if (namedGroups != null) {
+               pipeline.addLast("sni", new NamedGroupsSniHandler(mapping, namedGroups));
+            } else {
+               pipeline.addLast("sni", new SniHandler(mapping));
+            }
          }
       }
       ChannelInboundHandler decoder = decoderSupplier != null ? decoderSupplier.get() : null;

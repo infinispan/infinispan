@@ -52,7 +52,7 @@ jobs:
         uses: ./.github/actions/setup-java
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4
 
       - name: Build Image
         id: infinispan
@@ -75,7 +75,7 @@ jobs:
 
   tests:
     needs: image
-    uses: infinispan/infinispan-operator/.github/workflows/ci.yml@1119caa07ac3b9e0c3d1a8da9f3f08773c7d621a # main
+    uses: infinispan/infinispan-operator/.github/workflows/ci.yml@852b19ef8dd09f2e93217aeac5836c6625b6d1ba # main
     with:
       operand: ${{ needs.image.outputs.image }}
       operandArtifact: operand-image

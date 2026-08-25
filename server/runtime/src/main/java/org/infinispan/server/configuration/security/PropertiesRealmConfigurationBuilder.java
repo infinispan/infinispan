@@ -64,7 +64,7 @@ public class PropertiesRealmConfigurationBuilder implements RealmProviderBuilder
    }
 
    @Override
-   public int compareTo(RealmProviderBuilder o) {
-      return 0; // Irrelevant
+   public int sortOrder() {
+      return SORT_PENULTIMATE;
    }
 }

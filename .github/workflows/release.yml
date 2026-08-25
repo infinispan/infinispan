@@ -227,7 +227,7 @@ jobs:
         name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3.0.0
 
-      - uses: graalvm/setup-graalvm@0def53c0fd8534bc13416c9469f5be45265824fd # v1
+      - uses: graalvm/setup-graalvm@5298d94fb55a4f185c602eeac5de1b553882abe2 # v1
         with:
           java-version: '25'
           distribution: 'graalvm'
@@ -290,7 +290,7 @@ jobs:
   operator-main:
     needs: [images, release]
     if: ${{ !contains(needs.release.outputs.version, '.Dev') }}
-    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@1119caa07ac3b9e0c3d1a8da9f3f08773c7d621a # main
+    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@852b19ef8dd09f2e93217aeac5836c6625b6d1ba # main
     secrets: inherit
     with:
       image: quay.io/infinispan/server:${{ needs.release.outputs.version }}

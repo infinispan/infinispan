@@ -16,7 +16,6 @@ import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.security.auth.Subject;
 
@@ -86,13 +85,13 @@ public class NettyRestRequest implements RestRequest {
       this.context = getContext(this.path);
       List<String> action = queryStringDecoder.parameters().get("action");
       if (action != null) {
-         this.action = action.iterator().next();
+         this.action = action.getFirst();
       }
       this.contentSource = new ByteBufContentSource(request.content());
    }
 
    private String getContext(String path) {
-      if (path == null || path.isEmpty() || !path.startsWith("/") || path.length() == 1) return "";
+      if (path == null || !path.startsWith("/") || path.length() == 1) return "";
       int endIndex = path.indexOf("/", 1);
       return path.substring(1, endIndex == -1 ? path.length() : endIndex);
    }
@@ -128,7 +127,7 @@ public class NettyRestRequest implements RestRequest {
 
    @Override
    public Iterable<String> headersKeys() {
-      return request.headers().entries().stream().map(headerEntry -> headerEntry.getKey()).collect(Collectors.toList());
+      return request.headers().entries().stream().map(Map.Entry::getKey).toList();
    }
 
    @Override

@@ -176,6 +176,16 @@ public class SslConfigurationBuilder<T extends ProtocolServerConfiguration<T, A>
       return this;
    }
 
+   /**
+    * Configures the TLS named groups (key exchange algorithms).
+    *
+    * @param groups one or more named group names, e.g. "x25519", "X25519MLKEM768"
+    */
+   public SslConfigurationBuilder namedGroups(String... groups) {
+      attributes.attribute(SslConfiguration.NAMED_GROUPS).set(groups);
+      return this;
+   }
+
    @Override
    public void validate() {
       if (isEnabled()) {

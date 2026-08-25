@@ -4,6 +4,7 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.invoke.MethodHandles;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -37,6 +38,7 @@ import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.globalstate.LocalConfigurationStorage;
 import org.infinispan.globalstate.ScopeType;
 import org.infinispan.globalstate.ScopedState;
+import org.infinispan.manager.CacheStartupManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
@@ -86,6 +88,8 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    PrincipalRoleMapper principalRoleMapper;
    @Inject
    SharedContainerMaps sharedContainerMaps;
+   @Inject
+   CacheStartupManager cacheStartupManager;
 
    private Cache<ScopedState, Object> stateCache;
    private ParserRegistry parserRegistry;
@@ -118,16 +122,12 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
             new ConfigurationBuilder().build(),
             EnumSet.of(InternalCacheRegistry.Flag.GLOBAL));
 
-      internalCacheRegistry.startInternalCaches();
+      cacheStartupManager.startInternalCaches(internalCacheRegistry.getInternalCacheNames());
 
       parserRegistry = new ParserRegistry();
 
       Set<String> staticCacheNames = new TreeSet<>(configurationManager.getDefinedCaches());
       staticCacheNames.removeAll(internalCacheRegistry.getInternalCacheNames());
-      log.debugf("Starting user defined caches: %s", staticCacheNames);
-      for (String cacheName : staticCacheNames) {
-         SecurityActions.getCache(cacheManager, cacheName);
-      }
 
       localConfigurationManager.initialize(cacheManager, configurationManager, blockingManager);
 
@@ -139,6 +139,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       Map<String, Configuration> persistedTemplates = localConfigurationManager.loadAllTemplates();
       Map<String, Configuration> persistedCaches = localConfigurationManager.loadAllCaches();
 
+      Set<String> persistedCacheNames = new HashSet<>();
       getStateCache().forEach((key, v) -> {
          ScopeType scopeType = ScopeType.fromString(key.getScope());
          if (scopeType != null) {
@@ -148,7 +149,8 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
                case CONTAINER -> CompletionStages.join(updateGlobalConfigurationLocally(state));
                case CACHE -> {
                   ensureClusterCompatibility(name, state, persistedCaches);
-                  CompletionStages.join(createCacheLocally(name, state));
+                  CompletionStages.join(createConfigurationLocally(name, state));
+                  persistedCacheNames.add(name);
                }
                case TEMPLATE -> {
                   ensureClusterCompatibility(name, state, persistedTemplates);
@@ -167,7 +169,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
          CompletionStages.join(getOrCreateTemplate(name, configuration, adminFlags));
       });
 
-      // Create the caches
+      // Create the caches: define the configurations and collect the cache names.
       persistedCaches.forEach((name, configuration) -> {
          ensurePersistenceCompatibility(name, configuration);
          // The cache configuration was permanent, it still needs to be
@@ -176,11 +178,18 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
                   if (r instanceof CacheState) {
                      Configuration remoteConf = buildConfiguration(name, ((CacheState) r).getConfiguration(), false);
                      ensurePersistenceCompatibility(name, configuration, remoteConf);
-                     return createCacheLocally(name, (CacheState) r);
+                     return createConfigurationLocally(name, (CacheState) r);
                   }
                   return CompletableFutures.completedNull();
                }));
+         persistedCacheNames.add(name);
       });
+
+      // Start the caches after the configuration is defined.
+      Set<String> allUserCaches = new HashSet<>(staticCacheNames);
+      allUserCaches.addAll(persistedCacheNames);
+      log.debugf("Starting user defined caches: %s", allUserCaches);
+      CompletionStages.join(cacheStartupManager.startUserCaches(allUserCaches));
    }
 
    private void ensureClusterCompatibility(String name, CacheState state, Map<String, Configuration> configs) {
@@ -345,6 +354,19 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       return localConfigurationManager.createTemplate(name, configuration, flags)
             .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, ConfigurationChangedEvent.TEMPLATE, name, null))
             .toCompletableFuture();
+   }
+
+   CompletionStage<Void> createConfigurationLocally(String name, CacheState state) {
+      Configuration configuration = buildConfiguration(name, state.getConfiguration(), false);
+      return createConfigurationLocally(name, state.getTemplate(), configuration, state.getFlags());
+   }
+
+   CompletionStage<Void> createConfigurationLocally(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+      log.debugf("Defining cache configuration %s from global state", name);
+      return localConfigurationManager.defineCacheConfiguration(name, template, configuration, flags)
+            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(
+                  ConfigurationChangedEvent.EventType.CREATE, ConfigurationChangedEvent.CACHE, name, null
+            ));
    }
 
    CompletionStage<Void> createCacheLocally(String name, CacheState state) {
