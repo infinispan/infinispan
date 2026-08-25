@@ -1,7 +1,10 @@
-[id='cache-encoding']
 :context: storage-formats
+
+[id='cache-encoding']
 = Configuring cache encoding
-Find out how to configure {brandname} caches with different media types and how encoding affects the ways you can use {brandname}.
+
+[role="_abstract"]
+Configure {brandname} caches with different media types and learn how encoding affects their use.
 
 include::../topics/con_cache_encoding.adoc[leveloffset=+1]
 include::../topics/con_protobuf_encoding.adoc[leveloffset=+1]

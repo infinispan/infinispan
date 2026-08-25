@@ -1,6 +1,9 @@
-[id='getting-started']
 :context: getting-started
-= Getting Started with {brandname} CLI
+
+[id='getting-started']
+= Getting started with {brandname} CLI
+
+[role="_abstract"]
 The command line interface (CLI) lets you remotely connect to {brandname} Server to access data and perform administrative functions.
 Complete the following procedures to learn basic CLI usage such as creating users, connecting to {brandname}, and navigating resources.
 

@@ -1,10 +1,13 @@
-[id='raft']
 :context: cli
+
+[id='raft']
 = Working with Raft
+
+[role="_abstract"]
 {brandname} contains an internal mechanism backed by Raft.
 The CLI provides the means for the management of the Raft-backed internal components.
 
-.Prerequisites
+== Prerequisites
 * Start the {brandname} CLI.
 * Connect to a running {brandname} cluster.
 

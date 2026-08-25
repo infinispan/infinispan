@@ -2,6 +2,8 @@ ifdef::context[:parent-context: {context}]
 [id='secure-cluster-transport']
 :context: secure-cluster-transport
 = Encrypting cluster transport
+
+[role="_abstract"]
 Secure cluster transport so that nodes communicate with encrypted messages.
 You can also configure {brandname} clusters to perform certificate authentication so that only nodes with valid identities can join.
 

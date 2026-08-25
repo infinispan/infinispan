@@ -1,6 +1,9 @@
-[id='server_install']
 :context: installing_server
+
+[id='server_install']
 = Installing {brandname} Server
+
+[role="_abstract"]
 Download the {brandname} server distribution and extract it to any directory on your host.
 
 include::../topics/ref_server_requirements.adoc[leveloffset=+1]

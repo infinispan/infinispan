@@ -1,6 +1,9 @@
-[id='cache-operations']
 :context: cache-operations
+
+[id='cache-operations']
 = Performing Cache Operations with the {brandname} CLI
+
+[role="_abstract"]
 Use the command line interface (CLI) to perform operations on remote caches such as creating caches, manipulating data, and rebalancing.
 
 include::../topics/proc_creating_caches_cli.adoc[leveloffset=+1]

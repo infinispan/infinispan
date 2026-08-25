@@ -1,6 +1,9 @@
-[id='data-conversion']
 :context: transcoding
+
+[id='data-conversion']
 = Data conversion
+
+[role="_abstract"]
 {brandname} uses transcoders to convert data between various encodings that are identified by media types.
 
 //Pruivo: The only way to register a transcoder is via an internal API which we don't document.

@@ -2,7 +2,9 @@
 :context: statistics-jmx
 = Enabling and configuring {brandname} statistics and JMX monitoring
 
-{brandname} can provide Cache Manager and cache statistics as well as export JMX MBeans.
+[role="_abstract"]
+{brandname} provides Cache Manager and cache statistics. 
+It also exports JMX MBeans.
 
 ifdef::embedded_caches[]
 include::../topics/proc_enabling_statistics_embedded.adoc[leveloffset=+1]

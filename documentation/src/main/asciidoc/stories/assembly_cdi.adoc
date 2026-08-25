@@ -1,6 +1,9 @@
-[id='cdi_support']
 :context: cdi
-= Using the CDI Extension
+
+[id='cdi_support']
+= Using the CDI extension
+
+[role="_abstract"]
 {brandname} provides an extension that integrates with the CDI (Contexts and
 Dependency Injection) programming model and allows you to:
 

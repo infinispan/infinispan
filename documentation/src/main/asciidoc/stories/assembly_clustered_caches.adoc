@@ -1,7 +1,9 @@
-[id='clustered-caches']
 :context: clustered-caches
+
+[id='clustered-caches']
 = Clustered caches
 
+[role="_abstract"]
 You can create embedded and remote caches on {brandname} clusters that replicate data across nodes.
 
 include::../topics/con_replicated_caches.adoc[leveloffset=+1]

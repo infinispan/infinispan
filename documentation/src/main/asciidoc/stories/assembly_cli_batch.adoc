@@ -1,9 +1,12 @@
-[id='batch_operations']
 :context: cli
+
+[id='batch_operations']
 = Performing Batch Operations
+
+[role="_abstract"]
 Process operations in groups, either interactively or using batch files.
 
-.Prerequisites
+== Prerequisites
 * A running {brandname} cluster.
 
 include::../topics/proc_cli_batching_files.adoc[leveloffset=+1]

@@ -2,18 +2,18 @@
 :context: persistence
 = Configuring persistent storage
 
+[role="_abstract"]
 {brandname} uses cache stores and loaders to interact with persistent storage.
 
 Durability::
-Adding cache stores allows you to persist data to non-volatile storage so it
-survives restarts.
+Adding cache stores allows you to persist data to non-volatile storage so it survives restarts.
+
 Write-through caching::
-Configuring {brandname} as a caching layer in front of persistent storage
-simplifies data access for applications because {brandname} handles all
+Configuring {brandname} as a caching layer in front of persistent storage simplifies data access for applications because {brandname} handles all
 interactions with the external storage.
+
 Data overflow::
-Using eviction and passivation techniques ensures that {brandname} keeps only
-frequently used data in-memory and writes older entries to persistent storage.
+Using eviction and passivation techniques ensures that {brandname} keeps only frequently used data in-memory and writes older entries to persistent storage.
 
 include::../topics/con_segmented_cache_stores.adoc[leveloffset=+1]
 include::../topics/con_shared_cache_stores.adoc[leveloffset=+1]

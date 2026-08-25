@@ -1,15 +1,14 @@
-[id='backup']
 :context: cli
+
+[id='backup']
 = Backing Up and Restoring {brandname} Clusters
 
 [role="_abstract"]
 
-Create archives of {brandname} resources that include cached entries, cache
-configurations, Protobuf schemas, and server scripts. You can then use the 
-backup archives to restore {brandname} Server clusters after a restart or
-migration.
+Create archives of {brandname} resources that include cached entries, cache configurations, Protobuf schemas, and server scripts. 
+You can then use the backup archives to restore {brandname} server clusters after a restart or migration.
 
-.Prerequisites
+== Prerequisites
 
 * Start the {brandname} CLI.
 * Connect to a running {brandname} cluster.

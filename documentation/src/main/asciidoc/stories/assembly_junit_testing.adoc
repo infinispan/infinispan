@@ -1,6 +1,9 @@
-[id='junit-testing']
 :context: junit-testing
+
+[id='junit-testing']
 = JUnit testing
+
+[role="_abstract"]
 Run JUnit tests for {brandname}.
 
 include::../topics/infinispan_testcontainers.adoc[leveloffset=+1]

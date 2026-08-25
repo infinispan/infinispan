@@ -1,6 +1,8 @@
-[id='creating-custom-cache-stores']
 :context: custom-cache-stores
+[id='creating-custom-cache-stores']
 = Creating custom cache store implementations
+
+[role="_abstract"]
 You can create custom cache stores through the {brandname} persistent SPI.
 
 include::../topics/con_persistence_spi.adoc[leveloffset=+1]

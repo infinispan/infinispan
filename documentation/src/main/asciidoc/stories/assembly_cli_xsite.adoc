@@ -1,10 +1,13 @@
-[id='xsite_commands']
 :context: cli
+
+[id='xsite_commands']
 = Performing Cross-Site Replication Operations
+
+[role="_abstract"]
 {brandname} clusters running in different locations can discover and
 communicate with each other to backup data.
 
-.Prerequisites
+== Prerequisites
 * Start the {brandname} CLI.
 * Connect to a running {brandname} cluster.
 
