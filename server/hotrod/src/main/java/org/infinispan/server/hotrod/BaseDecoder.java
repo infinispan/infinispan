@@ -28,6 +28,7 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
    protected final Executor executor;
    protected final HotRodServer server;
    protected final int maxContentLength;
+   private final int maxCollectionSize;
    // And this is the ByteBuf pos before decode is performed
    protected int posBefore;
    // Set when the connection is being closed due to a protocol error (e.g. TooLongFrameException)
@@ -46,6 +47,7 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
       this.server = server;
       HotRodServerConfiguration configuration = server.getConfiguration();
       this.maxContentLength = configuration.maxContentLengthBytes();
+      this.maxCollectionSize = Integer.getInteger("infinispan.hotrod.server.max-collection-size", maxContentLength / 16);
    }
 
    public Executor getExecutor() {
@@ -96,7 +98,7 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
    }
 
    @Override
-   public void exceptionCaught(ChannelHandlerContext ctx, Throwable t) throws Exception {
+   public void exceptionCaught(ChannelHandlerContext ctx, Throwable t) {
       if (log.isTraceEnabled()) log.trace("Exception caught", t);
       if (t instanceof DecoderException) {
          t = t.getCause();
@@ -121,15 +123,24 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
    /**
     * We usually know the size of the map ahead, and we want to return static empty map if we're not going to add anything.
     */
-   protected <K, V> Map<K, V> allocMap(int size) {
+   protected <K, V> Map<K, V> allocMap(Channel channel, int size) {
+      if (size > maxCollectionSize) {
+         throw log.requestCollectionTooLarge(channel, maxCollectionSize, size);
+      }
       return size == 0 ? Collections.emptyMap() : new HashMap<>(size * 4/3, 0.75f);
    }
 
-   protected <T> List<T> allocList(int size) {
+   protected <T> List<T> allocList(Channel channel, int size) {
+      if (size > maxCollectionSize) {
+         throw log.requestCollectionTooLarge(channel, maxCollectionSize, size);
+      }
       return size == 0 ? Collections.emptyList() : new ArrayList<>(size);
    }
 
-   protected <T> Set<T> allocSet(int size) {
+   protected <T> Set<T> allocSet(Channel channel, int size) {
+      if (size > maxCollectionSize) {
+         throw log.requestCollectionTooLarge(channel, maxCollectionSize, size);
+      }
       return size == 0 ? Collections.emptySet() : new HashSet<>(size);
    }
 }

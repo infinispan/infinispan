@@ -106,6 +106,11 @@ value with a size suffix (for example, 128KB, 10MB, 1.5GB). Note that this is th
 include::xml/server_endpoints_limits_hotrod_resp_memcached.xml[]
 ----
 
+NOTE: The limit also affects the maximum number of elements passed as arguments to Hot Rod operations, such as the number of
+keys in `GET_ALL`, the number of entries in a `PUT_ALL` or the number of parameters of a task. The maximum number is
+calculated via the following formula `max-collection-size = max-content-length / 16`. It can be overridden by starting the
+server with the `-Dinfinispan.server.hotrod.max-collection-size=<size>` property.
+
 .REST endpoint
 
 [source,xml,options="nowrap",subs=attributes+]

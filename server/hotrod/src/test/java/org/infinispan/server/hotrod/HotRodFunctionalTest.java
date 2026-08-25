@@ -36,6 +36,7 @@ import org.infinispan.server.hotrod.test.HotRodClient;
 import org.infinispan.server.hotrod.test.TestBulkGetKeysResponse;
 import org.infinispan.server.hotrod.test.TestBulkGetResponse;
 import org.infinispan.server.hotrod.test.TestErrorResponse;
+import org.infinispan.server.hotrod.test.TestGetAllResponse;
 import org.infinispan.server.hotrod.test.TestGetWithVersionResponse;
 import org.infinispan.server.hotrod.test.TestResponse;
 import org.infinispan.server.hotrod.test.TestResponseWithPrevious;
@@ -484,6 +485,80 @@ public class HotRodFunctionalTest extends HotRodSingleNodeTest {
       // Not really necessary, SingleByteFrameDecoderChannelInitializer forces the server to retry even for small keys
       byte[] value = generateRandomString(1024).getBytes();
       assertStatus(client().put(k(m), 0, 0, value), Success);
+   }
+
+   public void testPutAll(Method m) {
+      Map<byte[], byte[]> entries = new java.util.LinkedHashMap<>();
+      for (int i = 0; i < 10; i++) {
+         entries.put(k(m, "k" + i + "-"), v(m, "v" + i + "-"));
+      }
+      TestResponse resp = client().putAll(entries, 0, 0);
+      assertStatus(resp, Success);
+      for (Map.Entry<byte[], byte[]> entry : entries.entrySet()) {
+         assertHotRodEquals(cacheManager, entry.getKey(), entry.getValue());
+      }
+   }
+
+   public void testPutAllWithLifespan(Method m) throws InterruptedException {
+      Map<byte[], byte[]> entries = new java.util.LinkedHashMap<>();
+      entries.put(k(m, "k1-"), v(m, "v1-"));
+      entries.put(k(m, "k2-"), v(m, "v2-"));
+      TestResponse resp = client().putAll(entries, 1, 0);
+      assertStatus(resp, Success);
+      assertEntryExpiration(k(m, "k1-"), 1000, -1);
+      assertEntryExpiration(k(m, "k2-"), 1000, -1);
+   }
+
+   public void testGetAll(Method m) {
+      int size = 10;
+      Set<byte[]> keys = new java.util.HashSet<>();
+      for (int i = 0; i < size; i++) {
+         byte[] key = k(m, "k" + i + "-");
+         byte[] value = v(m, "v" + i + "-");
+         assertStatus(client().put(key, 0, 0, value), Success);
+         keys.add(key);
+      }
+      TestGetAllResponse resp = client().getAll(keys);
+      assertStatus(resp, Success);
+      assertEquals(size, resp.data.size());
+      for (int i = 0; i < size; i++) {
+         byte[] key = k(m, "k" + i + "-");
+         List<Map.Entry<byte[], byte[]>> filtered = resp.data.entrySet().stream()
+                                                          .filter(entry -> Arrays.equals(entry.getKey(), key))
+                                                          .collect(Collectors.toList());
+         assertEquals(1, filtered.size());
+         assertArrayEquals(v(m, "v" + i + "-"), filtered.get(0).getValue());
+      }
+   }
+
+   public void testGetAllEmpty(Method m) {
+      TestGetAllResponse resp = client().getAll(new java.util.HashSet<>());
+      assertStatus(resp, Success);
+      assertEquals(0, resp.data.size());
+   }
+
+   public void testPutAllThenGetAll(Method m) {
+      Map<byte[], byte[]> entries = new java.util.LinkedHashMap<>();
+      Set<byte[]> keys = new java.util.HashSet<>();
+      for (int i = 0; i < 5; i++) {
+         byte[] key = k(m, "k" + i + "-");
+         byte[] value = v(m, "v" + i + "-");
+         entries.put(key, value);
+         keys.add(key);
+      }
+      assertStatus(client().putAll(entries, 0, 0), Success);
+
+      TestGetAllResponse resp = client().getAll(keys);
+      assertStatus(resp, Success);
+      assertEquals(5, resp.data.size());
+      for (int i = 0; i < 5; i++) {
+         byte[] key = k(m, "k" + i + "-");
+         List<Map.Entry<byte[], byte[]>> filtered = resp.data.entrySet().stream()
+                                                          .filter(entry -> Arrays.equals(entry.getKey(), key))
+                                                          .collect(Collectors.toList());
+         assertEquals(1, filtered.size());
+         assertArrayEquals(v(m, "v" + i + "-"), filtered.get(0).getValue());
+      }
    }
 
    public void testSize(Method m) {
