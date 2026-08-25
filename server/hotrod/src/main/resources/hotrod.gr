@@ -26,6 +26,7 @@ import org.infinispan.counter.api._private.CounterEncodeUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.server.core.transport.ConnectionMetadata;
+import org.infinispan.server.core.AllocationLimitException;
 import org.infinispan.server.hotrod.tx.ControlByte;
 
 init {
@@ -61,6 +62,12 @@ exceptionally {
    if (t instanceof TooLongFrameException tlfe) {
       log.requestTooLarge(ctx.channel(), maxContentLength, requestBytes);
       if (log.isTraceEnabled()) log.trace("Request too large", tlfe);
+      closing = true;
+      ctx.close();
+      return;
+   } else if (t instanceof AllocationLimitException sle) {
+      log.warn(t.toString());
+      if (log.isTraceEnabled()) log.trace("Illegal request", sle);
       closing = true;
       ctx.close();
       return;
@@ -124,7 +131,7 @@ mediaTypeDefinition: byte;
 mediaTypeId: vInt;
 mediaTypeName: string[bytesAvailable(buf)];
 mediaTypeParams returns Map<String, String>
-   : mediaTypeParamsNum { mediaTypeParams = allocMap(mediaTypeParamsNum); }
+   : mediaTypeParamsNum { mediaTypeParams = allocMap(ctx.channel(), mediaTypeParamsNum); }
       #mediaTypeParamsNum ( mediaParamName mediaParamValue { mediaTypeParams.put(mediaParamName, mediaParamValue); } )
    ;
 mediaTypeParamsNum: vInt;
@@ -146,7 +153,7 @@ otherParamsNum: vInt;
 otherParamName: string[bytesAvailable(buf)];
 otherParamValue: array[bytesAvailable(buf)];
 otherParamsRev returns Map<String, byte[]>
-   : otherParamsNum { otherParamsRev = allocMap(otherParamsNum); }
+   : otherParamsNum { otherParamsRev = allocMap(ctx.channel(), otherParamsNum); }
       #otherParamsNum ( otherParamName otherParamValue { otherParamsRev.put(otherParamName, otherParamValue); } )
    ;
 
@@ -198,13 +205,13 @@ listenerParams
    ;
 filterFactory: string[bytesAvailable(buf)];
 filterParams returns List<byte[]>
-   : { !filterFactory.isEmpty() }? numParams { filterParams = allocList(numParams); }
+   : { !filterFactory.isEmpty() }? numParams { filterParams = allocList(ctx.channel(), numParams); }
       #numParams ( param { filterParams.add(param); })
    | { null }
    ;
 converterFactory: string[bytesAvailable(buf)];
 converterParams returns List<byte[]>
-   : { !converterFactory.isEmpty() }? numParams { converterParams = allocList(numParams); }
+   : { !converterFactory.isEmpty() }? numParams { converterParams = allocList(ctx.channel(), numParams); }
       #numParams ( param { converterParams.add(param); })
    | { null; }
    ;
@@ -219,25 +226,25 @@ taskName: string[bytesAvailable(buf)];
 taskParam: string[bytesAvailable(buf)];
 taskParamValue: array[bytesAvailable(buf)];
 taskParams returns Map<String, byte[]>
-   : numParams { taskParams = allocMap(numParams); }
+   : numParams { taskParams = allocMap(ctx.channel(), numParams); }
       #numParams ( taskParam taskParamValue { taskParams.put(taskParam, taskParamValue); } )
    ;
 
 numEntries: vInt;
 entryMap returns Map<byte[], byte[]>
-   : numEntries { entryMap = allocMap(numEntries); }
+   : numEntries { entryMap = allocMap(ctx.channel(), numEntries); }
      #numEntries ( key value { entryMap.put(key, value); } )
    ;
 
 numKeys: vInt;
 keys returns Set<byte[]>:
-   numKeys { keys = allocSet(numKeys); } #numKeys ( key { keys.add(key); } )
+   numKeys { keys = allocSet(ctx.channel(), numKeys); } #numKeys ( key { keys.add(key); } )
    ;
 
 segmentMask: optionalArray[bytesAvailable(buf)];
 filterConverterFactory: optionalString[bytesAvailable(buf)];
 filterConverterParams returns List<byte[]>
-   : { filterConverterFactory != null }? numParams { filterConverterParams = allocList(numParams); }
+   : { filterConverterFactory != null }? numParams { filterConverterParams = allocList(ctx.channel(), numParams); }
       #numParams ( param { filterConverterParams.add(param); })
    | { null }
    ;
@@ -294,7 +301,7 @@ timeout: long;
 
 numModifications: vInt;
 modifications returns List<TransactionWrite>
-   : numModifications { modifications = allocList(numModifications); }
+   : numModifications { modifications = allocList(ctx.channel(), numModifications); }
       #numModifications ( modification { modifications.add(modification); } )
    ;
 modification

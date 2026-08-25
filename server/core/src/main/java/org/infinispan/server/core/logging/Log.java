@@ -15,6 +15,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.server.core.AllocationLimitException;
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
@@ -237,4 +238,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cache '%s' is not ready", id = 5066)
    IllegalLifecycleStateException cacheIsNotReady(String cacheName);
+
+   @Message(value = "Closing connection to '%s': request exceeded maximum collection size of %d (requested: %d)", id = 5067)
+   AllocationLimitException requestCollectionTooLarge(Channel channel, int max, int requested);
 }

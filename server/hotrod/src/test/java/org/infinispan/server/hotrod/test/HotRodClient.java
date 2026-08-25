@@ -501,6 +501,16 @@ public class HotRodClient implements Closeable {
       return execute(op);
    }
 
+   public TestResponse putAll(Map<byte[], byte[]> entries, int lifespan, int maxIdle) {
+      PutAllOp op = new PutAllOp(0xA0, protocolVersion, defaultCacheName, (byte) 1, 0, entries, lifespan, maxIdle);
+      return execute(op);
+   }
+
+   public TestGetAllResponse getAll(Set<byte[]> keys) {
+      GetAllOp op = new GetAllOp(0xA0, protocolVersion, defaultCacheName, (byte) 1, 0, keys);
+      return execute(op);
+   }
+
    public TestGetWithMetadataResponse getStream(byte[] key, int offset) {
       GetStreamOp op = new GetStreamOp(0xA0, protocolVersion, defaultCacheName, key, 0, (byte) 1, 0, offset);
       return execute(op);
@@ -627,6 +637,33 @@ class Encoder extends MessageToByteEncoder<Object> {
          encodePrepareOp((PrepareOp) msg, buffer);
       } else if (msg instanceof TxOp) {
          encodeTxOp((TxOp) msg, buffer);
+      } else if (msg instanceof PutAllOp) {
+         PutAllOp op = (PutAllOp) msg;
+         writeHeader(op, buffer);
+         if (protocolVersion >= 22) {
+            if (op.lifespan > 0 || op.maxIdle > 0) {
+               buffer.writeByte(0);
+               writeUnsignedInt(op.lifespan, buffer);
+               writeUnsignedInt(op.maxIdle, buffer);
+            } else {
+               buffer.writeByte(0x88);
+            }
+         } else {
+            writeUnsignedInt(op.lifespan, buffer);
+            writeUnsignedInt(op.maxIdle, buffer);
+         }
+         writeUnsignedInt(op.entries.size(), buffer);
+         for (Map.Entry<byte[], byte[]> entry : op.entries.entrySet()) {
+            writeRangedBytes(entry.getKey(), buffer);
+            writeRangedBytes(entry.getValue(), buffer);
+         }
+      } else if (msg instanceof GetAllOp) {
+         GetAllOp op = (GetAllOp) msg;
+         writeHeader(op, buffer);
+         writeUnsignedInt(op.keys.size(), buffer);
+         for (byte[] key : op.keys) {
+            writeRangedBytes(key, buffer);
+         }
       } else if (msg instanceof CounterOp) {
          writeHeader((Op) msg, buffer);
          ((CounterOp) msg).writeTo(buffer);
@@ -977,6 +1014,19 @@ class Decoder extends ReplayingDecoder<Void> {
                         opCode, listenerId, isRetried, key, dataVersion);
                }
             }
+            break;
+         case PUT_ALL:
+            resp = new TestResponse(op.version, id, op.cacheName, op.clientIntel, opCode,
+                  status, op.topologyId, topologyChangeResponse);
+            break;
+         case GET_ALL:
+            int numEntries = readUnsignedInt(buf);
+            Map<byte[], byte[]> getAllData = new HashMap<>();
+            for (int i = 0; i < numEntries; i++) {
+               getAllData.put(ExtendedByteBuf.readRangedBytes(buf), ExtendedByteBuf.readRangedBytes(buf));
+            }
+            resp = new TestGetAllResponse(op.version, id, op.cacheName, op.clientIntel,
+                  op.topologyId, topologyChangeResponse, getAllData);
             break;
          case SIZE:
             long lsize = ExtendedByteBuf.readUnsignedLong(buf);
@@ -1463,5 +1513,29 @@ class RecoveryOp extends AbstractOp {
 
    RecoveryOp(byte version) {
       super(0xA0, version, HotRodConstants.FETCH_TX_RECOVERY, "", (byte) 0, 0);
+   }
+}
+
+class PutAllOp extends AbstractOp {
+   final Map<byte[], byte[]> entries;
+   final int lifespan;
+   final int maxIdle;
+
+   public PutAllOp(int magic, byte version, String cacheName, byte clientIntel, int topologyId,
+                   Map<byte[], byte[]> entries, int lifespan, int maxIdle) {
+      super(magic, version, (byte) 0x2D, cacheName, clientIntel, topologyId);
+      this.entries = entries;
+      this.lifespan = lifespan;
+      this.maxIdle = maxIdle;
+   }
+}
+
+class GetAllOp extends AbstractOp {
+   final Set<byte[]> keys;
+
+   public GetAllOp(int magic, byte version, String cacheName, byte clientIntel, int topologyId,
+                   Set<byte[]> keys) {
+      super(magic, version, (byte) 0x2F, cacheName, clientIntel, topologyId);
+      this.keys = keys;
    }
 }

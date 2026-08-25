@@ -7,6 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.channels.ClosedChannelException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -62,14 +65,22 @@ public class HotRodRequestLimitTest extends HotRodSingleNodeTest {
    }
 
    public void testWithManyKeysTotalLarger() {
-      int keySize = 4;
+      int entrySize = 4;
+      byte[] value = new byte[entrySize - 2]; // keys are two bytes
+      Arrays.fill(value, (byte) 1);
       RemoteTransaction tx = RemoteTransaction.startTransaction(client());
-      for (byte i = 0; i < MAX_CONTENT_LENGTH / keySize; ++i) {
-         tx.set(new byte[] { i, (byte) (i + 1)}, new byte[] { i, (byte) (i + 1) });
+      for (byte i = 0; i < MAX_CONTENT_LENGTH / entrySize; ++i) {
+         tx.set(new byte[]{i, (byte) (i + 1)}, value);
       }
+      Exceptions.expectException(CompletionException.class, ClosedChannelException.class, tx::prepare);
+   }
 
-      Exceptions.expectException(CompletionException.class, ClosedChannelException.class,
-            () -> tx.prepare());
+   public void testTooManyKeys() {
+      Map<byte[], byte[]> map = new HashMap<>();
+      for (byte i = 0; i < 10; i++) {
+         map.put(new byte[]{i, (byte) (i + 1)}, new byte[]{i, (byte) (i + 1)});
+      }
+      Exceptions.expectException(CompletionException.class, ClosedChannelException.class, () -> client().putAll(map, -1, -1));
    }
 
    public void testPipelineWriteSecondOperationTooLarge() throws ExecutionException, InterruptedException, TimeoutException {
