@@ -295,4 +295,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = Logger.Level.WARN)
    @Message(value = "LOCALUSER authentication mechanism disabled: the filesystem does not support POSIX file permissions", id = 80077)
    void localUserDisabledNoPosix();
+
+   @LogMessage(level = Logger.Level.WARN)
+   @Message(value = "Brute-force protection disabled for realm '%s'", id = 80078)
+   void bruteForceProtectionDisabled(String realmName);
 }

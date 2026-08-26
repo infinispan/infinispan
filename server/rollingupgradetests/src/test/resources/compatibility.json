@@ -101,6 +101,18 @@
               ]
             }
           ]
+        },
+        {
+          "description": "Brute force protection",
+          "issue": "https://github.com/infinispan/infinispan/issues/18001",
+          "test-failures": [
+            {
+              "test-class": "org.infinispan.server.security.authentication.HotRodAuthentication",
+              "test-methods": [
+                "testBruteForceProtection"
+              ]
+            }
+          ]
         }
       ]
     }
