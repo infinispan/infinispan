@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -25,6 +26,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.AttributeKey;
+import io.netty.util.concurrent.GlobalEventExecutor;
 import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue;
 import io.netty.util.internal.shaded.org.jctools.queues.MpscUnboundedArrayQueue;
 import io.reactivex.rxjava3.core.Flowable;
@@ -115,13 +117,16 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
       if (immediateError != null) {
          Throwable innerError = immediateError;
          log.tracef("Connection to %s encountered immediate exception from %s", address, innerError);
-         // Allow another attempt later
-         if (channel != null) {
-            // When channel is present this might be invoked while holding write lock so run error handling in event loop
-            channel.eventLoop().execute(() -> handleError(connectFuture, innerError));
-         } else {
-            handleError(connectFuture, innerError);
-         }
+         // Allow another attempt later.
+         // handleError re-acquires the OperationDispatcher write lock (via connectionFailureListener), which is a
+         // non-reentrant StampedLock. This method can be invoked while that write lock is already held (e.g.
+         // updateCacheInfo -> startChannelIfNeeded), so running handleError inline on the calling thread would
+         // self-deadlock. Defer it so the write lock is released first. connect() always returns a non-null channel,
+         // but if the channel could not even be registered (e.g. a FailedChannel when channel creation itself fails)
+         // it has no event loop, so fall back to a global executor in that case.
+         Channel connectingChannel = channelFuture.channel();
+         Executor executor = connectingChannel.isRegistered() ? connectingChannel.eventLoop() : GlobalEventExecutor.INSTANCE;
+         executor.execute(() -> handleError(connectFuture, innerError));
       }
       return connectFuture;
    }
