@@ -96,6 +96,7 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
 
    @Override
    public void beforeEach(ExtensionContext context) {
+      this.testClient = null;
       Assumptions.assumeFalse(Compatibility.INSTANCE.isCompatibilitySkip(handler.getConfiguration(), context.getRequiredTestClass().getName(), context.getRequiredTestMethod().getName()));
       this.testClient = new TestClient(testServer);
       startTestClient(context, testClient);
