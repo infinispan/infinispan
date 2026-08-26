@@ -56,6 +56,10 @@ public final class ClusteredQueryOperation {
       return new ClusteredQueryOperation(CQCommandType.DELETE, queryDefinition);
    }
 
+   static ClusteredQueryOperation update(QueryDefinition queryDefinition) {
+      return new ClusteredQueryOperation(CQCommandType.UPDATE, queryDefinition);
+   }
+
    static ClusteredQueryOperation createEagerIterator(QueryDefinition queryDefinition) {
       return new ClusteredQueryOperation(CQCommandType.CREATE_EAGER_ITERATOR, queryDefinition);
    }

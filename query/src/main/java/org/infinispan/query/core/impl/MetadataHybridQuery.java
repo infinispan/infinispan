@@ -22,10 +22,18 @@ public class MetadataHybridQuery<T, S> extends HybridQuery<T, S> {
    public MetadataHybridQuery(AdvancedCache<?, ?> cache, String queryString,
                               IckleParsingResult.StatementType statementType, Map<String, Object> namedParameters,
                               ObjectFilter objectFilter, long startOffset, int maxResults, Query<?> baseQuery,
+                              LocalQueryStatistics queryStatistics, boolean local, boolean allSortFieldsAreStored) {
+      this(cache, queryString, statementType, namedParameters, objectFilter, startOffset, maxResults,
+            baseQuery, queryStatistics, local, allSortFieldsAreStored, null, null);
+   }
+
+   public MetadataHybridQuery(AdvancedCache<?, ?> cache, String queryString,
+                              IckleParsingResult.StatementType statementType, Map<String, Object> namedParameters,
+                              ObjectFilter objectFilter, long startOffset, int maxResults, Query<?> baseQuery,
                               LocalQueryStatistics queryStatistics, boolean local, boolean allSortFieldsAreStored,
-                              List<IckleParsingResult.UpdateOperation> updateOperations) {
+                              List<IckleParsingResult.UpdateOperation> updateOperations, String targetEntityName) {
       super(cache, queryString, statementType, namedParameters, objectFilter, startOffset, maxResults,
-            baseQuery, queryStatistics, local, allSortFieldsAreStored, updateOperations);
+            baseQuery, queryStatistics, local, allSortFieldsAreStored, updateOperations, targetEntityName);
 
       scoreProjections = new BitSet();
       String[] projection = objectFilter.getProjection();

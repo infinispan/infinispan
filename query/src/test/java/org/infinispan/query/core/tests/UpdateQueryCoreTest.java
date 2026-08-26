@@ -110,7 +110,21 @@ public class UpdateQueryCoreTest extends SingleCacheManagerTest {
       assertThat(results.get(0).getDescription()).isEqualTo("The best strategy game");
    }
 
-   // TODO: index re-sync after update via storageCache.put() - needs QueryInterceptor integration
+   @Test
+   public void testUpdateWithNamedParameter() {
+      Query<Game> update = gameCache.query(
+            "update from " + ENTITY + " set name = :newName where name = :oldName");
+      update.setParameter("newName", "Civilization VII");
+      update.setParameter("oldName", "Civilization");
+      int count = update.executeStatement();
+
+      assertThat(count).isEqualTo(1);
+
+      Game result = gameCache.get("g1");
+      assertThat(result.getName()).isEqualTo("Civilization VII");
+      assertThat(result.getDescription()).isEqualTo("The best strategy game");
+   }
+
    @Test
    public void testCacheGetAfterUpdate() {
       gameCache.query("update from " + ENTITY + " set name = 'Civ VI' where name = 'Civilization'")
