@@ -1,15 +1,20 @@
 package org.infinispan.server.security.authentication;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.test.api.TestClientDriver;
+import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.tags.Security;
 import org.infinispan.server.test.junit5.InfinispanServer;
+import org.infinispan.server.test.junit5.InfinispanServerExtension;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -46,5 +51,35 @@ public class HotRodAuthentication {
          // Rethrow if unexpected
          if (!mechanism.isEmpty()) throw e;
       }
+   }
+
+   @Test
+   public void testBruteForceProtection() {
+      Assumptions.assumeTrue(SERVERS instanceof InfinispanServerExtension); // Disable in rolling upgrade tests
+      String user = TestUser.DEPLOYER.getUser();
+      // All attempts must target the same server node so that the failure counter reaches the threshold
+      for (int i = 0; i < 10; i++) {
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.security().authentication()
+               .saslMechanism("SCRAM-SHA-256")
+               .serverName("infinispan")
+               .realm("default")
+               .username(user)
+               .password("wrongPassword");
+         assertThrows(HotRodClientException.class, () ->
+               SERVERS.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create(0)
+         );
+      }
+      // After exceeding max failed attempts, correct credentials should also be rejected
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.security().authentication()
+            .saslMechanism("SCRAM-SHA-256")
+            .serverName("infinispan")
+            .realm("default")
+            .username(user)
+            .password(TestUser.DEPLOYER.getPassword());
+      assertThrows(HotRodClientException.class, () ->
+            SERVERS.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create(0)
+      );
    }
 }
