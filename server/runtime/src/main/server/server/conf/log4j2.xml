@@ -128,5 +128,13 @@
     <Logger name="org.infinispan.RESP_ACCESS_LOG" additivity="false" level="INFO">
       <AppenderRef ref="RESP-ACCESS-FILE"/>
     </Logger>
+
+     <!-- Adjust filters for noisy loggers during failures to avoid floods. -->
+     <!-- Caps ERROR volume from command failures (timeouts, lock contention) during overload. -->
+     <Logger name="org.infinispan.FREQUENT">
+        <Filters>
+           <BurstFilter level="ERROR" rate="20" maxBurst="50"/>
+        </Filters>
+     </Logger>
   </Loggers>
 </Configuration>

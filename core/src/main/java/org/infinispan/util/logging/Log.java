@@ -111,6 +111,10 @@ public interface Log extends BasicLogger {
    Log XSITE = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "XSITE");
    Log INTERNAL = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "INTERNAL");
 
+   // Use this category for messages that can be logged frequently, e.g., several failures.
+   // This allows configuring filters to avoid spamming the log with repeated messages.
+   Log FREQUENT = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, LOG_ROOT + "FREQUENT");
+
 //   @LogMessage(level = WARN)
 //   @Message(value = "Unable to load %s from cache loader", id = 1)
 //   void unableToLoadFromCacheLoader(Object key, @Cause PersistenceException cle);

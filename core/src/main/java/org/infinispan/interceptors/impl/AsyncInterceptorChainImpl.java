@@ -437,7 +437,7 @@ public class AsyncInterceptorChainImpl implements AsyncInterceptorChain {
             if (log.isTraceEnabled()) log.tracef("Topology changed, retrying command: %s", th);
          } else if (command.logThrowable(th)) {
             Collection<?> affectedKeys = extractWrittenKeys(ctx, command);
-            log.executionError(command.getClass().getSimpleName(), getCacheNamePrefix(), toStr(affectedKeys), th);
+            Log.FREQUENT.executionError(command.getClass().getSimpleName(), getCacheNamePrefix(), toStr(affectedKeys), th);
          } else {
             log.trace("Unexpected exception encountered", th);
          }

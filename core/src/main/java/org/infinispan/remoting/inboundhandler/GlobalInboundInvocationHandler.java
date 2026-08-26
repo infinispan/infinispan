@@ -1,6 +1,7 @@
 package org.infinispan.remoting.inboundhandler;
 
 import static org.infinispan.util.logging.Log.CLUSTER;
+import static org.infinispan.util.logging.Log.FREQUENT;
 
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
@@ -77,7 +78,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
          }
       } catch (Throwable t) {
          if (command.logThrowable(t)) {
-            CLUSTER.exceptionHandlingCommand(command, t);
+            FREQUENT.exceptionHandlingCommand(command, t);
          }
          reply.reply(exceptionHandlingCommand(t));
       }
@@ -224,7 +225,7 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
                return shuttingDownResponse();
             } else {
                if (logThrowable(throwable)) {
-                  CLUSTER.exceptionHandlingCommand(getCommand(), throwable);
+                  FREQUENT.exceptionHandlingCommand(getCommand(), throwable);
                }
                return exceptionHandlingCommand(throwable);
             }
