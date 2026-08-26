@@ -23,9 +23,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.CacheFilters;
-import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
-import org.infinispan.protostream.ImmutableSerializationContext;
-import org.infinispan.protostream.ProtobufFieldUpdater;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter;
@@ -50,16 +47,18 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
    private final int defaultMaxResults;
 
    private final List<IckleParsingResult.UpdateOperation> updateOperations;
+   private final String targetEntityName;
 
    public EmbeddedQuery(QueryEngine<?> queryEngine, AdvancedCache<?, ?> cache,
                         String queryString, IckleParsingResult.StatementType statementType,
                         Map<String, Object> namedParameters, String[] projection,
                         long startOffset, int maxResults, int defaultMaxResults, LocalQueryStatistics queryStatistics, boolean local,
-                        List<IckleParsingResult.UpdateOperation> updateOperations) {
+                        List<IckleParsingResult.UpdateOperation> updateOperations, String targetEntityName) {
       super(cache, queryString, statementType, namedParameters, projection, startOffset, maxResults, queryStatistics, local);
       this.queryEngine = queryEngine;
       this.defaultMaxResults = defaultMaxResults;
       this.updateOperations = updateOperations;
+      this.targetEntityName = targetEntityName;
 
       if (maxResults == -1) {
          // apply the default
@@ -183,16 +182,13 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
          return 0;
       }
 
-      SerializationContextRegistry ctxRegistry = org.infinispan.security.actions.SecurityActions
-            .getCacheComponentRegistry(cache).getComponent(SerializationContextRegistry.class);
-      ImmutableSerializationContext serCtx = ctxRegistry.getUserCtx();
-
-      List<ProtobufFieldUpdater.UpdateOperation> ops = UpdateQueryHelper.toProtobufOps(updateOperations);
+      UpdateQueryHelper.UpdateBiFunction fn = new UpdateQueryHelper.UpdateBiFunction(
+            queryString, namedParameters, targetEntityName);
 
       int count = 0;
       for (Object key : keys) {
          try {
-            if (UpdateQueryHelper.applyUpdate((AdvancedCache<Object, Object>) cache, key, serCtx, ops)) {
+            if (UpdateQueryHelper.applyUpdate((AdvancedCache<Object, Object>) cache, key, fn)) {
                count++;
             }
          } catch (Exception e) {

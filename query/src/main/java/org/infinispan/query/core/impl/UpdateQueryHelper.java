@@ -8,18 +8,33 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiFunction;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.dataconversion.MediaType;
+import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.util.Util;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.marshall.protostream.impl.MarshallableMap;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufFieldUpdater;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.WrappedMessage;
+import org.infinispan.protostream.annotations.ProtoFactory;
+import org.infinispan.protostream.annotations.ProtoField;
+import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.WireType;
 import org.infinispan.protostream.impl.RandomAccessOutputStreamImpl;
 import org.infinispan.protostream.impl.TagReaderImpl;
 import org.infinispan.protostream.impl.TagWriterImpl;
+import org.infinispan.query.objectfilter.impl.syntax.ConstantValueExpr;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 
 /**
@@ -36,10 +51,30 @@ import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
  */
 public final class UpdateQueryHelper {
 
+   public enum UpdateStrategy {
+      PROTOBUF,
+      PROTOBUF_ROUNDTRIP,
+      REFLECTION
+   }
+
    private UpdateQueryHelper() {
    }
 
-   public static List<ProtobufFieldUpdater.UpdateOperation> toProtobufOps(List<IckleParsingResult.UpdateOperation> updateOperations) {
+   public static UpdateStrategy resolveStrategy(AdvancedCache<?, ?> cache,
+                                                  ImmutableSerializationContext serCtx,
+                                                  String targetEntityName) {
+      MediaType storageType = cache.getValueDataConversion().getStorageMediaType();
+      if (storageType.match(MediaType.APPLICATION_PROTOSTREAM)) {
+         return UpdateStrategy.PROTOBUF;
+      }
+      if (serCtx.canMarshall(targetEntityName)) {
+         return UpdateStrategy.PROTOBUF_ROUNDTRIP;
+      }
+      return UpdateStrategy.REFLECTION;
+   }
+
+   public static List<ProtobufFieldUpdater.UpdateOperation> toProtobufOps(
+         List<IckleParsingResult.UpdateOperation> updateOperations, Map<String, Object> namedParameters) {
       List<ProtobufFieldUpdater.UpdateOperation> ops = new ArrayList<>();
       for (IckleParsingResult.UpdateOperation uo : updateOperations) {
          ProtobufFieldUpdater.OperationType opType = switch (uo.getType()) {
@@ -47,48 +82,175 @@ public final class UpdateQueryHelper {
             case ADD -> ProtobufFieldUpdater.OperationType.ADD;
             case REMOVE -> ProtobufFieldUpdater.OperationType.REMOVE;
          };
-         ops.add(new ProtobufFieldUpdater.UpdateOperation(opType, uo.getPropertyPath(), uo.getValues()));
+         List<Object> resolvedValues = resolveValues(uo.getValues(), namedParameters);
+         ops.add(new ProtobufFieldUpdater.UpdateOperation(opType, uo.getPropertyPath(), resolvedValues));
       }
       return ops;
    }
 
-   public static boolean applyUpdate(AdvancedCache<Object, Object> cache, Object key,
-                               ImmutableSerializationContext serCtx,
-                               List<ProtobufFieldUpdater.UpdateOperation> ops) throws IOException {
-      AdvancedCache<Object, Object> storageCache = cache.withStorageMediaType();
-      Object existingValue = storageCache.get(key);
-      if (existingValue == null) return false;
+   /**
+    * Applies an update to a cache entry atomically using {@code cache.compute()}.
+    * The {@link UpdateBiFunction} is marshallable and safe for clustered (backup replication) use.
+    */
+   public static boolean applyUpdate(AdvancedCache<Object, Object> cache, Object key, UpdateBiFunction fn) {
+      cache.withStorageMediaType().compute(key, fn);
+      return fn.wasUpdated();
+   }
 
-      if (existingValue instanceof byte[] || existingValue instanceof WrappedByteArray) {
-         return applyProtobufUpdate(storageCache, key, existingValue, serCtx, ops);
+   private static List<Object> resolveValues(List<Object> values, Map<String, Object> namedParameters) {
+      if (values == null || namedParameters == null || namedParameters.isEmpty()) {
+         return values;
+      }
+      List<Object> resolved = new ArrayList<>(values.size());
+      for (Object value : values) {
+         if (value instanceof ConstantValueExpr.ParamPlaceholder placeholder) {
+            Object paramValue = namedParameters.get(placeholder.getName());
+            if (paramValue == null && !namedParameters.containsKey(placeholder.getName())) {
+               throw new IllegalArgumentException("Missing value for parameter: " + placeholder.getName());
+            }
+            resolved.add(paramValue);
+         } else {
+            resolved.add(value);
+         }
+      }
+      return resolved;
+   }
+
+   /**
+    * A marshallable BiFunction for use with {@code cache.compute()}.
+    * Carries the query string and named parameters; resolves update operations
+    * and serialization context via dependency injection on each node.
+    * <p>
+    * Follows the same pattern as {@link org.infinispan.query.core.impl.eventfilter.IckleFilterAndConverter}
+    * and {@link EmbeddedQuery.DeleteFunction}.
+    *
+    * @since 16.3
+    */
+   @ProtoTypeId(ProtoStreamTypeIds.ICKLE_UPDATE_BI_FUNCTION)
+   @Scope(Scopes.NONE)
+   public static final class UpdateBiFunction implements BiFunction<Object, Object, Object> {
+
+      private final String queryString;
+      private final Map<String, Object> namedParameters;
+      private final String targetEntityName;
+
+      private transient List<ProtobufFieldUpdater.UpdateOperation> ops;
+      private transient ImmutableSerializationContext serCtx;
+      private transient UpdateStrategy strategy;
+      private transient boolean updated;
+
+      public UpdateBiFunction(String queryString, Map<String, Object> namedParameters, String targetEntityName) {
+         this.queryString = queryString;
+         this.namedParameters = namedParameters;
+         this.targetEntityName = targetEntityName;
       }
 
-      // Java object stored in embedded mode — try protobuf roundtrip first, fall back to reflection
-      try {
-         byte[] wrappedBytes = ProtobufUtil.toWrappedByteArray(serCtx, existingValue);
-         byte[] updatedWrapped = applyProtobufUpdateToBytes(wrappedBytes, serCtx, ops);
-         if (updatedWrapped == null) return false;
-         Object updatedObject = ProtobufUtil.fromWrappedByteArray(serCtx, updatedWrapped);
-         cache.put(key, updatedObject);
-         return true;
-      } catch (IllegalArgumentException e) {
-         // No ProtoStream marshaller registered — fall back to reflection
-         return applyReflectionUpdate(cache, key, existingValue, ops);
+      @ProtoFactory
+      UpdateBiFunction(String queryString, MarshallableMap<String, Object> wrappedNamedParameters,
+                       String targetEntityName) {
+         this(queryString, MarshallableMap.unwrap(wrappedNamedParameters), targetEntityName);
+      }
+
+      @ProtoField(1)
+      public String getQueryString() {
+         return queryString;
+      }
+
+      @ProtoField(2)
+      public MarshallableMap<String, Object> getWrappedNamedParameters() {
+         return MarshallableMap.create(namedParameters);
+      }
+
+      @ProtoField(3)
+      public String getTargetEntityName() {
+         return targetEntityName;
+      }
+
+      @Inject
+      void injectDependencies(ComponentRegistry componentRegistry) {
+         if (ops != null) return;
+
+         AdvancedCache<?, ?> cache = componentRegistry.getCache().wired().getAdvancedCache();
+         SerializationContextRegistry ctxRegistry = componentRegistry.getComponent(SerializationContextRegistry.class);
+         serCtx = ctxRegistry.getUserCtx();
+
+         QueryEngine<?> queryEngine = componentRegistry.getComponent(QueryEngine.class);
+         IckleParsingResult<?> parsingResult = queryEngine.parse(queryString);
+         ops = toProtobufOps(parsingResult.getUpdateOperations(), namedParameters);
+         String entityName = targetEntityName != null ? targetEntityName : parsingResult.getTargetEntityName();
+         strategy = resolveStrategy(cache, serCtx, entityName);
+      }
+
+      public boolean wasUpdated() {
+         return updated;
+      }
+
+      @Override
+      public Object apply(Object key, Object existingValue) {
+         updated = false;
+         if (existingValue == null) return null;
+
+         try {
+            return switch (strategy) {
+               case PROTOBUF -> {
+                  byte[] wrappedBytes = existingValue instanceof byte[] b ? b
+                        : ((WrappedByteArray) existingValue).getBytes();
+                  byte[] updatedWrapped = applyProtobufUpdateToBytes(wrappedBytes, serCtx, ops);
+                  if (updatedWrapped == null) yield existingValue;
+                  updated = true;
+                  yield updatedWrapped;
+               }
+               case PROTOBUF_ROUNDTRIP -> {
+                  byte[] wrappedBytes = ProtobufUtil.toWrappedByteArray(serCtx, existingValue);
+                  byte[] updatedWrapped = applyProtobufUpdateToBytes(wrappedBytes, serCtx, ops);
+                  if (updatedWrapped == null) yield existingValue;
+                  updated = true;
+                  yield ProtobufUtil.fromWrappedByteArray(serCtx, updatedWrapped);
+               }
+               case REFLECTION -> applyReflectionOps(existingValue);
+            };
+         } catch (IOException e) {
+            throw CONTAINER.updateByQueryFailed(key, e);
+         }
+      }
+
+      @SuppressWarnings("unchecked")
+      private Object applyReflectionOps(Object value) {
+         for (ProtobufFieldUpdater.UpdateOperation op : ops) {
+            String[] path = op.propertyPath();
+            List<Object> values = op.values();
+            try {
+               Object target = value;
+               for (int i = 0; i < path.length - 1; i++) {
+                  target = getPropertyValue(target, path[i]);
+               }
+               String fieldName = path[path.length - 1];
+               switch (op.type()) {
+                  case SET -> {
+                     Object newValue = values != null && !values.isEmpty() ? values.get(0) : null;
+                     setPropertyValue(target, fieldName, newValue);
+                  }
+                  case ADD -> {
+                     Collection<Object> collection = (Collection<Object>) getPropertyValue(target, fieldName);
+                     if (collection == null || values == null) return value;
+                     collection.addAll(values);
+                  }
+                  case REMOVE -> {
+                     Collection<Object> collection = (Collection<Object>) getPropertyValue(target, fieldName);
+                     if (collection == null || values == null) return value;
+                     collection.removeAll(values);
+                  }
+               }
+            } catch (Exception e) {
+               throw CONTAINER.updateByQueryFailed(String.join(".", path), e);
+            }
+         }
+         updated = true;
+         return value;
       }
    }
 
-   private static boolean applyProtobufUpdate(AdvancedCache<Object, Object> storageCache, Object key,
-                                               Object existingValue, ImmutableSerializationContext serCtx,
-                                               List<ProtobufFieldUpdater.UpdateOperation> ops) throws IOException {
-      byte[] wrappedBytes = existingValue instanceof byte[] b ? b
-            : ((WrappedByteArray) existingValue).getBytes();
-      byte[] updatedWrapped = applyProtobufUpdateToBytes(wrappedBytes, serCtx, ops);
-      if (updatedWrapped == null) return false;
-      storageCache.put(key, updatedWrapped);
-      return true;
-   }
-
-   private static byte[] applyProtobufUpdateToBytes(byte[] wrappedBytes, ImmutableSerializationContext serCtx,
+   static byte[] applyProtobufUpdateToBytes(byte[] wrappedBytes, ImmutableSerializationContext serCtx,
                                                      List<ProtobufFieldUpdater.UpdateOperation> ops) throws IOException {
       String typeName = null;
       Integer typeId = null;
@@ -117,45 +279,6 @@ public final class UpdateQueryHelper {
 
       byte[] updatedInner = ProtobufFieldUpdater.update(descriptor, innerBytes, ops);
       return rewrap(serCtx, typeName, typeId, updatedInner);
-   }
-
-   @SuppressWarnings("unchecked")
-   private static boolean applyReflectionUpdate(AdvancedCache<Object, Object> cache, Object key,
-                                                 Object value,
-                                                 List<ProtobufFieldUpdater.UpdateOperation> ops) {
-      for (ProtobufFieldUpdater.UpdateOperation op : ops) {
-         String[] path = op.propertyPath();
-         List<Object> values = op.values();
-         try {
-            Object target = value;
-            for (int i = 0; i < path.length - 1; i++) {
-               target = getPropertyValue(target, path[i]);
-            }
-            String fieldName = path[path.length - 1];
-            switch (op.type()) {
-               case SET -> {
-                  Object newValue = values != null && !values.isEmpty() ? values.get(0) : null;
-                  setPropertyValue(target, fieldName, newValue);
-               }
-               case ADD -> {
-                  Collection<Object> collection = (Collection<Object>) getPropertyValue(target, fieldName);
-                  if (collection != null && values != null) {
-                     collection.addAll(values);
-                  }
-               }
-               case REMOVE -> {
-                  Collection<Object> collection = (Collection<Object>) getPropertyValue(target, fieldName);
-                  if (collection != null && values != null) {
-                     collection.removeAll(values);
-                  }
-               }
-            }
-         } catch (Exception e) {
-            throw CONTAINER.updateByQueryFailed(String.join(".", path), e);
-         }
-      }
-      cache.put(key, value);
-      return true;
    }
 
    private static Object getPropertyValue(Object obj, String propertyName) throws Exception {
@@ -218,15 +341,7 @@ public final class UpdateQueryHelper {
    private static Object convertValue(Object value, Class<?> targetType) {
       if (value == null) return null;
       if (targetType.isInstance(value)) return value;
-
-      String str = value.toString();
-      if (targetType == String.class) return str;
-      if (targetType == int.class || targetType == Integer.class) return Integer.parseInt(str);
-      if (targetType == long.class || targetType == Long.class) return Long.parseLong(str);
-      if (targetType == double.class || targetType == Double.class) return Double.parseDouble(str);
-      if (targetType == float.class || targetType == Float.class) return Float.parseFloat(str);
-      if (targetType == boolean.class || targetType == Boolean.class) return Boolean.parseBoolean(str);
-      return value;
+      return Util.fromString(targetType, value.toString());
    }
 
    private static byte[] rewrap(ImmutableSerializationContext ctx, String typeName, Integer typeId, byte[] innerBytes) throws IOException {

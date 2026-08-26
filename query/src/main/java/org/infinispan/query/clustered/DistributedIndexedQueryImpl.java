@@ -53,8 +53,9 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
 
    public DistributedIndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache,
                                       LocalQueryStatistics queryStatistics, int defaultMaxResults, Integer knn,
-                                      List<IckleParsingResult.UpdateOperation> updateOperations) {
-      super(queryDefinition, cache, queryStatistics, updateOperations);
+                                      List<IckleParsingResult.UpdateOperation> updateOperations,
+                                      String targetEntityName) {
+      super(queryDefinition, cache, queryStatistics, updateOperations, targetEntityName);
       this.invoker = new ClusteredQueryInvoker(cache, queryStatistics);
       this.knn = knn;
       this.maxResults = (knn == null) ? defaultMaxResults : knn;
@@ -184,16 +185,15 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
          throw CONTAINER.statementCannotUsePaging();
       }
 
-      if (queryDefinition.getStatementType() == IckleParsingResult.StatementType.UPDATE) {
-         queryDefinition.initialize(cache);
-         return super.executeStatement();
-      }
-
       try {
          partitionHandlingSupport.checkCacheAvailable();
          long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
-         List<QueryResponse> responses = invoker.broadcast(ClusteredQueryOperation.delete(queryDefinition));
+         ClusteredQueryOperation operation = queryDefinition.getStatementType() == IckleParsingResult.StatementType.DELETE
+               ? ClusteredQueryOperation.delete(queryDefinition)
+               : ClusteredQueryOperation.update(queryDefinition);
+
+         List<QueryResponse> responses = invoker.broadcast(operation);
          int count = 0;
          for (QueryResponse response : responses) {
             count += response.getResultSize();

@@ -12,14 +12,10 @@ import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
-import org.infinispan.protostream.ImmutableSerializationContext;
-import org.infinispan.protostream.ProtobufFieldUpdater;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
-import org.infinispan.security.actions.SecurityActions;
 
 /**
  * A non-indexed query performed on top of the results returned by another query (usually a Lucene based query). This
@@ -41,16 +37,25 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
    private final boolean allSortFieldsAreStored;
 
    protected final List<IckleParsingResult.UpdateOperation> updateOperations;
+   protected final String targetEntityName;
+
+   public HybridQuery(AdvancedCache<?, ?> cache, String queryString, IckleParsingResult.StatementType statementType,
+                      Map<String, Object> namedParameters, ObjectFilter objectFilter, long startOffset, int maxResults,
+                      Query<?> baseQuery, LocalQueryStatistics queryStatistics, boolean local, boolean allSortFieldsAreStored) {
+      this(cache, queryString, statementType, namedParameters, objectFilter, startOffset, maxResults,
+            baseQuery, queryStatistics, local, allSortFieldsAreStored, null, null);
+   }
 
    public HybridQuery(AdvancedCache<?, ?> cache, String queryString, IckleParsingResult.StatementType statementType,
                       Map<String, Object> namedParameters, ObjectFilter objectFilter, long startOffset, int maxResults,
                       Query<?> baseQuery, LocalQueryStatistics queryStatistics, boolean local, boolean allSortFieldsAreStored,
-                      List<IckleParsingResult.UpdateOperation> updateOperations) {
+                      List<IckleParsingResult.UpdateOperation> updateOperations, String targetEntityName) {
       super(cache, queryString, statementType, namedParameters, objectFilter.getProjection(), startOffset, maxResults, queryStatistics, local);
       this.objectFilter = objectFilter;
       this.baseQuery = (Query<S>) baseQuery;
       this.allSortFieldsAreStored = allSortFieldsAreStored;
       this.updateOperations = updateOperations;
+      this.targetEntityName = targetEntityName;
    }
 
    @Override
@@ -123,18 +128,15 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
          return 0;
       }
 
-      SerializationContextRegistry ctxRegistry = SecurityActions
-            .getCacheComponentRegistry(cache).getComponent(SerializationContextRegistry.class);
-      ImmutableSerializationContext serCtx = ctxRegistry.getUserCtx();
-
-      List<ProtobufFieldUpdater.UpdateOperation> ops = UpdateQueryHelper.toProtobufOps(updateOperations);
+      UpdateQueryHelper.UpdateBiFunction fn = new UpdateQueryHelper.UpdateBiFunction(
+            queryString, namedParameters, targetEntityName);
 
       int count = 0;
       while (it.hasNext()) {
          ObjectFilter.FilterResult fr = it.next();
          Object key = fr.getKey();
          try {
-            if (UpdateQueryHelper.applyUpdate((AdvancedCache<Object, Object>) cache, key, serCtx, ops)) {
+            if (UpdateQueryHelper.applyUpdate((AdvancedCache<Object, Object>) cache, key, fn)) {
                count++;
             }
          } catch (Exception e) {

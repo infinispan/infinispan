@@ -25,9 +25,6 @@ import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.commons.query.TotalHitCount;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
-import org.infinispan.protostream.ImmutableSerializationContext;
-import org.infinispan.protostream.ProtobufFieldUpdater;
 import org.infinispan.query.core.impl.MappingIterator;
 import org.infinispan.query.core.impl.PartitionHandlingSupport;
 import org.infinispan.query.core.impl.QueryResultImpl;
@@ -53,19 +50,22 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
    protected final QueryDefinition queryDefinition;
    protected final LocalQueryStatistics queryStatistics;
    protected final List<IckleParsingResult.UpdateOperation> updateOperations;
+   protected final String targetEntityName;
 
    public IndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache, LocalQueryStatistics queryStatistics) {
-      this(queryDefinition, cache, queryStatistics, null);
+      this(queryDefinition, cache, queryStatistics, null, null);
    }
 
    public IndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache,
                            LocalQueryStatistics queryStatistics,
-                           List<IckleParsingResult.UpdateOperation> updateOperations) {
+                           List<IckleParsingResult.UpdateOperation> updateOperations,
+                           String targetEntityName) {
       this.queryDefinition = queryDefinition;
       this.cache = cache;
       this.partitionHandlingSupport = new PartitionHandlingSupport(cache);
       this.queryStatistics = queryStatistics;
       this.updateOperations = updateOperations;
+      this.targetEntityName = targetEntityName;
    }
 
    /**
@@ -74,8 +74,9 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
    public IndexedQueryImpl(String queryString, IckleParsingResult.StatementType statementType,
                            SearchQueryBuilder searchQuery, AdvancedCache<?, ?> cache,
                            LocalQueryStatistics queryStatistics, int defaultMaxResults,
-                           List<IckleParsingResult.UpdateOperation> updateOperations) {
-      this(new QueryDefinition(queryString, statementType, searchQuery, defaultMaxResults), cache, queryStatistics, updateOperations);
+                           List<IckleParsingResult.UpdateOperation> updateOperations,
+                           String targetEntityName) {
+      this(new QueryDefinition(queryString, statementType, searchQuery, defaultMaxResults), cache, queryStatistics, updateOperations, targetEntityName);
    }
 
    /**
@@ -281,16 +282,13 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
          return 0;
       }
 
-      SerializationContextRegistry ctxRegistry = org.infinispan.security.actions.SecurityActions
-            .getCacheComponentRegistry(cache).getComponent(SerializationContextRegistry.class);
-      ImmutableSerializationContext serCtx = ctxRegistry.getUserCtx();
-
-      List<ProtobufFieldUpdater.UpdateOperation> ops = UpdateQueryHelper.toProtobufOps(updateOperations);
+      UpdateQueryHelper.UpdateBiFunction fn = new UpdateQueryHelper.UpdateBiFunction(
+            queryDefinition.getQueryString(), queryDefinition.getNamedParameters(), targetEntityName);
 
       int count = 0;
       for (Object id : hits) {
          try {
-            if (UpdateQueryHelper.applyUpdate((AdvancedCache<Object, Object>) cache, id, serCtx, ops)) {
+            if (UpdateQueryHelper.applyUpdate((AdvancedCache<Object, Object>) cache, id, fn)) {
                count++;
             }
          } catch (Exception e) {

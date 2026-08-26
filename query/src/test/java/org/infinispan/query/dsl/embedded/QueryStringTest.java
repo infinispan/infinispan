@@ -584,6 +584,29 @@ public class QueryStringTest extends AbstractQueryTest {
       assertThat(result.count().exact()).isTrue();
    }
 
+   public void testUpdateWithSetParameter() throws Exception {
+      Transaction tx = getModelFactory().makeTransaction();
+      tx.setId(9998);
+      tx.setDescription("Param test");
+      tx.setAccountId(1);
+      tx.setAmount(100);
+      tx.setDate(makeDate("2021-09-07"));
+      tx.setDebit(false);
+      tx.setValid(true);
+      getCacheForWrite().put("transaction_" + tx.getId(), tx);
+
+      Query<Transaction> update = createQueryFromString(
+            "UPDATE FROM " + getModelFactory().getTransactionTypeName()
+                  + " SET description = :newDesc WHERE description = :oldDesc");
+      update.setParameter("newDesc", "Updated via param");
+      update.setParameter("oldDesc", "Param test");
+      assertEquals(1, update.executeStatement());
+
+      Query<Transaction> select = createQueryFromString(
+            "FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Updated via param'");
+      assertEquals(1, select.execute().count().value());
+   }
+
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
    public void testUpdateWithProjections() {
       Query<Transaction> update = createQueryFromString("UPDATE t.description FROM " + getModelFactory().getTransactionTypeName() + " as t SET description = 'bogus' WHERE t.description = 'bogus'");
