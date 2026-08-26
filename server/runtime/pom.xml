@@ -212,6 +212,10 @@
       </dependency>
       <dependency>
          <groupId>org.wildfly.security</groupId>
+         <artifactId>wildfly-elytron-realm</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly.security</groupId>
          <artifactId>wildfly-elytron-realm-ldap</artifactId>
       </dependency>
       <dependency>
