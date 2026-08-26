@@ -195,7 +195,7 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
 
       // Check if there's an alias
       if (ctx.aliasClause() != null) {
-         String alias = ctx.aliasClause().getText();
+         String alias = ctx.aliasClause().aliasDeclaration().aliasIdentifier().getText();
          aliasToEntityType.put(alias, targetTypeName);
       }
 
@@ -1254,7 +1254,7 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
       PropertyPath<TypeDescriptor<TypeMetadata>> joinPath = buildPropertyPath(pathText);
 
       if (ctx.aliasClause() != null) {
-         String alias = ctx.aliasClause().aliasDeclaration().getText();
+         String alias = ctx.aliasClause().aliasDeclaration().aliasIdentifier().getText();
          aliasToPropertyPath.put(alias, joinPath);
       }
 

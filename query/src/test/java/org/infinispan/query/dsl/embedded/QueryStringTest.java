@@ -414,6 +414,13 @@ public class QueryStringTest extends AbstractQueryTest {
       assertEquals(1, q.execute().list().size());
    }
 
+   public void testSelectWithAsAlias() {
+      Query<Object[]> q = createQueryFromString("SELECT e.description FROM " + getModelFactory().getTransactionTypeName() + " AS e WHERE e.description = 'Birthday present'");
+      List<Object[]> list = q.execute().list();
+      assertEquals(1, list.size());
+      assertEquals("Birthday present", list.get(0)[0]);
+   }
+
    public void testDeleteByQueryOnNonIndexedType() {
       getCacheForWrite().put("notIndexedToBeDeleted", new NotIndexed("testing delete"));
 
