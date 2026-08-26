@@ -1,6 +1,7 @@
 package org.infinispan.server.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -12,6 +13,7 @@ import org.infinispan.server.test.core.LdapServerListener;
 import org.infinispan.server.test.jupiter.InfinispanServerExtension;
 import org.infinispan.server.test.jupiter.InfinispanServerExtensionBuilder;
 import org.infinispan.testing.jupiter.tags.Security;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -51,5 +53,34 @@ public class AuthenticationLDAPIT {
          // Rethrow if unexpected
          if (!mechanism.isEmpty()) throw e;
       }
+   }
+
+   @Test
+   public void testBruteForceProtection() {
+      String user = TestUser.DEPLOYER.getUser();
+      // All attempts must target the same server node so that the failure counter reaches the threshold
+      for (int i = 0; i < 10; i++) {
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.security().authentication()
+               .saslMechanism("SCRAM-SHA-256")
+               .serverName("infinispan")
+               .realm("default")
+               .username(user)
+               .password("wrongPassword");
+         assertThrows(HotRodClientException.class, () ->
+               SERVERS.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create(0)
+         );
+      }
+      // After exceeding max failed attempts, correct credentials should also be rejected
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.security().authentication()
+            .saslMechanism("SCRAM-SHA-256")
+            .serverName("infinispan")
+            .realm("default")
+            .username(user)
+            .password(TestUser.DEPLOYER.getPassword());
+      assertThrows(HotRodClientException.class, () ->
+            SERVERS.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create(0)
+      );
    }
 }

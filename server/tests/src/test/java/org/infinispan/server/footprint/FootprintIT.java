@@ -34,7 +34,7 @@ public class FootprintIT {
    private static final int LOADED_CLASS_COUNT_LOWER_BOUND = 12_420;
    private static final int LOADED_CLASS_COUNT_UPPER_BOUND = 12_530;
    private static final long HEAP_USAGE_LOWER_BOUND = 24_000_000L;
-   private static final long HEAP_USAGE_UPPER_BOUND = 27_000_000L;
+   private static final long HEAP_USAGE_UPPER_BOUND = 26_000_000L;
    private static final long DISK_USAGE_LOWER_BOUND = 90_000_000L;
    private static final long DISK_USAGE_UPPER_BOUND = 95_000_000L;
 

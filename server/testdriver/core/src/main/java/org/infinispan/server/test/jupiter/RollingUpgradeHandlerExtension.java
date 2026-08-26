@@ -107,6 +107,7 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
 
    @Override
    public void beforeEach(ExtensionContext context) {
+      this.testClient = null;
       Assumptions.assumeFalse(Compatibility.INSTANCE.isCompatibilitySkip(handler.getConfiguration(), context.getRequiredTestClass().getName(), context.getRequiredTestMethod().getName()));
       // A previous test already confirmed the shared cluster is unresponsive; skip the rest of the
       // suite rather than piling up identical timeout failures.
@@ -130,7 +131,7 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
                   "remaining suite tests will be skipped", handler.getConfiguration().name());
          }
       } finally {
-         testClient.clearResources();
+         if (testClient != null) testClient.clearResources();
       }
    }
 
