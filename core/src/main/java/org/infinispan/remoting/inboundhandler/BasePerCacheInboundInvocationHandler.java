@@ -3,6 +3,7 @@ package org.infinispan.remoting.inboundhandler;
 import static org.infinispan.factories.KnownComponentNames.BLOCKING_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.NON_BLOCKING_EXECUTOR;
 import static org.infinispan.util.logging.Log.CLUSTER;
+import static org.infinispan.util.logging.Log.FREQUENT;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -124,7 +125,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
 
    static ExceptionResponse exceptionHandlingCommand(CacheRpcCommand command, Throwable throwable) {
       if (command.logThrowable(throwable)) {
-         CLUSTER.exceptionHandlingCommand(command, throwable);
+         FREQUENT.exceptionHandlingCommand(command, throwable);
       }
       if (throwable instanceof Exception) {
          return new ExceptionResponse(((Exception) throwable));
