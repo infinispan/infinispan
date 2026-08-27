@@ -39,7 +39,7 @@ public class Bind extends CliCommand {
          return CommandResult.FAILURE;
       }
 
-      EditMode editMode = EditModeBuilder.builder(editModeType).create();
+      EditMode editMode = EditModeBuilder.builder(editModeType).build();
       KeyAction[] keys = editMode.keys();
 
       Map<String, String> bindings = new LinkedHashMap<>();

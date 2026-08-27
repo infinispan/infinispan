@@ -7,13 +7,15 @@ import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.infinispan.cli.AeshTestShell;
+import org.infinispan.cli.test.AeshTestShell;
 import org.infinispan.cli.util.JsonReaderIterable;
+import org.infinispan.testing.jupiter.tags.Cli;
 import org.junit.jupiter.api.Test;
 
 /**
  * @since 15.0
  **/
+@Cli
 public class TablePrettyPrinterTest {
 
    public static final int WIDTH = 120;

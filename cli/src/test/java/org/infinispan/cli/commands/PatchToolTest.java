@@ -1,4 +1,4 @@
-package org.infinispan.cli.patching;
+package org.infinispan.cli.commands;
 
 import static org.infinispan.cli.util.Utils.sha256;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,21 +26,24 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.Properties;
 
+import org.infinispan.cli.patching.PatchTool;
 import org.infinispan.commons.util.Util;
 import org.infinispan.testing.Exceptions;
 import org.infinispan.testing.Testing;
+import org.infinispan.testing.jupiter.tags.Cli;
 import org.junit.jupiter.api.Test;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 11.0
  **/
+@Cli
 public class PatchToolTest {
 
    @Test
    public void testPatchToolCreate() throws IOException {
       Path tmp = Paths.get(Testing.tmpDirectory(PatchToolTest.class));
-      Util.recursiveFileRemove(tmp.toFile());
+      Util.recursiveFileRemove(tmp);
       Files.createDirectories(tmp);
       Util.recursiveDirectoryCopy(new File("target/test-classes/patch").toPath(), tmp);
 

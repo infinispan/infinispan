@@ -1,5 +1,8 @@
-package org.infinispan.cli;
+package org.infinispan.cli.test;
 
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Deque;
 import java.util.concurrent.TimeUnit;
 
 import org.aesh.command.shell.Shell;
@@ -16,37 +19,47 @@ import org.opentest4j.AssertionFailedError;
  * @since 15.0
  **/
 public class AeshTestShell implements Shell {
-   private final StringBuilder bufferBuilder = new StringBuilder();
+   private final StringBuilder output = new StringBuilder();
+   private final Deque<String> readLineResponses;
+
+   public AeshTestShell() {
+      this.readLineResponses = new ArrayDeque<>();
+
+   }
+
+   public AeshTestShell(Collection<String> lines) {
+      this.readLineResponses = new ArrayDeque<>(lines);
+   }
 
 
    @Override
    public void write(String msg, boolean paging) {
-      bufferBuilder.append(msg);
+      output.append(msg);
    }
 
    @Override
    public void writeln(String msg, boolean paging) {
-      bufferBuilder.append(msg).append(Config.getLineSeparator());
+      output.append(msg).append(Config.getLineSeparator());
    }
 
    @Override
    public void write(int[] out) {
-      bufferBuilder.append(Parser.fromCodePoints(out));
+      output.append(Parser.fromCodePoints(out));
    }
 
    @Override
    public void write(char out) {
-      bufferBuilder.append(out);
+      output.append(out);
    }
 
    @Override
    public String readLine() {
-      return null;
+      return readLineResponses.removeFirst();
    }
 
    @Override
    public String readLine(Prompt prompt) {
-      return null;
+      return readLine();
    }
 
    @Override
@@ -81,22 +94,28 @@ public class AeshTestShell implements Shell {
 
    @Override
    public void clear() {
-      bufferBuilder.setLength(0);
+      output.setLength(0);
    }
 
    public String getBuffer() {
-      return bufferBuilder.toString();
+      return output.toString();
    }
 
    public void assertEquals(String expected) {
       Eventually.eventually(
-            () -> new AssertionFailedError("Expected output was not equal to expected string after timeout", expected, bufferBuilder.toString()),
-            () -> expected.contentEquals(bufferBuilder), 10_000, 50, TimeUnit.MILLISECONDS);
+            () -> new AssertionFailedError("Expected output was not equal to expected string after timeout", expected, output.toString()),
+            () -> expected.contentEquals(output), 10_000, 50, TimeUnit.MILLISECONDS);
    }
 
    public void assertContains(String expected) {
       Eventually.eventually(
-            () -> new AssertionFailedError("Expected output did not contain expected string after timeout", expected, bufferBuilder.toString()),
-            () -> bufferBuilder.toString().contains(expected), 10_000, 50, TimeUnit.MILLISECONDS);
+            () -> new AssertionFailedError("Expected output did not contain expected string after timeout", expected, output.toString()),
+            () -> output.toString().contains(expected), 10_000, 50, TimeUnit.MILLISECONDS);
+   }
+
+   public void assertNotContains(String unexpected) {
+      Eventually.eventually(
+            () -> new AssertionFailedError("Expected output should not contain expected string after timeout", unexpected, output.toString()),
+            () -> !output.toString().contains(unexpected), 10_000, 50, TimeUnit.MILLISECONDS);
    }
 }

@@ -1,4 +1,4 @@
-package org.infinispan.cli.user;
+package org.infinispan.cli.commands;
 
 import static org.infinispan.testing.Testing.tmpDirectory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -7,13 +7,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Properties;
 
+import org.infinispan.cli.user.UserTool;
 import org.infinispan.commons.util.Util;
+import org.infinispan.testing.jupiter.tags.Cli;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.wildfly.common.iteration.CodePointIterator;
@@ -28,17 +31,18 @@ import org.wildfly.security.password.spec.PasswordSpec;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 11.0
  **/
+@Cli
 public class UserToolTest {
    private static File serverDirectory;
    private static File confDirectory;
 
    @BeforeEach
-   public void createTestDirectory() {
+   public void createTestDirectory() throws IOException {
       String tmpDirectory = tmpDirectory(UserToolTest.class);
       Util.recursiveFileRemove(tmpDirectory);
       serverDirectory = new File(tmpDirectory, UserTool.DEFAULT_SERVER_ROOT);
       confDirectory = new File(serverDirectory, "conf");
-      confDirectory.mkdirs();
+      Files.createDirectories(confDirectory.toPath());
    }
 
    private static Properties loadProperties(String filename) throws IOException {
