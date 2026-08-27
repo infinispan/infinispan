@@ -66,7 +66,7 @@ jobs:
 
       - uses: graalvm/setup-graalvm@5298d94fb55a4f185c602eeac5de1b553882abe2 # v1
         with:
-          java-version: '25'
+          version: '25.0'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
