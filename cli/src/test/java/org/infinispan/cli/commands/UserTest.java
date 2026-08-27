@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.Properties;
 
 import org.infinispan.cli.test.CliExtension;
+import org.infinispan.cli.test.CliTerminal;
 import org.infinispan.commons.util.Util;
 import org.infinispan.testing.jupiter.tags.Cli;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,22 +39,23 @@ public class UserTest {
 
    @Test
    public void testCreateAndDescribe() throws Exception {
-      assertEquals(0, cli.run("user", "create", "admin", "-p", "changeme",
-            "--plain-text", "-g", "administrators,deployers", "-s", serverRoot));
+      try (CliTerminal terminal = cli.run("user", "create", "admin", "-p", "changeme", "--plain-text", "-g", "administrators,deployers", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
 
-      Properties users = loadProperties("users.properties");
-      assertEquals("changeme", users.getProperty("admin"));
-
-      assertEquals(0, cli.run("user", "describe", "admin", "-s", serverRoot));
-      String output = cli.shell().getBuffer();
-      assertThat(output).contains("admin", "administrators", "deployers");
+         Properties users = loadProperties("users.properties");
+         assertEquals("changeme", users.getProperty("admin"));
+      }
+      try (CliTerminal terminal = cli.run("user", "describe", "admin", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
+         assertThat(terminal.output()).contains("admin", "administrators", "deployers");
+      }
    }
 
    @Test
    public void testCreateEncrypted() throws Exception {
-      assertEquals(0, cli.run("user", "create", "secure", "-p", "s3cret",
-            "-g", "admin", "-s", serverRoot));
-
+      try (CliTerminal terminal = cli.run("user", "create", "secure", "-p", "s3cret", "-g", "admin", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
+      }
       Properties users = loadProperties("users.properties");
       String stored = users.getProperty("secure");
       assertThat(stored).contains(":").describedAs("Encrypted password should contain algorithm:hash pairs");
@@ -61,88 +63,97 @@ public class UserTest {
 
    @Test
    public void testCreateDuplicate() {
-      assertEquals(0, cli.run("user", "create", "dup", "-p", "pass1",
-            "--plain-text", "-s", serverRoot));
-
-      cli.run("user", "create", "dup", "-p", "pass2",
-            "--plain-text", "-s", serverRoot);
-      assertThat(cli.shell().getBuffer()).contains("already exists");
+      try (CliTerminal terminal = cli.run("user", "create", "dup", "-p", "pass1", "--plain-text", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode(), terminal.output());
+      }
+      try (CliTerminal terminal = cli.run("user", "create", "dup", "-p", "pass2", "--plain-text", "-s", serverRoot)) {
+         assertEquals(1, terminal.exitCode());
+         assertThat(terminal.output()).contains("already exists");
+      }
    }
 
    @Test
    public void testRemoveUser() {
-      assertEquals(0, cli.run("user", "create", "toremove", "-p", "pass",
-            "--plain-text", "-g", "ops", "-s", serverRoot));
-
-      assertEquals(0, cli.run("user", "remove", "toremove", "-s", serverRoot));
-
-      assertEquals(0, cli.run("user", "ls", "-s", serverRoot));
-      assertThat(cli.shell().getBuffer()).contains("[]");
+      try (CliTerminal terminal = cli.run("user", "create", "toremove", "-p", "pass", "--plain-text", "-g", "ops", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
+      }
+      try (CliTerminal terminal = cli.run("user", "remove", "toremove", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
+      }
+      try (CliTerminal terminal = cli.run("user", "ls", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
+         assertThat(terminal.output()).contains("[]");
+      }
    }
 
    @Test
    public void testChangePassword() throws Exception {
-      assertEquals(0, cli.run("user", "create", "pwuser", "-p", "oldpass",
-            "--plain-text", "-s", serverRoot));
-
-      assertEquals(0, cli.run("user", "password", "pwuser", "-p", "newpass",
-            "--plain-text", "-s", serverRoot));
-
+      try (CliTerminal terminal = cli.run("user", "create", "pwuser", "-p", "oldpass", "--plain-text", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
+      }
+      try (CliTerminal terminal = cli.run("user", "password", "pwuser", "-p", "newpass", "--plain-text", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
+      }
       Properties users = loadProperties("users.properties");
       assertEquals("newpass", users.getProperty("pwuser"));
    }
 
    @Test
    public void testModifyGroups() {
-      assertEquals(0, cli.run("user", "create", "groupuser", "-p", "pass",
-            "--plain-text", "-g", "readers", "-s", serverRoot));
-
-      assertEquals(0, cli.run("user", "groups", "groupuser",
-            "-g", "readers,writers,admins", "-s", serverRoot));
-
-      assertEquals(0, cli.run("user", "describe", "groupuser", "-s", serverRoot));
-      String output = cli.shell().getBuffer();
-      assertThat(output).contains("readers", "writers", "admins");
+      try (CliTerminal terminal = cli.run("user", "create", "groupuser", "-p", "pass", "--plain-text", "-g", "readers", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
+      }
+      try (CliTerminal terminal = cli.run("user", "groups", "groupuser", "-g", "readers,writers,admins", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
+      }
+      try (CliTerminal terminal = cli.run("user", "describe", "groupuser", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
+         assertThat(terminal.output()).contains("readers", "writers", "admins");
+      }
    }
 
    @Test
    public void testListUsers() {
       for (String name : new String[]{"charlie", "alice", "bob"}) {
-         assertEquals(0, cli.run("user", "create", name, "-p", "pass",
-               "--plain-text", "-s", serverRoot));
+         try (CliTerminal terminal = cli.run("user", "create", name, "-p", "pass", "--plain-text", "-s", serverRoot)) {
+            assertEquals(0, terminal.exitCode());
+         }
       }
 
-      assertEquals(0, cli.run("user", "ls", "-s", serverRoot));
-      String output = cli.shell().getBuffer();
-      assertThat(output).contains("alice", "bob", "charlie");
+      try (CliTerminal terminal = cli.run("user", "ls", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
+         assertThat(terminal.output()).contains("alice", "bob", "charlie");
+      }
    }
 
    @Test
    public void testListGroups() {
-      assertEquals(0, cli.run("user", "create", "u1", "-p", "pass",
-            "--plain-text", "-g", "dev,ops", "-s", serverRoot));
-
-      assertEquals(0, cli.run("user", "create", "u2", "-p", "pass",
-            "--plain-text", "-g", "ops,qa", "-s", serverRoot));
-
-      assertEquals(0, cli.run("user", "ls", "-g", "-s", serverRoot));
-      String output = cli.shell().getBuffer();
-      assertThat(output).contains("dev", "ops", "qa");
+      try (CliTerminal terminal = cli.run("user", "create", "u1", "-p", "pass", "--plain-text", "-g", "dev,ops", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
+      }
+      try (CliTerminal terminal = cli.run("user", "create", "u2", "-p", "pass", "--plain-text", "-g", "ops,qa", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
+      }
+      try (CliTerminal terminal = cli.run("user", "ls", "-g", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
+         assertThat(terminal.output()).contains("dev", "ops", "qa");
+      }
    }
 
    @Test
    public void testEncryptAll() throws Exception {
-      assertEquals(0, cli.run("user", "create", "user1", "-p", "pass1",
-            "--plain-text", "-s", serverRoot));
-      assertEquals(0, cli.run("user", "create", "user2", "-p", "pass2",
-            "--plain-text", "-s", serverRoot));
-
-      Properties before = loadProperties("users.properties");
-      assertEquals("pass1", before.getProperty("user1"));
-      assertEquals("pass2", before.getProperty("user2"));
-
-      assertEquals(0, cli.run("user", "encrypt-all", "-s", serverRoot));
-
+      try (CliTerminal terminal = cli.run("user", "create", "user1", "-p", "pass1", "--plain-text", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
+      }
+      try (CliTerminal terminal = cli.run("user", "create", "user2", "-p", "pass2", "--plain-text", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
+         Properties before = loadProperties("users.properties");
+         assertEquals("pass1", before.getProperty("user1"));
+         assertEquals("pass2", before.getProperty("user2"));
+      }
+      try (CliTerminal terminal = cli.run("user", "encrypt-all", "-s", serverRoot)) {
+         assertEquals(0, terminal.exitCode());
+      }
       Properties after = loadProperties("users.properties");
       assertThat(after.getProperty("user1")).contains(":");
       assertThat(after.getProperty("user2")).contains(":");

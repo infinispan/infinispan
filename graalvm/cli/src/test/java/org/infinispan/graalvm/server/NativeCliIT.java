@@ -1,75 +1,129 @@
 package org.infinispan.graalvm.server;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.file.Paths;
-import java.util.concurrent.TimeUnit;
+import java.io.File;
 
+import org.infinispan.cli.test.CliExtension;
+import org.infinispan.cli.test.CliTerminal;
 import org.infinispan.client.rest.RestClient;
-import org.infinispan.client.rest.RestContainerClient;
 import org.infinispan.client.rest.RestResponse;
+import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.jupiter.InfinispanServerExtension;
 import org.infinispan.server.test.jupiter.InfinispanServerExtensionBuilder;
+import org.infinispan.testing.Testing;
+import org.infinispan.testing.jupiter.tags.Cli;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
- * Test to ensure that the native CLI is able to execute.
+ * Integration tests for the native CLI binary against a containerized server.
  *
- * @author Ryan Emerson
- * @since 12.1
+ * @since 16.3
  */
+@Cli
 public class NativeCliIT {
+
    @RegisterExtension
    public static final InfinispanServerExtension SERVERS =
          InfinispanServerExtensionBuilder.config("configuration/ClusteredServerTest.xml")
                .numServers(1)
                .build();
 
+   @RegisterExtension
+   CliExtension cli = new CliExtension();
+
+   private static File workingDir;
+
+   @BeforeAll
+   public static void setup() {
+      workingDir = new File(Testing.tmpDirectory(NativeCliIT.class));
+      Util.recursiveFileRemove(workingDir);
+      workingDir.mkdirs();
+   }
+
+   @AfterAll
+   public static void teardown() {
+      Util.recursiveFileRemove(workingDir);
+   }
+
+   private static String cliPath() {
+      return System.getProperty("infinispan.cli.bin");
+   }
+
+   private String hostAddress() {
+      return SERVERS.getServerDriver().getServerAddress(0).getHostAddress();
+   }
+
+   private String serverUrl() {
+      return "http://" + hostAddress() + ":11222";
+   }
+
    @Test
-   public void testCliBatch() throws Exception {
+   public void testCliBatch() {
+      CliTerminal terminal = cli.batch(
+            "connect " + serverUrl(),
+            "create cache --template=org.infinispan.DIST_SYNC mybatch",
+            "cd caches/mybatch",
+            "put k1 v1",
+            "get k1"
+      );
+      assertEquals(0, terminal.exitCode(), "batch failed: " + terminal.output());
+      assertThat(terminal.output()).contains("v1");
+
       RestClient client = SERVERS.rest().create();
-      RestContainerClient cm = client.container();
-      RestResponse restResponse = sync(cm.healthStatus());
-      assertEquals(200, restResponse.status());
-      assertEquals("HEALTHY", restResponse.body());
-
-      String cliPath = Paths.get(System.getProperty("infinispan.cli.bin")).toString();
-      String batchFile = resource("batch.file");
-      String hostname = SERVERS.getTestServer().getDriver().getServerAddress(0).getHostAddress() + ":11222";
-
-      ProcessBuilder pb = new ProcessBuilder(cliPath, "--connect", hostname, "--file=" + batchFile);
-      pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-      Process p = pb.start();
-      StringBuilder sb = new StringBuilder();
-      new Thread(() -> {
-         try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getErrorStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-               sb.append(line);
-            }
-         } catch (IOException e) {
-            throw new RuntimeException(e);
-         }
-      }).start();
-
-      p.waitFor(5, TimeUnit.SECONDS);
-      String stderr = sb.toString();
-      if (!stderr.isEmpty()) {
-         System.err.println(stderr);
-         fail("Unexpected CLI output in stderr");
-      }
-      assertEquals(0, p.exitValue());
-      restResponse = sync(client.cache("mybatch").exists());
+      RestResponse restResponse = sync(client.cache("mybatch").exists());
       assertEquals(204, restResponse.status());
    }
 
-   private String resource(String name) throws Exception {
-      return Paths.get(NativeCliIT.class.getClassLoader().getResource(name).toURI()).toString();
+   @Test
+   public void testCliCacheOperations() {
+      try (CliTerminal terminal = cli.interactive()) {
+         terminal.send("connect " + serverUrl());
+         terminal.send("create cache --template=org.infinispan.DIST_SYNC clitest");
+         terminal.send("put --cache=clitest k1 v1");
+         terminal.clear();
+         terminal.send("get --cache=clitest k1");
+         terminal.assertContains("v1");
+         terminal.clear();
+         terminal.send("ls caches/clitest");
+         terminal.assertContains("k1");
+      }
+   }
+
+   @Test
+   public void testCliCredentials() {
+      try (CliTerminal terminal = cli.interactive()) {
+         String keyStore = workingDir.toPath().resolve("key.store").toAbsolutePath().toString();
+         terminal.send("credentials add --path=" + keyStore + " --password=secret --credential=credential password");
+         terminal.send("credentials add --path=" + keyStore + " --password=secret --credential=credential another");
+         terminal.clear();
+         terminal.send("credentials ls --path=" + keyStore + " --password=secret");
+         terminal.assertContains("password");
+         terminal.assertContains("another");
+      }
+   }
+
+   @Test
+   public void testCliConfigPersistence() {
+      try (CliTerminal terminal = cli.interactive()) {
+         terminal.send("config set autoconnect-url " + serverUrl());
+         terminal.clear();
+         terminal.send("config get autoconnect-url");
+         terminal.assertContains(serverUrl());
+         terminal.send("config set autoconnect-url");
+      }
+   }
+
+   @Test
+   public void testCliServerReport() {
+      try (CliTerminal terminal = cli.batch("connect " + serverUrl(), "lcd " + workingDir.getAbsolutePath(), "server report")) {
+         assertEquals(0, terminal.exitCode(), "serverReport failed: " + terminal.output());
+         assertThat(terminal.output()).contains("tar.gz");
+      }
    }
 }
