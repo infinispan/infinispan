@@ -196,6 +196,11 @@
                         <enabled>true</enabled>
                         <dependencies>
                            <dependency>
+                              <groupId>org.jgroups</groupId>
+                              <artifactId>jgroups</artifactId>
+                              <excluded>true</excluded>
+                           </dependency>
+                           <dependency>
                               <groupId>org.testcontainers</groupId>
                               <artifactId>testcontainers</artifactId>
                               <metadataVersion>${versionx.org.testcontainers.testcontainers}</metadataVersion>

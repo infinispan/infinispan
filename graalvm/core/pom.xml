@@ -16,6 +16,7 @@
    <properties>
       <infinispan.cluster.stack>tcp</infinispan.cluster.stack>
       <skipTests>true</skipTests>
+      <skipNativeTests>false</skipNativeTests>
    </properties>
 
    <dependencies>
@@ -167,10 +168,22 @@
 
    <profiles>
       <profile>
-         <id>native</id>
+         <!--
+            GraalVM does not support -H:+ForeignAPISupport on Windows (JNIRegistrationSupport.makeShimLibrary fails)
+            https://github.com/oracle/graal/issues/13948
+         -->
+         <id>windows</id>
+         <activation>
+            <os>
+               <family>windows</family>
+            </os>
+         </activation>
          <properties>
-            <skipTests>false</skipTests>
+            <skipNativeTests>true</skipNativeTests>
          </properties>
+      </profile>
+      <profile>
+         <id>native</id>
          <build>
             <plugins>
                <plugin>
@@ -185,6 +198,7 @@
                         </goals>
                         <phase>integration-test</phase>
                         <configuration>
+                           <skipNativeTests>${skipNativeTests}</skipNativeTests>
                            <buildArgs>
                               <buildArg>-J-Xmx${native.build.xmx}</buildArg>
                               <buildArg>-H:+UnlockExperimentalVMOptions</buildArg>
@@ -197,6 +211,10 @@
                               <buildArg>-H:ServiceLoaderFeatureExcludeServiceProviders=org.infinispan.marshall.ServiceLoadedSciImpl</buildArg>
                               <buildArg>-H:SerializationConfigurationResources=serialization-config.json</buildArg>
                               <buildArg>--enable-url-protocols=http</buildArg>
+                              <buildArg>--initialize-at-build-time=org.apache.logging.log4j.jul.LogManager</buildArg>
+                              <buildArg>--enable-native-access=ALL-UNNAMED</buildArg>
+                              <buildArg>-H:+ForeignAPISupport</buildArg>
+                              <buildArg>-H:ReachabilityMetadataResources=foreign-downcalls.json</buildArg>
                            </buildArgs>
                            <fallback>false</fallback>
                            <quickBuild>true</quickBuild>

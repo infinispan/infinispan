@@ -1,13 +1,14 @@
 package org.infinispan.cli.commands;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.infinispan.cli.test.CliExtension;
+import org.infinispan.cli.test.CliTerminal;
 import org.infinispan.testing.jupiter.tags.Cli;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
@@ -27,48 +28,57 @@ public class ConfigTest {
 
    @Test
    public void testSetAndGet() throws Exception {
-      assertEquals(0, cli.run("config", "set", "autoconnect-url", "http://localhost:11222"));
-
-      assertEquals(0, cli.run("config", "get", "autoconnect-url"));
-      assertTrue(cli.shell().getBuffer().contains("autoconnect-url=http://localhost:11222"));
+      CliTerminal terminal = cli.run("config", "set", "autoconnect-url", "http://localhost:11222");
+      assertEquals(0, terminal.exitCode());
+      terminal = cli.run("config", "get", "autoconnect-url");
+      assertEquals(0, terminal.exitCode());
+      terminal.assertContains("autoconnect-url=http://localhost:11222");
    }
 
    @Test
    public void testSetRemovesProperty() throws Exception {
-      assertEquals(0, cli.run("config", "set", "autoconnect-url", "http://localhost:11222"));
-
-      assertEquals(0, cli.run("config", "set", "autoconnect-url"));
-
-      assertEquals(0, cli.run("config", "get", "autoconnect-url"));
-      assertTrue(cli.shell().getBuffer().contains("autoconnect-url=null"));
+      CliTerminal terminal = cli.run("config", "set", "autoconnect-url", "http://localhost:11222");
+      assertEquals(0, terminal.exitCode());
+      terminal = cli.run("config", "set", "autoconnect-url");
+      assertEquals(0, terminal.exitCode());
+      terminal = cli.run("config", "get", "autoconnect-url");
+      assertEquals(0, terminal.exitCode());
+      terminal.assertContains("autoconnect-url=null");
    }
 
    @Test
    public void testReset() throws Exception {
-      assertEquals(0, cli.run("config", "set", "autoconnect-url", "http://localhost:11222"));
-      assertEquals(0, cli.run("config", "set", "trustall", "true"));
+      CliTerminal terminal = cli.run("config", "set", "autoconnect-url", "http://localhost:11222");
+      assertEquals(0, terminal.exitCode());
+      terminal = cli.run("config", "set", "trustall", "true");
+      assertEquals(0, terminal.exitCode());
 
-      assertEquals(0, cli.run("config", "reset"));
+      terminal = cli.run("config", "reset");
+      assertEquals(0, terminal.exitCode());
 
-      assertEquals(0, cli.run("config", "get", "autoconnect-url"));
-      assertTrue(cli.shell().getBuffer().contains("autoconnect-url=null"));
+      terminal = cli.run("config", "get", "autoconnect-url");
+      assertEquals(0, terminal.exitCode());
+      terminal.assertContains("autoconnect-url=null");
    }
 
    @Test
    public void testListProperties() throws Exception {
-      assertEquals(0, cli.run("config", "set", "autoconnect-url", "http://localhost:11222"));
-      assertEquals(0, cli.run("config", "set", "trustall", "true"));
+      CliTerminal terminal = cli.run("config", "set", "autoconnect-url", "http://localhost:11222");
+      assertEquals(0, terminal.exitCode());
+      terminal = cli.run("config", "set", "trustall", "true");
+      assertEquals(0, terminal.exitCode());
 
-      assertEquals(0, cli.run("config"));
-      String output = cli.shell().getBuffer();
-      assertTrue(output.contains("autoconnect-url=http://localhost:11222"));
-      assertTrue(output.contains("trustall=true"));
+      terminal = cli.run("config");
+      assertEquals(0, terminal.exitCode());
+      terminal.assertContains("autoconnect-url=http://localhost:11222");
+      terminal.assertContains("trustall=true");
    }
 
    @Test
    public void testGetReturnsNull() throws Exception {
-      assertEquals(0, cli.run("config", "get", "nonexistent"));
-      assertTrue(cli.shell().getBuffer().contains("nonexistent=null"));
+      CliTerminal terminal = cli.run("config", "get", "nonexistent");
+      assertEquals(0, terminal.exitCode());
+      terminal.assertContains("nonexistent=null");
    }
 
    @Test
@@ -77,13 +87,11 @@ public class ConfigTest {
       Path inputFile = cli.configPath().resolve("test-config.xml");
       Path outputFile = cli.configPath().resolve("test-config.json");
       Files.writeString(inputFile, SAMPLE_XML);
-
-      int rc = cli.run("config", "convert", inputFile.toString(), "-f", "json", "-o", outputFile.toString());
-      assertEquals(0, rc, cli.shell().getBuffer());
-
+      CliTerminal terminal = cli.run("config", "convert", inputFile.toString(), "-f", "json", "-o", outputFile.toString());
+      assertEquals(0, terminal.exitCode());
       String json = Files.readString(outputFile);
-      assertTrue(json.contains("distributed-cache"), json);
-      assertTrue(json.contains("testcache"), json);
+      assertThat(json).contains("distributed-cache");
+      assertThat(json).contains("testcache");
    }
 
    @Test
@@ -93,12 +101,12 @@ public class ConfigTest {
       Path outputFile = cli.configPath().resolve("test-config.yaml");
       Files.writeString(inputFile, SAMPLE_XML);
 
-      int rc = cli.run("config", "convert", inputFile.toString(), "-f", "yaml", "-o", outputFile.toString());
-      assertEquals(0, rc, cli.shell().getBuffer());
+      CliTerminal terminal = cli.run("config", "convert", inputFile.toString(), "-f", "yaml", "-o", outputFile.toString());
+      assertEquals(0, terminal.exitCode());
 
       String yaml = Files.readString(outputFile);
-      assertTrue(yaml.contains("distributedCache"), yaml);
-      assertTrue(yaml.contains("testcache"), yaml);
+      assertThat(yaml).contains("distributedCache");
+      assertThat(yaml).contains("testcache");
    }
 
    @Test
@@ -109,13 +117,12 @@ public class ConfigTest {
       Path xmlOutput = cli.configPath().resolve("output.xml");
       Files.writeString(xmlInput, SAMPLE_XML);
 
-      int rc1 = cli.run("config", "convert", xmlInput.toString(), "-f", "json", "-o", jsonFile.toString());
-      assertEquals(0, rc1, cli.shell().getBuffer());
-      int rc2 = cli.run("config", "convert", jsonFile.toString(), "-f", "xml", "-o", xmlOutput.toString());
-      assertEquals(0, rc2, cli.shell().getBuffer());
-
+      CliTerminal terminal = cli.run("config", "convert", xmlInput.toString(), "-f", "json", "-o", jsonFile.toString());
+      assertEquals(0, terminal.exitCode());
+      terminal = cli.run("config", "convert", jsonFile.toString(), "-f", "xml", "-o", xmlOutput.toString());
+      assertEquals(0, terminal.exitCode());
       String xml = Files.readString(xmlOutput);
-      assertTrue(xml.contains("distributed-cache"), xml);
-      assertTrue(xml.contains("testcache"), xml);
+      assertThat(xml).contains("distributed-cache");
+      assertThat(xml).contains("testcache");
    }
 }

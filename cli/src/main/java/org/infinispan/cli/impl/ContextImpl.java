@@ -49,7 +49,6 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    private CommandRegistry<? extends CommandInvocation> registry;
    private final Path configPath;
 
-
    public ContextImpl(Properties defaults) {
       this.properties = new Properties(defaults);
       String userDir = properties.getProperty("user.dir");

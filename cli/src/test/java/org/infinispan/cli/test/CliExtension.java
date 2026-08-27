@@ -53,7 +53,6 @@ public class CliExtension implements BeforeEachCallback, AfterEachCallback {
 
    private final List<String> responses;
    private Path configPath;
-   private AeshTestShell shell;
    private StubContext context;
 
    public CliExtension() {
@@ -64,14 +63,9 @@ public class CliExtension implements BeforeEachCallback, AfterEachCallback {
       this.responses = responses;
    }
 
-   public static Connection newConnection(String url, String inferreduser) {
-      return new StubConnection(url, inferreduser);
-   }
-
    @Override
    public void beforeEach(ExtensionContext extensionContext) throws IOException {
       configPath = Files.createTempDirectory("cli-test");
-      shell = new AeshTestShell(responses);
       context = new StubContext(configPath);
    }
 
@@ -81,16 +75,12 @@ public class CliExtension implements BeforeEachCallback, AfterEachCallback {
    }
 
    public ContextAwareCommandInvocation invocation() {
-      return new ContextAwareCommandInvocation(new StubCommandInvocation(shell), context);
+      return new ContextAwareCommandInvocation(new StubCommandInvocation(new AeshTestShell()), context);
    }
 
    public ContextAwareCommandInvocation invocation(Connection connection, Properties properties) {
       StubContext ctx = new StubContext(configPath, connection, properties);
-      return new ContextAwareCommandInvocation(new StubCommandInvocation(shell), ctx);
-   }
-
-   public AeshTestShell shell() {
-      return shell;
+      return new ContextAwareCommandInvocation(new StubCommandInvocation(new AeshTestShell()), ctx);
    }
 
    public Path configPath() {
@@ -109,43 +99,80 @@ public class CliExtension implements BeforeEachCallback, AfterEachCallback {
 
    /**
     * Runs a non-interactive CLI command
+    *
     * @param args the CLI arguments
     * @return the exit code. Code should use #getShell() to inspect the output buffer
     */
-   public int run(String... args) {
-      shell.clear();
+   public CliTerminal run(String... args) {
+      AeshTestShell shell = new AeshTestShell(responses);
       String cliPath = System.getProperty("infinispan.cli.bin");
       if (cliPath == null) {
-         System.out.printf("Embedded CLI args=%s%n", String.join(" ", args));
          try {
-            return CLI.main(shell, cliProperties(), args);
+            int exitCode = CLI.main(shell, cliProperties(), args);
+            return new BatchCliTerminal(exitCode, shell.getBuffer());
          } catch (Exception e) {
             shell.writeln(e.getMessage(), false);
-            return 1;
+            return new BatchCliTerminal(1, shell.getBuffer());
+         }
+      } else {
+         List<String> cmd = new ArrayList<>();
+         cmd.add(cliPath);
+         cmd.addAll(Arrays.asList(args));
+         ProcessBuilder pb = new ProcessBuilder(cmd);
+         pb.environment().put("ISPN_CLI_DIR", configPath.toString());
+         pb.redirectErrorStream(true);
+         try {
+            Process p = pb.start();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
+               String line;
+               while ((line = reader.readLine()) != null) {
+                  shell.writeln(line, false);
+               }
+            }
+            if (!p.waitFor(30, TimeUnit.SECONDS)) {
+               p.destroyForcibly();
+               throw new RuntimeException("CLI process timed out after 30 seconds");
+            }
+            return new BatchCliTerminal(p.exitValue(),  shell.getBuffer());
+         } catch (IOException | InterruptedException e) {
+            throw new RuntimeException("Failed to execute CLI process", e);
          }
       }
-      System.out.printf("External CLI %s %s%n", cliPath, String.join(" ", args));
-      List<String> cmd = new ArrayList<>();
-      cmd.add(cliPath);
-      cmd.addAll(Arrays.asList(args));
-      ProcessBuilder pb = new ProcessBuilder(cmd);
-      pb.environment().put("ISPN_CLI_DIR", configPath.toString());
-      pb.redirectErrorStream(true);
+   }
+
+   /**
+    * Runs multiple CLI commands in batch mode.
+    *
+    * @param commands the CLI commands to execute
+    * @return terminal with exit code and captured output
+    */
+   public CliTerminal batch(String... commands) {
       try {
-         Process p = pb.start();
-         try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-               shell.writeln(line, false);
-            }
+         Path batchFile = Files.createTempFile(configPath, "batch", ".cli");
+         try {
+            Files.write(batchFile, Arrays.asList(commands));
+            return run("-f", batchFile.toString());
+         } finally {
+            Files.deleteIfExists(batchFile);
          }
-         if (!p.waitFor(30, TimeUnit.SECONDS)) {
-            p.destroyForcibly();
-            throw new RuntimeException("CLI process timed out after 30 seconds");
-         }
-         return p.exitValue();
-      } catch (IOException | InterruptedException e) {
-         throw new RuntimeException("Failed to execute CLI process", e);
+      } catch (IOException e) {
+         throw new RuntimeException(e);
+      }
+   }
+
+   /**
+    * Starts the CLI in interactive mode. Commands can be sent via
+    * {@link CliTerminal#send(String)} and output inspected between commands.
+    * The caller must {@link CliTerminal#close()} when done.
+    *
+    * @return an interactive terminal
+    */
+   public CliTerminal interactive() {
+      String cliPath = System.getProperty("infinispan.cli.bin");
+      if (cliPath == null) {
+         return new EmbeddedCliTerminal(cliProperties());
+      } else {
+         return new ProcessCliTerminal(cliPath, configPath.toString());
       }
    }
 

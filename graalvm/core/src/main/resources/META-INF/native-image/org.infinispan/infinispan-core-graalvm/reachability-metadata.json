@@ -1,14 +1,20 @@
 {
-  "foreign": {
-    "downcalls": [
-      {
-        "returnType": "long",
-        "parameterTypes": ["long"]
-      },
-      {
-        "returnType": "void",
-        "parameterTypes": ["long"]
-      }
-    ]
-  }
+  "reflection": [
+    {
+      "type": "org.jgroups.util.MaxOneThreadPerSender",
+      "fields": [
+        {
+          "name": "max_buffer_size"
+        }
+      ]
+    },
+    {
+      "type": "com.github.benmanes.caffeine.cache.SSLMS",
+      "fields": [
+        {
+          "name": "FACTORY"
+        }
+      ]
+    }
+  ]
 }
