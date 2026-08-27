@@ -314,18 +314,42 @@ public class FileProvider {
       lock.writeLock().lock();
       try {
          log.debug("Dropping all data");
-         while (currentOpenFiles.get() > 0) {
-            if (tryCloseFile()) {
-               if (currentOpenFiles.decrementAndGet() == 0) {
-                  break;
+         // The write lock prevents any new file from being opened while we drop everything. Files
+         // that nobody is using are closed and deleted right away. Files still held by a handle are
+         // marked deleteOnClose so the last handle release deletes them. We deliberately never block
+         // waiting for open handles here: doing so while holding the write lock would deadlock a
+         // thread that holds a handle and then tries to open another file (it would block acquiring
+         // the read lock), and a busy loop would peg a CPU core (pinning the carrier when run on a
+         // virtual thread), which can hang the JVM.
+         Set<String> deferredFiles = null;
+         Record removed;
+         while ((removed = recordQueue.poll()) != null) {
+            currentOpenFiles.decrementAndGet();
+            synchronized (removed) {
+               if (removed.isUsed()) {
+                  // Defer deletion until the last handle is released.
+                  removed.deleteOnClose();
+                  if (deferredFiles == null) {
+                     deferredFiles = new HashSet<>();
+                  }
+                  deferredFiles.add(fileIdToString(removed.getFileId()));
+               } else {
+                  if (removed.isOpen()) {
+                     removed.close();
+                  }
+                  openFiles.remove(removed.getFileId(), removed);
                }
             }
          }
-         if (!recordQueue.isEmpty()) throw new IllegalStateException();
-         if (!openFiles.isEmpty()) throw new IllegalStateException();
+         if (currentOpenFiles.get() != 0) throw new IllegalStateException();
          File[] files = directoryFile.listFiles();
          if (files != null) {
             for (File file : files) {
+               // A file still held open is deleted when its last handle is released (deleteOnClose);
+               // on some platforms it cannot be deleted while open, so skip it here.
+               if (deferredFiles != null && deferredFiles.contains(file.getName())) {
+                  continue;
+               }
                Files.delete(file.toPath());
             }
          }
