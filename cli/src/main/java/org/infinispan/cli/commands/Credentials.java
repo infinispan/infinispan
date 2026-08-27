@@ -5,6 +5,7 @@ import static org.infinispan.cli.logging.Messages.MSG;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Provider;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,8 +16,6 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
-import org.aesh.io.FileResource;
-import org.aesh.io.Resource;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.auth.server.IdentityCredentials;
@@ -24,6 +23,7 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStoreException;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
+import org.wildfly.security.password.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.util.PasswordBasedEncryptionUtil;
 
@@ -46,6 +46,8 @@ public class Credentials extends CliCommand {
       return CommandResult.FAILURE;
    }
 
+   private static final Provider[] PROVIDERS = new Provider[]{WildFlyElytronPasswordProvider.getInstance()};
+
    static KeyStoreCredentialStore getKeyStoreCredentialStore(Path path, String type, boolean create, char[] password) throws CredentialStoreException {
       KeyStoreCredentialStore store = new KeyStoreCredentialStore();
       final Map<String, String> map = new HashMap<>();
@@ -56,20 +58,20 @@ public class Credentials extends CliCommand {
             map,
             new CredentialStore.CredentialSourceProtectionParameter(
                   IdentityCredentials.NONE.withCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password)))),
-            null
+            PROVIDERS
       );
       return store;
    }
 
-   static Path resourceToPath(Resource resource, String serverRoot) {
-      if (((FileResource) resource).getFile().getParent() != null) {
-         return Paths.get(resource.getAbsolutePath());
+   static Path resourceToPath(String path, String serverRoot) {
+      java.io.File file = new java.io.File(path);
+      if (file.getParent() != null) {
+         return file.toPath().toAbsolutePath();
       } else {
          String serverHome = System.getProperty("infinispan.server.home.path");
          Path serverHomePath = serverHome == null ? Paths.get("") : Paths.get(serverHome);
-         return serverHomePath.resolve(serverRoot).resolve("conf").resolve(((FileResource) resource).getFile().getPath()).toAbsolutePath();
+         return serverHomePath.resolve(serverRoot).resolve("conf").resolve(path).toAbsolutePath();
       }
-
    }
 
    @CommandDefinition(name = "add", description = "Adds credentials to keystores.")
@@ -79,7 +81,7 @@ public class Credentials extends CliCommand {
       String alias;
 
       @Option(description = "Sets the path to a credential keystore and creates a new one if it does not exist.", completer = FileOptionCompleter.class, defaultValue = CREDENTIALS_PATH)
-      Resource path;
+      String path;
 
       @Option(description = "Specifies a password to protect the credential keystore.", shortName = 'p')
       String password;
@@ -120,7 +122,7 @@ public class Credentials extends CliCommand {
       String alias;
 
       @Option(description = "Sets the path to a credential keystore.", completer = FileOptionCompleter.class, defaultValue = CREDENTIALS_PATH)
-      Resource path;
+      String path;
 
       @Option(description = "Specifies the password that protects the credential keystore.", shortName = 'p')
       String password;
@@ -152,7 +154,7 @@ public class Credentials extends CliCommand {
    public static class Ls extends CliCommand {
 
       @Option(description = "Sets the path to a credential keystore.", completer = FileOptionCompleter.class, defaultValue = CREDENTIALS_PATH)
-      Resource path;
+      String path;
 
       @Option(description = "Specifies the password that protects the credential keystore.", shortName = 'p')
       String password;

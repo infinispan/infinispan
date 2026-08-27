@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Collections;
 import java.util.Map;
 
+import org.infinispan.testing.jupiter.tags.Cli;
 import org.junit.jupiter.api.Test;
 
 import io.fabric8.kubernetes.api.model.Secret;
@@ -12,6 +13,7 @@ import io.fabric8.kubernetes.api.model.Secret;
 /**
  * @since 15.0
  **/
+@Cli
 public class KubeTest {
 
    @Test
