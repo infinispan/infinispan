@@ -1,6 +1,7 @@
 package org.infinispan.container.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -10,11 +11,15 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.MemoryMonitor;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.ContainerMemoryConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.mockito.Mockito;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -141,6 +146,27 @@ public class DynamicMemoryResizerIntegrationTest extends AbstractInfinispanTest 
       monitor.recordGcEvent(100_000, 3000);
       eventually(() -> dynamicMap.capacity() == 800, 5000);
       assertEquals(500, staticMap.capacity());
+   }
+
+   /**
+    * Reproducer for issue #18012: constructing a cache manager with the memory monitor disabled must
+    * not fail wiring the always-registered {@link DynamicMemoryResizer}, which hard-injects the
+    * (now absent) {@link MemoryMonitor}.
+    */
+   @Test
+   public void testCacheManagerStartsWithMemoryMonitorDisabled() {
+      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder().nonClusteredDefault();
+      gcb.cacheContainer().statistics(true);
+      gcb.memoryMonitor().enabled(false);
+
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(gcb, new ConfigurationBuilder());
+      try {
+         assertEquals(ComponentStatus.RUNNING, cm.getStatus());
+         cm.defineConfiguration("test", new ConfigurationBuilder().build());
+         assertNotNull(cm.getCache("test"));
+      } finally {
+         TestingUtil.killCacheManagers(cm);
+      }
    }
 
    @Test
