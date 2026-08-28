@@ -155,7 +155,10 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          basicComponentRegistry.getComponent(XSiteEventsManager.class);
 
          basicComponentRegistry.getComponent(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR, ScheduledExecutorService.class);
-         basicComponentRegistry.getComponent(DynamicMemoryResizer.class);
+         // The resizer only reacts to MemoryMonitor callbacks, so it is only wired when the monitor is enabled
+         if (mmConfig.enabled()) {
+            basicComponentRegistry.getComponent(DynamicMemoryResizer.class);
+         }
 
          cacheComponents();
       } catch (Exception e) {
