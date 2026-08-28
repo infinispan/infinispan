@@ -1352,6 +1352,8 @@ public class Parser extends CacheParser {
                if (storage != null) {
                   throw ParseUtils.unexpectedElement(reader);
                }
+               ParseUtils.requireNoAttributes(reader);
+               ParseUtils.requireNoContent(reader);
                storage = ConfigurationStorage.IMMUTABLE;
                break;
             }

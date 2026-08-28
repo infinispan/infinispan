@@ -35,6 +35,7 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.threads.AbstractThreadPoolExecutorFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.factories.threads.EnhancedQueueExecutorFactory;
+import org.infinispan.globalstate.ConfigurationStorage;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
@@ -238,6 +239,23 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(storeConfiguration instanceof AbstractStoreConfiguration);
       AbstractStoreConfiguration abstractStoreConfiguration = (AbstractStoreConfiguration) storeConfiguration;
       assertTrue(abstractStoreConfiguration.preload());
+   }
+
+   public void testImmutableConfigurationStorage() {
+      String config = TestingUtil.wrapXMLWithSchema(
+            """
+                  <cache-container>
+                     <transport cluster="demoCluster"/>
+                     <global-state>
+                        <immutable-configuration-storage/>
+                     </global-state>
+                  </cache-container>"""
+      );
+
+      ConfigurationBuilderHolder holder = parseStringConfiguration(config);
+      GlobalConfiguration globalCfg = holder.getGlobalConfigurationBuilder().build();
+      assertTrue(globalCfg.globalState().enabled());
+      assertEquals(ConfigurationStorage.IMMUTABLE, globalCfg.globalState().configurationStorage());
    }
 
    public void testNoDefaultCache() {
