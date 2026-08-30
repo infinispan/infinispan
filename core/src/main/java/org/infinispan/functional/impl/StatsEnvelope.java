@@ -52,11 +52,16 @@ public class StatsEnvelope<T> {
 
 
    public static Object unpack(InvocationContext ctx, VisitableCommand command, Object o) {
-      return ((StatsEnvelope<?>) o).value;
+      // Value may arrive unwrapped from a non-owner RPC response
+      return o instanceof StatsEnvelope<?> envelope ? envelope.value : o;
    }
 
    public static Object unpackCollection(InvocationContext ctx, VisitableCommand command, Object o) {
-      return ((Collection<StatsEnvelope<?>>) o).stream().map(StatsEnvelope::value).collect(Collectors.toList());
+      Collection<?> collection = (Collection<?>) o;
+      if (collection.isEmpty() || !(collection.iterator().next() instanceof StatsEnvelope)) {
+         return collection;
+      }
+      return collection.stream().map(c -> ((StatsEnvelope<?>) c).value()).collect(Collectors.toList());
    }
 
    public static Object unpackStream(InvocationContext ctx, VisitableCommand command, Object o) {
