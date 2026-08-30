@@ -306,7 +306,9 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
 
       long start = timeService.time();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
-         StatsEnvelope<?> envelope = (StatsEnvelope<?>) rv;
+         if (!(rv instanceof StatsEnvelope<?> envelope)) {
+            return rv;
+         }
          if (envelope.isDelete()) {
             trackRemoveHit(start, getWriteOwnership(rCommand.getSegment()));
          } else if ((envelope.flags() & (StatsEnvelope.CREATE | StatsEnvelope.UPDATE)) != 0) {
@@ -336,7 +338,9 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
          if (rv == null && !rCommand.isSuccessful() && rCommand.hasAnyFlag(FlagBitSets.FAIL_SILENTLY))
             return null;
 
-         StatsEnvelope<?> envelope = (StatsEnvelope<?>) rv;
+         if (!(rv instanceof StatsEnvelope<?> envelope)) {
+            return rv;
+         }
          if (envelope.isDelete()) {
             trackRemoveHit(start, getWriteOwnership(rCommand.getSegment()));
          } else if ((envelope.flags() & (StatsEnvelope.CREATE | StatsEnvelope.UPDATE)) != 0) {
@@ -387,8 +391,13 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
          int stores = 0;
          int removals = 0;
          int numResults = rCommand.getAffectedKeys().size();
+         Collection<?> collection = (Collection<?>) rv;
+         if (collection.isEmpty() || !(collection.iterator().next() instanceof StatsEnvelope)) {
+            return rv instanceof List ? rv : new ArrayList<>(collection);
+         }
          List<Object> results = new ArrayList<>(numResults);
-         for (StatsEnvelope<?> envelope : ((Collection<StatsEnvelope<?>>) rv)) {
+         for (Object item : collection) {
+            StatsEnvelope<?> envelope = (StatsEnvelope<?>) item;
             if (envelope.isDelete()) {
                removals++;
             } else if ((envelope.flags() & (StatsEnvelope.CREATE | StatsEnvelope.UPDATE)) != 0) {
