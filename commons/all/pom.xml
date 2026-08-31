@@ -192,6 +192,9 @@
                <excludedGroups combine.self="override">${defaultExcludedJUnitGroups}</excludedGroups>
                <excludes>
                   <exclude>**/MemoryMonitorLowMemoryTest.java</exclude>
+                  <!-- Forks a JVM per garbage collector; run manually with
+                       -Dtest=MemoryMonitorGcNotificationTest -->
+                  <exclude>**/MemoryMonitorGcNotificationTest.java</exclude>
                </excludes>
             </configuration>
             <executions>

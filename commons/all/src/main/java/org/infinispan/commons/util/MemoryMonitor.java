@@ -171,6 +171,12 @@ public class MemoryMonitor {
             NotificationListener listener = (n, hb) -> {
                if (GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION.equals(n.getType())) {
                   GarbageCollectionNotificationInfo gcInfo = GarbageCollectionNotificationInfo.from((CompositeData) n.getUserData());
+                  if (isConcurrentGcAction(gcInfo.getGcAction())) {
+                     // Concurrent-phase GC actions (e.g. ZGC background cycles) report wall-clock
+                     // duration, not stop-the-world pause time. Exclude them from all metrics to
+                     // avoid false ISPN000978/ISPN000979 alerts on healthy heaps.
+                     return;
+                  }
                   GcInfo info = gcInfo.getGcInfo();
                   long duration = info.getDuration();
                   long now = System.currentTimeMillis();
@@ -189,6 +195,34 @@ public class MemoryMonitor {
             registeredListeners.add(new ListenerRegistration(emitter, listener));
          }
       }
+   }
+
+   /**
+    * Returns {@code true} if the GC action string describes a concurrent (non-stop-the-world) phase
+    * whose {@link GcInfo#getDuration()} reflects wall-clock elapsed time rather than pause time.
+    * <p>
+    * The concurrent collectors expose a separate {@link GarbageCollectorMXBean} for the full
+    * concurrent cycle in addition to the bean(s) that report their actual stop-the-world pauses. The
+    * cycle bean tracks wall-clock cycle time (potentially tens of seconds), while the pause bean(s)
+    * track only the STW pauses (sub-millisecond). Both fire a {@code GARBAGE_COLLECTION_NOTIFICATION},
+    * but only the pause bean is meaningful for GC duration and pressure tracking. The cycle bean uses
+    * the action string {@code "end of GC cycle"}, and this is the only action that must be filtered:
+    * <ul>
+    *    <li>Generational ZGC reports pauses via {@code "end of GC pause"}.</li>
+    *    <li>Shenandoah reports pauses via its phase names ({@code "Init Mark"}, {@code "Final Mark"},
+    *    {@code "Init Update Refs"}, {@code "Final Update Refs"}) — it also emits {@code "end of GC
+    *    cycle"} for its concurrent cycle, which is likewise filtered.</li>
+    * </ul>
+    * <p>
+    * The stop-the-world collectors (Serial, Parallel, G1) never emit {@code "end of GC cycle"} — they
+    * use action strings such as {@code "end of minor GC"} and {@code "end of major GC"} — so the
+    * filter is a no-op for them.
+    *
+    * @param gcAction the action string from {@link GarbageCollectionNotificationInfo#getGcAction()}
+    * @return {@code true} if the action represents a concurrent cycle that should be excluded
+    */
+   static boolean isConcurrentGcAction(String gcAction) {
+      return "end of GC cycle".equals(gcAction);
    }
 
    /**
