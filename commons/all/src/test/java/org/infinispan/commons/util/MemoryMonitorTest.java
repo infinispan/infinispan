@@ -243,6 +243,36 @@ public class MemoryMonitorTest {
       assertEquals(3, completedCount.get());
    }
 
+
+   /**
+    * Verifies that "end of GC cycle" (ZGC concurrent cycle) is correctly identified as a
+    * concurrent action to exclude, while all stop-the-world action strings are not filtered.
+    * <p>
+    * ZGC fires two notification beans per generation: a cycle bean (wall-clock duration of the
+    * entire concurrent cycle — can be 15-80s on a healthy heap) and a pause bean (actual STW time,
+    * sub-millisecond). Only the cycle bean must be excluded to fix ISPN000978/ISPN000979.
+    */
+   @Test
+   public void testIsConcurrentGcAction() {
+      // The only action that should be filtered: ZGC concurrent cycle bean
+      assertTrue(MemoryMonitor.isConcurrentGcAction("end of GC cycle"));
+
+      // ZGC STW pause bean — must NOT be filtered
+      assertFalse(MemoryMonitor.isConcurrentGcAction("end of GC pause"));
+
+      // G1 / Serial / Parallel STW pauses — must NOT be filtered
+      assertFalse(MemoryMonitor.isConcurrentGcAction("end of minor GC"));
+      assertFalse(MemoryMonitor.isConcurrentGcAction("end of major GC"));
+
+      // G1 concurrent mark STW remark/cleanup — action name contains "concurrent" but these
+      // are genuine short STW pauses that should still be tracked
+      assertFalse(MemoryMonitor.isConcurrentGcAction("end of concurrent GC pause"));
+
+      // Null safety
+      assertFalse(MemoryMonitor.isConcurrentGcAction(null));
+   }
+
+
    private static class CountingListener implements MemoryMonitor.Listener {
       private final AtomicInteger memoryLow;
       private final AtomicInteger memoryRecovered;
