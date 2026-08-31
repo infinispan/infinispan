@@ -193,6 +193,9 @@
                <disableXmlReport>false</disableXmlReport>
                <excludes>
                   <exclude>**/MemoryMonitorLowMemoryTest.java</exclude>
+                  <!-- Forks a JVM per garbage collector; run manually with
+                       -Dtest=MemoryMonitorGcNotificationTest -->
+                  <exclude>**/MemoryMonitorGcNotificationTest.java</exclude>
                </excludes>
             </configuration>
             <executions>
