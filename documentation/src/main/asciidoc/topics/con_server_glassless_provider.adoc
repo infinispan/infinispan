@@ -1,0 +1,37 @@
+[id='glassless-provider_{context}']
+= GlaSSLess OpenSSL provider
+
+GlaSSLess is a JCA (Java Cryptography Architecture) security provider that delegates TLS operations to the system's OpenSSL library via native bindings.
+By offloading the TLS handshake and encryption to OpenSSL, {brandname} Server can achieve significantly better throughput and lower latency compared to the default Java TLS implementation (JSSE), especially under high-concurrency workloads.
+
+== Activation
+
+{brandname} Server automatically registers the GlaSSLess provider at startup when the OpenSSL native library is available on the system.
+No configuration changes are required: if OpenSSL is installed and accessible on the library path, {brandname} Server will use it transparently for all TLS operations.
+
+You can verify that the provider is active by checking the server log at startup for a message indicating that the GlaSSLess provider has been registered.
+
+If OpenSSL is not available, {brandname} Server falls back to the default JSSE provider without any impact on functionality.
+
+== Performance benefits
+
+OpenSSL is a highly-optimized, widely-deployed TLS implementation written in C. By delegating TLS operations to OpenSSL:
+
+* TLS handshakes complete faster, reducing connection establishment time.
+* Bulk encryption and decryption benefit from hardware-accelerated AES-NI instructions where available.
+* Overall CPU usage for TLS processing is reduced, freeing resources for cache operations.
+
+These benefits are most noticeable in deployments with a high rate of new TLS connections or large volumes of encrypted data transfer.
+
+== Compatibility
+
+GlaSSLess is compatible with OpenSSL 3.x and 4.x.
+
+== FIPS considerations
+
+When running on a FIPS 140-3 enabled system, the GlaSSLess provider uses the system's FIPS-configured OpenSSL library.
+This means that the FIPS restrictions and approved algorithms enforced by the operating system's OpenSSL configuration apply automatically.
+
+If you require strict FIPS compliance with an audited and certified cryptographic module, you should verify your platform's
+FIPS policy with regard to the installed OpenSSL library.
+You can also use an alternative dedicated FIPS provider such as PKCS#11 with NSS or Bouncy Castle FIPS, as described in the following section.

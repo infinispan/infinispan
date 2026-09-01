@@ -24,6 +24,7 @@
       <server.output.dir>../runtime/target/${infinispan.brand.prefix}-server-${infinispan.brand.version}</server.output.dir>
       <jdk.dist>https://api.adoptium.net/v3/binary/latest/25/ga/linux/${arch}/jdk/hotspot/normal/eclipse</jdk.dist>
       <server.dist>target/${infinispan.brand.prefix}-server-${infinispan.brand.version}.zip</server.dist>
+      <image.crypto.policy></image.crypto.policy>
    </properties>
 
    <dependencies>
@@ -83,6 +84,7 @@
                                  <BRAND_VERSION>${infinispan.brand.version}</BRAND_VERSION>
                                  <JDK_DIST>${jdk.dist}</JDK_DIST>
                                  <SERVER_DIST>${server.dist}</SERVER_DIST>
+                                 <CRYPTO_POLICY>${image.crypto.policy}</CRYPTO_POLICY>
                               </args>
                               <buildx>
                                  <platforms>${image.platforms}</platforms>
