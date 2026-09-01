@@ -50,7 +50,6 @@ import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.cache.impl.EncoderEntryMapper;
 import org.infinispan.cache.impl.EncoderKeyMapper;
 import org.infinispan.commons.api.CacheContainerAdmin.AdminFlag;
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
@@ -77,7 +76,6 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.impl.InternalEntryFactory;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -743,15 +741,13 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       final MediaType valueMediaType = getMediaType(negotiate, cache, false);
 
       AdvancedCache<?, ?> typedCache = invocationHelper.getRestCacheManager().getCache(cacheName, keyMediaType, valueMediaType, request);
-      ComponentRegistry registry = SecurityActions.getCacheComponentRegistry(typedCache);
-      ClusterPublisherManager<Object, Object> cpm = registry.getClusterPublisherManager().wired();
-      InternalEntryFactory ief = registry.getInternalEntryFactory().running();
-      EncoderEntryMapper<Object, Object, CacheEntry<Object, Object>> mapper = EncoderEntryMapper.newCacheEntryMapper(typedCache.getKeyDataConversion(), typedCache.getValueDataConversion(), ief);
-      mapper.injectDependencies(registry);
-      SegmentPublisherSupplier<CacheEntry<Object, Object>> sps = cpm.entryPublisher(null, null, null, EMPTY_BIT_SET, guarantee,
-            batch, PublisherTransformers.identity());
-      Flowable<CacheEntry<?, ?>> flowable = Flowable.fromPublisher(sps.publisherWithoutSegments())
-            .map(mapper::apply);
+      @SuppressWarnings("unchecked")
+      AdvancedCache<Object, Object> objectCache = (AdvancedCache<Object, Object>) typedCache;
+      SegmentPublisherSupplier<CacheEntry<Object, Object>> sps = objectCache
+            .cachePublisher()
+            .batchSize(batch)
+            .entryPublisher(PublisherTransformers.identity());
+      Flowable<CacheEntry<?, ?>> flowable = Flowable.<CacheEntry<?, ?>>fromPublisher(sps.publisherWithoutSegments());
       if (limit > -1) {
          flowable = flowable.take(limit);
       }

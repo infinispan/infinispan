@@ -6,6 +6,7 @@ import org.infinispan.commands.functional.functions.InjectableComponent;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -73,7 +74,8 @@ public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements Enco
       if (key != newKey || value != newValue) {
          if (e instanceof CacheEntry) {
             CacheEntry<K, V> ce = (CacheEntry<K, V>) e;
-            return (T) entryFactory.create(newKey, newValue, ce.getMetadata().version(), ce.getCreated(),
+            EntryVersion version = ce.getMetadata() == null ? null : ce.getMetadata().version();
+            return (T) entryFactory.create(newKey, newValue, version, ce.getCreated(),
                   ce.getLifespan(), ce.getLastUsed(), ce.getMaxIdle());
          } else {
             return (T) entryFactory.create(newKey, newValue, (Metadata) null);

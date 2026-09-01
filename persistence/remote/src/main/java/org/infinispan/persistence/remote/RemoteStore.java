@@ -329,7 +329,13 @@ public class RemoteStore<K, V> implements NonBlockingStore<K, V> {
          }
          // Technically we will send the metadata and value to the user, no matter what.
          return entryFlowable.observeOn(Schedulers.from(nonBlockingExecutor))
-               .map(e -> e.getValue() == null ? null : entryFactory.create(wrap(e.getKey()), (MarshalledValue) e.getValue()));
+               .map(e -> {
+                  Object val = e.getValue();
+                  if (val instanceof MarshalledValue mv) {
+                     return entryFactory.create(wrap(e.getKey()), mv);
+                  }
+                  return entryFactory.create(wrap(e.getKey()), (Object) wrap(val));
+               });
       }
    }
 

@@ -2,13 +2,11 @@ package org.infinispan.server.test.core;
 
 import static javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag.REQUIRED;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -178,23 +176,24 @@ public class Common {
    public static String assertStatus(int status, CompletionStage<RestResponse> request) {
       try (RestResponse response = sync(request)) {
          String body = response.body();
-         assertEquals(status, response.status(), body);
+         assertThat(response.status()).withFailMessage(body).isEqualTo(status);
          return body;
       }
    }
 
    public static void assertStatusAndBodyEquals(int status, String body, CompletionStage<RestResponse> response) {
-      assertEquals(body, assertStatus(status, response));
+      String responseBody = assertStatus(status, response);
+      assertThat(responseBody).isEqualTo(body);
    }
 
    public static void assertStatusAndBodyContains(int status, String body, CompletionStage<RestResponse> response) {
       String responseBody = assertStatus(status, response);
-      assertTrue(responseBody.contains(body), responseBody);
+      assertThat(responseBody).contains(body);
    }
 
    public static void assertResponse(int status, CompletionStage<RestResponse> request, Consumer<RestResponse> consumer) {
       try (RestResponse response = sync(request)) {
-         assertEquals(status, response.status());
+         assertThat(response.status()).isEqualTo(status);
          consumer.accept(response);
       }
    }
@@ -281,10 +280,12 @@ public class Common {
    }
 
    public static void assertAnyEquals(Object expected, Object actual) {
-      if (expected instanceof byte[] && actual instanceof byte[])
-         assertArrayEquals((byte[]) expected, (byte[]) actual);
-      else
-         assertEquals(expected, actual);
+      if (expected instanceof byte[] && actual instanceof byte[]) {
+         assertThat((byte[]) expected).containsExactly((byte[]) actual);
+      }
+      else {
+         assertThat(expected).isEqualTo(actual);
+      }
    }
 
    public static Integer getIntKeyForServer(RemoteCache<Integer, ?> cache, int server) {

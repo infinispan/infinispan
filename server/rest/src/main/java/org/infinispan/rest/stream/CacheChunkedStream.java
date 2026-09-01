@@ -31,6 +31,7 @@ public abstract class CacheChunkedStream<T> {
    }
 
    public static byte[] readContentAsBytes(Object content) {
+      if (content == null) return new byte[0];
       if (content instanceof byte[]) return (byte[]) content;
       if (content instanceof WrappedByteArray) {
          return ((WrappedByteArray) content).getBytes();

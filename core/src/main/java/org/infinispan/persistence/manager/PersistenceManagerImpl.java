@@ -565,6 +565,12 @@ public class PersistenceManagerImpl implements PersistenceManager {
             .concatMapCompletable(v -> Completable.using(this::acquireWriteLock, lock ->
                         startManagerAndStores(singletonList(storeConfiguration))
                               .doOnComplete(() -> {
+                                 if (TIMEOUT_FLOWABLE == null) {
+                                    TIMEOUT_FLOWABLE = Flowable.error(log.storeTimeoutBetweenEntries(configuration.clustering().remoteTimeout()));
+                                 }
+                                 if (rxTimeoutScheduler == null) {
+                                    rxTimeoutScheduler = Schedulers.from(timeoutExecutor);
+                                 }
                                  AsyncInterceptorChain chain = ComponentRegistry.componentOf(cache.wired(), AsyncInterceptorChain.class);
                                  interceptorChainFactory.addPersistenceInterceptors(chain, configuration, singletonList(storeConfiguration));
                                  listeners.forEach(l -> l.storeChanged(createStatus()));
