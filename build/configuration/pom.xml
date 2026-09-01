@@ -85,7 +85,7 @@
       <version.gdx-jnigen-loader>2.5.2</version.gdx-jnigen-loader>
       <version.glassfish.jaxb>4.0.9</version.glassfish.jaxb>
       <version.hamcrest>2.2</version.hamcrest>
-      <version.hibernate.core>6.6.55.Final</version.hibernate.core>
+      <version.hibernate.core>6.6.56.Final</version.hibernate.core>
       <version.hibernate.search>8.4.0.Final</version.hibernate.search>
       <version.hibernate.models>1.3.0</version.hibernate.models>
       <version.infinispan>16.3.0-SNAPSHOT</version.infinispan>
