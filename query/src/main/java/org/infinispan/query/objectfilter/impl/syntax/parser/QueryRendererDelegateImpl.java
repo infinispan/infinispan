@@ -582,9 +582,13 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
       boolean aggregationPropertyPath = false;
 
       if (function != null) {
-         propertyPath = new FunctionPropertyPath<>(propertyPath.getNodes(), function, functionArgs);
-      }
-      if (aggregationFunction != null) {
+         if (aggregationFunction != null) {
+            propertyPath = new AggregationFunctionPropertyPath<>(aggregationFunction, propertyPath.getNodes(), function, functionArgs);
+            aggregationPropertyPath = true;
+         } else {
+            propertyPath = new FunctionPropertyPath<>(propertyPath.getNodes(), function, functionArgs);
+         }
+      } else if (aggregationFunction != null) {
          if (propertyPath == null && aggregationFunction != AggregationFunction.COUNT && aggregationFunction != AggregationFunction.COUNT_DISTINCT) {
             throw log.getAggregationCanOnlyBeAppliedToPropertyReferencesException(aggregationFunction.name());
          }
@@ -611,7 +615,10 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
             nullMarker = null;
          } else {
             if (function == Function.DISTANCE) {
-               projection = new FunctionPropertyPath<>(resolveAlias(propertyPath).getNodes(), Function.DISTANCE, functionArgs);
+               projection = resolveAlias(propertyPath);
+               propertyType = Double.class;
+            } else if (propertyPath instanceof AggregationFunctionPropertyPath) {
+               projection = resolveAlias(propertyPath);
                propertyType = Double.class;
             } else {
                projection = resolveAlias(propertyPath);
@@ -835,6 +842,11 @@ final class QueryRendererDelegateImpl<TypeMetadata> implements QueryRendererDele
 
    private PropertyPath<TypeDescriptor<TypeMetadata>> resolveAlias(PropertyPath<TypeDescriptor<TypeMetadata>> path) {
       List<PropertyPath.PropertyReference<TypeDescriptor<TypeMetadata>>> resolved = resolveAliasPath(path);
+      if (path instanceof AggregationFunctionPropertyPath) {
+         AggregationFunctionPropertyPath<TypeMetadata> afp = (AggregationFunctionPropertyPath<TypeMetadata>) path;
+         return new AggregationFunctionPropertyPath<>(afp.getAggregationFunction(), resolved,
+               afp.getInnerFunction(), afp.getInnerArgs());
+      }
       if (path instanceof AggregationPropertyPath) {
          return new AggregationPropertyPath<>(((AggregationPropertyPath<TypeMetadata>) path).getAggregationFunction(), resolved);
       }

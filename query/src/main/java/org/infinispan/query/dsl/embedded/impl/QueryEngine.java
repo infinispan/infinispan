@@ -51,6 +51,7 @@ import org.infinispan.query.objectfilter.impl.syntax.PropertyValueExpr;
 import org.infinispan.query.objectfilter.impl.syntax.SyntaxTreePrinter;
 import org.infinispan.query.objectfilter.impl.syntax.ValueExpr;
 import org.infinispan.query.objectfilter.impl.syntax.parser.AggregationPropertyPath;
+import org.infinispan.query.objectfilter.impl.syntax.parser.FunctionPropertyPath;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.query.objectfilter.impl.syntax.parser.RowPropertyHelper;
@@ -140,7 +141,9 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
                   // this constraint will be relaxed later: https://issues.jboss.org/browse/ISPN-6015
                   throw CONTAINER.multivaluedPropertyCannotBeUsedInGroupBy(p.toString());
                }
-               Class<?> propertyType = propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityMetadata(), p.asArrayPath());
+               Class<?> propertyType = p instanceof FunctionPropertyPath<?>
+                     ? Double.class
+                     : propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityMetadata(), p.asArrayPath());
                int idx = columns.size();
                columns.put(p, new RowPropertyHelper.ColumnMetadata(idx, "C" + idx, propertyType));
             }
@@ -203,16 +206,18 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       }
 
       LinkedHashMap<String, Integer> inColumns = new LinkedHashMap<>();
+      List<PropertyPath<?>> inColumnPaths = new ArrayList<>();
       List<FieldAccumulator> accumulators = new LinkedList<>();
       RowPropertyHelper.ColumnMetadata[] _columns = new RowPropertyHelper.ColumnMetadata[columns.size()];
       for (PropertyPath<?> p : columns.keySet()) {
          RowPropertyHelper.ColumnMetadata c = columns.get(p);
          _columns[c.getColumnIndex()] = c;
-         String asStringPath = p.asStringPath();
-         Integer inIdx = inColumns.get(asStringPath);
+         String inputKey = getInputColumnKey(p);
+         Integer inIdx = inColumns.get(inputKey);
          if (inIdx == null) {
             inIdx = inColumns.size();
-            inColumns.put(asStringPath, inIdx);
+            inColumns.put(inputKey, inIdx);
+            inColumnPaths.add(getInputColumnPath(p));
          }
          if (p instanceof AggregationPropertyPath) {
             FieldAccumulator acc = FieldAccumulator.makeAccumulator(((AggregationPropertyPath) p).getAggregationFunction(), inIdx, c.getColumnIndex(), c.getPropertyType());
@@ -224,13 +229,13 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       firstPhaseQuery.append("SELECT ");
       {
          boolean isFirst = true;
-         for (String p : inColumns.keySet()) {
+         for (PropertyPath<?> p : inColumnPaths) {
             if (isFirst) {
                isFirst = false;
             } else {
                firstPhaseQuery.append(", ");
             }
-            firstPhaseQuery.append(DEFAULT_ALIAS).append('.').append(p);
+            appendFirstPhaseProjection(firstPhaseQuery, p);
          }
       }
       firstPhaseQuery.append(" FROM ").append(parsingResult.getTargetEntityName()).append(' ').append(DEFAULT_ALIAS);
