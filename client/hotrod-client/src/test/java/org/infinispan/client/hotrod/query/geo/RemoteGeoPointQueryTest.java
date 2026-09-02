@@ -139,4 +139,70 @@ public class RemoteGeoPointQueryTest extends SingleHotRodServerTest {
       assertThat(proList).extracting(item -> item[0]).containsExactly("track 2", "track 3");
       assertThat(proList).extracting(item -> item[1]).containsExactly(702.0532157425224, 458.7166803703988);
    }
+
+   @Test
+   public void mixedSpatialPredicates() {
+      RemoteCache<Object, Object> remoteCache = remoteCacheManager.getCache();
+
+      remoteCache.put(1, new ProtoHiking("track 1", LatLng.of(41.907903484609356, 12.45540543756422),
+            LatLng.of(41.90369455835456, 12.459566517195528)));
+      remoteCache.put(2, new ProtoHiking("track 2", LatLng.of(41.90369455835456, 12.459566517195528),
+            LatLng.of(41.907930453801285, 12.455204785977637)));
+      remoteCache.put(3, new ProtoHiking("track 3", LatLng.of(41.907930453801285, 12.455204785977637),
+            LatLng.of(41.907903484609356, 12.45540543756422)));
+
+      // circle(start) returns [track 1, track 3]
+      // polygon(end) returns [track 2, track 3]
+      // intersection should be [track 3]
+      Query<ProtoHiking> query = remoteCache.query(String.format("from %s r " +
+            "where r.start within circle(41.90847031512531, 12.455633288333539, :distance) " +
+            "and r.end within polygon(:a, :b, :c, :d)", HIKING_ENTITY_NAME));
+      query.setParameter("distance", 150);
+      query.setParameter("a", "(42.00, 12.00)");
+      query.setParameter("b", "(42.00, 12.459)");
+      query.setParameter("c", "(41.00, 12.459)");
+      query.setParameter("d", "(41.00, 12.00)");
+      List<ProtoHiking> list = query.list();
+      assertThat(list).extracting(ProtoHiking::name)
+            .containsExactlyInAnyOrder("track 3");
+
+      // circle(start) AND box(end)
+      query = remoteCache.query(String.format("from %s r " +
+            "where r.start within circle(41.90847031512531, 12.455633288333539, :distance) " +
+            "and r.end within box(:a, :b, :c, :d)", HIKING_ENTITY_NAME));
+      query.setParameter("distance", 150);
+      query.setParameter("a", 42.00);
+      query.setParameter("b", 12.00);
+      query.setParameter("c", 41.00);
+      query.setParameter("d", 12.459);
+      list = query.list();
+      assertThat(list).extracting(ProtoHiking::name)
+            .containsExactlyInAnyOrder("track 3");
+
+      // NOT polygon(end)
+      query = remoteCache.query(String.format("from %s r " +
+            "where r.start within circle(41.90847031512531, 12.455633288333539, :distance) " +
+            "and r.end not within polygon(:a, :b, :c, :d)", HIKING_ENTITY_NAME));
+      query.setParameter("distance", 150);
+      query.setParameter("a", "(42.00, 12.00)");
+      query.setParameter("b", "(42.00, 12.459)");
+      query.setParameter("c", "(41.00, 12.459)");
+      query.setParameter("d", "(41.00, 12.00)");
+      list = query.list();
+      assertThat(list).extracting(ProtoHiking::name)
+            .containsExactlyInAnyOrder("track 1");
+
+      // NOT box(end)
+      query = remoteCache.query(String.format("from %s r " +
+            "where r.start within circle(41.90847031512531, 12.455633288333539, :distance) " +
+            "and r.end not within box(:a, :b, :c, :d)", HIKING_ENTITY_NAME));
+      query.setParameter("distance", 150);
+      query.setParameter("a", 42.00);
+      query.setParameter("b", 12.00);
+      query.setParameter("c", 41.00);
+      query.setParameter("d", 12.459);
+      list = query.list();
+      assertThat(list).extracting(ProtoHiking::name)
+            .containsExactlyInAnyOrder("track 1");
+   }
 }

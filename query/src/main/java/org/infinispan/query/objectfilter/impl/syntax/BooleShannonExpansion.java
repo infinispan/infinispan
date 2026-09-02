@@ -99,7 +99,7 @@ public final class BooleShannonExpansion {
       @Override
       public BooleanExpr visit(SpatialWithinPolygonExpr spatialWithinPolygonExpr) {
          collect(spatialWithinPolygonExpr);
-         return super.visit(spatialWithinPolygonExpr);
+         return spatialWithinPolygonExpr;
       }
 
       @Override
@@ -279,6 +279,16 @@ public final class BooleShannonExpansion {
       @Override
       public BooleanExpr visit(SpatialWithinCircleExpr spatialWithinCircleExpr) {
          return replace(spatialWithinCircleExpr);
+      }
+
+      @Override
+      public BooleanExpr visit(SpatialWithinBoxExpr spatialWithinBoxExpr) {
+         return replace(spatialWithinBoxExpr);
+      }
+
+      @Override
+      public BooleanExpr visit(SpatialWithinPolygonExpr spatialWithinPolygonExpr) {
+         return replace(spatialWithinPolygonExpr);
       }
 
       @Override

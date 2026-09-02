@@ -80,7 +80,7 @@ public class GeoLocalQueryTest extends SingleCacheManagerTest {
             "Traditional trattoria with exposed brick walls, serving up antipasti, pizzas & pasta dishes.",
             "Via Sebastiano Veniero, 26, 00192 Roma RM", 41.907930453801285, 12.455204785977637, 4.0f));
       cache.put("Alla Bracioleria Gracchi Restaurant", new Restaurant("Alla Bracioleria Gracchi Restaurant",
-            "", "Via dei Gracchi, 19, 00192 Roma RM", 41.907129402661795, 12.458927251586584, 4.7f ));
+            "", "Via dei Gracchi, 19, 00192 Roma RM", 41.907129402661795, 12.458927251586584, 4.7f));
       cache.put("Magazzino Scipioni", new Restaurant("Magazzino Scipioni",
             "Contemporary venue with a focus on unique wines & seasonal Italian plates, plus a bottle shop.",
             "Via degli Scipioni, 30, 00192 Roma RM", 41.90817843995448, 12.457118458698043, 4.6f));
@@ -390,5 +390,129 @@ public class GeoLocalQueryTest extends SingleCacheManagerTest {
       trainRoutes = trainQuery.list();
       assertThat(trainRoutes).extracting(TrainRoute::name)
             .containsExactlyInAnyOrder("Milan-Como");
+   }
+
+   @Test
+   public void distanceAggregation() {
+      cache.put("La Locanda di Pietro", new Restaurant("La Locanda di Pietro",
+            "", "", 41.907903484609356, 12.45540543756422, 4.6f));
+      cache.put("Scialla The Original Street Food", new Restaurant("Scialla The Original Street Food",
+            "", "", 41.90369455835456, 12.459566517195528, 4.7f));
+      cache.put("Trattoria Pizzeria Gli Archi", new Restaurant("Trattoria Pizzeria Gli Archi",
+            "", "", 41.907930453801285, 12.455204785977637, 4.0f));
+      cache.put("Magazzino Scipioni", new Restaurant("Magazzino Scipioni",
+            "", "", 41.90817843995448, 12.457118458698043, 4.6f));
+
+      String ickle = String.format(
+            "select max(distance(r.location, 41.90847031512531, 12.455633288333539)) " +
+                  "from %s r group by distance(r.location, 41.90847031512531, 12.455633288333539)", RESTAURANT_ENTITY_NAME);
+      Query<Object[]> query = cache.query(ickle);
+      List<Object[]> results = query.list();
+      assertThat(results).isNotEmpty();
+      for (Object[] row : results) {
+         assertThat(row[0]).isInstanceOf(Double.class);
+      }
+
+      ickle = String.format(
+            "select r.score, avg(distance(r.location, 41.90847031512531, 12.455633288333539)) " +
+                  "from %s r group by r.score", RESTAURANT_ENTITY_NAME);
+      query = cache.query(ickle);
+      results = query.list();
+      assertThat(results).isNotEmpty();
+      for (Object[] row : results) {
+         assertThat(row[0]).isInstanceOf(Float.class);
+         assertThat(row[1]).isInstanceOf(Double.class);
+      }
+   }
+
+   @Test
+   public void mixedSpatialPredicates() {
+      cache.put(1, new Hiking("track 1", LatLng.of(41.907903484609356, 12.45540543756422),
+            LatLng.of(41.90369455835456, 12.459566517195528)));
+      cache.put(2, new Hiking("track 2", LatLng.of(41.90369455835456, 12.459566517195528),
+            LatLng.of(41.907930453801285, 12.455204785977637)));
+      cache.put(3, new Hiking("track 3", LatLng.of(41.907930453801285, 12.455204785977637),
+            LatLng.of(41.907903484609356, 12.45540543756422)));
+
+      // circle(start) AND polygon(end) => intersection [track 3]
+      Query<Hiking> query = cache.query(String.format("from %s r " +
+            "where r.start within circle(41.90847031512531, 12.455633288333539, :distance) " +
+            "and r.end within polygon(:a, :b, :c, :d)", HIKING_ENTITY_NAME));
+      query.setParameter("distance", 150);
+      query.setParameter("a", "(42.00, 12.00)");
+      query.setParameter("b", "(42.00, 12.459)");
+      query.setParameter("c", "(41.00, 12.459)");
+      query.setParameter("d", "(41.00, 12.00)");
+      assertThat(query.list()).extracting(Hiking::name)
+            .containsExactlyInAnyOrder("track 3");
+
+      // circle(start) AND box(end) => intersection [track 3]
+      query = cache.query(String.format("from %s r " +
+            "where r.start within circle(41.90847031512531, 12.455633288333539, :distance) " +
+            "and r.end within box(:a, :b, :c, :d)", HIKING_ENTITY_NAME));
+      query.setParameter("distance", 150);
+      query.setParameter("a", 42.00);
+      query.setParameter("b", 12.00);
+      query.setParameter("c", 41.00);
+      query.setParameter("d", 12.459);
+      assertThat(query.list()).extracting(Hiking::name)
+            .containsExactlyInAnyOrder("track 3");
+
+      // circle(start) AND NOT polygon(end) => [track 1]
+      query = cache.query(String.format("from %s r " +
+            "where r.start within circle(41.90847031512531, 12.455633288333539, :distance) " +
+            "and r.end not within polygon(:a, :b, :c, :d)", HIKING_ENTITY_NAME));
+      query.setParameter("distance", 150);
+      query.setParameter("a", "(42.00, 12.00)");
+      query.setParameter("b", "(42.00, 12.459)");
+      query.setParameter("c", "(41.00, 12.459)");
+      query.setParameter("d", "(41.00, 12.00)");
+      assertThat(query.list()).extracting(Hiking::name)
+            .containsExactlyInAnyOrder("track 1");
+
+      // circle(start) AND NOT box(end) => [track 1]
+      query = cache.query(String.format("from %s r " +
+            "where r.start within circle(41.90847031512531, 12.455633288333539, :distance) " +
+            "and r.end not within box(:a, :b, :c, :d)", HIKING_ENTITY_NAME));
+      query.setParameter("distance", 150);
+      query.setParameter("a", 42.00);
+      query.setParameter("b", 12.00);
+      query.setParameter("c", 41.00);
+      query.setParameter("d", 12.459);
+      assertThat(query.list()).extracting(Hiking::name)
+            .containsExactlyInAnyOrder("track 1");
+   }
+
+   @Test
+   public void hybridSpatialQuery() {
+      cache.put("La Locanda di Pietro", new Restaurant("La Locanda di Pietro",
+            "Roman-style pasta dishes & Lazio region wines at a cozy traditional trattoria with a shaded terrace.",
+            "Via Sebastiano Veniero, 28/c, 00192 Roma RM", 41.907903484609356, 12.45540543756422, 4.6f));
+      cache.put("Scialla The Original Street Food", new Restaurant("Scialla The Original Street Food",
+            "Pastas & traditional pizza pies served in an unassuming eatery with vegetarian options.",
+            "Vicolo del Farinone, 27, 00193 Roma RM", 41.90369455835456, 12.459566517195528, 4.7f));
+      cache.put("Trattoria Pizzeria Gli Archi", new Restaurant("Trattoria Pizzeria Gli Archi",
+            "Traditional trattoria with exposed brick walls, serving up antipasti, pizzas & pasta dishes.",
+            "Via Sebastiano Veniero, 26, 00192 Roma RM", 41.907930453801285, 12.455204785977637, 4.0f));
+
+      // Projecting 'description' (non-projectable @Text field) forces the hybrid query path,
+      // which re-serializes the WHERE clause. With a parameterized circle radius the unit "m"
+      // was concatenated to the parameter name (":distancem"), causing a missing-parameter error.
+      String ickle = String.format("select r.name, r.description from %s r " +
+            "where r.location within circle(41.90847031512531, 12.455633288333539, :distance)", RESTAURANT_ENTITY_NAME);
+      Query<Object[]> query = cache.query(ickle);
+      query.setParameter("distance", 100);
+      List<Object[]> list = query.list();
+      assertThat(list).extracting(item -> item[0])
+            .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi");
+
+      // Also test with an explicit unit
+      ickle = String.format("select r.name, r.description from %s r " +
+            "where r.location within circle(41.90847031512531, 12.455633288333539, :distance km)", RESTAURANT_ENTITY_NAME);
+      query = cache.query(ickle);
+      query.setParameter("distance", 0.1);
+      list = query.list();
+      assertThat(list).extracting(item -> item[0])
+            .containsExactlyInAnyOrder("La Locanda di Pietro", "Trattoria Pizzeria Gli Archi");
    }
 }
