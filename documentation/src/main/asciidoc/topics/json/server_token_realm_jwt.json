@@ -1,0 +1,27 @@
+{
+  "infinispan" : {
+    "server" : {
+      "security" : {
+        "security-realms" : [ {
+          "name" : "default",
+          "token-realm" : {
+            "name" : "token",
+            "auth-server-url" : "https://oauth-server/auth/",
+            "client-id" : "my-client",
+            "principal-claim" : "sub",
+            "jwt" : {
+              "issuer" : "https://oauth-server/realms/my-realm",
+              "audience" : "account"
+            }
+          }
+        } ]
+      },
+      "endpoints" : {
+        "endpoint" : {
+          "socket-binding" : "default",
+          "security-realm" : "default"
+        }
+      }
+    }
+  }
+}

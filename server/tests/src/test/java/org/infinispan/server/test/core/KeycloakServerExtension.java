@@ -40,16 +40,16 @@ import com.github.dockerjava.api.model.ContainerNetwork;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public class KeyCloakServerExtension implements AfterAllCallback, BeforeAllCallback {
+public class KeycloakServerExtension implements AfterAllCallback, BeforeAllCallback {
    public static final String KEYCLOAK_IMAGE = System.getProperty(TestSystemPropertyNames.KEYCLOAK_IMAGE, "quay.io/keycloak/keycloak:26.4");
    public static final String KEYCLOAK_HOSTNAME = "keycloak-test";
    private final String realmJsonFile;
 
    private FixedHostPortGenericContainer<?> container;
-   private final List<Consumer<KeyCloakServerExtension>> beforeListeners = new ArrayList<>();
+   private final List<Consumer<KeycloakServerExtension>> beforeListeners = new ArrayList<>();
    private final File keycloakDirectory;
 
-   public KeyCloakServerExtension(String realmJsonFile) {
+   public KeycloakServerExtension(String realmJsonFile) {
       this.realmJsonFile = realmJsonFile;
       this.keycloakDirectory = new File(tmpDirectory("keycloak"));
    }
@@ -93,7 +93,7 @@ public class KeyCloakServerExtension implements AfterAllCallback, BeforeAllCallb
       return network.getIpAddress();
    }
 
-   public String getAccessTokenForCredentials(String realm, String client, String secret, String username, String password, Path trustStore, String trustStorePassword) {
+   public String getOAuthToken(String realm, String client, String secret, String username, String password, Path trustStore, String trustStorePassword) {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
       int port;
       if (trustStore != null) {
@@ -124,7 +124,7 @@ public class KeyCloakServerExtension implements AfterAllCallback, BeforeAllCallb
       container.close();
    }
 
-   public KeyCloakServerExtension addBeforeListener(Consumer<KeyCloakServerExtension> listener) {
+   public KeycloakServerExtension addBeforeListener(Consumer<KeycloakServerExtension> listener) {
       beforeListeners.add(listener);
       return this;
    }
@@ -134,9 +134,9 @@ public class KeyCloakServerExtension implements AfterAllCallback, BeforeAllCallb
    }
 
    public static class KeyCloakServerAddressListener implements InfinispanServerListener {
-      private final KeyCloakServerExtension instance;
+      private final KeycloakServerExtension instance;
 
-      public KeyCloakServerAddressListener(KeyCloakServerExtension instance) {
+      public KeyCloakServerAddressListener(KeycloakServerExtension instance) {
          this.instance = instance;
       }
 
