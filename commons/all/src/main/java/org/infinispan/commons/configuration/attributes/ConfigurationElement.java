@@ -6,7 +6,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
 
+import org.infinispan.commons.configuration.io.ConfigurationSchemaVersion;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.util.Util;
@@ -24,6 +26,8 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
    protected final AttributeSet attributes;
    protected final ConfigurationElement<?>[] children;
    protected final boolean repeated;
+   protected final int sinceMajor;
+   protected final int sinceMinor;
 
    protected ConfigurationElement(Enum<?> element, AttributeSet attributes, ConfigurationElement<?>... children) {
       this(element.toString(), false, attributes, children);
@@ -34,8 +38,14 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
    }
 
    protected ConfigurationElement(String element, boolean repeated, AttributeSet attributes, ConfigurationElement<?>... children) {
+      this(element, repeated, 4, 0, attributes, children);
+   }
+
+   protected ConfigurationElement(String element, boolean repeated, int sinceMajor, int sinceMinor, AttributeSet attributes, ConfigurationElement<?>... children) {
       this.element = element;
       this.repeated = repeated;
+      this.sinceMajor = sinceMajor;
+      this.sinceMinor = sinceMinor;
       this.attributes = attributes.checkProtection();
       this.children = (children != null && children.length > 0) ? children : CHILDLESS;
    }
@@ -100,6 +110,10 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
 
    public boolean matches(T other, Attribute<?> ... ignored) {
       return internalMatches(other, ignored);
+   }
+
+   public final boolean isSince(int major, int minor) {
+      return major > sinceMajor || (major == sinceMajor && minor >= sinceMinor);
    }
 
    private boolean internalMatches(T other, Attribute<?> ... ignored) {
@@ -218,16 +232,41 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
    }
 
    /**
-    * Writes this {@link ConfigurationElement} to the writer
+    * Writes this {@link ConfigurationElement} to the writer.
     *
-    * @param writer
+    * <p>
+    * If the writer carries a target {@link ConfigurationSchemaVersion} (see
+    * {@link ConfigurationWriter.Builder#targetVersion(ConfigurationSchemaVersion)}), the whole element (and its subtree)
+    * is omitted when its own {@code since} is newer than the target, and any child elements newer than the target are
+    * excluded before children are wrapped in a list or repeated-group element, so no empty wrapper is ever emitted for
+    * a fully-gated group.
+    * </p>
+    *
+    * @param writer the writer to serialise this element into
     */
    public void write(ConfigurationWriter writer) {
+      ConfigurationSchemaVersion target = writer.targetVersion();
+      if (target != null && !isSince(target.getMajor(), target.getMinor()))
+         return;
+
       if (isModified()) {
-         if (attributes.attributes().isEmpty() && children.length > 0 && Arrays.stream(children).allMatch(c -> children[0].element.equals(c.element))) {
+         // Filter to the target-eligible subset *before* deciding how to wrap children.
+         // This ensures we only iterate over children that accepts the requested version for serialisation.
+         ConfigurationElement<?>[] eligibleChildren = target == null
+               ? children
+               : Arrays.stream(children).filter(c -> c.isSince(target.getMajor(), target.getMinor())).toArray(ConfigurationElement<?>[]::new);
+
+         // A list container, without attributes, which exists only to hold children elements.
+         // If all the children containers are filtered out, the outer container should be skipped, too.
+         if (attributes.attributes().isEmpty() && children.length > 0 && eligibleChildren.length == 0)
+            return;
+
+         if (attributes.attributes().isEmpty()
+               && eligibleChildren.length > 0
+               && Stream.of(eligibleChildren).allMatch(c -> eligibleChildren[0].element.equals(c.element))) {
             // Simple array: all children are homogeneous
             writer.writeStartListElement(element, true);
-            for (ConfigurationElement<?> child : children) {
+            for (ConfigurationElement<?> child : eligibleChildren) {
                child.write(writer);
             }
             writer.writeEndListElement();
@@ -235,7 +274,7 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
             writer.writeStartElement(element);
             attributes.write(writer);
             String repeatElement = null;
-            for (ConfigurationElement<?> child : children) {
+            for (ConfigurationElement<?> child : eligibleChildren) {
                if (child.repeated) {
                   if (!child.element.equals(repeatElement)) {
                      if (repeatElement != null) {
@@ -275,6 +314,11 @@ public abstract class ConfigurationElement<T extends ConfigurationElement> imple
 
       @Override
       public void write(ConfigurationWriter writer) {
+         ConfigurationSchemaVersion target = writer.targetVersion();
+         AttributeDefinition<?> definition = attribute.getAttributeDefinition();
+         if (target != null && !definition.isSince(target.getMajor(), target.getMinor()))
+            return;
+
          attribute.write(writer, attribute.name());
       }
    }

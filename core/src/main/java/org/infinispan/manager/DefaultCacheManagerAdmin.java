@@ -16,9 +16,12 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.globalstate.GlobalConfigurationManager;
+import org.infinispan.remoting.transport.NodeVersion;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.security.impl.Authorizer;
+import org.infinispan.util.logging.Log;
 
 /**
  * The default implementation of {@link EmbeddedCacheManagerAdmin}
@@ -33,12 +36,14 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    private final Authorizer authorizer;
    private final EnumSet<AdminFlag> flags;
    private final Subject subject;
+   private final Transport transport;
 
    DefaultCacheManagerAdmin(EmbeddedCacheManager cm, Authorizer authorizer, EnumSet<AdminFlag> flags,
-                            Subject subject, GlobalConfigurationManager clusterConfigurationManager) {
+                            Subject subject, GlobalConfigurationManager clusterConfigurationManager, Transport transport) {
       this.cacheManager = cm;
       this.authorizer = authorizer;
       this.clusterConfigurationManager = clusterConfigurationManager;
+      this.transport = transport;
       this.flags = flags;
       this.subject = subject;
    }
@@ -46,6 +51,7 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    @Override
    public <K, V> Cache<K, V> createCache(String cacheName, Configuration configuration) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
+      verifyMixedCluster(cacheName);
       join(clusterConfigurationManager.createCache(cacheName, configuration, flags));
       return cacheManager.getCache(cacheName);
    }
@@ -53,6 +59,7 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    @Override
    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Configuration configuration) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
+      verifyMixedCluster(cacheName);
       join(clusterConfigurationManager.getOrCreateCache(cacheName, configuration, flags));
       return cacheManager.getCache(cacheName);
    }
@@ -60,6 +67,7 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    @Override
    public <K, V> Cache<K, V> createCache(String cacheName, String template) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
+      verifyMixedCluster(cacheName);
       join(clusterConfigurationManager.createCache(cacheName, template, flags));
       return cacheManager.getCache(cacheName);
    }
@@ -67,6 +75,7 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    @Override
    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, String template) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
+      verifyMixedCluster(cacheName);
       join(clusterConfigurationManager.getOrCreateCache(cacheName, template, flags));
       return cacheManager.getCache(cacheName);
    }
@@ -74,12 +83,14 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    @Override
    public void createTemplate(String name, Configuration configuration) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
+      verifyMixedCluster(name);
       join(clusterConfigurationManager.createTemplate(name, configuration, flags));
    }
 
    @Override
    public Configuration getOrCreateTemplate(String name, Configuration configuration) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
+      verifyMixedCluster(name);
       join(clusterConfigurationManager.getOrCreateTemplate(name, configuration, flags));
       return cacheManager.getCacheConfiguration(name);
    }
@@ -100,19 +111,19 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    public EmbeddedCacheManagerAdmin withFlags(AdminFlag... flags) {
       EnumSet<AdminFlag> newFlags = EnumSet.copyOf(this.flags);
       Collections.addAll(newFlags, flags);
-      return new DefaultCacheManagerAdmin(cacheManager, authorizer, newFlags, subject, clusterConfigurationManager);
+      return new DefaultCacheManagerAdmin(cacheManager, authorizer, newFlags, subject, clusterConfigurationManager, transport);
    }
 
    @Override
    public EmbeddedCacheManagerAdmin withFlags(EnumSet<AdminFlag> flags) {
       EnumSet<AdminFlag> newFlags = EnumSet.copyOf(this.flags);
       newFlags.addAll(flags);
-      return new DefaultCacheManagerAdmin(cacheManager, authorizer, newFlags, subject, clusterConfigurationManager);
+      return new DefaultCacheManagerAdmin(cacheManager, authorizer, newFlags, subject, clusterConfigurationManager, transport);
    }
 
    @Override
    public EmbeddedCacheManagerAdmin withSubject(Subject subject) {
-      return new DefaultCacheManagerAdmin(cacheManager, authorizer, flags, subject, clusterConfigurationManager);
+      return new DefaultCacheManagerAdmin(cacheManager, authorizer, flags, subject, clusterConfigurationManager, transport);
    }
 
    @Override
@@ -158,5 +169,13 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
       newFlags.add(AdminFlag.UPDATE);
       return clusterConfigurationManager.getOrCreateCache(assigned.getName(), configuration, newFlags)
             .thenApply(CompletableFutures.toNullFunction());
+   }
+
+   private void verifyMixedCluster(String cacheName) {
+      if (transport == null) return;
+      NodeVersion oldest = transport.getOldestMember();
+      if (oldest.lessThan(NodeVersion.INSTANCE)) {
+         Log.CONFIG.possibleConfigurationOmissionInMixedCluster(cacheName, oldest);
+      }
    }
 }
