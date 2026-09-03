@@ -48,6 +48,11 @@ jobs:
           server-password: MAVEN_PASSWORD
           gpg-private-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
 
+      - name: Configure GPG agent for non-interactive signing
+        run: |
+          echo "allow-loopback-pinentry" >> "$GNUPGHOME/gpg-agent.conf"
+          gpgconf --homedir "$GNUPGHOME" --kill gpg-agent 2>/dev/null || true
+
       - name: Checkout Source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
         with:
