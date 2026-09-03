@@ -91,7 +91,6 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.GlobalSecurityManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.security.impl.AuthorizationManagerImpl;
 import org.infinispan.security.impl.AuthorizationMapperContextImpl;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.security.impl.SecureCacheImpl;
@@ -1079,13 +1078,13 @@ public class DefaultCacheManager extends InternalCacheManager {
    @Override
    public Set<String> getAccessibleCacheNames() {
       if (configurationManager.getGlobalConfiguration().security().authorization().enabled()) {
-         Set<String> names = new TreeSet<>();
          GlobalSecurityManager gsm = globalComponentRegistry.getComponent(GlobalSecurityManager.class);
+         Authorizer authorizer = new Authorizer(configurationManager.getGlobalConfiguration().security(),
+               AuditContext.CACHE, null, gsm.globalACLCache());
+         Subject subject = Security.getSubject();
+         Set<String> names = new TreeSet<>();
          for (String name : configurationManager.getDefinedCaches()) {
-            Configuration cfg = configurationManager.getConfiguration(name);
-            AuthorizationManagerImpl am = new AuthorizationManagerImpl();
-            am.init(name, configurationManager.getGlobalConfiguration(), cfg, gsm);
-            if (!am.getPermissions(Security.getSubject()).isEmpty()) {
+            if (!authorizer.getPermissions(configurationManager.getConfiguration(name).security().authorization(), subject).isEmpty()) {
                names.add(name);
             }
          }
