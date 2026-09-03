@@ -121,7 +121,7 @@ performance compared to a similar query using constant values instead of query p
 The `Query` API provides two methods for executing Ickle queries on a cache:
 
 * `Query.execute()` runs a SELECT statement and returns a result.
-* `Query.executeStatement()` runs a DELETE statement and modifies data.
+* `Query.executeStatement()` runs a DELETE or UPDATE statement and modifies data.
 
 [NOTE]
 ====

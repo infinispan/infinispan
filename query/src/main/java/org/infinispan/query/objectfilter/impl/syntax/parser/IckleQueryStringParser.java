@@ -26,6 +26,14 @@ public final class IckleQueryStringParser {
             && (result.getProjections() != null || result.getSortFields() != null || result.getGroupBy() != null)) {
          throw new ParsingException("DELETE statements cannot have projections or use ORDER BY or GROUP BY");
       }
+      if (result.getStatementType() == IckleParsingResult.StatementType.UPDATE) {
+         if (result.getProjections() != null || result.getSortFields() != null || result.getGroupBy() != null) {
+            throw new ParsingException("UPDATE statements cannot have projections or use ORDER BY or GROUP BY");
+         }
+         if (result.getUpdateOperations() == null || result.getUpdateOperations().isEmpty()) {
+            throw new ParsingException("UPDATE statements must have at least one SET, ADD, or REMOVE operation");
+         }
+      }
       return result;
    }
 }

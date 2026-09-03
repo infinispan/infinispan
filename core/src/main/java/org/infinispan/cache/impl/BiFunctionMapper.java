@@ -29,6 +29,7 @@ public class BiFunctionMapper implements BiFunction {
    public void injectDependencies(ComponentRegistry componentRegistry) {
       componentRegistry.wireDependencies(keyDataConversion);
       componentRegistry.wireDependencies(valueDataConversion);
+      componentRegistry.wireDependencies(biFunction);
    }
 
    public BiFunctionMapper(BiFunction remappingFunction,

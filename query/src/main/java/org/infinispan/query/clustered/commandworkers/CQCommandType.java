@@ -27,7 +27,8 @@ public enum CQCommandType {
    //TODO [ISPN-12182] Add support for scrolling
    CREATE_EAGER_ITERATOR(CQCreateEagerQuery::new),
    GET_RESULT_SIZE(CQGetResultSize::new),
-   DELETE(CQDelete::new);
+   DELETE(CQDelete::new),
+   UPDATE(CQUpdate::new);
 
    private final Supplier<CQWorker> workerSupplier;
 

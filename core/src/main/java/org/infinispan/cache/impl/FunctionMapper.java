@@ -43,6 +43,7 @@ public class FunctionMapper implements Function {
    public void injectDependencies(ComponentRegistry registry) {
       registry.wireDependencies(keyDataConversion);
       registry.wireDependencies(valueDataConversion);
+      registry.wireDependencies(function.get());
    }
 
    @Override

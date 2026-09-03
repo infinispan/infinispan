@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
@@ -35,13 +36,26 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
 
    private final boolean allSortFieldsAreStored;
 
+   protected final List<IckleParsingResult.UpdateOperation> updateOperations;
+   protected final String targetEntityName;
+
    public HybridQuery(AdvancedCache<?, ?> cache, String queryString, IckleParsingResult.StatementType statementType,
                       Map<String, Object> namedParameters, ObjectFilter objectFilter, long startOffset, int maxResults,
                       Query<?> baseQuery, LocalQueryStatistics queryStatistics, boolean local, boolean allSortFieldsAreStored) {
+      this(cache, queryString, statementType, namedParameters, objectFilter, startOffset, maxResults,
+            baseQuery, queryStatistics, local, allSortFieldsAreStored, null, null);
+   }
+
+   public HybridQuery(AdvancedCache<?, ?> cache, String queryString, IckleParsingResult.StatementType statementType,
+                      Map<String, Object> namedParameters, ObjectFilter objectFilter, long startOffset, int maxResults,
+                      Query<?> baseQuery, LocalQueryStatistics queryStatistics, boolean local, boolean allSortFieldsAreStored,
+                      List<IckleParsingResult.UpdateOperation> updateOperations, String targetEntityName) {
       super(cache, queryString, statementType, namedParameters, objectFilter.getProjection(), startOffset, maxResults, queryStatistics, local);
       this.objectFilter = objectFilter;
       this.baseQuery = (Query<S>) baseQuery;
       this.allSortFieldsAreStored = allSortFieldsAreStored;
+      this.updateOperations = updateOperations;
+      this.targetEntityName = targetEntityName;
    }
 
    @Override
@@ -91,17 +105,45 @@ public class HybridQuery<T, S> extends BaseEmbeddedQuery<T> {
          Iterator<ObjectFilter.FilterResult> it =
                new MappingIterator<>(entryIterator, e -> objectFilter.filter(e.key(), e.value(), null));
          int count = 0;
-         while (it.hasNext()) {
-            ObjectFilter.FilterResult fr = it.next();
-            Object removed = cache.remove(fr.getKey());
-            if (removed != null) {
-               count++;
+         if (statementType == IckleParsingResult.StatementType.UPDATE) {
+            count = executeUpdate(it);
+         } else {
+            while (it.hasNext()) {
+               ObjectFilter.FilterResult fr = it.next();
+               Object removed = cache.remove(fr.getKey());
+               if (removed != null) {
+                  count++;
+               }
             }
          }
          return count;
       } finally {
          if (queryStatistics.isEnabled()) recordQuery(System.nanoTime() - start);
       }
+   }
+
+   @SuppressWarnings("unchecked")
+   private int executeUpdate(Iterator<ObjectFilter.FilterResult> it) {
+      if (updateOperations == null || updateOperations.isEmpty()) {
+         return 0;
+      }
+
+      UpdateQueryHelper.UpdateBiFunction fn = new UpdateQueryHelper.UpdateBiFunction(
+            queryString, namedParameters, targetEntityName);
+
+      int count = 0;
+      while (it.hasNext()) {
+         ObjectFilter.FilterResult fr = it.next();
+         Object key = fr.getKey();
+         try {
+            if (UpdateQueryHelper.applyUpdate((AdvancedCache<Object, Object>) cache, key, fn)) {
+               count++;
+            }
+         } catch (Exception e) {
+            throw LOG.updateByQueryFailed(key, e);
+         }
+      }
+      return count;
    }
 
    @Override

@@ -52,8 +52,10 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
    private int firstResult = 0;
 
    public DistributedIndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache,
-                                      LocalQueryStatistics queryStatistics, int defaultMaxResults, Integer knn) {
-      super(queryDefinition, cache, queryStatistics);
+                                      LocalQueryStatistics queryStatistics, int defaultMaxResults, Integer knn,
+                                      List<IckleParsingResult.UpdateOperation> updateOperations,
+                                      String targetEntityName) {
+      super(queryDefinition, cache, queryStatistics, updateOperations, targetEntityName);
       this.invoker = new ClusteredQueryInvoker(cache, queryStatistics);
       this.knn = knn;
       this.maxResults = (knn == null) ? defaultMaxResults : knn;
@@ -174,20 +176,24 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
 
    @Override
    public int executeStatement() {
-      // at the moment the only supported statement is DELETE
-      if (queryDefinition.getStatementType() != IckleParsingResult.StatementType.DELETE) {
+      if (queryDefinition.getStatementType() != IckleParsingResult.StatementType.DELETE
+            && queryDefinition.getStatementType() != IckleParsingResult.StatementType.UPDATE) {
          throw CONTAINER.unsupportedStatement();
       }
 
       if (queryDefinition.getFirstResult() != 0 || queryDefinition.isCustomMaxResults()) {
-         throw CONTAINER.deleteStatementsCannotUsePaging();
+         throw CONTAINER.statementCannotUsePaging();
       }
 
       try {
          partitionHandlingSupport.checkCacheAvailable();
          long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
 
-         List<QueryResponse> responses = invoker.broadcast(ClusteredQueryOperation.delete(queryDefinition));
+         ClusteredQueryOperation operation = queryDefinition.getStatementType() == IckleParsingResult.StatementType.DELETE
+               ? ClusteredQueryOperation.delete(queryDefinition)
+               : ClusteredQueryOperation.update(queryDefinition);
+
+         List<QueryResponse> responses = invoker.broadcast(operation);
          int count = 0;
          for (QueryResponse response : responses) {
             count += response.getResultSize();

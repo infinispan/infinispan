@@ -511,7 +511,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       if (!isIndexed) {
          return new EmbeddedQuery<>(this, cache, queryString, parsingResult.getStatementType(),
                namedParameters, parsingResult.getProjections(), startOffset, maxResults, defaultMaxResults,
-               queryStatistics, local);
+               queryStatistics, local, parsingResult.getUpdateOperations(), parsingResult.getTargetEntityName());
       }
 
       IndexedFieldProvider.FieldIndexingMetadata fieldIndexingMetadata = propertyHelper.getIndexedFieldProvider().get(parsingResult.getTargetEntityMetadata());
@@ -630,7 +630,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
          // expansion leads to a full non-indexed query or the expansion is too long/complex
          return new EmbeddedQuery<>(this, cache, queryString, parsingResult.getStatementType(),
                namedParameters, parsingResult.getProjections(), startOffset, maxResults, defaultMaxResults,
-               queryStatistics, local);
+               queryStatistics, local, parsingResult.getUpdateOperations(), parsingResult.getTargetEntityName());
       }
 
       // some fields are indexed, run a hybrid query
@@ -638,7 +638,7 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       Query<?> expandedQuery = new EmbeddedLuceneQuery<>(this, namedParameters, fpr, null, null, -1, -1, local);
       return new MetadataHybridQuery<>(cache, queryString, parsingResult.getStatementType(),
             namedParameters, getObjectFilter(matcher, queryString, namedParameters, null), startOffset, maxResults,
-            expandedQuery, queryStatistics, local, allSortFieldsAreStored);
+            expandedQuery, queryStatistics, local, allSortFieldsAreStored, parsingResult.getUpdateOperations(), parsingResult.getTargetEntityName());
    }
 
    /**
@@ -658,7 +658,8 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
       return new IckleParsingResult<>(queryString, parsingResult.getStatementType(), parsingResult.getParameterNames(),
             normalizedWhereClause, null, parsingResult.getFilteringClause(),
             parsingResult.getTargetEntityName(), parsingResult.getTargetEntityMetadata(),
-            projection, projectedTypes, projectedNullMarkers, null, sortFields);
+            projection, projectedTypes, projectedNullMarkers, null, sortFields,
+            parsingResult.getUpdateOperations());
    }
 
    /**
@@ -741,10 +742,14 @@ public class QueryEngine<TypeMetadata> extends org.infinispan.query.core.impl.Qu
          QueryDefinition queryDefinition = new QueryDefinition(queryString, ickleParsingResult.getStatementType(),
                getQueryEngineProvider(), defaultMaxResults);
          queryDefinition.setNamedParameters(namedParameters);
-         return new DistributedIndexedQueryImpl<>(queryDefinition, cache, queryStatistics, defaultMaxResults, searchQuery.knn());
+         return new DistributedIndexedQueryImpl<>(queryDefinition, cache, queryStatistics, defaultMaxResults, searchQuery.knn(),
+               ickleParsingResult.getUpdateOperations(), ickleParsingResult.getTargetEntityName());
       }
-      return new IndexedQueryImpl<>(queryString, ickleParsingResult.getStatementType(), searchQuery, cache,
-            queryStatistics, defaultMaxResults);
+      QueryDefinition queryDefinition = new QueryDefinition(queryString, ickleParsingResult.getStatementType(),
+            searchQuery, defaultMaxResults);
+      queryDefinition.setNamedParameters(namedParameters);
+      return new IndexedQueryImpl<>(queryDefinition, cache,
+            queryStatistics, ickleParsingResult.getUpdateOperations(), ickleParsingResult.getTargetEntityName());
    }
 
    protected SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> getQueryEngineProvider() {

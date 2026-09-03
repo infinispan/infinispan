@@ -1,6 +1,7 @@
 package org.infinispan.query.core.impl;
 
 import java.util.BitSet;
+import java.util.List;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
@@ -22,8 +23,17 @@ public class MetadataHybridQuery<T, S> extends HybridQuery<T, S> {
                               IckleParsingResult.StatementType statementType, Map<String, Object> namedParameters,
                               ObjectFilter objectFilter, long startOffset, int maxResults, Query<?> baseQuery,
                               LocalQueryStatistics queryStatistics, boolean local, boolean allSortFieldsAreStored) {
+      this(cache, queryString, statementType, namedParameters, objectFilter, startOffset, maxResults,
+            baseQuery, queryStatistics, local, allSortFieldsAreStored, null, null);
+   }
+
+   public MetadataHybridQuery(AdvancedCache<?, ?> cache, String queryString,
+                              IckleParsingResult.StatementType statementType, Map<String, Object> namedParameters,
+                              ObjectFilter objectFilter, long startOffset, int maxResults, Query<?> baseQuery,
+                              LocalQueryStatistics queryStatistics, boolean local, boolean allSortFieldsAreStored,
+                              List<IckleParsingResult.UpdateOperation> updateOperations, String targetEntityName) {
       super(cache, queryString, statementType, namedParameters, objectFilter, startOffset, maxResults,
-            baseQuery, queryStatistics, local, allSortFieldsAreStored);
+            baseQuery, queryStatistics, local, allSortFieldsAreStored, updateOperations, targetEntityName);
 
       scoreProjections = new BitSet();
       String[] projection = objectFilter.getProjection();
