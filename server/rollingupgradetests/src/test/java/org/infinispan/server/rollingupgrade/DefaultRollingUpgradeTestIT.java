@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.functional.FunctionalTestUtils.await;
 import static org.infinispan.server.test.core.rollingupgrade.RollingUpgradeHandler.STATE.REMOVED_OLD;
 
+import java.net.InetAddress;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -97,6 +98,66 @@ public class DefaultRollingUpgradeTestIT {
 
       // At least the initial interaction plus one for each node added.
       assertThat(interactions.get()).isGreaterThanOrEqualTo(1 + nodeCount);
+   }
+
+   @Test
+   public void testAwaitLeaveTransferForwardCompat() {
+      String cacheName = "await-leave-cache";
+      TestUser user = TestUser.ADMIN;
+      int nodeCount = 3;
+
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(
+            DefaultRollingUpgradeTestIT.class.getName(),
+            RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
+            .useCustomServerConfiguration("configuration/ClusteredServerTest.xml")
+            .jgroupsProtocol("test-tcp")
+            .nodeCount(nodeCount);
+
+      ByRef.Boolean created = new ByRef.Boolean(false);
+
+      builder.handlers(
+            uh -> { /* initial (OLD_RUNNING): nothing needed */ },
+            uh -> {
+               if (uh.getCurrentState() != RollingUpgradeHandler.STATE.ADDED_NEW)
+                  return true; // let REMOVED_OLD etc. pass through
+
+               // Create ON THE NEW NODE (toDriver index 0).
+               // It should identify the cluster is mixed and should not include the new attribute when replicating.
+               if (!created.get()) {
+                  String xml = "<distributed-cache name=\"" + cacheName + "\">"
+                        + "<state-transfer enabled=\"true\" timeout=\"60500\" chunk-size=\"10500\" await-leave-transfer=\"true\"/>"
+                        + "</distributed-cache>";
+                  RestClient newNode = restClient(uh.getToDriver().getServerAddress(0), user);
+                  try (RestResponse res = await(newNode.cache(cacheName)
+                        .createWithConfiguration(RestEntity.create(MediaType.APPLICATION_XML, xml)))) {
+                     assertThat(res.status()).isEqualTo(200);
+                  }
+                  created.set(true);
+               }
+
+               // Verify ON A SURVIVING OLD NODE that the replicated config parsed and the cache exists.
+               if (!uh.getFromDriver().isRunning(0))
+                  return true;
+
+               RestClient oldNode = restClient(uh.getFromDriver().getServerAddress(0), user);
+               try (RestResponse exists = await(oldNode.cache(cacheName).exists())) {
+                  // 204 = present on the old node (parse succeeded);
+                  // 404 = old node could not build it (parse threw) -> the failure we're probing for.
+                  return exists.status() == 204;
+               }
+            }
+      );
+
+      RollingUpgradeConfiguration configuration = builder.build();
+      Assumptions.assumeFalse(Compatibility.INSTANCE.isCompatibilitySkip(configuration), "Incompatible test");
+      RollingUpgradeHandler.performUpgrade(configuration);
+   }
+
+   private static RestClient restClient(InetAddress addr, TestUser user) {
+      RestClientConfigurationBuilder b = new RestClientConfigurationBuilder();
+      b.security().authentication().enable().username(user.getUser()).password(user.getPassword());
+      b.addServer().host(addr.getHostAddress()).port(11222);
+      return RestClient.forConfiguration(b.build());
    }
 
    @Test

@@ -19,6 +19,8 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
+import org.infinispan.commons.configuration.io.ConfigurationSchemaVersion;
+import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -29,7 +31,9 @@ import org.infinispan.configuration.global.ContainerMemoryConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.configuration.parsing.Schema;
 import org.infinispan.container.impl.SharedContainerMaps;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
@@ -43,6 +47,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.event.ConfigurationChangedEvent;
 import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.remoting.transport.NodeVersion;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.RolePermissionMapper;
 import org.infinispan.security.actions.SecurityActions;
@@ -90,6 +96,8 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    SharedContainerMaps sharedContainerMaps;
    @Inject
    CacheStartupManager cacheStartupManager;
+   @Inject
+   Transport transport;
 
    private Cache<ScopedState, Object> stateCache;
    private ParserRegistry parserRegistry;
@@ -218,6 +226,28 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       }
    }
 
+   /**
+    * Returns the schema version that a newly serialized cache configuration must stay compatible with, or {@code null}
+    * when there is nothing to target (no cluster transport).
+    *
+    * @return a schema version matching the oldest node currently in the cluster view, or {@code null} if this cache
+    *         manager has no {@link Transport}.
+    */
+   ConfigurationSchemaVersion targetSchemaVersion() {
+      if (transport == null) {
+         return null;
+      }
+      NodeVersion oldest = transport.getOldestMember();
+      return new Schema(Parser.NAMESPACE + oldest.getMajor() + "." + oldest.getMinor(), oldest.getMajor(), oldest.getMinor());
+   }
+
+   private ConfigurationSchemaVersion targetSchemaVersion(String cacheName) {
+      ConfigurationSchemaVersion target = targetSchemaVersion();
+      if (target != null && (target.getMajor() != NodeVersion.INSTANCE.getMajor() || target.getMinor() != NodeVersion.INSTANCE.getMinor()))
+         log.possibleConfigurationOmissionInMixedCluster(cacheName, transport.getOldestMember());
+      return target;
+   }
+
    @Override
    public Cache<ScopedState, Object> getStateCache() {
       if (stateCache == null) {
@@ -235,7 +265,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       return cache.containsKeyAsync(key).thenCompose(exists -> {
          if (exists)
             throw CONFIG.configAlreadyDefined(name);
-         return cache.putAsync(key, new CacheState(null, configuration.toStringConfiguration(name), flags));
+         return cache.putAsync(key, new CacheState(null, configuration.toStringConfiguration(name, MediaType.APPLICATION_XML, true, targetSchemaVersion(name)), flags));
       }).thenApply(v -> null);
    }
 
@@ -244,7 +274,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       assertNameLength(name);
       localConfigurationManager.validateFlags(flags);
       try {
-         final CacheState state = new CacheState(null, configuration.toStringConfiguration(name), flags);
+         final CacheState state = new CacheState(null, configuration.toStringConfiguration(name, MediaType.APPLICATION_XML, true, targetSchemaVersion(name)), flags);
          return getStateCache().putIfAbsentAsync(new ScopedState(ScopeType.TEMPLATE.toString(), name), state).thenApply((v) -> configuration);
       } catch (Exception e) {
          throw CONFIG.configurationSerializationFailed(name, configuration, e);
@@ -308,7 +338,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       localConfigurationManager.validateFlags(flags);
       final CacheState state;
       try {
-         state = new CacheState(template, configuration.toStringConfiguration(cacheName), flags);
+         state = new CacheState(template, configuration.toStringConfiguration(cacheName, MediaType.APPLICATION_XML, true, targetSchemaVersion(cacheName)), flags);
       } catch (Exception e) {
          throw CONFIG.configurationSerializationFailed(cacheName, configuration, e);
       }
