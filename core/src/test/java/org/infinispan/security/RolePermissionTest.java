@@ -3,10 +3,15 @@ package org.infinispan.security;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Set;
 
 import javax.security.auth.Subject;
 
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeListener;
+import org.infinispan.configuration.cache.AuthorizationConfiguration;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
@@ -134,6 +139,49 @@ public class RolePermissionTest extends SingleCacheManagerTest {
       assertTrue(names.contains("cache5"), names.toString());
       names = Security.doAs(TestingUtil.makeSubject("Subject0"), () -> cacheManager.getAccessibleCacheNames());
       assertEquals(0, names.size());
+   }
+
+   /**
+    * Reproducer for https://github.com/infinispan/infinispan/issues/18039
+    * <p>
+    * Each call to {@code getAccessibleCacheNames()} creates a new {@code AuthorizationManagerImpl} and invokes
+    * {@code init()}, which registers a listener on the cache's {@code AuthorizationConfiguration.ROLES} attribute.
+    * These listeners are never removed, causing an unbounded memory leak.
+    */
+   public void testGetAccessibleCacheNamesDoesNotLeakListeners() throws Exception {
+      Security.doAs(ADMIN, () -> {
+         ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
+         config.security().authorization().enable().role("role1").role("admin");
+         cacheManager.createCache("leakTestCache", config.build());
+      });
+
+      // Retrieve the ROLES attribute directly from the cache configuration (requires ADMIN)
+      AuthorizationConfiguration authCfg = Security.doAs(ADMIN,
+            () -> cacheManager.getCacheConfiguration("leakTestCache").security().authorization());
+      Attribute<Set> rolesAttribute = authCfg.attributes().attribute(AuthorizationConfiguration.ROLES);
+
+      // Access the private listeners field via reflection
+      Field listenersField = Attribute.class.getDeclaredField("listeners");
+      listenersField.setAccessible(true);
+
+      @SuppressWarnings("unchecked")
+      List<AttributeListener<Set>> listeners = (List<AttributeListener<Set>>) listenersField.get(rolesAttribute);
+      int listenerCountBefore = listeners == null ? 0 : listeners.size();
+
+      // Call getAccessibleCacheNames() multiple times — each call should NOT add a new listener
+      int invocations = 5;
+      Subject subject = TestingUtil.makeSubject("leakTestUser", "role1");
+      for (int i = 0; i < invocations; i++) {
+         Security.doAs(subject, () -> cacheManager.getAccessibleCacheNames());
+      }
+
+      int listenerCountAfter = listeners == null ? 0 : listeners.size();
+
+      // If the bug is present, listenerCountAfter will exceed listenerCountBefore by invocations (5).
+      // The expected correct behaviour is that no new listeners are added.
+      assertEquals(listenerCountBefore, listenerCountAfter,
+            "getAccessibleCacheNames() must not register new listeners on the ROLES attribute (issue #18039). " +
+                  "Count before: " + listenerCountBefore + ", count after " + invocations + " calls: " + listenerCountAfter);
    }
 
    @Override
