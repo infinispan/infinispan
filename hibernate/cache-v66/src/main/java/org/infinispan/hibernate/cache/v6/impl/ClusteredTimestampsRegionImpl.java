@@ -62,8 +62,13 @@ public class ClusteredTimestampsRegionImpl extends TimestampsRegionImpl {
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public void putIntoCache(Object key, Object value, SharedSessionContractImplementor session) {
-      updateLocalCache(key, value);
+      // Local write: always replace. Hibernate issues preInvalidate (now+timeout) then
+      // invalidate (now) in guaranteed sequential order on this node, so the second write
+      // must win unconditionally. Using Math.max here would permanently retain the larger
+      // preInvalidate timestamp and keep queries stale for the full timeout period.
+      localCache.put(key, value);
       super.putIntoCache(key, value, session);
    }
 
@@ -101,6 +106,13 @@ public class ClusteredTimestampsRegionImpl extends TimestampsRegionImpl {
    @SuppressWarnings({"unused", "unchecked"})
    public void nodeModified(CacheEntryModifiedEvent event) {
       if (!event.isPre()) {
+         if (event.isOriginLocal()) {
+            // Already handled synchronously in putIntoCache; skip here to avoid the
+            // Math.max merge racing with a subsequent local write on this same node.
+            return;
+         }
+         // Remote event: use Math.max to guard against out-of-order async delivery
+         // from another cluster node where a stale write could arrive after a newer one.
          updateLocalCache(event.getKey(), event.getValue());
       }
    }
@@ -119,6 +131,9 @@ public class ClusteredTimestampsRegionImpl extends TimestampsRegionImpl {
       localCache.remove(event.getKey());
    }
 
+   // Used only for remote events (isOriginLocal() == false) where async replication
+   // can deliver writes out of order across nodes. Math.max prevents a stale remote
+   // write from downgrading a more recent timestamp already in the local cache.
    // TODO: with recent Infinispan we should access the cache directly
    private void updateLocalCache(Object key, Object value) {
       localCache.compute(key, (k, v) -> {
