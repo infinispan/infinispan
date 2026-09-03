@@ -46,12 +46,6 @@ jobs:
           server-id: central
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
-          gpg-private-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
-
-      - name: Configure GPG agent for non-interactive signing
-        run: |
-          echo "allow-loopback-pinentry" >> "$GNUPGHOME/gpg-agent.conf"
-          gpgconf --homedir "$GNUPGHOME" --kill gpg-agent 2>/dev/null || true
 
       - name: Checkout Source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
@@ -113,10 +107,11 @@ jobs:
           git commit --no-verify -a -m "Releasing ${{ steps.resolve-versions.outputs.RELEASE_VERSION }}"
 
       - name: Publish to Central
-        run: mvn -B -Drelease-mode=upstream -Pdistribution -Pcommunity-release -DskipTests clean deploy -Dinfinispan.brand.version=${{ steps.resolve-versions.outputs.RELEASE_VERSION }}
+        run: mvn -B -Drelease-mode=upstream -Pdistribution -Pcommunity-release -DskipTests -Dgpg.signer=bc clean deploy -Dinfinispan.brand.version=${{ steps.resolve-versions.outputs.RELEASE_VERSION }}
         env:
           MAVEN_USERNAME: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
+          MAVEN_GPG_KEY: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}
 
       - name: Tag Release
