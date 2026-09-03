@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.configuration.parsing.Schema;
 import org.infinispan.distribution.ch.impl.HashFunctionPartitioner;
 import org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner;
 import org.infinispan.remoting.transport.jgroups.EmbeddedJGroupsChannelConfigurator;
@@ -65,6 +66,23 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
       cb.invocationBatching().enable(true);
 
       assertConfigurationMatch(name, cb.build());
+   }
+
+   public void testVersionedConversionOmitsAliasesNewerThanTarget() {
+      String name = "some-name";
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.LOCAL);
+      cb.aliases("alias1");
+      Configuration before = cb.build();
+
+      // Schema URI content is irrelevant to the gate itself, only major/minor drive isSince().
+      String converted = before.toStringConfiguration(name, MediaType.APPLICATION_XML, true, new Schema("urn:infinispan:test:14.0", 14, 0));
+      assertThat(converted).doesNotContain("alias1");
+
+      ParserRegistry registry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
+      ConfigurationBuilderHolder holder = registry.parse(converted, MediaType.APPLICATION_XML);
+      Configuration after = holder.getNamedConfigurationBuilders().get(name).build();
+      assertThat(after.aliases()).isEmpty();
    }
 
    @Override

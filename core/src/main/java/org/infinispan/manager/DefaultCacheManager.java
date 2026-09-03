@@ -316,7 +316,7 @@ public class DefaultCacheManager extends InternalCacheManager {
          authorizer = new Authorizer(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.cacheManagerName(), null);
          globalComponentRegistry.registerComponent(authorizer, Authorizer.class);
          cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authorizer, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
-               null, globalComponentRegistry.getComponent(GlobalConfigurationManager.class));
+               null, globalComponentRegistry.getComponent(GlobalConfigurationManager.class), globalComponentRegistry.getComponent(Transport.class));
       } catch (CacheConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {

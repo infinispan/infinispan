@@ -2493,4 +2493,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Non-shared stores must have purge-on-startup enabled when conflict resolution is configured", id = 729)
    CacheConfigurationException nonSharedStoreMustPurgeWithConflictResolution();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Creating cache '%s' in a mixed-version cluster (oldest member %s); " +
+         "newer configuration elements may be omitted from the configuration replicated to older nodes and some features might be disabled", id = 730)
+   void possibleConfigurationOmissionInMixedCluster(String cacheName, NodeVersion oldestMember);
 }
