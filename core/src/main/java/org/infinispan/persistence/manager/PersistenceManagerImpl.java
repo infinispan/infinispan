@@ -205,6 +205,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
       segmentCount = configuration.clustering().hash().numSegments();
 
       isInvalidationCache = configuration.clustering().cacheMode().isInvalidation();
+      // Initialize even when no stores are configured at startup, as stores can be added dynamically (e.g. Hot Rod migration)
+      TIMEOUT_FLOWABLE = Flowable.error(log.storeTimeoutBetweenEntries(configuration.clustering().remoteTimeout()));
+      rxTimeoutScheduler = Schedulers.from(timeoutExecutor);
       if (!enabled)
          return;
       // Blocks here waiting for stores and availability task to start if needed
@@ -212,9 +215,6 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   __ -> startManagerAndStores(configuration.persistence().stores()),
                   this::releaseWriteLock)
             .blockingAwait();
-
-      TIMEOUT_FLOWABLE = Flowable.error(log.storeTimeoutBetweenEntries(configuration.clustering().remoteTimeout()));
-      rxTimeoutScheduler = Schedulers.from(timeoutExecutor);
    }
 
    @GuardedBy("lock#writeLock")
