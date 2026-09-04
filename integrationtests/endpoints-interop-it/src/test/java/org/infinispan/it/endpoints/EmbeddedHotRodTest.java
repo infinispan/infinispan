@@ -45,10 +45,10 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
       cacheFactory = new EndpointsCacheFactory.Builder<Integer, String>().withCacheMode(CacheMode.LOCAL)
             .withContextInitializer(EndpointITSCI.INSTANCE).build();
       HotRodServer hotrod = cacheFactory.getHotrodServer();
-      hotrod.addCacheEventFilterFactory("static-filter-factory", new StaticCacheEventFilterFactory(2));
+      hotrod.addCacheEventFilterFactory("static-filter-factory", new StaticCacheEventFilterFactory<>(2));
       hotrod.addCacheEventFilterFactory("dynamic-filter-factory", new DynamicCacheEventFilterFactory());
-      hotrod.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory());
-      hotrod.addCacheEventConverterFactory("dynamic-converter-factory", new DynamicConverterFactory());
+      hotrod.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory<>());
+      hotrod.addCacheEventConverterFactory("dynamic-converter-factory", new DynamicConverterFactory<>());
    }
 
    @AfterClass
@@ -341,13 +341,13 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
          remote.put(1, "one");
          Cache<Integer, String> embedded = getEmbeddedCache();
          assertEquals("one", embedded.get(1));
-         l.expectCreatedEvent(new CustomEvent(1, "one", 0));
+         l.expectCreatedEvent(new CustomEvent<>(1, "one", 0));
          remote.put(1, "new-one");
          assertEquals("new-one", embedded.get(1));
-         l.expectModifiedEvent(new CustomEvent(1, "new-one", 0));
+         l.expectModifiedEvent(new CustomEvent<>(1, "new-one", 0));
          remote.remove(1);
          assertNull(embedded.get(1));
-         l.expectRemovedEvent(new CustomEvent(1, null, 0));
+         l.expectRemovedEvent(new CustomEvent<>(1, null, 0));
       });
    }
 

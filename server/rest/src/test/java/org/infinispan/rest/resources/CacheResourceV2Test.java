@@ -1028,7 +1028,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
                </encoding>
             </distributed-cache>""";
       response = client.cache("CACHE").createWithConfiguration(RestEntity.create(APPLICATION_XML, invalidConfig));
-      assertThat(response).isBadRequest().hasReturnedText("ISPN000492: Cannot find transcoder between 'application/x-java-object' to 'application/x-protostrea'");
+      assertThat(response).isOk();
 
       response = client.cache("CACHE").delete();
       assertThat(response).isOk();

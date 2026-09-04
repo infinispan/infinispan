@@ -1,4 +1,4 @@
-package org.infinispan.server.core.dataconversion;
+package org.infinispan.transcoder.xml;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonList;
@@ -17,7 +17,7 @@ import org.infinispan.test.data.Person;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "server.XMLTranscoderTest")
+@Test(groups = "functional", testName = "transcoder.xml.XMLTranscoderTest")
 public class XMLTranscoderTest {
 
    private Person person;

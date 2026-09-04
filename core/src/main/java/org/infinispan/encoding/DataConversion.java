@@ -1,5 +1,7 @@
 package org.infinispan.encoding;
 
+import static org.infinispan.util.logging.Log.CONTAINER;
+
 import java.util.Objects;
 
 import org.infinispan.commons.dataconversion.MediaType;
@@ -32,6 +34,7 @@ public final class DataConversion {
 
    private transient MediaType storageMediaType;
    private transient Transcoder transcoder;
+   private transient boolean transcodingRequired;
    private transient EncoderRegistry encoderRegistry;
    private transient StorageConfigurationManager storageConfigurationManager;
 
@@ -79,20 +82,28 @@ public final class DataConversion {
    }
 
    private void lookupTranscoder() {
-      boolean needsTranscoding = storageMediaType != null && requestMediaType != null && !requestMediaType.matchesAll() && !requestMediaType.equals(storageMediaType);
-      if (needsTranscoding) {
-            transcoder = encoderRegistry.getTranscoder(requestMediaType, storageMediaType);
+      transcodingRequired = storageMediaType != null && requestMediaType != null && !requestMediaType.matchesAll() && !requestMediaType.equals(storageMediaType);
+      if (transcodingRequired && encoderRegistry.isConversionSupported(requestMediaType, storageMediaType)) {
+         transcoder = encoderRegistry.getTranscoder(requestMediaType, storageMediaType);
+      }
+   }
+
+   private void checkTranscoder() {
+      if (transcodingRequired && transcoder == null) {
+         throw CONTAINER.cannotFindTranscoder(requestMediaType, storageMediaType);
       }
    }
 
    public Object fromStorage(Object stored) {
       if (stored == null) return null;
+      checkTranscoder();
       Object fromStorage = unwrap(stored);
       return transcoder == null ? fromStorage : transcoder.transcode(fromStorage, storageMediaType, requestMediaType);
    }
 
    public Object toStorage(Object toStore) {
       if (toStore == null) return null;
+      checkTranscoder();
       toStore = transcoder == null ? toStore : transcoder.transcode(toStore, requestMediaType, storageMediaType);
       return wrap(toStore);
    }
@@ -113,6 +124,7 @@ public final class DataConversion {
       }
 
       // Otherwise convert to the request format
+      checkTranscoder();
       Object unencoded = unwrap(stored);
       return transcoder == null ? unencoded : transcoder.transcode(unencoded, storageMediaType, requestMediaType);
    }
