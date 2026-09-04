@@ -17,6 +17,7 @@ import org.infinispan.commons.configuration.attributes.AttributeMatcher;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.configuration.attributes.ConfigurationElement;
 import org.infinispan.commons.configuration.attributes.Matchable;
+import org.infinispan.commons.configuration.io.ConfigurationSchemaVersion;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.StringBuilderWriter;
@@ -313,9 +314,15 @@ public class Configuration extends ConfigurationElement<Configuration> implement
    }
 
    @Override
-   public String toStringConfiguration(String name, MediaType mediaType, boolean clearTextSecrets) {
+   public String toStringConfiguration(String name, MediaType mediaType, boolean clearTextSecrets, ConfigurationSchemaVersion target) {
       StringBuilderWriter sw = new StringBuilderWriter();
-      try (ConfigurationWriter writer = ConfigurationWriter.to(sw).withType(mediaType).clearTextSecrets(clearTextSecrets).prettyPrint(false).namespaceAware(false).build()) {
+      ConfigurationWriter.Builder cwb = ConfigurationWriter.to(sw)
+            .withType(mediaType)
+            .clearTextSecrets(clearTextSecrets)
+            .prettyPrint(false)
+            .namespaceAware(false)
+            .targetVersion(target);
+      try (ConfigurationWriter writer = cwb.build()) {
          ParserRegistry reg = new ParserRegistry();
          reg.serialize(writer, name, this);
       }

@@ -1,5 +1,6 @@
 package org.infinispan.commons.configuration;
 
+import org.infinispan.commons.configuration.io.ConfigurationSchemaVersion;
 import org.infinispan.commons.dataconversion.MediaType;
 
 /**
@@ -22,7 +23,7 @@ public class StringConfiguration implements BasicConfiguration {
    }
 
    @Override
-   public String toStringConfiguration(String name, MediaType mediaType, boolean clearTextSecrets) {
+   public String toStringConfiguration(String name, MediaType mediaType, boolean clearTextSecrets, ConfigurationSchemaVersion target) {
       return string;
    }
 }

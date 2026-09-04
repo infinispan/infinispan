@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.commons.configuration.Combine;
+import org.infinispan.commons.configuration.io.ConfigurationSchemaVersion;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.util.TypedProperties;
 
@@ -243,13 +244,22 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
    }
 
    /**
-    * Writer a single attribute to the specified {@link ConfigurationWriter} using the supplied name
+    * Writer a single attribute to the specified {@link ConfigurationWriter} using the supplied name.
+    *
+    * <p>
+    * If the writer carries a target {@link org.infinispan.commons.configuration.io.ConfigurationSchemaVersion}, the
+    * attribute is omitted entirely when its own {@code since} is newer than the target.
+    * </p>
     *
     * @param writer the writer
     * @param def    the Attribute definition
     * @param name   the XML tag name for the attribute
     */
    public void write(ConfigurationWriter writer, AttributeDefinition<?> def, String name) {
+      ConfigurationSchemaVersion target = writer.targetVersion();
+      if (target != null && !def.isSince(target.getMajor(), target.getMinor()))
+         return;
+
       Attribute<?> attribute = attribute(def);
       attribute.write(writer, name);
    }
@@ -285,9 +295,13 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
     * @param defs the attributes that should be written
     */
    public void write(ConfigurationWriter writer, String persistentName, AttributeDefinition<?>... defs) {
-      if (Arrays.stream(defs).anyMatch(def -> attribute(def).isModified())) {
+      ConfigurationSchemaVersion target = writer.targetVersion();
+      Collection<AttributeDefinition<?>> eligible = target == null
+            ? List.of(defs)
+            : Arrays.stream(defs).filter(def -> def.isSince(target.getMajor(), target.getMinor())).toList();
+      if (eligible.stream().anyMatch(def -> attribute(def).isModified())) {
          writer.writeStartElement(persistentName);
-         for (AttributeDefinition<?> def : defs) {
+         for (AttributeDefinition<?> def : eligible) {
             Attribute<?> attr = attribute(def);
             attr.write(writer, attr.getAttributeDefinition().name());
          }
@@ -301,13 +315,18 @@ public class AttributeSet implements AttributeListener<Object>, Matchable<Attrib
     * @param writer
     */
    public void write(ConfigurationWriter writer) {
+      ConfigurationSchemaVersion target = writer.targetVersion();
       List<Attribute<?>> deferred = new ArrayList<>();
       for (Attribute<?> attr : attributes.values()) {
+         AttributeDefinition<?> def = attr.getAttributeDefinition();
+         if (target != null && !def.isSince(target.getMajor(), target.getMinor())) {
+            continue;
+         }
          if (attr.isPersistent()) {
-            if (attr.getAttributeDefinition().serializer().defer()) {
+            if (def.serializer().defer()) {
                deferred.add(attr);
             } else {
-               attr.write(writer, attr.getAttributeDefinition().name());
+               attr.write(writer, def.name());
             }
          }
       }

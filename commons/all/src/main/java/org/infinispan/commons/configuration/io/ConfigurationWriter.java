@@ -22,6 +22,7 @@ public interface ConfigurationWriter extends AutoCloseable {
       private boolean prettyPrint = false;
       private boolean clearTextSecrets = false;
       private boolean namespaceAware = true;
+      private ConfigurationSchemaVersion targetVersion;
       private int indent = 2;
 
       private Builder(OutputStream os) {
@@ -57,6 +58,11 @@ public interface ConfigurationWriter extends AutoCloseable {
          return this;
       }
 
+      public ConfigurationWriter.Builder targetVersion(ConfigurationSchemaVersion targetVersion) {
+         this.targetVersion = targetVersion;
+         return this;
+      }
+
       public MediaType type() {
          return type;
       }
@@ -71,6 +77,10 @@ public interface ConfigurationWriter extends AutoCloseable {
 
       public boolean namespaceAware() {
          return namespaceAware;
+      }
+
+      public ConfigurationSchemaVersion targetVersion() {
+         return targetVersion;
       }
 
       public int indent() {
@@ -106,6 +116,8 @@ public interface ConfigurationWriter extends AutoCloseable {
    void writeStartElement(String name);
 
    boolean namespaceAware();
+
+   ConfigurationSchemaVersion targetVersion();
 
    void writeStartElement(Enum<?> name);
 

@@ -22,6 +22,7 @@ public abstract class AbstractConfigurationWriter implements ConfigurationWriter
    protected final boolean prettyPrint;
    protected final boolean clearTextSecrets;
    protected final boolean namespaceAware;
+   protected final ConfigurationSchemaVersion targetVersion;
    protected final NamingStrategy naming;
 
    protected AbstractConfigurationWriter(ConfigurationWriter.Builder builder, NamingStrategy naming) {
@@ -30,6 +31,7 @@ public abstract class AbstractConfigurationWriter implements ConfigurationWriter
       this.prettyPrint = builder.prettyPrint();
       this.clearTextSecrets = builder.clearTextSecrets();
       this.namespaceAware = builder.namespaceAware();
+      this.targetVersion = builder.targetVersion();
       this.naming = naming;
    }
 
@@ -41,6 +43,11 @@ public abstract class AbstractConfigurationWriter implements ConfigurationWriter
    @Override
    public boolean namespaceAware() {
       return namespaceAware;
+   }
+
+   @Override
+   public ConfigurationSchemaVersion targetVersion() {
+      return targetVersion;
    }
 
    @Override

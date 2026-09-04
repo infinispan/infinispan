@@ -1,5 +1,6 @@
 package org.infinispan.commons.configuration;
 
+import org.infinispan.commons.configuration.io.ConfigurationSchemaVersion;
 import org.infinispan.commons.dataconversion.MediaType;
 
 /**
@@ -31,5 +32,19 @@ public interface BasicConfiguration {
     *
     * @return a String containing the representation of an Infinispan configuration using the Infinispan schema in one of the supported formats (XML, JSON, YAML).
     */
-   String toStringConfiguration(String name, MediaType mediaType, boolean clearTextSecrets);
+   default String toStringConfiguration(String name, MediaType mediaType, boolean clearTextSecrets) {
+      return toStringConfiguration(name, mediaType, clearTextSecrets, null);
+   }
+
+   /**
+    * Serializes this configuration as XML, omitting any element or attribute whose {@code since} is newer than {@code target},
+    * so the emitted document stays parseable by an older cluster member's parser.
+    *
+    * @param name   the name under which the cache configuration is emitted
+    * @param mediaType The type of string to generate. Can be one of XML, JSON or YAML.
+    * @param clearTextSecrets Whether secrets (e.g. passwords) should be included in clear text or masked.
+    * @param target the schema version the emitted document must stay compatible with, <code>null</code> includes all.
+    * @return the serialized configuration, with newer members omitted
+    */
+   String toStringConfiguration(String name, MediaType mediaType, boolean clearTextSecrets, ConfigurationSchemaVersion target);
 }
