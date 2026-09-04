@@ -31,12 +31,15 @@ import org.infinispan.configuration.parsing.CacheParser;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.container.impl.SharedContainerMaps;
+import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.globalstate.GlobalConfigurationManager;
+import org.infinispan.globalstate.GlobalStateManager;
 import org.infinispan.globalstate.LocalConfigurationStorage;
 import org.infinispan.globalstate.ScopeType;
+import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.globalstate.ScopedState;
 import org.infinispan.manager.CacheStartupManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -69,6 +72,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    @Deprecated(forRemoval = true, since = "16.2")
    public static final String CONTAINER_SCOPE = ScopeType.CONTAINER.toString();
    public static final String CONTAINER_GLOBAL_NAME = "__global";
+   private static final String LOCAL_ATTRS_SCOPE_PREFIX = "___local-attrs.";
 
    @Inject
    EmbeddedCacheManager cacheManager;
@@ -94,6 +98,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    private Cache<ScopedState, Object> stateCache;
    private ParserRegistry parserRegistry;
    private LocalConfigurationStorage localConfigurationManager;
+   private GlobalStateManager globalStateManager;
 
    static boolean isKnownScope(String scope) {
       return ScopeType.fromString(scope) != null;
@@ -138,6 +143,8 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       // Load the persisted configurations
       Map<String, Configuration> persistedTemplates = localConfigurationManager.loadAllTemplates();
       Map<String, Configuration> persistedCaches = localConfigurationManager.loadAllCaches();
+
+      globalStateManager = GlobalComponentRegistry.componentOf(cacheManager, GlobalStateManager.class);
 
       Set<String> persistedCacheNames = new HashSet<>();
       getStateCache().forEach((key, v) -> {
@@ -197,7 +204,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       if (persisted != null) {
          // Template value is not serialized, so buildConfiguration param is irrelevant
          Configuration configuration = buildConfiguration(name, state.getConfiguration(), false);
-         if (!persisted.matches(configuration))
+         if (areConfigurationsIncompatible(persisted, configuration))
             throw CONFIG.incompatibleClusterConfiguration(name, configuration, persisted);
       }
    }
@@ -208,8 +215,25 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    private void ensurePersistenceCompatibility(String name, Configuration existing, Configuration other) {
-      if (existing != null && !existing.matches(other))
+      if (areConfigurationsIncompatible(existing, other))
          throw CONFIG.incompatiblePersistedConfiguration(name, other, existing);
+   }
+
+   private boolean areConfigurationsIncompatible(Configuration one, Configuration another) {
+      if (one != null && !one.matches(another)) {
+         // The configuration doesn't match, but it might not be due to incompatibility.
+         // There might be a case where the configuration was updated in the cluster, and the node was stopped.
+         // The attribute was allowed to be updated and it was only a matter of syncing the value.
+         // Let's check again whether it is the case.
+         Configuration existingCopy = new ConfigurationBuilder().read(one).build(false);
+         Configuration otherCopy = new ConfigurationBuilder().read(another).build(false);
+         ConfigurationUtil.resetGlobalMutableAttributes(existingCopy);
+         ConfigurationUtil.resetGlobalMutableAttributes(otherCopy);
+
+         // If the stripped copies still don't match, then we declare as an incompatibility.
+         return !existingCopy.matches(otherCopy);
+      }
+      return false;
    }
 
    private void assertNameLength(String name) {
@@ -308,7 +332,14 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       localConfigurationManager.validateFlags(flags);
       final CacheState state;
       try {
-         state = new CacheState(template, configuration.toStringConfiguration(cacheName), flags);
+         // The entry in the CONFIG cache are replicated and should match on all nodes.
+         // Therefore, we strip it from the local + mutable attributes, since those values refer to a specific node.
+         // We employ a defensive copy here, the copy is stripped of the local mutable attributes before replicating.
+         Configuration replicated = new ConfigurationBuilder()
+               .read(configuration)
+               .build(false);
+         ConfigurationUtil.resetLocalMutableAttributes(replicated);
+         state = new CacheState(template, replicated.toStringConfiguration(cacheName), flags);
       } catch (Exception e) {
          throw CONFIG.configurationSerializationFailed(cacheName, configuration, e);
       }
@@ -319,6 +350,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
          Configuration existing = SecurityActions.getCacheConfiguration(cacheManager, cacheName);
          if (existing != null) {
             applyNonGlobalAttributes(existing, configuration);
+            writeLocalAttributes(cacheName, existing);
          }
          return getStateCache().putAsync(new ScopedState(ScopeType.CACHE.toString(), cacheName), state);
       } else {
@@ -358,6 +390,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
    CompletionStage<Void> createConfigurationLocally(String name, CacheState state) {
       Configuration configuration = buildConfiguration(name, state.getConfiguration(), false);
+      applyLocalAttributes(name, configuration);
       return createConfigurationLocally(name, state.getTemplate(), configuration, state.getFlags());
    }
 
@@ -371,7 +404,23 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
    CompletionStage<Void> createCacheLocally(String name, CacheState state) {
       Configuration configuration = buildConfiguration(name, state.getConfiguration(), false);
+      applyLocalAttributes(name, configuration);
       return createCacheLocally(name, state.getTemplate(), configuration, state.getFlags());
+   }
+
+   private void applyLocalAttributes(String cacheName, Configuration configuration) {
+      Optional<ScopedPersistentState> optional = globalStateManager.readScopedState(LOCAL_ATTRS_SCOPE_PREFIX + cacheName);
+      if (optional.isEmpty())
+         return;
+
+      ScopedPersistentState sps = optional.get();
+      ConfigurationUtil.applyLocalAttributes(configuration, sps);
+   }
+
+   private void writeLocalAttributes(String cacheName, Configuration source) {
+      ScopedPersistentState scopedState = new ScopedPersistentStateImpl(LOCAL_ATTRS_SCOPE_PREFIX + cacheName);
+      ConfigurationUtil.collectLocalAttributesInto(source, scopedState);
+      globalStateManager.writeScopedState(scopedState);
    }
 
    CompletionStage<Void> createCacheLocally(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
@@ -499,7 +548,9 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    CompletionStage<Void> removeCacheLocally(String name) {
-      return localConfigurationManager.removeCache(name, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class)).thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, ConfigurationChangedEvent.CACHE, name, null));
+      globalStateManager.deleteScopedState(LOCAL_ATTRS_SCOPE_PREFIX + name);
+      return localConfigurationManager.removeCache(name, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class))
+            .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, ConfigurationChangedEvent.CACHE, name, null));
    }
 
    CompletionStage<Void> removeTemplateLocally(String name) {
