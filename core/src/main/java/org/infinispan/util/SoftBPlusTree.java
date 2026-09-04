@@ -496,14 +496,18 @@ public class SoftBPlusTree<V> extends BPlusTree<V> {
    }
 
    /**
-    * Thrown by a {@link PublishFunction} or during node resolution when the underlying data
-    * for a tree entry is no longer available — for example, because a compactor deleted the
-    * data file between the time the index was read and the time the entry was accessed.
+    * Thrown by a {@link PublishFunction} or during node deserialization (via the
+    * {@link KeyLoader}) when the underlying data for a tree entry is no longer available —
+    * for example, because a compactor deleted the data file between the time the index node
+    * was cached and the time the entry's key was loaded.
     * <p>
-    * {@link SoftBPlusTree} retries {@link #get}, {@link #put}, {@link #remove}, and
-    * {@link #publish} up to {@code MAX_OUTDATED_RETRIES} times when this exception is thrown.
-    * Callers should throw this instead of returning {@code null} when a missing resource
-    * indicates a transient concurrent modification rather than a permanent error.
+    * {@link SoftBPlusTree} retries {@link #get} and {@link #publish} up to
+    * {@code MAX_OUTDATED_RETRIES} times when this exception is thrown. {@link #put} and
+    * {@link #remove} do not retry and will propagate the exception if it occurs.
+    * <p>
+    * Callers outside the tree (e.g. code that calls {@link #get} and then accesses the
+    * returned value) may also need their own retry loop to cover the window between the
+    * {@code get} returning and the value being used.
     */
    public static class IndexNodeOutdatedException extends RuntimeException {
       public IndexNodeOutdatedException(String message) {

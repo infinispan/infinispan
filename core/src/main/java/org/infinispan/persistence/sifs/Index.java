@@ -274,13 +274,27 @@ class Index {
    private EntryRecord getRecord(int cacheSegment, byte[] indexKey, boolean checkExpiration) throws IOException {
       long stamp = lock.readLock();
       try {
-         IndexEntry entry = segments[cacheSegment].tree.get(indexKey);
-         if (entry == null) {
-            log.tracef("No entry found in index for segment %d", cacheSegment);
-            return null;
+         // Both tree.get() and entry.loadRecord() must be inside the same retry loop.
+         // If the compactor deletes the backing data file between tree.get() returning an
+         // IndexEntry and loadRecord() opening that file, IndexEntry.ensureRecord() throws
+         // IndexNodeOutdatedException. Without retrying here the exception propagates as a
+         // PersistenceException even though the entry still exists at a new location.
+         // See https://github.com/infinispan/infinispan/issues/18036
+         for (int attempts = 0; ; attempts++) {
+            try {
+               IndexEntry entry = segments[cacheSegment].tree.get(indexKey);
+               if (entry == null) {
+                  log.tracef("No entry found in index for segment %d", cacheSegment);
+                  return null;
+               }
+               long wallClockTime = checkExpiration ? timeService.wallClockTime() : -1;
+               return entry.loadRecord(dataFileProvider, wallClockTime, true, true);
+            } catch (IndexNodeOutdatedException e) {
+               if (attempts >= 10) {
+                  throw e;
+               }
+            }
          }
-         long wallClockTime = checkExpiration ? timeService.wallClockTime() : -1;
-         return entry.loadRecord(dataFileProvider, wallClockTime, true, true);
       } finally {
          lock.unlockRead(stamp);
       }
@@ -290,20 +304,33 @@ class Index {
       long stamp = lock.readLock();
       try {
          byte[] indexKey = toIndexKey(serializedKey);
-         IndexEntry entry = segments[cacheSegment].tree.get(indexKey);
-         if (entry == null) {
-            log.tracef("No position found in index for key %s segment %d", key, cacheSegment);
-            return null;
-         }
-         EntryHeader header = entry.getHeader(dataFileProvider);
-         if (header == null) return null;
-         if (header.expiryTime() > 0 && header.expiryTime() <= timeService.wallClockTime()) {
-            if (log.isTraceEnabled()) {
-               log.tracef("Found node on %d:%d but it is expired", entry.file, entry.offset);
+         // Same race as getRecord(): tree.get() and entry.getHeader() must be inside the same
+         // retry loop. If the compactor deletes the data file between the two calls,
+         // IndexEntry.ensureRecord() throws IndexNodeOutdatedException. Retrying re-resolves the
+         // entry from the index which by then points to the compacted location.
+         // See https://github.com/infinispan/infinispan/issues/18036
+         for (int attempts = 0; ; attempts++) {
+            try {
+               IndexEntry entry = segments[cacheSegment].tree.get(indexKey);
+               if (entry == null) {
+                  log.tracef("No position found in index for key %s segment %d", key, cacheSegment);
+                  return null;
+               }
+               EntryHeader header = entry.getHeader(dataFileProvider);
+               if (header == null) return null;
+               if (header.expiryTime() > 0 && header.expiryTime() <= timeService.wallClockTime()) {
+                  if (log.isTraceEnabled()) {
+                     log.tracef("Found node on %d:%d but it is expired", entry.file, entry.offset);
+                  }
+                  return null;
+               }
+               return entry;
+            } catch (IndexNodeOutdatedException e) {
+               if (attempts >= 10) {
+                  throw e;
+               }
             }
-            return null;
          }
-         return entry;
       } finally {
          lock.unlockRead(stamp);
       }
