@@ -29,7 +29,7 @@ for TEST in "${TESTS[@]}"; do
   i=0
   while IFS= read -r ENTRY; do
     [ -z "$ENTRY" ] && continue
-    (( i++ ))
+    i=$(( i + 1 ))
     TEST_CLASS="${ENTRY%%#*}"
     TEST_NAME="${ENTRY#*#}"
     # Removing (Flaky Test) text
@@ -54,13 +54,13 @@ for TEST in "${TESTS[@]}"; do
     # Search issues for existing github issue
     # Wait some time for subsequent request to respect API rate limit
     sleep $API_LIMIT_TIME
-    ISSUES="$(gh search issues \"${SUMMARY}\" in:title --json number,state --repo $GITHUB_REPOSITORY || true)"
+    ISSUES="$(gh search issues "${SUMMARY}" in:title --json number,state --repo "$GITHUB_REPOSITORY" || true)"
     API_LIMIT_TIME=120
     if [[ "${ISSUES}" == "" ]]; then
       echo "Error with gh search. Maybe rate limits reached? Waiting 120 sec and retrying..."
       gh api rate_limit
       sleep $API_LIMIT_TIME
-      ISSUES="$(gh search issues \"${SUMMARY}\" in:title --json number,state --repo $GITHUB_REPOSITORY || true)"
+      ISSUES="$(gh search issues "${SUMMARY}" in:title --json number,state --repo "$GITHUB_REPOSITORY" || true)"
       if [[ "${ISSUES}" == "" ]]; then
         echo "Retry also returned no results for ${SUMMARY}, skipping."
         continue
