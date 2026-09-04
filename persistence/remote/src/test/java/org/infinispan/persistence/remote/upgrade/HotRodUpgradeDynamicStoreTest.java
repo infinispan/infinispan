@@ -3,7 +3,6 @@ package org.infinispan.persistence.remote.upgrade;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfiguration;
-import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.testng.annotations.Test;
 
@@ -32,7 +31,7 @@ public class HotRodUpgradeDynamicStoreTest extends HotRodUpgradeSynchronizerTest
       ConfigurationBuilder builder = new ConfigurationBuilder();
       RemoteStoreConfigurationBuilder storeBuilder = builder.persistence().addStore(RemoteStoreConfigurationBuilder.class);
       storeBuilder.remoteCacheName(cacheName).protocolVersion(version).shared(true).segmented(false)
-            .addServer().host("localhost").port(sourceCluster.getHotRodPort()).addProperty(RemoteStore.MIGRATION, "true");
+            .addServer().host("localhost").port(sourceCluster.getHotRodPort());
       return storeBuilder.build().persistence().stores().get(0);
    }
 }
