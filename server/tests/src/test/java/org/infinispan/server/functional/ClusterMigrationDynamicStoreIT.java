@@ -19,7 +19,6 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
@@ -198,8 +197,7 @@ public class ClusterMigrationDynamicStoreIT extends AbstractMultiClusterIT {
             .shared(true)
             .addServer()
             .host(source.driver.getServerAddress(0).getHostAddress())
-            .port(11222)
-            .addProperty(RemoteStore.MIGRATION, "true");
+            .port(11222);
       final KeyValuePair<String, String> credentials = getCredentials();
       if (getCredentials() != null) {
          storeConfigurationBuilder.remoteSecurity()
