@@ -18,7 +18,6 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.RemoteServerConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
@@ -61,6 +60,38 @@ public class ClusterMigrationStreamEntriesIT extends AbstractMultiClusterIT {
    public void after() throws Exception {
       stopTargetCluster();
       stopSourceCluster();
+   }
+
+   @Test
+   public void testStreamEntriesAfterMigration() throws Exception {
+      RestClient restClientSource = source.getClient();
+      RestClient restClientTarget = target.getClient();
+
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      builder.encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM);
+      createCache(CACHE_NAME, builder, restClientSource);
+      createCache(CACHE_NAME, builder, restClientTarget);
+
+      RestCacheClient sourceCache = restClientSource.cache(CACHE_NAME);
+      for (int i = 0; i < ENTRIES; i++) {
+         String key = "{\"_type\":\"string\",\"_value\":\"" + i + "\"}";
+         RestEntity value = RestEntity.create(MediaType.APPLICATION_JSON, "{\"_type\":\"string\",\"_value\":\"value-" + i + "\"}");
+         assertStatus(NO_CONTENT, sourceCache.put(key, MediaType.APPLICATION_JSON_TYPE, value));
+      }
+      assertEquals(ENTRIES, getCacheSize(CACHE_NAME, restClientSource));
+
+      connectTargetCluster(CACHE_NAME);
+      assertSourceConnected(CACHE_NAME);
+
+      migrate(CACHE_NAME, restClientTarget);
+      disconnectSource(CACHE_NAME, restClientTarget);
+
+      try (RestResponse response = sync(restClientTarget.cache(CACHE_NAME).entries())) {
+         assertEquals(OK, response.status());
+         Collection<?> entries = (Collection<?>) Json.read(response.body()).getValue();
+         assertEquals(ENTRIES, entries.size());
+      }
    }
 
    @Test
@@ -116,6 +147,14 @@ public class ClusterMigrationStreamEntriesIT extends AbstractMultiClusterIT {
       assertStatus(OK, target.getClient().cache(cacheName).sourceConnected());
    }
 
+   protected void migrate(String cacheName, RestClient client) {
+      assertStatus(OK, client.cache(cacheName).synchronizeData());
+   }
+
+   protected void disconnectSource(String cacheName, RestClient client) {
+      assertStatus(NO_CONTENT, client.cache(cacheName).disconnectSource());
+   }
+
    void addRemoteStore(String cacheName, ConfigurationBuilder builder) {
       RemoteStoreConfigurationBuilder storeConfigurationBuilder = builder.clustering()
             .cacheMode(CacheMode.DIST_SYNC).persistence().addStore(RemoteStoreConfigurationBuilder.class);
@@ -125,8 +164,7 @@ public class ClusterMigrationStreamEntriesIT extends AbstractMultiClusterIT {
             .shared(true)
             .addServer()
             .host(source.driver.getServerAddress(0).getHostAddress())
-            .port(11222)
-            .addProperty(RemoteStore.MIGRATION, "true");
+            .port(11222);
       final KeyValuePair<String, String> credentials = getCredentials();
       if (credentials != null) {
          storeConfigurationBuilder.remoteSecurity()

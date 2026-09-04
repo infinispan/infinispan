@@ -60,6 +60,7 @@ public class AddSourceRemoteStoreTask implements Function<EmbeddedCacheManager, 
       PersistenceManager persistenceManager = cr.getComponent(PersistenceManager.class);
       try {
          if (persistenceManager.getStores(RemoteStore.class).isEmpty()) {
+             storeConfiguration.properties().setProperty(RemoteStore.MIGRATION, "true");
              return CompletionStages.join(persistenceManager.addStore(storeConfiguration));
          }
          return null;
