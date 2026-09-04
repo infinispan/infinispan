@@ -2493,4 +2493,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Non-shared stores must have purge-on-startup enabled when conflict resolution is configured", id = 729)
    CacheConfigurationException nonSharedStoreMustPurgeWithConflictResolution();
+
+   @Message(value = "Request to %s rejected: destination is overloaded and request was not submitted", id = 730)
+   TimeoutException requestShed(Address destination, @Param boolean writableStackTrace);
 }
