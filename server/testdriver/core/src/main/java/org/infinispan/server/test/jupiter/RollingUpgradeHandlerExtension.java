@@ -96,6 +96,7 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
 
    @Override
    public void beforeEach(ExtensionContext context) {
+      this.testClient = null;
       Assumptions.assumeFalse(Compatibility.INSTANCE.isCompatibilitySkip(handler.getConfiguration(), context.getRequiredTestClass().getName(), context.getRequiredTestMethod().getName()));
       this.testClient = new TestClient(testServer);
       startTestClient(context, testClient);
@@ -103,7 +104,40 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
 
    @Override
    public void afterEach(ExtensionContext extensionContext) {
-      testClient.clearResources();
+      try {
+         // When a test fails for a real reason (not an assumption based skip) probe the shared cluster.
+         // If it is no longer responding we treat the failure as the start of an outage and mark the
+         // cluster so subsequent tests are skipped instead of repeating the same timeout failure. A
+         // genuine assertion failure leaves the cluster healthy, so the probe passes and later tests
+         // still run normally.
+         if (!clusterUnresponsive && isRealFailure(extensionContext) && !isClusterResponsive()) {
+            clusterUnresponsive = true;
+            log.warnf("Rolling upgrade cluster '%s' is not responding after a test failure; " +
+                  "remaining suite tests will be skipped", handler.getConfiguration().name());
+         }
+      } finally {
+         if (testClient != null) testClient.clearResources();
+      }
+   }
+
+   private static boolean isRealFailure(ExtensionContext context) {
+      return context.getExecutionException()
+            .filter(t -> !TestSetupUtil.isAssumptionViolated(t))
+            .isPresent();
+   }
+
+   /**
+    * Probes the shared mixed-version cluster using the same predicate the handler uses to gate each
+    * upgrade step (a synchronous Hot Rod get plus a server count check). Any exception, including the
+    * client socket timeout, is treated as the cluster being unresponsive.
+    */
+   private boolean isClusterResponsive() {
+      try {
+         return handler.getConfiguration().isValidServerState().test(handler);
+      } catch (Exception e) {
+         log.debugf(e, "Rolling upgrade cluster health probe failed");
+         return false;
+      }
    }
 
    @Override

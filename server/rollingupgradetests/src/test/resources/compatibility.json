@@ -59,6 +59,60 @@
               ]
             }
           ]
+        },
+        {
+          "description": "Global configuration attribute REST endpoints are new in 16.2",
+          "issue": "https://github.com/infinispan/infinispan/issues/16323",
+          "test-failures": [
+            {
+              "test-class": "org.infinispan.server.functional.rest.RestGlobalConfigurationTest",
+              "test-methods": [
+                "testGetMutableAttributes",
+                "testGetMutableAttributesFull",
+                "testUpdateAccurateSize",
+                "testUpdateImmutableAttributeFails",
+                "testUpdatePropagatesAcrossCluster"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "version-from": "[16.0,16.3)",
+      "version-to": "[16.3,)",
+      "exceptions": [
+        {
+          "description": "Peek flag does not exist in older server versions",
+          "issue": "https://github.com/infinispan/infinispan/issues/17532",
+          "test-failures": [
+            {
+              "test-class": "org.infinispan.server.functional.hotrod.HotRodPeekOperations",
+              "test-methods": [
+                "testPeekDoesNotResetMaxIdle"
+              ]
+            },
+            {
+              "test-class": "org.infinispan.server.functional.rest.RestPeekOperations",
+              "test-methods": [
+                "testGetWithPeekReturnsValue",
+                "testGetWithPeekNonExistentKey",
+                "testGetWithPeekDoesNotResetMaxIdle"
+              ]
+            }
+          ]
+        },
+        {
+          "description": "Brute force protection",
+          "issue": "https://github.com/infinispan/infinispan/issues/18001",
+          "test-failures": [
+            {
+              "test-class": "org.infinispan.server.security.authentication.HotRodAuthentication",
+              "test-methods": [
+                "testBruteForceProtection"
+              ]
+            }
+          ]
         }
       ]
     }
