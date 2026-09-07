@@ -271,9 +271,6 @@ public interface Log extends BasicLogger {
    @Message(value = "The cache container requires authorization, but none of the connectors enable authentication", id = 80070)
    CacheConfigurationException authorizationWithoutAuthentication();
 
-   @Message(value = "A user mapper must be configured in order to use LDAP direct verification", id = 80071)
-   CacheConfigurationException ldapDirectVerificationWithoutUserMapper();
-
    @LogMessage(level = Logger.Level.WARN)
    @Message(value = "JMX remoting enabled without a default security realm. All connections will be rejected.", id = 80072)
    void jmxNoDefaultSecurityRealm();

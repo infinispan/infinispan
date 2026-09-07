@@ -22,8 +22,8 @@ public class LdapIdentityMappingConfigurationBuilder implements Builder<LdapIden
    private final List<LdapAttributeConfigurationBuilder> attributeMappings = new ArrayList<>();
    private final LdapUserPasswordMapperConfigurationBuilder userPasswordMapper;
 
-   LdapIdentityMappingConfigurationBuilder(LdapRealmConfigurationBuilder ldapConfigurationBuilder) {
-      this.userPasswordMapper = new LdapUserPasswordMapperConfigurationBuilder(ldapConfigurationBuilder);
+   LdapIdentityMappingConfigurationBuilder() {
+      this.userPasswordMapper = new LdapUserPasswordMapperConfigurationBuilder();
       this.attributes = LdapIdentityMappingConfiguration.attributeDefinitionSet();
    }
 
