@@ -5,7 +5,6 @@ import static org.infinispan.server.configuration.security.DistributedRealmConfi
 import java.util.function.Supplier;
 
 import org.infinispan.commons.configuration.Combine;
-import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.server.security.PasswordCredentialSource;
@@ -23,7 +22,7 @@ public class LdapRealmConfigurationBuilder implements RealmProviderBuilder<LdapR
 
    LdapRealmConfigurationBuilder() {
       this.attributes = LdapRealmConfiguration.attributeDefinitionSet();
-      identityMapping = new LdapIdentityMappingConfigurationBuilder(this);
+      identityMapping = new LdapIdentityMappingConfigurationBuilder();
    }
 
    @Override
@@ -120,15 +119,5 @@ public class LdapRealmConfigurationBuilder implements RealmProviderBuilder<LdapR
       attributes.read(template.attributes(), combine);
       identityMapping.read(template.identityMapping(), combine);
       return this;
-   }
-
-   @Override
-   public int compareTo(RealmProviderBuilder o) {
-      return 0; // Irrelevant
-   }
-
-   boolean isDirectVerificationEnabled() {
-      Attribute<Boolean> attribute = attributes.attribute(LdapRealmConfiguration.DIRECT_EVIDENCE_VERIFICATION);
-      return !attribute.isNull() && attribute.get();
    }
 }
