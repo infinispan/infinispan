@@ -71,7 +71,11 @@ public class LdapRealmConfiguration extends ConfigurationElement<LdapRealmConfig
    @Override
    public SecurityRealm build(SecurityConfiguration security, RealmConfiguration realm, SecurityDomain.Builder domainBuilder, Properties properties) {
       LdapSecurityRealmBuilder ldapRealmBuilder = LdapSecurityRealmBuilder.builder();
-      attributes.attribute(DIRECT_EVIDENCE_VERIFICATION).apply(ldapRealmBuilder::addDirectEvidenceVerification);
+      attributes.attribute(DIRECT_EVIDENCE_VERIFICATION).apply(v -> {
+         if (v) {
+            ldapRealmBuilder.addDirectEvidenceVerification();
+         }
+      });
       ldapRealmBuilder.setPageSize(attributes.attribute(PAGE_SIZE).get());
       mappingFeatures = identityMapping.build(ldapRealmBuilder, realm);
       Properties connectionProperties = new Properties();
