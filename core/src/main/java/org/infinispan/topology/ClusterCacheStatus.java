@@ -1569,11 +1569,14 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                } else {
                   // TODO Add log event for cancel/restart
                   if (cancelledLocally.get()) {
-                     // We have explicitly cancelled the request, therefore return and do nothing
+                     // We have explicitly cancelled the request, therefore return and do nothing.
+                     // CompletableFuture.cancel() completes this stage on the cancelling thread, which is always
+                     // restartConflictResolution holding the ClusterCacheStatus lock, and that takes care of the
+                     // CR phase itself: it either queues a replacement attempt or lets the caller install a
+                     // NO_REBALANCE topology. Completing the phase here would end CR before it resolved anything.
                      Log.CLUSTER.cancelledConflictResolution(cacheName, topology);
                      eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.conflictResolutionCancelled(
                              topology.getMembers(), topology.getTopologyId()));
-                     cancelConflictResolutionPhase(topology);
                   } else {
                      Throwable cause;
                      Throwable rootCause = t;

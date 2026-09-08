@@ -84,9 +84,19 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
 
    @Override
    public void cancelRequests() {
-      if (log.isTraceEnabled()) log.tracef("Cache %s stop() called on StateReceiverImpl", cacheName);
+      if (log.isTraceEnabled()) log.tracef("Cache %s cancelling all segment requests", cacheName);
       for (SegmentRequest request : requestMap.values()) {
          request.cancel(null);
+      }
+   }
+
+   @Override
+   public void cancelRequests(int topologyId) {
+      if (log.isTraceEnabled()) log.tracef("Cache %s cancelling segment requests for topologyId=%s", cacheName, topologyId);
+      for (SegmentRequest request : requestMap.values()) {
+         if (request.topology.getTopologyId() == topologyId) {
+            request.cancel(null);
+         }
       }
    }
 
@@ -253,7 +263,7 @@ public class StateReceiverImpl<K, V> implements StateReceiver<K, V> {
       }
 
       synchronized void cancel(Throwable throwable) {
-         if (future.isDone())
+         if (future != null && future.isDone())
             return;
 
          log.debugf(throwable, "Cache %s cancelling request for segment %s", cacheName, segmentId);
