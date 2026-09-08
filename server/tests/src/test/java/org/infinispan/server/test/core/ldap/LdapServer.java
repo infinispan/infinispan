@@ -2,7 +2,7 @@ package org.infinispan.server.test.core.ldap;
 
 import java.io.File;
 
-public interface LdapServer {
+public interface LdapServer extends AutoCloseable {
 
    String TEST_LDAP_URL = "org.infinispan.test.ldap.url";
    String TEST_LDAP_PRINCIPAL = "org.infinispan.test.ldap.principal";
@@ -11,4 +11,9 @@ public interface LdapServer {
    void start(String keystoreFile, File confDir) throws Exception;
 
    void stop() throws Exception;
+
+   @Override
+   default void close() throws Exception {
+      stop();
+   }
 }

@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.apache.directory.api.ldap.model.entry.Entry;
@@ -15,7 +17,6 @@ import org.apache.directory.api.ldap.model.ldif.LdifReader;
 import org.apache.directory.ldap.client.api.LdapNetworkConnection;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.testcontainers.shaded.com.google.common.io.Files;
 
 public class RemoteLdapServer implements LdapServer {
 
@@ -36,16 +37,17 @@ public class RemoteLdapServer implements LdapServer {
 
       // for each ldap server, there is a ldif file. you should replace infinispan.ldif content
       String fullPathFile = getClass().getClassLoader().getResource(initLDIF).getFile();
-      String fileContent = Files.toString(new File(fullPathFile), Charset.defaultCharset());
-      LdifReader ldifReader = new LdifReader();
-      List<LdifEntry> entries = ldifReader.parseLdif(fileContent);
-      for (LdifEntry ldifEntry : entries) {
-         try {
-            Entry entry = ldifEntry.getEntry();
-            connection.add(entry);
-         } catch (LdapEntryAlreadyExistsException e) {
-            // for now, remove entry or edit is not supported
-            log.debug(ldifEntry.getDn().toString(), e);
+      String fileContent = Files.readString(Paths.get(fullPathFile), Charset.defaultCharset());
+      try (LdifReader ldifReader = new LdifReader()) {
+         List<LdifEntry> entries = ldifReader.parseLdif(fileContent);
+         for (LdifEntry ldifEntry : entries) {
+            try {
+               Entry entry = ldifEntry.getEntry();
+               connection.add(entry);
+            } catch (LdapEntryAlreadyExistsException e) {
+               // for now, remove entry or edit is not supported
+               log.debug(ldifEntry.getDn().toString(), e);
+            }
          }
       }
    }

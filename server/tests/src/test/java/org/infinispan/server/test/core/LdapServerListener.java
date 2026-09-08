@@ -1,39 +1,61 @@
 package org.infinispan.server.test.core;
 
-import org.infinispan.commons.test.Exceptions;
-import org.infinispan.commons.test.ThreadLeakChecker;
+import java.util.Locale;
+
+import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.ldap.ApacheLdapServer;
 import org.infinispan.server.test.core.ldap.LdapServer;
 import org.infinispan.server.test.core.ldap.RemoteLdapServer;
+import org.infinispan.server.test.core.ldap.SambaLdapServer;
+import org.infinispan.testing.Exceptions;
+import org.infinispan.testing.ThreadLeakChecker;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 12.1
  **/
 public class LdapServerListener implements InfinispanServerListener {
-   public static final String LDAP_SERVER = System.getProperty(TestSystemPropertyNames.LDAP_SERVER, "apache");
    private static final String DEFAULT_LDIF = "ldif/infinispan.ldif";
    private static final String KERBEROS_LDIF = "ldif/infinispan-kerberos.ldif";
+   private final boolean kdc;
 
-   private final LdapServer ldapServer;
+   public enum LdapServerType {
+      APACHE {
+         @Override
+         LdapServer ldapServer(boolean withKdc) {
+            return new ApacheLdapServer(withKdc, withKdc ? KERBEROS_LDIF : DEFAULT_LDIF);
+         }
+      },
+      SAMBA {
+         @Override
+         LdapServer ldapServer(boolean withKdc) {
+            return new SambaLdapServer();
+         }
+      },
+      REMOTE {
+         @Override
+         LdapServer ldapServer(boolean withKdc) {
+            return new RemoteLdapServer(withKdc ? KERBEROS_LDIF : DEFAULT_LDIF);
+         }
+      };
+
+      abstract LdapServer ldapServer(boolean withKdc);
+   }
+
+   private LdapServer ldapServer;
 
    public LdapServerListener() {
       this(false);
    }
 
    public LdapServerListener(boolean withKdc) {
-      if ("apache".equals(LDAP_SERVER)) {
-         ldapServer = new ApacheLdapServer(withKdc, withKdc ? KERBEROS_LDIF : DEFAULT_LDIF);
-      // when using the remote ldap server, you should overwrite the content of the ldif files before running the test
-      } else if ("remote".equals(LDAP_SERVER)) {
-         ldapServer = new RemoteLdapServer(withKdc ? KERBEROS_LDIF : DEFAULT_LDIF);
-      } else {
-         throw new IllegalStateException("Unsupported LDAP Server: " + LDAP_SERVER);
-      }
+      this.kdc =withKdc;
    }
 
    @Override
    public void before(InfinispanServerDriver driver) {
+      String type = driver.getConfiguration().properties().getProperty(TestSystemPropertyNames.LDAP_SERVER, "apache");
+      ldapServer = LdapServerType.valueOf(type.toUpperCase(Locale.ROOT)).ldapServer(kdc);
       Exceptions.unchecked(() -> {
          ldapServer.start(driver.getCertificateFile("server.pfx").getAbsolutePath(), driver.getConfDir());
       });
@@ -41,12 +63,7 @@ public class LdapServerListener implements InfinispanServerListener {
 
    @Override
    public void after(InfinispanServerDriver driver) {
-      try {
-         ldapServer.stop();
-      } catch (Exception e) {
-         // Ignore
-      }
-
+      Util.close(ldapServer);
       // LdapServer creates an ExecutorFilter with an "unmanaged" executor and doesn't stop the executor itself
       ThreadLeakChecker.ignoreThreadsContaining("pool-.*thread-");
       //
