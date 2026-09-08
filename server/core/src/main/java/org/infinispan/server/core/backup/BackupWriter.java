@@ -116,8 +116,7 @@ class BackupWriter {
 
       return prepareStage.thenCompose(ignore -> {
          AggregateCompletionStage<Void> stages = CompletionStages.aggregateCompletionStage();
-         for (ContainerResource cr : resources)
-            stages.dependsOn(cr.backup());
+         stages.dependsOn(CompletionStages.performSequentially(resources.iterator(), ContainerResource::backup));
 
          stages.dependsOn(
                // Write the global configuration xml
