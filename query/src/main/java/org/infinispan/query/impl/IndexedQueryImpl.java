@@ -275,27 +275,24 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       return count;
    }
 
-   @SuppressWarnings("unchecked")
-   private int executeUpdate(List<Object> hits) {
-      if (updateOperations == null || updateOperations.isEmpty()) {
-         return 0;
-      }
+    @SuppressWarnings("unchecked")
+    private int executeUpdate(List<Object> hits) {
+       if (updateOperations == null || updateOperations.isEmpty()) {
+          return 0;
+       }
 
-      UpdateQueryHelper.UpdateBiFunction fn = new UpdateQueryHelper.UpdateBiFunction(
-            queryDefinition.getQueryString(), queryDefinition.getNamedParameters(), targetEntityName);
+        UpdateQueryHelper.UpdateBiFunction fn = new UpdateQueryHelper.UpdateBiFunction(
+              queryDefinition.getQueryString(), queryDefinition.getNamedParameters(), targetEntityName,
+              queryDefinition.getQueryEngineProvider());
 
-      int count = 0;
-      for (Object id : hits) {
-         try {
-            if (UpdateQueryHelper.applyUpdate((AdvancedCache<Object, Object>) cache, id, fn)) {
-               count++;
-            }
-         } catch (Exception e) {
-            throw CONTAINER.updateByQueryFailed(id, e);
-         }
-      }
-      return count;
-   }
+       int count = 0;
+       for (Object id : hits) {
+          if (UpdateQueryHelper.applyUpdate((AdvancedCache<Object, Object>) cache, id, fn)) {
+             count++;
+          }
+       }
+       return count;
+    }
 
    private <T> ClosableIteratorWithCount<T> iterator(SearchQuery<T> searchQuery) {
       try {

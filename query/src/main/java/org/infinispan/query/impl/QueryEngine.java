@@ -666,9 +666,10 @@ public class QueryEngine<TypeMetadata> {
       // some fields are indexed, run a hybrid query
       IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, expansion, null, null, null, null);
       Query<?> expandedQuery = new EmbeddedLuceneQuery<>(this, namedParameters, fpr, null, null, -1, -1, local);
-      return new MetadataHybridQuery<>(cache, queryString, parsingResult.getStatementType(),
-            namedParameters, getObjectFilter(matcher, queryString, namedParameters, null), startOffset, maxResults,
-            expandedQuery, queryStatistics, local, allSortFieldsAreStored, parsingResult.getUpdateOperations(), parsingResult.getTargetEntityName());
+       return new MetadataHybridQuery<>(cache, queryString, parsingResult.getStatementType(),
+             namedParameters, getObjectFilter(matcher, queryString, namedParameters, null), startOffset, maxResults,
+             expandedQuery, queryStatistics, local, allSortFieldsAreStored, parsingResult.getUpdateOperations(), parsingResult.getTargetEntityName(),
+             getQueryEngineProvider());
    }
 
    private IckleParsingResult<TypeMetadata> makeFilterParsingResult(IckleParsingResult<TypeMetadata> parsingResult, BooleanExpr normalizedWhereClause,
@@ -787,15 +788,15 @@ public class QueryEngine<TypeMetadata> {
                ickleParsingResult.getUpdateOperations(), ickleParsingResult.getTargetEntityName());
       }
       QueryDefinition queryDefinition = new QueryDefinition(queryString, ickleParsingResult.getStatementType(),
-            searchQuery, defaultMaxResults);
+            searchQuery, defaultMaxResults, getQueryEngineProvider());
       queryDefinition.setNamedParameters(namedParameters);
       return new IndexedQueryImpl<>(queryDefinition, cache,
             queryStatistics, ickleParsingResult.getUpdateOperations(), ickleParsingResult.getTargetEntityName());
    }
 
-   protected SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> getQueryEngineProvider() {
-      return queryEngineProvider;
-   }
+    public SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> getQueryEngineProvider() {
+       return queryEngineProvider;
+    }
 
    private static String getInputColumnKey(PropertyPath<?> p) {
       if (p instanceof AggregationFunctionPropertyPath<?> afp) {

@@ -71,6 +71,12 @@ public final class QueryDefinition {
 
    public QueryDefinition(String queryString, IckleParsingResult.StatementType statementType,
                           SearchQueryBuilder searchQueryBuilder, int originalMaxResults) {
+      this(queryString, statementType, searchQueryBuilder, originalMaxResults, null);
+   }
+
+   public QueryDefinition(String queryString, IckleParsingResult.StatementType statementType,
+                          SearchQueryBuilder searchQueryBuilder, int originalMaxResults,
+                          SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> queryEngineProvider) {
       if (queryString == null) {
          throw new IllegalArgumentException("queryString cannot be null");
       }
@@ -83,7 +89,7 @@ public final class QueryDefinition {
       this.searchQueryBuilder = searchQueryBuilder;
       this.queryString = queryString;
       this.statementType = statementType;
-      this.queryEngineProvider = null;
+      this.queryEngineProvider = queryEngineProvider;
       this.maxResults = originalMaxResults;
       this.originalMaxResults = originalMaxResults;
    }
@@ -116,9 +122,13 @@ public final class QueryDefinition {
       return queryString;
    }
 
-   public IckleParsingResult.StatementType getStatementType() {
-      return statementType;
-   }
+    public IckleParsingResult.StatementType getStatementType() {
+       return statementType;
+    }
+
+    public SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> getQueryEngineProvider() {
+       return queryEngineProvider;
+    }
 
    private QueryEngine<?> getQueryEngine(AdvancedCache<?, ?> cache) {
       if (queryEngineProvider == null) {

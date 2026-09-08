@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 
 import org.infinispan.AdvancedCache;
@@ -21,6 +23,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.protostream.impl.MarshallableMap;
+import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.protostream.ProtobufFieldUpdater;
@@ -37,6 +40,7 @@ import org.infinispan.protostream.impl.TagWriterImpl;
 import org.infinispan.query.impl.QueryEngine;
 import org.infinispan.query.objectfilter.impl.syntax.ConstantValueExpr;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
+import org.infinispan.util.function.SerializableFunction;
 
 /**
  * Shared logic for applying Ickle UPDATE statement operations to cache entries.
@@ -92,11 +96,29 @@ public final class UpdateQueryHelper {
    /**
     * Applies an update to a cache entry atomically using {@code cache.compute()}.
     * The {@link UpdateBiFunction} is marshallable and safe for clustered (backup replication) use.
+    * Returns {@code true} if the entry existed (and was therefore updated), {@code false} otherwise.
+    * <p>
+    * The result is derived from the compute return value rather than {@link UpdateBiFunction#wasUpdated()}
+    * because the function may be serialized and executed on a remote node, leaving the local instance's
+    * state unchanged.
     */
    public static boolean applyUpdate(AdvancedCache<Object, Object> cache, Object key, UpdateBiFunction fn) {
-      cache.withStorageMediaType().compute(key, fn);
-      return fn.wasUpdated();
+      Object result = cache.withStorageMediaType().compute(key, fn);
+      return result != null;
    }
+
+    /**
+     * Asynchronous variant of {@link #applyUpdate(AdvancedCache, Object, UpdateBiFunction)} using
+     * {@code cache.computeAsync()}. Returns a future completing with {@code true} if the entry existed
+     * (and was therefore updated), {@code false} otherwise.
+     * <p>
+     * The function instance may be shared across concurrent computes; the result is derived from
+     * the compute return value, not from per-instance mutable state.
+     */
+    public static CompletableFuture<Boolean> applyUpdateAsync(AdvancedCache<Object, Object> cache, Object key,
+                                                             UpdateBiFunction fn) {
+       return cache.withStorageMediaType().computeAsync(key, fn).thenApply(Objects::nonNull);
+    }
 
    private static List<Object> resolveValues(List<Object> values, Map<String, Object> namedParameters) {
       if (values == null || namedParameters == null || namedParameters.isEmpty()) {
@@ -131,26 +153,38 @@ public final class UpdateQueryHelper {
    @Scope(Scopes.NONE)
    public static final class UpdateBiFunction implements BiFunction<Object, Object, Object> {
 
-      private final String queryString;
-      private final Map<String, Object> namedParameters;
-      private final String targetEntityName;
+       private final String queryString;
+       private final Map<String, Object> namedParameters;
+       private final String targetEntityName;
+       private final SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> engineProvider;
 
-      private transient List<ProtobufFieldUpdater.UpdateOperation> ops;
-      private transient ImmutableSerializationContext serCtx;
-      private transient UpdateStrategy strategy;
-      private transient boolean updated;
+       // Injected lazily on first use and shared across (potentially concurrent) computes.
+       // The volatile fields make the one-time injection visible to all threads; {@code ops}
+       // doubles as the "already injected" flag and is written last so it publishes the others.
+       private transient volatile List<ProtobufFieldUpdater.UpdateOperation> ops;
+       private transient volatile ImmutableSerializationContext serCtx;
+       private transient volatile UpdateStrategy strategy;
 
-      public UpdateBiFunction(String queryString, Map<String, Object> namedParameters, String targetEntityName) {
-         this.queryString = queryString;
-         this.namedParameters = namedParameters;
-         this.targetEntityName = targetEntityName;
-      }
+       // Set by {@link #apply} to indicate whether the entry was actually modified.
+       // Used by the synchronous {@link #applyUpdate} path via {@link #wasUpdated()}.
+       // The async path uses a value-based check instead and never reads this field.
+       private transient volatile boolean updated;
 
-      @ProtoFactory
-      UpdateBiFunction(String queryString, MarshallableMap<String, Object> wrappedNamedParameters,
-                       String targetEntityName) {
-         this(queryString, MarshallableMap.unwrap(wrappedNamedParameters), targetEntityName);
-      }
+       public UpdateBiFunction(String queryString, Map<String, Object> namedParameters, String targetEntityName,
+                               SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> engineProvider) {
+          this.queryString = queryString;
+          this.namedParameters = namedParameters;
+          this.targetEntityName = targetEntityName;
+          this.engineProvider = engineProvider;
+       }
+
+       @ProtoFactory
+       UpdateBiFunction(String queryString, MarshallableMap<String, Object> wrappedNamedParameters,
+                        String targetEntityName,
+                        MarshallableObject<SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>>> wrappedEngineProvider) {
+          this(queryString, MarshallableMap.unwrap(wrappedNamedParameters), targetEntityName,
+                MarshallableObject.unwrap(wrappedEngineProvider));
+       }
 
       @ProtoField(1)
       public String getQueryString() {
@@ -162,58 +196,69 @@ public final class UpdateQueryHelper {
          return MarshallableMap.create(namedParameters);
       }
 
-      @ProtoField(3)
-      public String getTargetEntityName() {
-         return targetEntityName;
-      }
+       @ProtoField(3)
+       public String getTargetEntityName() {
+          return targetEntityName;
+       }
 
-      @Inject
-      void injectDependencies(ComponentRegistry componentRegistry) {
-         if (ops != null) return;
+       @ProtoField(4)
+       public MarshallableObject<SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>>> getWrappedEngineProvider() {
+          return MarshallableObject.create(engineProvider);
+       }
 
-         AdvancedCache<?, ?> cache = componentRegistry.getCache().wired().getAdvancedCache();
-         SerializationContextRegistry ctxRegistry = componentRegistry.getComponent(SerializationContextRegistry.class);
-         serCtx = ctxRegistry.getUserCtx();
+       @Inject
+       void injectDependencies(ComponentRegistry componentRegistry) {
+          if (ops != null) return;
 
-         QueryEngine<?> queryEngine = componentRegistry.getComponent(QueryEngine.class);
-         IckleParsingResult<?> parsingResult = queryEngine.parse(queryString);
-         ops = toProtobufOps(parsingResult.getUpdateOperations(), namedParameters);
-         String entityName = targetEntityName != null ? targetEntityName : parsingResult.getTargetEntityName();
-         strategy = resolveStrategy(cache, serCtx, entityName);
-      }
+          AdvancedCache<?, ?> cache = componentRegistry.getCache().wired().getAdvancedCache();
+          SerializationContextRegistry ctxRegistry = componentRegistry.getComponent(SerializationContextRegistry.class);
+          ImmutableSerializationContext context = ctxRegistry.getUserCtx();
 
-      public boolean wasUpdated() {
-         return updated;
-      }
+           QueryEngine<?> queryEngine = engineProvider != null
+                 ? engineProvider.apply(cache)
+                 : componentRegistry.getComponent(QueryEngine.class);
+           IckleParsingResult<?> parsingResult = queryEngine.parse(queryString);
+          List<ProtobufFieldUpdater.UpdateOperation> parsedOps = toProtobufOps(parsingResult.getUpdateOperations(), namedParameters);
+          String entityName = targetEntityName != null ? targetEntityName : parsingResult.getTargetEntityName();
+          UpdateStrategy resolvedStrategy = resolveStrategy(cache, context, entityName);
 
-      @Override
-      public Object apply(Object key, Object existingValue) {
-         updated = false;
-         if (existingValue == null) return null;
+          serCtx = context;
+          strategy = resolvedStrategy;
+          ops = parsedOps;
+       }
 
-         try {
-            return switch (strategy) {
-               case PROTOBUF -> {
-                  byte[] wrappedBytes = existingValue instanceof byte[] b ? b
-                        : ((WrappedByteArray) existingValue).getBytes();
-                  byte[] updatedWrapped = applyProtobufUpdateToBytes(wrappedBytes, serCtx, ops);
-                  if (updatedWrapped == null) yield existingValue;
-                  updated = true;
-                  yield updatedWrapped;
-               }
-               case PROTOBUF_ROUNDTRIP -> {
-                  byte[] wrappedBytes = ProtobufUtil.toWrappedByteArray(serCtx, existingValue);
-                  byte[] updatedWrapped = applyProtobufUpdateToBytes(wrappedBytes, serCtx, ops);
-                  if (updatedWrapped == null) yield existingValue;
-                  updated = true;
-                  yield ProtobufUtil.fromWrappedByteArray(serCtx, updatedWrapped);
-               }
-               case REFLECTION -> applyReflectionOps(existingValue);
-            };
-         } catch (IOException e) {
-            throw CONTAINER.updateByQueryFailed(key, e);
-         }
-      }
+       public boolean wasUpdated() {
+          return updated;
+       }
+
+       @Override
+       public Object apply(Object key, Object existingValue) {
+          updated = false;
+          if (existingValue == null) return null;
+
+          try {
+             return switch (strategy) {
+                case PROTOBUF -> {
+                   byte[] wrappedBytes = existingValue instanceof byte[] b ? b
+                         : ((WrappedByteArray) existingValue).getBytes();
+                   byte[] updatedWrapped = applyProtobufUpdateToBytes(wrappedBytes, serCtx, ops);
+                   if (updatedWrapped == null) yield existingValue;
+                   updated = true;
+                   yield updatedWrapped;
+                }
+                case PROTOBUF_ROUNDTRIP -> {
+                   byte[] wrappedBytes = ProtobufUtil.toWrappedByteArray(serCtx, existingValue);
+                   byte[] updatedWrapped = applyProtobufUpdateToBytes(wrappedBytes, serCtx, ops);
+                   if (updatedWrapped == null) yield existingValue;
+                   updated = true;
+                   yield ProtobufUtil.fromWrappedByteArray(serCtx, updatedWrapped);
+                }
+                case REFLECTION -> applyReflectionOps(existingValue);
+             };
+          } catch (IOException e) {
+             throw CONTAINER.updateByQueryFailed(key, e);
+          }
+       }
 
       @SuppressWarnings("unchecked")
       private Object applyReflectionOps(Object value) {
@@ -225,30 +270,32 @@ public final class UpdateQueryHelper {
                for (int i = 0; i < path.length - 1; i++) {
                   target = getPropertyValue(target, path[i]);
                }
-               String fieldName = path[path.length - 1];
-               switch (op.type()) {
-                  case SET -> {
-                     Object newValue = values != null && !values.isEmpty() ? values.get(0) : null;
-                     setPropertyValue(target, fieldName, newValue);
-                  }
-                  case ADD -> {
-                     Collection<Object> collection = (Collection<Object>) getPropertyValue(target, fieldName);
-                     if (collection == null || values == null) return value;
-                     collection.addAll(values);
-                  }
-                  case REMOVE -> {
-                     Collection<Object> collection = (Collection<Object>) getPropertyValue(target, fieldName);
-                     if (collection == null || values == null) return value;
-                     collection.removeAll(values);
-                  }
-               }
-            } catch (Exception e) {
-               throw CONTAINER.updateByQueryFailed(String.join(".", path), e);
-            }
-         }
-         updated = true;
-         return value;
-      }
+                String fieldName = path[path.length - 1];
+                switch (op.type()) {
+                   case SET -> {
+                      Object newValue = values != null && !values.isEmpty() ? values.get(0) : null;
+                      setPropertyValue(target, fieldName, newValue);
+                      updated = true;
+                   }
+                   case ADD -> {
+                      Collection<Object> collection = (Collection<Object>) getPropertyValue(target, fieldName);
+                      if (collection == null || values == null) return value;
+                      collection.addAll(values);
+                      updated = true;
+                   }
+                   case REMOVE -> {
+                      Collection<Object> collection = (Collection<Object>) getPropertyValue(target, fieldName);
+                      if (collection == null || values == null) return value;
+                      collection.removeAll(values);
+                      updated = true;
+                   }
+                }
+             } catch (Exception e) {
+                throw CONTAINER.updateByQueryFailed(String.join(".", path), e);
+             }
+          }
+          return value;
+       }
    }
 
    static byte[] applyProtobufUpdateToBytes(byte[] wrappedBytes, ImmutableSerializationContext serCtx,

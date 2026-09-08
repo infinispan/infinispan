@@ -26,14 +26,22 @@ public final class IckleQueryStringParser {
             && (result.getProjections() != null || result.getSortFields() != null || result.getGroupBy() != null)) {
          throw new ParsingException("DELETE statements cannot have projections or use ORDER BY or GROUP BY");
       }
-      if (result.getStatementType() == IckleParsingResult.StatementType.UPDATE) {
-         if (result.getProjections() != null || result.getSortFields() != null || result.getGroupBy() != null) {
-            throw new ParsingException("UPDATE statements cannot have projections or use ORDER BY or GROUP BY");
-         }
-         if (result.getUpdateOperations() == null || result.getUpdateOperations().isEmpty()) {
-            throw new ParsingException("UPDATE statements must have at least one SET, ADD, or REMOVE operation");
-         }
-      }
+       if (result.getStatementType() == IckleParsingResult.StatementType.UPDATE) {
+          if (result.getProjections() != null || result.getSortFields() != null || result.getGroupBy() != null) {
+             throw new ParsingException("UPDATE statements cannot have projections or use ORDER BY or GROUP BY");
+          }
+          if (result.getUpdateOperations() == null || result.getUpdateOperations().isEmpty()) {
+             throw new ParsingException("UPDATE statements must have at least one SET, ADD, or REMOVE operation");
+          }
+          for (Object opObj : result.getUpdateOperations()) {
+             IckleParsingResult.UpdateOperation op = (IckleParsingResult.UpdateOperation) opObj;
+             for (String segment : op.getPropertyPath()) {
+                if (segment.contains("[")) {
+                   throw new ParsingException("UPDATE paths do not support indexed access: " + segment);
+                }
+             }
+          }
+       }
       return result;
    }
 }

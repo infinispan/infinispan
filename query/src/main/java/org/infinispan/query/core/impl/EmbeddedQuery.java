@@ -144,13 +144,13 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
          filteredKeyStream = filteredKeyStream.timeout(timeout, TimeUnit.NANOSECONDS);
       }
 
-      int result;
-      if (statementType == IckleParsingResult.StatementType.UPDATE) {
-         List<Object> keys = new ArrayList<>();
-         filteredKeyStream.iterator().forEachRemaining(keys::add);
-         filteredKeyStream.close();
-         result = executeUpdate(keys);
-      } else {
+       int result;
+       if (statementType == IckleParsingResult.StatementType.UPDATE) {
+          List<Object> keys = new ArrayList<>();
+          filteredKeyStream.iterator().forEachRemaining(keys::add);
+          filteredKeyStream.close();
+          result = executeUpdate(keys, cache);
+       } else {
          Optional<Integer> count = filteredKeyStream.map(new DeleteFunction()).reduce(Integer::sum);
          filteredKeyStream.close();
          result = count.orElse(0);
@@ -177,27 +177,22 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
       }
    }
 
-   @SuppressWarnings("unchecked")
-   private int executeUpdate(List<Object> keys) {
-      if (updateOperations == null || updateOperations.isEmpty()) {
-         return 0;
-      }
+    private int executeUpdate(List<Object> keys, AdvancedCache<Object, Object> cache) {
+       if (updateOperations == null || updateOperations.isEmpty()) {
+          return 0;
+       }
 
-      UpdateQueryHelper.UpdateBiFunction fn = new UpdateQueryHelper.UpdateBiFunction(
-            queryString, namedParameters, targetEntityName);
+        UpdateQueryHelper.UpdateBiFunction fn = new UpdateQueryHelper.UpdateBiFunction(
+              queryString, namedParameters, targetEntityName, queryEngine.getQueryEngineProvider());
 
-      int count = 0;
-      for (Object key : keys) {
-         try {
-            if (UpdateQueryHelper.applyUpdate((AdvancedCache<Object, Object>) cache, key, fn)) {
-               count++;
-            }
-         } catch (Exception e) {
-            throw CONTAINER.updateByQueryFailed(key, e);
-         }
-      }
-      return count;
-   }
+       int count = 0;
+       for (Object key : keys) {
+          if (UpdateQueryHelper.applyUpdate(cache, key, fn)) {
+             count++;
+          }
+       }
+       return count;
+    }
 
    @Override
    public String toString() {
