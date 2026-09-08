@@ -32,7 +32,6 @@ import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.ProcessorInfo;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.ConfigurationManager;
@@ -67,6 +66,8 @@ import org.infinispan.util.concurrent.NonBlockingManager;
 import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Scheduler;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 /**
  * {@link org.infinispan.server.core.backup.ContainerResource} implementation for {@link
@@ -111,10 +112,9 @@ public class CacheResource extends AbstractContainerResource {
 
    @Override
    public CompletionStage<Void> backup() {
-      AggregateCompletionStage<Void> stages = CompletionStages.aggregateCompletionStage();
-      for (String cache : resources)
-         stages.dependsOn(createCacheBackup(cache));
-      return stages.freeze();
+      int parallelism = Math.max(1, ProcessorInfo.availableProcessors() >> 2);
+      Scheduler scheduler = Schedulers.from(blockingManager.asExecutor("cache-backup"));
+      return CompletionStages.performConcurrently(resources, parallelism, scheduler, this::createCacheBackup);
    }
 
    @Override
@@ -325,14 +325,14 @@ public class CacheResource extends AbstractContainerResource {
             } catch (IOException ex) {
                throw Util.rewrapAsCacheException(ex);
             }
-         }, "backup-cache-entries");
+         }, "backup-cache-entries-" + cacheName);
 
          return stage.whenComplete((Void, t) -> {
             if (t == null)
                log.debugf("Cache %s backed up %d entries", cacheName, entries.get());
             Util.close(output);
          });
-      }, "backup-cache")
+      }, "backup-cache-" + cacheName)
             .thenCompose(Function.identity());
    }
 
