@@ -25,6 +25,13 @@ public interface StateReceiver<K, V> {
    void cancelRequests();
 
    /**
+    * Cancels the ongoing replica requests that were issued for the given topology. Requests made by a later
+    * conflict resolution attempt are left untouched, so that a superseded attempt cannot cancel the requests
+    * of the attempt that replaced it.
+    */
+   void cancelRequests(int topologyId);
+
+   /**
     * Return all replicas of a cache entry for a given segment. We require the ConsitentHash to be passed here, as it is
     * necessary for the hash of the last stable topology to be utilised during an automatic merge, before a
     * new merged topology is installed.

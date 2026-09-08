@@ -77,6 +77,7 @@ import org.reactivestreams.Publisher;
 
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import jakarta.transaction.TransactionManager;
 
 /**
@@ -288,7 +289,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    private final Map<K, VersionRequest> versionRequestMap = new HashMap<>();
    private final Queue<VersionRequest> retryQueue = new ConcurrentLinkedQueue<>();
    private volatile boolean running = false;
-   private volatile CompletableFuture<Void> conflictFuture;
+   private volatile CompositeDisposable conflictSubscription;
 
    @Start
    public void start() {
@@ -410,8 +411,8 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
             )
             .filter(DefaultConflictManager::hasConflict)
             .timeout(conflictTimeout, TimeUnit.MILLISECONDS)
-            .doOnError(t -> stateReceiver.cancelRequests())
-            .doOnCancel(() -> stateReceiver.cancelRequests())
+            .doOnError(t -> stateReceiver.cancelRequests(topology.getTopologyId()))
+            .doOnCancel(() -> stateReceiver.cancelRequests(topology.getTopologyId()))
             .doFinally(() -> streamInProgress.set(false));
    }
 
@@ -490,7 +491,8 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
    @Override
    public CompletionStage<Void> resolveConflictsAsync(EntryMergePolicy<K, V> mergePolicy) {
       checkIsRunning();
-      return doResolveConflictsAsync(distributionManager.getCacheTopology(), mergePolicy, null);
+      return doResolveConflicts(distributionManager.getCacheTopology(), mergePolicy, null)
+            .toCompletionStage(null);
    }
 
    @Override
@@ -504,25 +506,36 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       } else {
          localizedTopology = distributionManager.createLocalizedCacheTopology(topology);
       }
-      conflictFuture = doResolveConflictsAsync(localizedTopology, entryMergePolicy, preferredNodes)
-            .toCompletableFuture();
-      // doFinally inside getConflictsFlowable handles the normal-completion reset; this
-      // whenComplete is a safety net that covers the future.cancel() race and error paths.
-      return conflictFuture.whenComplete((v, t) -> streamInProgress.set(false));
+      // Subscribe to the Completable ourselves so that cancelConflictResolution() can dispose the pipeline.
+      // Cancelling a CompletableFuture derived from it would only complete the stage: the subscription would
+      // stay alive, keep applying merges from a superseded topology, and its timeout would eventually cancel
+      // the segment requests of whichever attempt replaced it.
+      CompletableFuture<Void> future = new CompletableFuture<>();
+      CompositeDisposable subscription = new CompositeDisposable();
+      // Publish the container before subscribing so a concurrent cancel cannot be missed, CompositeDisposable
+      // immediately disposes anything added to it once it has been disposed.
+      conflictSubscription = subscription;
+      subscription.add(doResolveConflicts(localizedTopology, entryMergePolicy, preferredNodes)
+            // Disposal never invokes the observer, so cancel the stage here to notify ClusterCacheStatus
+            .doOnDispose(() -> future.cancel(true))
+            .subscribe(() -> future.complete(null), future::completeExceptionally));
+      return future;
    }
 
    @Override
    public void cancelConflictResolution() {
-      if (conflictFuture != null && !conflictFuture.isDone()) {
-         if (log.isTraceEnabled()) log.tracef("Cache %s cancelling conflict resolution future", cacheName);
-         conflictFuture.cancel(true);
+      CompositeDisposable subscription = conflictSubscription;
+      if (subscription != null && !subscription.isDisposed()) {
+         if (log.isTraceEnabled()) log.tracef("Cache %s cancelling conflict resolution", cacheName);
+         // Disposing runs doOnCancel -> stateReceiver.cancelRequests(topologyId), doOnDispose -> cancel the
+         // stage and doFinally -> streamInProgress.set(false) for this attempt, and only this attempt.
+         subscription.dispose();
       }
-      streamInProgress.set(false);
    }
 
-   private CompletionStage<Void> doResolveConflictsAsync(final LocalizedCacheTopology topology,
-                                                         final EntryMergePolicy<K, V> mergePolicy,
-                                                         final Set<Address> preferredNodes) {
+   private Completable doResolveConflicts(final LocalizedCacheTopology topology,
+                                          final EntryMergePolicy<K, V> mergePolicy,
+                                          final Set<Address> preferredNodes) {
       boolean userCall = preferredNodes == null;
       final Set<Address> preferredPartition = userCall ? new HashSet<>(topology.getCurrentCH().getMembers()) : preferredNodes;
 
@@ -584,8 +597,7 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
                         return true;
                      });
             }, false, MERGE_CONCURRENCY)
-            .toCompletionStage(null)
-            .thenRun(() -> {
+            .doOnComplete(() -> {
                if (log.isTraceEnabled())
                   log.tracef("Cache %s finished resolving conflicts for topologyId=%s", cacheName, topology.getTopologyId());
             });
