@@ -66,7 +66,7 @@
 
       <!-- Dependency versions -->
       <version.aesh>3.17.5</version.aesh>
-      <version.ant>1.10.17</version.ant>
+      <version.ant>1.10.18</version.ant>
       <version.ant-nodeps>1.8.1</version.ant-nodeps>
       <version.ant-contrib>1.0b3</version.ant-contrib>
       <version.antlr4>4.13.2</version.antlr4>
@@ -94,7 +94,7 @@
       <version.insights>2.0.4</version.insights>
       <version.io.agroal>2.8.2</version.io.agroal>
       <version.io.lettuce>6.8.2.RELEASE</version.io.lettuce>
-      <version.vertx>4.5.32</version.vertx>
+      <version.vertx>4.5.33</version.vertx>
       <version.io.mashona>1.1.0</version.io.mashona>
       <version.jackson>2.22.2</version.jackson>
       <version.jackson.annotations>2.22</version.jackson.annotations>
@@ -168,7 +168,7 @@
       <version.spring.boot4>4.1.1</version.spring.boot4>
       <version.spring.session4>4.0.3</version.spring.session4>
 
-      <version.swagger-ui-dist>5.32.14</version.swagger-ui-dist>
+      <version.swagger-ui-dist>5.32.15</version.swagger-ui-dist>
       <version.xstream>1.4.21</version.xstream>
 
       <!-- Plugin dependencies -->
@@ -196,7 +196,7 @@
       <version.maven.help>3.5.2</version.maven.help>
       <version.maven.install>3.1.4</version.maven.install>
       <version.maven.invoker>3.10.1</version.maven.invoker>
-      <version.maven.japicmp>0.26.1</version.maven.japicmp>
+      <version.maven.japicmp>0.26.2</version.maven.japicmp>
       <version.maven.jar>3.5.1</version.maven.jar>
       <version.maven-plugin-plugin>3.15.2</version.maven-plugin-plugin>
       <version.maven.project-info-reports>3.9.0</version.maven.project-info-reports>
@@ -213,7 +213,7 @@
       <version.pmd.plugin>3.28.0</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>9.2.0</version.owasp-dependency-check-plugin>
       <version.spotbugs.plugin>4.10.4.0</version.spotbugs.plugin>
-      <version.spotbugs.plugin>4.10.3.0</version.spotbugs.plugin>
+      <version.spotbugs.plugin>4.10.4.1</version.spotbugs.plugin>
       <version.jazzer>0.30.0</version.jazzer>
       <version.openapi.generator>7.24.0</version.openapi.generator>
       <version.weld-servlet>5.1.7.Final</version.weld-servlet>
