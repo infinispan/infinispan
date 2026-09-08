@@ -1,0 +1,17 @@
+<security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="urn:infinispan:server:16.3 https://infinispan.org/schemas/infinispan-server-16.3.xsd"
+          xmlns="urn:infinispan:server:16.3">
+   <security-realms>
+      <security-realm name="default">
+         <!-- Active Directory stores only write-only password hashes, so the realm
+              must verify credentials by binding as the user (direct verification).
+              This supports PLAIN and DIGEST-SHA mechanisms; SCRAM is not possible
+              because it requires server-side access to the password material. -->
+         <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389"
+                     principal="CN=Administrator,CN=Users,DC=infinispan,DC=org"
+                     credential="strongPassword@123" direct-verification="true" connection-timeout="15s">
+            <identity-mapping rdn-identifier="cn" search-dn="CN=Users,DC=infinispan,DC=org" search-recursive="true"/>
+         </ldap-realm>
+      </security-realm>
+   </security-realms>
+</security>
