@@ -58,4 +58,9 @@ public class DelegatingStateConsumer implements StateConsumer {
    public boolean ownsData() {
       return delegate.ownsData();
    }
+
+   @Override
+   public Collection<Address> getSources() {
+      return delegate.getSources();
+   }
 }
