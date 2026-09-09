@@ -22,6 +22,11 @@ public interface StateConsumer {
    boolean isStateTransferInProgressForKey(Object key);
 
    /**
+    * Returns the list of active state transfer sources.
+    */
+   Collection<Address> getSources();
+
+   /**
     * Returns the number of in-flight requested segments.
     */
    long inflightRequestCount();
