@@ -341,6 +341,14 @@ public interface Log extends BasicLogger {
    @Message(value = "Feature '%s' is enabled", id = 983)
    void featureEnabled(String featureName);
 
+   @LogMessage(level = WARN)
+   @Message(value = "SSL NamedGroups are not supported on this JDK", id = 984)
+   void sslNamedGroupsUnsupported();
+
+   @LogMessage(level = WARN)
+   @Message(value = "JavaSerializationMarshaller is deprecated and will be removed in a future version. It is susceptible to deserialization attacks. Use ProtoStream-based marshalling instead.", id = 985)
+   void javaSerializationMarshallerEnabled();
+
    @Message(value = "Cannot instantiate class '%s'", id = 29523)
    CacheConfigurationException cannotInstantiateClass(String classname, @Suppressed Throwable t);
 }
