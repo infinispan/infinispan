@@ -1,0 +1,3 @@
+{
+ "query":"UPDATE FROM Entity SET name = 'updated' WHERE value > 10"
+}

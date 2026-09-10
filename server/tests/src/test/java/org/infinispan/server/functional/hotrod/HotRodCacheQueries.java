@@ -251,6 +251,24 @@ public class HotRodCacheQueries {
       assertEquals(1, query.executeStatement());
    }
 
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testUpdateStatement(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
+      remoteCache.put(1, createUser1());
+      remoteCache.put(2, createUser2());
+
+      Query<User> query = remoteCache.query("UPDATE FROM sample_bank_account.User SET name = 'Thomas' WHERE name = 'Tom'");
+      assertEquals(1, query.executeStatement());
+
+      User updated = remoteCache.get(1);
+      assertEquals("Thomas", updated.getName());
+      assertEquals("Cat", updated.getSurname());
+
+      User unchanged = remoteCache.get(2);
+      assertEquals("Adrian", unchanged.getName());
+   }
+
    @Test
    public void testProjectionAndFilteringOnEmbeddedData() {
       RemoteCache<String, KeywordVector> remoteCache = createQueryableCache(SERVERS, true,

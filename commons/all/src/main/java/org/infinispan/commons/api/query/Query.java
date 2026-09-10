@@ -48,7 +48,7 @@ public interface Query<T> extends Iterable<T> {
    /**
     *  Executes the query (a SELECT statement). Subsequent invocations cause the query to be re-executed.
     *  <p>
-    *  Executing a DELETE is also allowed. In this case, no results will be returned, but the number of affected entries
+    *  Executing a DELETE or UPDATE is also allowed. In this case, no results will be returned, but the number of affected entries
     *  will be returned as the hit count in the {@link QueryResult}.
     *
     * @return {@link QueryResult} with the results.
@@ -67,18 +67,18 @@ public interface Query<T> extends Iterable<T> {
    CompletionStage<QueryResult<T>> executeAsync();
 
    /**
-    * Executes a data modifying statement (typically a DELETE) that does not return results; instead it returns the
+    * Executes a data modifying statement (DELETE or UPDATE) that does not return results; instead it returns the
     * count of affected entries. This method cannot be used to execute a SELECT.
     * <p>
     * <b>NOTE:</b> Paging parameters (firstResult/maxResults) are NOT allowed.
     *
-    * @return the number of affected (deleted) entries
+    * @return the number of affected entries
     */
    int executeStatement();
 
    /**
     * Reactive version of {@link #executeStatement()}
-    * @return a Stage that when complete contains the affected (deleted) entries
+    * @return a Stage that when complete contains the affected entries
     */
    @Experimental
    CompletionStage<Integer> executeStatementAsync();

@@ -1,6 +1,7 @@
 package org.infinispan.query.core.impl;
 
 import java.util.BitSet;
+import java.util.List;
 import java.util.Map;
 
 import org.infinispan.AdvancedCache;
@@ -8,22 +9,34 @@ import org.infinispan.commons.api.query.ClosableIteratorWithCount;
 import org.infinispan.commons.api.query.EntityEntry;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.query.impl.QueryEngine;
 import org.infinispan.query.objectfilter.ObjectFilter;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
 import org.infinispan.query.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
+import org.infinispan.util.function.SerializableFunction;
 
 public class MetadataHybridQuery<T, S> extends HybridQuery<T, S> {
 
    private final BitSet scoreProjections;
    private final boolean versionProjection;
 
-   public MetadataHybridQuery(AdvancedCache<?, ?> cache, String queryString,
-                              IckleParsingResult.StatementType statementType, Map<String, Object> namedParameters,
-                              ObjectFilter objectFilter, long startOffset, int maxResults, Query<?> baseQuery,
-                              LocalQueryStatistics queryStatistics, boolean local, boolean allSortFieldsAreStored) {
-      super(cache, queryString, statementType, namedParameters, objectFilter, startOffset, maxResults,
-            baseQuery, queryStatistics, local, allSortFieldsAreStored);
+    public MetadataHybridQuery(AdvancedCache<?, ?> cache, String queryString,
+                               IckleParsingResult.StatementType statementType, Map<String, Object> namedParameters,
+                               ObjectFilter objectFilter, long startOffset, int maxResults, Query<?> baseQuery,
+                               LocalQueryStatistics queryStatistics, boolean local, boolean allSortFieldsAreStored) {
+       this(cache, queryString, statementType, namedParameters, objectFilter, startOffset, maxResults,
+             baseQuery, queryStatistics, local, allSortFieldsAreStored, null, null, null);
+    }
+
+    public MetadataHybridQuery(AdvancedCache<?, ?> cache, String queryString,
+                               IckleParsingResult.StatementType statementType, Map<String, Object> namedParameters,
+                               ObjectFilter objectFilter, long startOffset, int maxResults, Query<?> baseQuery,
+                               LocalQueryStatistics queryStatistics, boolean local, boolean allSortFieldsAreStored,
+                               List<IckleParsingResult.UpdateOperation> updateOperations, String targetEntityName,
+                               SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> engineProvider) {
+       super(cache, queryString, statementType, namedParameters, objectFilter, startOffset, maxResults,
+             baseQuery, queryStatistics, local, allSortFieldsAreStored, updateOperations, targetEntityName, engineProvider);
 
       scoreProjections = new BitSet();
       String[] projection = objectFilter.getProjection();

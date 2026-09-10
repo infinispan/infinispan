@@ -9,6 +9,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       dependsOn = org.infinispan.marshall.protostream.impl.GlobalContextInitializer.class,
       includeClasses = {
             org.infinispan.query.core.impl.EmbeddedQuery.DeleteFunction.class,
+            org.infinispan.query.core.impl.UpdateQueryHelper.UpdateBiFunction.class,
             org.infinispan.query.core.impl.continuous.ContinuousQueryResult.class,
             org.infinispan.query.core.impl.continuous.ContinuousQueryResult.ResultType.class,
             org.infinispan.query.core.impl.continuous.IckleContinuousQueryCacheEventFilterConverter.class,

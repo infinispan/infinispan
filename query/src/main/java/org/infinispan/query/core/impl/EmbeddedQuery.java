@@ -2,9 +2,11 @@ package org.infinispan.query.core.impl;
 
 import static org.infinispan.query.core.impl.Log.CONTAINER;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -45,13 +47,19 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
 
    private final int defaultMaxResults;
 
+   private final List<IckleParsingResult.UpdateOperation> updateOperations;
+   private final String targetEntityName;
+
    public EmbeddedQuery(QueryEngine<?> queryEngine, AdvancedCache<?, ?> cache,
                         String queryString, IckleParsingResult.StatementType statementType,
                         Map<String, Object> namedParameters, String[] projection,
-                        long startOffset, int maxResults, int defaultMaxResults, LocalQueryStatistics queryStatistics, boolean local) {
+                        long startOffset, int maxResults, int defaultMaxResults, LocalQueryStatistics queryStatistics, boolean local,
+                        List<IckleParsingResult.UpdateOperation> updateOperations, String targetEntityName) {
       super(cache, queryString, statementType, namedParameters, projection, startOffset, maxResults, queryStatistics, local);
       this.queryEngine = queryEngine;
       this.defaultMaxResults = defaultMaxResults;
+      this.updateOperations = updateOperations;
+      this.targetEntityName = targetEntityName;
 
       if (maxResults == -1) {
          // apply the default
@@ -118,7 +126,7 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
       }
 
       if (getStartOffset() != 0 || getMaxResults() != defaultMaxResults) {
-         throw CONTAINER.deleteStatementsCannotUsePaging();
+         throw CONTAINER.statementCannotUsePaging();
       }
 
       long start = queryStatistics.isEnabled() ? System.nanoTime() : 0;
@@ -136,12 +144,21 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
          filteredKeyStream = filteredKeyStream.timeout(timeout, TimeUnit.NANOSECONDS);
       }
 
-      Optional<Integer> count = filteredKeyStream.map(new DeleteFunction()).reduce(Integer::sum);
-      filteredKeyStream.close();
+       int result;
+       if (statementType == IckleParsingResult.StatementType.UPDATE) {
+          List<Object> keys = new ArrayList<>();
+          filteredKeyStream.iterator().forEachRemaining(keys::add);
+          filteredKeyStream.close();
+          result = executeUpdate(keys, cache);
+       } else {
+         Optional<Integer> count = filteredKeyStream.map(new DeleteFunction()).reduce(Integer::sum);
+         filteredKeyStream.close();
+         result = count.orElse(0);
+      }
 
       if (queryStatistics.isEnabled()) recordQuery(System.nanoTime() - start);
 
-      return count.orElse(0);
+      return result;
    }
 
    @ProtoTypeId(ProtoStreamTypeIds.ICKLE_DELETE_FUNCTION)
@@ -159,6 +176,23 @@ public final class EmbeddedQuery<T> extends BaseEmbeddedQuery<T> {
          return cache.withStorageMediaType().remove(key) == null ? 0 : 1;
       }
    }
+
+    private int executeUpdate(List<Object> keys, AdvancedCache<Object, Object> cache) {
+       if (updateOperations == null || updateOperations.isEmpty()) {
+          return 0;
+       }
+
+        UpdateQueryHelper.UpdateBiFunction fn = new UpdateQueryHelper.UpdateBiFunction(
+              queryString, namedParameters, targetEntityName, queryEngine.getQueryEngineProvider());
+
+       int count = 0;
+       for (Object key : keys) {
+          if (UpdateQueryHelper.applyUpdate(cache, key, fn)) {
+             count++;
+          }
+       }
+       return count;
+    }
 
    @Override
    public String toString() {

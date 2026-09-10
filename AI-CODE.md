@@ -38,6 +38,27 @@ When you need to understand the internal architecture (interceptor chain, compon
 ## Module-specific instructions
 When working in a specific module, check for an AI-CODE.md in that module's directory for additional guidelines.
 
+## Clustered Mode and Concurrency Checklist
+
+Before writing or modifying any code that interacts with the cache, you MUST evaluate the following. Not every feature or fix will require action on all points, but the check itself is mandatory.
+
+### Clustered mode
+Infinispan is a distributed cache. Code that works on a single node may fail in a cluster.
+- **Does this code run in a clustered environment?** Commands are serialized and sent to backup owners. Any lambda or function passed to `cache.compute()`, `cache.merge()`, or similar operations will be marshalled via ProtoStream.
+- **Are all captured objects marshallable?** Lambdas that capture non-marshallable objects (e.g. `SerializationContextImpl`, `ComponentRegistry`, iterators, streams) will cause `MarshallingException` on backup nodes even though they work locally.
+- **If a function needs infrastructure on the remote node**, use a named `@ProtoTypeId` class with `@Inject` and register it in the appropriate `SerializationContextInitializer`. Follow existing patterns like `EmbeddedQuery.DeleteFunction` or `UpdateQueryHelper.UpdateBiFunction`. Remember that `BiFunctionMapper`/`FunctionMapper` wrap functions used with encoded caches; injection must propagate through these wrappers.
+
+### Concurrency
+- **Is this operation atomic?** Prefer `cache.compute()` or `cache.replace(key, oldValue, newValue)` (CAS) over `cache.get()` + `cache.put()` to avoid race conditions when multiple threads or nodes access the same key.
+- **Does the code handle concurrent access to shared state?** Check for thread-safety of any mutable state captured in lambdas or shared across operations.
+- **For batch operations over multiple keys**, consider using `CompletionStages.performConcurrently()` with a bounded concurrency level (see `CQDelete` for the pattern).
+
+### Test coverage for clustering and marshalling
+- **Embedded tests** must cover the logic at the unit/integration level.
+- **Remote/server tests** (Hot Rod) must verify the feature works end-to-end through the protocol layer.
+- **Clustered tests** must verify the feature works with multiple nodes (replication, distribution). If only single-node tests exist, the feature is not validated for production use.
+- **Marshalling**: any new `@ProtoTypeId` class or command must be tested for correct serialization/deserialization, especially when carrying complex or heterogeneous data.
+
 ## Development Standards
 * **Style:** Functional programming patterns where possible; use Records for DTOs.
 * **Javadocs:** Required for public API classes and methods. Optional for internal code (but encouraged where they help developers). Unnecessary for test classes and methods.
@@ -49,6 +70,14 @@ When working in a specific module, check for an AI-CODE.md in that module's dire
 
 ## Development Platform
 * **Issues:** Use GitHub issue types (Bug, Feature, Task, Epic) instead of labels for classification. Each type has a template in `.github/ISSUE_TEMPLATE/` that must be filled in when opening issues.
+
+## Rolling Upgrade Compatibility
+
+When adding new Hot Rod commands, REST endpoints, or protocol changes, you **must** update the rolling upgrade compatibility config:
+
+**File:** `server/rollingupgradetests/src/test/resources/compatibility.json`
+
+Rolling upgrade tests run against older Infinispan server versions. If new tests exercise commands that didn't exist in older versions, those tests will fail. Update `compatibility.json` to exclude the specific older versions that don't support the new functionality.
 
 ## Related projects
 

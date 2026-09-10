@@ -28,6 +28,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.core.impl.MappingIterator;
 import org.infinispan.query.core.impl.PartitionHandlingSupport;
 import org.infinispan.query.core.impl.QueryResultImpl;
+import org.infinispan.query.core.impl.UpdateQueryHelper;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.dsl.QueryResult;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
@@ -47,12 +48,23 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
    protected final PartitionHandlingSupport partitionHandlingSupport;
    protected final QueryDefinition queryDefinition;
    protected final LocalQueryStatistics queryStatistics;
+   protected final List<IckleParsingResult.UpdateOperation> updateOperations;
+   protected final String targetEntityName;
 
    public IndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache, LocalQueryStatistics queryStatistics) {
+      this(queryDefinition, cache, queryStatistics, null, null);
+   }
+
+   public IndexedQueryImpl(QueryDefinition queryDefinition, AdvancedCache<?, ?> cache,
+                           LocalQueryStatistics queryStatistics,
+                           List<IckleParsingResult.UpdateOperation> updateOperations,
+                           String targetEntityName) {
       this.queryDefinition = queryDefinition;
       this.cache = cache;
       this.partitionHandlingSupport = new PartitionHandlingSupport(cache);
       this.queryStatistics = queryStatistics;
+      this.updateOperations = updateOperations;
+      this.targetEntityName = targetEntityName;
    }
 
    /**
@@ -60,8 +72,10 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
     */
    public IndexedQueryImpl(String queryString, IckleParsingResult.StatementType statementType,
                            SearchQueryBuilder searchQuery, AdvancedCache<?, ?> cache,
-                           LocalQueryStatistics queryStatistics, int defaultMaxResults) {
-      this(new QueryDefinition(queryString, statementType, searchQuery, defaultMaxResults), cache, queryStatistics);
+                           LocalQueryStatistics queryStatistics, int defaultMaxResults,
+                           List<IckleParsingResult.UpdateOperation> updateOperations,
+                           String targetEntityName) {
+      this(new QueryDefinition(queryString, statementType, searchQuery, defaultMaxResults), cache, queryStatistics, updateOperations, targetEntityName);
    }
 
    /**
@@ -217,13 +231,13 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
 
    @Override
    public int executeStatement() {
-      // at the moment the only supported statement is DELETE
-      if (queryDefinition.getStatementType() != IckleParsingResult.StatementType.DELETE) {
+      if (queryDefinition.getStatementType() != IckleParsingResult.StatementType.DELETE
+            && queryDefinition.getStatementType() != IckleParsingResult.StatementType.UPDATE) {
          throw CONTAINER.unsupportedStatement();
       }
 
       if (queryDefinition.getFirstResult() != 0 || queryDefinition.isCustomMaxResults()) {
-         throw CONTAINER.deleteStatementsCannotUsePaging();
+         throw CONTAINER.statementCannotUsePaging();
       }
 
       try {
@@ -235,12 +249,11 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
          LuceneSearchQuery<Object> searchQuery = searchQueryBuilder.ids();
          List<Object> hits = searchQuery.fetchAllHits();
 
-         int count = 0;
-         for (Object id : hits) {
-            Object removed = cache.remove(id);
-            if (removed != null) {
-               count++;
-            }
+         int count;
+         if (queryDefinition.getStatementType() == IckleParsingResult.StatementType.UPDATE) {
+            count = executeUpdate(hits);
+         } else {
+            count = executeDelete(hits);
          }
 
          if (queryStatistics.isEnabled()) recordQuery(System.nanoTime() - start);
@@ -250,6 +263,36 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
          throw new TimeoutException();
       }
    }
+
+   private int executeDelete(List<Object> hits) {
+      int count = 0;
+      for (Object id : hits) {
+         Object removed = cache.remove(id);
+         if (removed != null) {
+            count++;
+         }
+      }
+      return count;
+   }
+
+    @SuppressWarnings("unchecked")
+    private int executeUpdate(List<Object> hits) {
+       if (updateOperations == null || updateOperations.isEmpty()) {
+          return 0;
+       }
+
+        UpdateQueryHelper.UpdateBiFunction fn = new UpdateQueryHelper.UpdateBiFunction(
+              queryDefinition.getQueryString(), queryDefinition.getNamedParameters(), targetEntityName,
+              queryDefinition.getQueryEngineProvider());
+
+       int count = 0;
+       for (Object id : hits) {
+          if (UpdateQueryHelper.applyUpdate((AdvancedCache<Object, Object>) cache, id, fn)) {
+             count++;
+          }
+       }
+       return count;
+    }
 
    private <T> ClosableIteratorWithCount<T> iterator(SearchQuery<T> searchQuery) {
       try {

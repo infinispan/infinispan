@@ -11,6 +11,22 @@ Infinispan uses two test frameworks depending on the module:
 
 Both frameworks are bridged via `org.junit.support:testng-engine` so Maven can run everything through the JUnit Platform.
 
+## Mandatory: Clustered and Marshalling Test Coverage
+
+Every feature or fix that interacts with the cache MUST be evaluated for the following test coverage. Not every change needs all levels, but the evaluation is mandatory.
+
+### Clustered tests
+If the feature involves cache operations, commands, or functions that are sent across nodes, you MUST have clustered tests (`MultipleCacheManagersTest` with 2+ nodes). Single-node tests alone do NOT validate that marshalling, replication, and backup operations work correctly. Use `CacheMode.DIST_SYNC` or `CacheMode.REPL_SYNC` to catch clustering issues.
+
+### Marshalling tests
+Any new `@ProtoTypeId` class, command, or marshallable function MUST be tested for correct serialization/deserialization. This includes:
+- Functions passed to `cache.compute()`, `cache.merge()`, or CacheStream operations
+- New commands or command parameters
+- Classes carrying heterogeneous data (e.g. `Map<String, Object>` via `MarshallableMap`)
+
+### Remote/server tests
+Features exposed via Hot Rod or REST MUST have server integration tests (`server/tests/`) that verify the end-to-end path through the protocol layer. The test hierarchy for query features is: `QueryStringTest` (embedded) -> `RemoteQueryStringTest` (remote) -> `HotRodCacheQueries` (server/native).
+
 ## Writing Core (Embedded) Tests
 
 ### Base Classes

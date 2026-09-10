@@ -215,11 +215,11 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot index entry since the search mapping failed to initialize.", id = 14055)
    CacheException searchMappingUnavailable();
 
-   @Message(value = "Only DELETE statements are supported by executeStatement", id = 14056)
+   @Message(value = "Only DELETE and UPDATE statements are supported by executeStatement", id = 14056)
    CacheException unsupportedStatement();
 
-   @Message(value = "DELETE statements cannot use paging (firstResult/maxResults)", id = 14057)
-   CacheException deleteStatementsCannotUsePaging();
+   @Message(value = "DELETE and UPDATE statements cannot use paging (firstResult/maxResults)", id = 14057)
+   CacheException statementCannotUsePaging();
 
    @Message(value = "Projections are not supported with entryIterator()", id = 14058)
    CacheException entryIteratorDoesNotAllowProjections();
@@ -263,6 +263,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Query '%s' rejected: sorted non-indexed queries require loading all results into memory, but the system is under memory pressure", id = 14069)
    CacheException queryRejectedLowMemory(String queryString);
+
+   @Message(value = "Failed to apply update for key: %s", id = 14070)
+   CacheException updateByQueryFailed(Object key, @Cause Throwable cause);
 
    @Message(id = 14501, value = "Exception while retrieving the type model for '%1$s'.")
    SearchException errorRetrievingTypeModel(@FormatWith(ClassFormatter.class) Class<?> clazz, @Cause Exception cause);

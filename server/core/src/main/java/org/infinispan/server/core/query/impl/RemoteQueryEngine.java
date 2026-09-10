@@ -49,7 +49,7 @@ final class RemoteQueryEngine extends ObjectRemoteQueryEngine {
    }
 
    @Override
-   protected SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> getQueryEngineProvider() {
+   public SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> getQueryEngineProvider() {
       return queryEngineProvider;
    }
 

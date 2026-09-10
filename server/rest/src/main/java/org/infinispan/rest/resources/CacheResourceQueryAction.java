@@ -60,7 +60,7 @@ class CacheResourceQueryAction {
       if (query == null || query.getQuery() == null || query.getQuery().isEmpty()) {
          return CompletableFuture.completedFuture(queryError(request, "Invalid search request, missing 'query' parameter", null));
       }
-      return callQueryOperation(request, query, false, responseBuilder);
+      return callStatementOperation(request, query, StatementType.SELECT, responseBuilder);
    }
 
    public CompletionStage<RestResponse> deleteByQuery(RestRequest request) {
@@ -80,13 +80,33 @@ class CacheResourceQueryAction {
       if (query == null || query.getQuery() == null || query.getQuery().isEmpty() || !query.getQuery().toUpperCase().startsWith("DELETE")) {
          return CompletableFuture.completedFuture(queryError(request, "Invalid delete by query request, missing 'query' parameter or not 'DELETE' statement", null));
       }
-      return callQueryOperation(request, query, true, responseBuilder);
+      return callStatementOperation(request, query, StatementType.DELETE, responseBuilder);
    }
 
-   private CompletableFuture<RestResponse> callQueryOperation(RestRequest request,
-                                                              JsonQueryRequest query,
-                                                              boolean isDelete,
-                                                              NettyRestResponse.Builder responseBuilder) {
+   public CompletionStage<RestResponse> updateByQuery(RestRequest request) {
+      NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
+      JsonQueryRequest query = null;
+      if (request.method() == Method.PUT) {
+         query = getQueryFromString(request);
+      }
+      if (request.method() == Method.POST) {
+         try {
+            query = getQueryFromJSON(request);
+         } catch (IOException e) {
+            return CompletableFuture.completedFuture(queryError(request, "Invalid update by query request", e.getMessage()));
+         }
+      }
+
+      if (query == null || query.getQuery() == null || query.getQuery().isEmpty() || !query.getQuery().toUpperCase().startsWith("UPDATE")) {
+         return CompletableFuture.completedFuture(queryError(request, "Invalid update by query request, missing 'query' parameter or not 'UPDATE' statement", null));
+      }
+      return callStatementOperation(request, query, StatementType.UPDATE, responseBuilder);
+   }
+
+   private CompletableFuture<RestResponse> callStatementOperation(RestRequest request,
+                                                                  JsonQueryRequest query,
+                                                                  StatementType statementType,
+                                                                  NettyRestResponse.Builder responseBuilder) {
       String cacheName = request.variables().get("cacheName");
       boolean isLocal = Boolean.parseBoolean(request.getParameter("local"));
       MediaType keyContentType = request.keyContentType();
@@ -98,10 +118,10 @@ class CacheResourceQueryAction {
       return CompletableFuture.supplyAsync(() -> {
          try {
             byte[] queryResultBytes;
-            if (isDelete) {
-               queryResultBytes = remoteQueryManager.executeDeleteByQuery(queryString, emptyMap(), cache, MediaType.APPLICATION_JSON, isLocal);
-            } else {
-               queryResultBytes = remoteQueryManager.executeQuery(queryString, emptyMap(), query.getStartOffset(),
+            switch (statementType) {
+               case DELETE -> queryResultBytes = remoteQueryManager.executeDeleteByQuery(queryString, emptyMap(), cache, MediaType.APPLICATION_JSON, isLocal);
+               case UPDATE -> queryResultBytes = remoteQueryManager.executeUpdateByQuery(queryString, emptyMap(), cache, MediaType.APPLICATION_JSON, isLocal);
+               default -> queryResultBytes = remoteQueryManager.executeQuery(queryString, emptyMap(), query.getStartOffset(),
                        query.getMaxResults(), query.getHitCountAccuracy(), cache, MediaType.APPLICATION_JSON, isLocal);
             }
             responseBuilder.entity(queryResultBytes);
@@ -142,4 +162,7 @@ class CacheResourceQueryAction {
       return builder.build();
    }
 
+   private enum StatementType {
+      SELECT, DELETE, UPDATE
+   }
 }
