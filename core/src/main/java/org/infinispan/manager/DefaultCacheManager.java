@@ -89,10 +89,11 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.GlobalSecurityManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.security.impl.AuthorizationManagerImpl;
 import org.infinispan.security.impl.AuthorizationMapperContextImpl;
 import org.infinispan.security.impl.Authorizer;
+import org.infinispan.security.impl.CacheSubjectPair;
 import org.infinispan.security.impl.SecureCacheImpl;
+import org.infinispan.security.impl.SubjectACL;
 import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.stats.impl.CacheContainerStatsImpl;
 import org.infinispan.topology.LocalTopologyManager;
@@ -993,11 +994,13 @@ public class DefaultCacheManager extends InternalCacheManager {
       if (configurationManager.getGlobalConfiguration().security().authorization().enabled()) {
          Set<String> names = new TreeSet<>();
          GlobalSecurityManager gsm = globalComponentRegistry.getComponent(GlobalSecurityManager.class);
+         GlobalConfiguration globalCfg = configurationManager.getGlobalConfiguration();
+         Subject subject = Security.getSubject();
+         Map<CacheSubjectPair, SubjectACL> globalACLCache = gsm.globalACLCache();
          for (String name : configurationManager.getDefinedCaches()) {
             Configuration cfg = configurationManager.getConfiguration(name);
-            AuthorizationManagerImpl am = new AuthorizationManagerImpl();
-            am.init(name, configurationManager.getGlobalConfiguration(), cfg, gsm);
-            if (!am.getPermissions(Security.getSubject()).isEmpty()) {
+            Authorizer authorizer = new Authorizer(globalCfg.security(), AuditContext.CACHE, name, globalACLCache);
+            if (!authorizer.getPermissions(cfg.security().authorization(), subject).isEmpty()) {
                names.add(name);
             }
          }
