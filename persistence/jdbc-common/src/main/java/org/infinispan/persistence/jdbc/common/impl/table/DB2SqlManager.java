@@ -16,13 +16,13 @@ public class DB2SqlManager extends GenericSqlManager {
       upsert.append("))) AS tmp(");
       appendStrings(upsert, allColumns, Function.identity(), ", ");
       upsert.append(") ON ");
-      appendStrings(upsert, allColumns, all -> "t." + all + " = tmp." + all, " AND ");
+      appendStrings(upsert, keyColumns, all -> "t." + all + " = tmp." + all, " AND ");
       upsert.append(" WHEN MATCHED THEN UPDATE SET (");
       appendStrings(upsert, valueIterable(keyColumns, allColumns), v -> "t." + v, ", ");
       upsert.append(") = (");
       appendStrings(upsert, valueIterable(keyColumns, allColumns), v -> "tmp." + v, ", ");
       upsert.append(") WHEN NOT MATCHED THEN INSERT (");
-      appendStrings(upsert, allColumns, all -> "t." + all, ", ");
+      appendStrings(upsert, allColumns, Function.identity(), ", ");
       upsert.append(") VALUES (");
       appendStrings(upsert, allColumns, all -> "tmp." + all, ", ");
       upsert.append(')');
