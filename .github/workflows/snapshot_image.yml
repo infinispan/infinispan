@@ -1,8 +1,5 @@
 name: Snapshot Images
 
-permissions:
-  contents: read
-
 on:
   workflow_call:
     inputs:
@@ -39,7 +36,7 @@ jobs:
 
     steps:
       - name: Download Artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@v8.0.1
         with:
           run-id: '${{ inputs.runId }}'
           name: infinispan-dist
@@ -50,7 +47,7 @@ jobs:
         run: |
           unzip -q infinispan-*-src.zip
           SRCROOT=$(find . -maxdepth 1 -type d -name '*src')
-          echo "srcroot=$SRCROOT" >> "$GITHUB_OUTPUT"
+          echo "srcroot=$SRCROOT" >> $GITHUB_OUTPUT
           mv infinispan-server-*.zip "$SRCROOT"/server/image/infinispan-server.zip
 
       - name: Install qemu
@@ -60,7 +57,7 @@ jobs:
 
       - name: Build image
         id: build-image
-        uses: redhat-actions/buildah-build@719e3c40d8af9790c23eca13f7daa339f2867034 # v2
+        uses: redhat-actions/buildah-build@v3
         with:
           build-args: |
             BRAND_VERSION=${{ inputs.runId }}
@@ -74,7 +71,7 @@ jobs:
           tags: ${{ inputs.tag }}
 
       - name: Log in to Quay.io
-        uses: redhat-actions/podman-login@50c2d9a331bb67c8fdab99b86455fad05e2e3252 # v2.0
+        uses: redhat-actions/podman-login@v2
         with:
           username: ${{ secrets.QUAY_USERNAME_TEST }}
           password: ${{ secrets.QUAY_TOKEN_TEST }}
@@ -82,7 +79,7 @@ jobs:
 
       - name: Push to Quay.io
         id: push-to-quay
-        uses: redhat-actions/push-to-registry@94ade333c38ecc0e60e94785125d9a52ca423b37 # v2
+        uses: redhat-actions/push-to-registry@v3
         with:
           registry: quay.io/infinispan-test
           image: server

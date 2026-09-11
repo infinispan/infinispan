@@ -1,8 +1,5 @@
 name: Release Images
 
-permissions:
-  contents: read
-
 on:
   workflow_call:
     inputs:
@@ -51,25 +48,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.branch }}
 
       -  name: Generate Image Tags
          run: echo "IMAGE_TAGS=$(./.github/scripts/image_tags.sh)" >> "$GITHUB_ENV"
          env:
-            VERSION: ${{ inputs.version }}
-            TYPE: ${{ inputs.type }}
+           VERSION: ${{ inputs.version }}
+           TYPE: ${{ inputs.type }}
 
       - name: Log in to Docker Hub
-        uses: redhat-actions/podman-login@50c2d9a331bb67c8fdab99b86455fad05e2e3252 # v2.0
+        uses: redhat-actions/podman-login@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           registry: docker.io
 
       - name: Log in to Quay.io
-        uses: redhat-actions/podman-login@50c2d9a331bb67c8fdab99b86455fad05e2e3252 # v2.0
+        uses: redhat-actions/podman-login@v2
         with:
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_TOKEN }}
@@ -82,7 +79,7 @@ jobs:
 
       - name: Build image
         id: build-image
-        uses: redhat-actions/buildah-build@719e3c40d8af9790c23eca13f7daa339f2867034 # v2
+        uses: redhat-actions/buildah-build@v3
         with:
           build-args: |
             BRAND_VERSION=${{ inputs.version }}
@@ -98,7 +95,7 @@ jobs:
       - name: Push to Docker Hub
         id: push-to-docker
         if: ${{ inputs.push }}
-        uses: redhat-actions/push-to-registry@94ade333c38ecc0e60e94785125d9a52ca423b37 # v2
+        uses: redhat-actions/push-to-registry@v3
         with:
           registry: docker.io/infinispan
           image: server
@@ -110,7 +107,7 @@ jobs:
       - name: Push to Quay.io
         id: push-to-quay
         if: ${{ inputs.push }}
-        uses: redhat-actions/push-to-registry@94ade333c38ecc0e60e94785125d9a52ca423b37 # v2
+        uses: redhat-actions/push-to-registry@v3
         with:
           registry: quay.io/infinispan
           image: server
