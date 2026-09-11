@@ -23,9 +23,8 @@ import org.springframework.util.Assert;
 
 /**
  * <p>
- * A {@link org.springframework.cache.CacheManager <code>CacheManager</code>} implementation that is
- * backed by an {@link RemoteCacheManager
- * <code>Infinispan RemoteCacheManager</code>} instance.
+ * A {@link org.springframework.cache.CacheManager} implementation that is
+ * backed by an {@link RemoteCacheManager} instance.
  * </p>
  *
  * @author Olaf Bergner
@@ -89,12 +88,10 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
    }
 
    /**
-    * Return the {@link RemoteCacheManager
-    * <code>org.infinispan.client.hotrod.RemoteCacheManager</code>} that backs this
+    * Return the {@link RemoteCacheManager} that backs this
     * <code>SpringRemoteCacheManager</code>.
     *
-    * @return The {@link RemoteCacheManager
-    *         <code>org.infinispan.client.hotrod.RemoteCacheManager</code>} that backs this
+    * @return The {@link RemoteCacheManager} that backs this
     *         <code>SpringRemoteCacheManager</code>
     */
    public RemoteCacheManager getNativeCacheManager() {
@@ -118,8 +115,7 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
    }
 
    /**
-    * Start the {@link RemoteCacheManager
-    * <code>org.infinispan.client.hotrod.RemoteCacheManager</code>} that backs this
+    * Start the {@link RemoteCacheManager} that backs this
     * <code>SpringRemoteCacheManager</code>.
     */
    public void start() {
@@ -127,8 +123,7 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
    }
 
    /**
-    * Stop the {@link RemoteCacheManager
-    * <code>org.infinispan.client.hotrod.RemoteCacheManager</code>} that backs this
+    * Stop the {@link RemoteCacheManager} that backs this
     * <code>SpringRemoteCacheManager</code>.
     */
    public void stop() {
