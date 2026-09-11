@@ -345,7 +345,7 @@ public class APITxTest<K, V> extends MultiHotRodServersTest {
       clientBuilder.forceReturnValues(false);
       TransactionSetup.amendJTA(clientBuilder.remoteCache(CACHE_NAME)).transactionMode(transactionMode);
       if (useJavaSerialization) {
-         clientBuilder.marshaller(new JavaSerializationMarshaller()).addJavaSerialAllowList("\\Q[\\ELjava.lang.Object;");
+         clientBuilder.marshaller(new JavaSerializationMarshaller()).addJavaSerialAllowList("java.lang.Object");//.addJavaSerialAllowList("\\Q[\\ELjava.lang.Object;");
       }
       return clientBuilder;
    }
