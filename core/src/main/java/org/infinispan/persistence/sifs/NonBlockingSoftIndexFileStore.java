@@ -652,6 +652,11 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                      }
                   }, "soft-index-containsKey");
                }
+               // The compactor updated the temp-table entry to the new file location (via
+               // replaceOrLock) before deleting the old file. We caught the entry at the exact
+               // instant the old handle became null — re-reading the temp-table will see the
+               // updated location. See https://github.com/infinispan/infinispan/issues/18036
+               log.tracef("Entry for key found in temporary table on %d:%d but file no longer exists, retrying", entry.file, entry.offset);
             } else {
                EntryPosition position = index.getPosition(key, segmentUsed, marshaller.objectToBuffer(key));
                return CompletableFutures.booleanStage(position != null);
@@ -675,9 +680,21 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
                      log.tracef("Entry for key=%s found in temporary table on %d:%d but it is a tombstone", key, entry.file, entry.offset);
                      return null;
                   }
-                  MarshallableEntry<K, V> marshallableEntry = readValueFromFileOffset(key, entry);
-                  if (marshallableEntry != null) {
-                     return marshallableEntry;
+                  FileProvider.Handle handle = fileProvider.getFile(entry.file);
+                  if (handle != null) {
+                     try (handle) {
+                        MarshallableEntry<K, V> marshallableEntry = readValueFromFileOffset(key, entry, handle);
+                        if (marshallableEntry != null) {
+                           return marshallableEntry;
+                        }
+                     }
+                  } else {
+                     // The compactor updated the temp-table entry to the new file location (via
+                     // replaceOrLock) before deleting the old file. We caught the entry at the
+                     // exact instant the old handle became null — re-reading the temp-table will
+                     // see the updated location.
+                     // See https://github.com/infinispan/infinispan/issues/18036
+                     log.tracef("Entry for key=%s found in temporary table on %d:%d but file no longer exists, retrying", key, entry.file, entry.offset);
                   }
                } else {
                   EntryRecord record = index.getRecord(key, segmentUsed, marshaller.objectToBuffer(key));
@@ -706,20 +723,36 @@ public class NonBlockingSoftIndexFileStore<K, V> implements NonBlockingStore<K, 
    private MarshallableEntry<K, V> readValueFromFileOffset(Object key, EntryPosition entry, boolean includeExpired) throws IOException {
       FileProvider.Handle handle = fileProvider.getFile(entry.file);
       if (handle != null) {
-         try {
-            EntryHeader header = EntryRecord.readEntryHeader(handle, entry.offset);
-            if (header == null) {
-               throw new IllegalStateException("Error reading from " + entry.file + ":" + entry.offset + " | " + handle.getFileSize());
-            }
-            return readEntry(handle, header, entry.offset, key, false,
-                  (serializedKey, value, meta, internalMeta, created, lastUsed) ->
-                        marshallableEntryFactory.create(serializedKey, value, meta, internalMeta, created, lastUsed),
-                  includeExpired);
-         } finally {
-            handle.close();
+         try (handle) {
+            return readValueFromFileOffset(key, entry, handle, includeExpired);
          }
       }
       return null;
+   }
+
+   /**
+    * Reads from {@code handle} at the position described by {@code entry}.
+    * The caller is responsible for closing {@code handle}.
+    */
+   private MarshallableEntry<K, V> readValueFromFileOffset(Object key, EntryPosition entry, FileProvider.Handle handle)
+         throws IOException {
+      return readValueFromFileOffset(key, entry, handle, false);
+   }
+
+   /**
+    * Reads from {@code handle} at the position described by {@code entry}.
+    * The caller is responsible for closing {@code handle}.
+    */
+   private MarshallableEntry<K, V> readValueFromFileOffset(Object key, EntryPosition entry, FileProvider.Handle handle,
+         boolean includeExpired) throws IOException {
+      EntryHeader header = EntryRecord.readEntryHeader(handle, entry.offset);
+      if (header == null) {
+         throw new IllegalStateException("Error reading from " + entry.file + ":" + entry.offset + " | " + handle.getFileSize());
+      }
+      return readEntry(handle, header, entry.offset, key, false,
+            (serializedKey, value, meta, internalMeta, created, lastUsed) ->
+                  marshallableEntryFactory.create(serializedKey, value, meta, internalMeta, created, lastUsed),
+            includeExpired);
    }
 
    private MarshallableEntry<K, V> readEntry(FileProvider.Handle handle, EntryHeader header, int offset,
