@@ -144,7 +144,7 @@ public class RestCacheManager<V> {
          if (!create || !getInstance().cacheConfigurationExists(cacheName))
             throw logger.cacheNotFound(cacheName);
       } else if (icr.isInternalCache(cacheName)) {
-         if (icr.isPrivateCache(cacheName)) {
+         if (icr.isPrivateCache(cacheName) || icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.PROTECTED)) {
             throw logger.requestNotAllowedToInternalCaches(cacheName);
          } else if (!allowInternalCacheAccess && !icr.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.USER)) {
             throw logger.requestNotAllowedToInternalCachesWithoutAuthz(cacheName);
