@@ -19,7 +19,6 @@ import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Indexer;
-import org.infinispan.query.Search;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.massindex.IndexUpdater;
 import org.infinispan.query.test.QueryTestSCI;
@@ -88,7 +87,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
          cache1 = cacheManager.getCache();
          cache2 = cacheManager.getCache();
       }
-      indexer = Search.getIndexer(cache1);
+      indexer = Indexer.of(cache1);
    }
 
    private void writeData() throws InterruptedException {
@@ -170,7 +169,7 @@ public class AsyncMassIndexPerfTest extends MultipleCacheManagersTest {
    }
 
    protected void clearIndex() {
-      Search.getIndexer(cache1).remove();
+      Indexer.of(cache1).remove();
    }
 
    class EventLoop implements Runnable {

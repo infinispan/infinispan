@@ -12,9 +12,9 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
-import org.infinispan.protostream.sampledomain.User;
+import org.infinispan.protostream.sampledomain.bank.Address;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.query.mapper.scope.SearchScope;
@@ -37,7 +37,7 @@ public class ProtobufValueWrapperIndexingTest extends SingleCacheManagerTest {
             .memory().encoding().value().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE)
             .indexing().enable()
             .storage(LOCAL_HEAP)
-            .addIndexedEntity("sample_bank_account.User");
+            .addIndexedEntity(User.ENTITY_NAME);
       GlobalConfigurationBuilder globalBuilder = new GlobalConfigurationBuilder().nonClusteredDefault();
       globalBuilder.serialization().addContextInitializer(TestDomainSCI.INSTANCE);
       return TestCacheManagerFactory.createCacheManager(globalBuilder, cfg);
@@ -52,7 +52,7 @@ public class ProtobufValueWrapperIndexingTest extends SingleCacheManagerTest {
       cache.put(new byte[]{4, 5, 6}, createUser("John", "Batman"));
 
       SearchSession session = searchMapping.getMappingSession();
-      SearchScope<byte[]> scope = session.scope(byte[].class, "sample_bank_account.User");
+      SearchScope<byte[]> scope = session.scope(byte[].class, User.ENTITY_NAME);
       SearchQuery<Object> query = session.search(scope)
             .select(f -> f.field("surname"))
             .where(f -> f.match().field("name").matching("Adrian"))

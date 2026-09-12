@@ -63,6 +63,7 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.server.functional.rest.RestOperations;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.ResponseAssertion;
@@ -385,7 +386,7 @@ abstract class RESTAuthorizationTest {
       assertStatus(OK, ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().schemas().put(BANK_PROTO, schema));
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
-      builder.indexing().enable().addIndexedEntity("sample_bank_account.User").statistics().enable();
+      builder.indexing().enable().addIndexedEntity(User.ENTITY_NAME).statistics().enable();
       RestClient restClient = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN))
             .withServerConfiguration(builder).create();
       String indexedCache = ext.getMethodName();
@@ -594,7 +595,7 @@ abstract class RESTAuthorizationTest {
       createIndexedCache();
       for (TestUser user : EnumSet.of(TestUser.ADMIN, TestUser.DEPLOYER, TestUser.APPLICATION, TestUser.OBSERVER)) {
          RestCacheClient userCache = ext.rest().withClientConfiguration(restBuilders.get(user)).get().cache(ext.getMethodName());
-         assertStatus(OK, userCache.query("FROM sample_bank_account.User WHERE name = 'Tom'"));
+         assertStatus(OK, userCache.query("FROM sample_domain.User WHERE name = 'Tom'"));
          assertStatus(OK, userCache.searchStats());
          assertStatus(OK, userCache.indexStats());
          assertStatus(OK, userCache.queryStats());
@@ -606,7 +607,7 @@ abstract class RESTAuthorizationTest {
       createIndexedCache();
       for (TestUser user : EnumSet.of(TestUser.READER, TestUser.WRITER, TestUser.MONITOR)) {
          RestCacheClient userCache = ext.rest().withClientConfiguration(restBuilders.get(user)).get().cache(ext.getMethodName());
-         assertStatus(FORBIDDEN, userCache.query("FROM sample_bank_account.User WHERE name = 'Tom'"));
+         assertStatus(FORBIDDEN, userCache.query("FROM sample_domain.User WHERE name = 'Tom'"));
          assertStatus(OK, userCache.searchStats());
          assertStatus(OK, userCache.indexStats());
          assertStatus(OK, userCache.queryStats());
@@ -701,7 +702,7 @@ abstract class RESTAuthorizationTest {
       assertStatus(OK, adminClient.schemas().put(BANK_PROTO, schema));
 
       String cacheName = ext.getMethodName();
-      String cacheConfig = "{\"distributed-cache\":{\"statistics\":true,\"encoding\":{\"media-type\":\"application/x-protostream\"},\"indexing\":{\"enabled\":true,\"storage\":\"local-heap\",\"indexed-entities\":[\"sample_bank_account.User\"]},\"security\":{\"authorization\":{}}}}";
+      String cacheConfig = "{\"distributed-cache\":{\"statistics\":true,\"encoding\":{\"media-type\":\"application/x-protostream\"},\"indexing\":{\"enabled\":true,\"storage\":\"local-heap\",\"indexed-entities\":[\"sample_domain.User\"]},\"security\":{\"authorization\":{}}}}";
 
       assertStatus(OK,
             adminClient.cache(cacheName)

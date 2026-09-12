@@ -18,11 +18,11 @@ Unlike Hibernate Search, using `@DocumentId` to mark a field as identifier does 
 
 [discrete]
 == @Transformable keys
-The key for each value needs to be indexed as well, and the key instance must be transformed in a `String`. {brandname} includes some default transformation routines to encode common primitives, but to use a custom key you must provide an implementation of `org.infinispan.query.Transformer` .
+The key for each value needs to be indexed as well, and the key instance must be transformed in a `String`. {brandname} includes some default transformation routines to encode common primitives, but to use a custom key you must provide an implementation of `org.infinispan.api.query.Transformer` .
 
 .Registering a key Transformer via annotations
 
-You can annotate your key class with `org.infinispan.query.Transformable` and your custom transformer implementation
+You can annotate your key class with `org.infinispan.api.annotation.query.Transformable` and your custom transformer implementation
 will be picked up automatically:
 
 [source,java]

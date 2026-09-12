@@ -14,10 +14,10 @@ import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
+import org.infinispan.protostream.sampledomain.TypeA;
 import org.infinispan.query.core.stats.IndexInfo;
+import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.query.impl.config.SearchPropertyExtractor;
-import org.infinispan.query.model.TypeA;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.testing.annotation.TestForIssue;
@@ -69,14 +69,14 @@ public class DefaultIndexPathTest extends SingleCacheManagerTest {
       // if the default filesystem storage is not chosen wisely, we're expecting a lock error such as:
       //
       // java.util.concurrent.ExecutionException: org.infinispan.commons.CacheException:
-      // HSEARCH600016: Unable to index entity of type 'org.infinispan.query.model.TypeA' with identifier 'key-simple-313' and tenant identifier 'null':
+      // HSEARCH600016: Unable to index entity of type 'org.infinispan.protostream.sampledomain.TypeA' with identifier 'key-simple-313' and tenant identifier 'null':
       // Lock held by this virtual machine: /Users/fabio/code/infinispan/query/index-A/write.lock
       // Context: index 'index-A'
       future2.get();
 
-      CompletionStage<Map<String, IndexInfo>> infoIndex1 = Search.getSearchStatistics(cache1).getIndexStatistics()
+      CompletionStage<Map<String, IndexInfo>> infoIndex1 = SearchStatistics.of(cache1).getIndexStatistics()
             .computeIndexInfos();
-      CompletionStage<Map<String, IndexInfo>> infoIndex2 = Search.getSearchStatistics(cache2).getIndexStatistics()
+      CompletionStage<Map<String, IndexInfo>> infoIndex2 = SearchStatistics.of(cache2).getIndexStatistics()
             .computeIndexInfos();
 
       infoIndex1.toCompletableFuture().get();

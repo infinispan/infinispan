@@ -11,7 +11,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Indexer;
-import org.infinispan.query.Search;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -58,7 +57,7 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
    @Test
    public void testMassIndexer() {
       fillData();
-      Indexer massIndexer = Search.getIndexer(cache);
+      Indexer massIndexer = Indexer.of(cache);
 
       assertEquals(NUM_ENTITIES, indexSize(cache));
 
@@ -84,7 +83,7 @@ public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
    public void testPartiallyReindex() {
       cache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(0, new Person("name" + 0, "blurb" + 0, 0));
       verifyFindsPerson(0, "name" + 0);
-      join(Search.getIndexer(cache).run(0));
+      join(Indexer.of(cache).run(0));
       verifyFindsPerson(1, "name" + 0);
       cache.remove(0);
       verifyFindsPerson(0, "name" + 0);

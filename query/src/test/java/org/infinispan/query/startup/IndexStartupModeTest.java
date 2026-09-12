@@ -9,8 +9,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStartupMode;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.model.Developer;
+import org.infinispan.protostream.sampledomain.Developer;
+import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -146,7 +146,7 @@ public class IndexStartupModeTest extends AbstractInfinispanTest {
       } finally {
          eventually( () ->
                // Wait for a possible ongoing reindexing
-               !Search.getSearchStatistics(cache).getIndexStatistics().reindexing()
+               !SearchStatistics.of(cache).getIndexStatistics().reindexing()
          );
          TestingUtil.killCacheManagers(cacheManager);
       }
