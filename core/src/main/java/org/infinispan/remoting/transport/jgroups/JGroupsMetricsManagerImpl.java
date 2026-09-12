@@ -14,16 +14,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.function.IntConsumer;
 
 import org.infinispan.commons.stat.CounterTracker;
 import org.infinispan.commons.stat.DistributionSummaryTracker;
 import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.commons.stat.TimerTracker;
-import org.infinispan.commons.time.TimeService;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -32,11 +29,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metrics.Constants;
 import org.infinispan.metrics.impl.MetricUtils;
 import org.infinispan.metrics.impl.MetricsRegistry;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
-import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
-import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.transport.Address;
 import org.jgroups.JChannel;
 import org.jgroups.stack.Protocol;
@@ -49,14 +41,10 @@ import com.google.errorprone.annotations.concurrent.GuardedBy;
  * It listens on view change to remove metrics for members that left the cluster.
  */
 @Scope(Scopes.GLOBAL)
-@Listener
-public class JGroupsMetricsManagerImpl implements JGroupsMetricsManager {
+public final class JGroupsMetricsManagerImpl extends BaseJGroupsMetricManager {
 
-   @Inject CacheManagerNotifier notifier;
    @Inject MetricsRegistry registry;
-   @Inject TimeService timeService;
 
-   private final Map<Address, DestinationMetrics> perDestinationMetrics;
    private final List<ClusterMetrics> otherChannels;
    private final boolean histogramEnabled;
    @Deprecated(forRemoval = true, since = "16.0")
@@ -66,54 +54,20 @@ public class JGroupsMetricsManagerImpl implements JGroupsMetricsManager {
 
    public JGroupsMetricsManagerImpl(boolean histogramEnabled, String legacyGlobalPrefix) {
       this.histogramEnabled = histogramEnabled;
-      perDestinationMetrics = new ConcurrentHashMap<>(16);
       otherChannels = new CopyOnWriteArrayList<>();
       this.legacyGlobalPrefix = legacyGlobalPrefix;
    }
 
    @Start
-   public void start() {
+   public void startInternal() {
       stopped = false;
-      notifier.addListener(this);
    }
 
    @Stop
-   public void stop() {
+   public void stopInternal() {
       stopped = true;
-      notifier.removeListener(this);
-      perDestinationMetrics.values().forEach(metrics -> metrics.unregister(registry));
-      perDestinationMetrics.clear();
       otherChannels.forEach(metrics -> metrics.unregister(registry));
       mainChannelRegistry = null;
-   }
-
-   @ViewChanged
-   @Merged
-   public void onViewChanged(ViewChangedEvent event) {
-      if (stopped) {
-         return;
-      }
-      var leftMembers = new HashSet<>(perDestinationMetrics.keySet());
-      event.getNewMembers().forEach(leftMembers::remove);
-
-      for (Address node : leftMembers) {
-         perDestinationMetrics.computeIfPresent(node, (unused, metrics) -> {
-            metrics.unregister(registry);
-            return null;
-         });
-      }
-   }
-
-   @Override
-   public RequestTracker trackRequest(Address destination) {
-      if (stopped) {
-         return new NoOpRequestTracker(destination);
-      }
-      var metrics = get(destination);
-      if (metrics == null) {
-         return new NoOpRequestTracker(destination);
-      }
-      return new RequestTrackerImpl(destination, metrics, timeService);
    }
 
    @Override
@@ -121,7 +75,7 @@ public class JGroupsMetricsManagerImpl implements JGroupsMetricsManager {
       if (stopped) {
          return;
       }
-      var metrics = get(destination);
+      DestinationMetrics metrics = ((MetricsDestinationState) getOrCreateDestinationState(destination)).metrics();
       if (metrics == null) {
          return;
       }
@@ -167,12 +121,7 @@ public class JGroupsMetricsManagerImpl implements JGroupsMetricsManager {
       otherChannels.remove(metrics);
    }
 
-   private DestinationMetrics get(Address dst) {
-      assert dst != null;
-      return perDestinationMetrics.computeIfAbsent(dst, this::createDestinationMetrics);
-   }
-
-   private DestinationMetrics createDestinationMetrics(Address destination) {
+   private DestinationMetrics createDestinationMetrics(Address destination, AdaptiveTimeout adaptiveTimeout) {
       assert destination != null;
       var statsRegistry = mainChannelRegistry;
       if (statsRegistry == null) {
@@ -185,6 +134,8 @@ public class JGroupsMetricsManagerImpl implements JGroupsMetricsManager {
       DestinationMetricsBuilder builder = new DestinationMetricsBuilder();
       // registerMetrics sets all the fields
       var metricsIds = statsRegistry.registerStats(builder, attributes);
+
+      metricsIds.addAll(statsRegistry.registerStats(adaptiveTimeout, adaptiveTimeoutGauges(destination.toString())));
       // create DestinationMetrics
       return builder.build(metricsIds, histogramEnabled);
    }
@@ -227,6 +178,28 @@ public class JGroupsMetricsManagerImpl implements JGroupsMetricsManager {
          builder.append(clusterName).append("_");
       }
       return builder.append(componentName).append("_").toString();
+   }
+
+   static Collection<MetricInfo> adaptiveTimeoutGauges(String dst) {
+      Map<String, String> tags = Map.of(Constants.TARGET_NODE, dst);
+      List<MetricInfo> attributes = new ArrayList<>();
+
+      attributes.add(MetricUtils.createGauge("RoundTripTime",
+            "Smoothed round-trip time to " + dst + " in nanoseconds", AdaptiveTimeout::srtt, tags));
+
+      attributes.add(MetricUtils.createGauge("RoundTripTimeVariance",
+            "Round-trip time variance to " + dst + " in nanoseconds", AdaptiveTimeout::rttvar, tags));
+
+      attributes.add(MetricUtils.createGauge("TokenBucketLevel",
+            "Adaptive timeout token bucket level for " + dst + " (full means healthy)", AdaptiveTimeout::bucketLevel, tags));
+
+      attributes.add(MetricUtils.createGauge("InFlightRequests",
+            "Number of in-flight requests to " + dst, AdaptiveTimeout::inFlight, tags));
+
+      attributes.add(MetricUtils.createGauge("ConcurrencyLimit",
+            "Adaptive concurrency limit for in-flight requests to " + dst, AdaptiveTimeout::concurrencyLimit, tags));
+
+      return attributes;
    }
 
    private static class DestinationMetricsBuilder {
@@ -298,50 +271,57 @@ public class JGroupsMetricsManagerImpl implements JGroupsMetricsManager {
       }
    }
 
-   private static class RequestTrackerImpl implements RequestTracker {
-      private final Address destination;
-      final DestinationMetrics metrics;
-      final TimeService timeService;
-      volatile long sentTimeNanos;
-      @GuardedBy("this")
-      boolean completed;
+   @Override
+   protected DestinationState createDestinationState(Address address) {
+      return new MetricsDestinationState(address, this);
+   }
 
-      RequestTrackerImpl(Address destination, DestinationMetrics metrics, TimeService timeService) {
-         this.destination = destination;
-         this.metrics = metrics;
-         this.timeService = timeService;
-         this.sentTimeNanos = timeService.time();
+   private static final class MetricsDestinationState extends DestinationState {
+      private final JGroupsMetricsManagerImpl manager;
+      private volatile DestinationMetrics metrics;
+
+      public MetricsDestinationState(Address address, JGroupsMetricsManagerImpl manager) {
+         super(address);
+         this.manager = manager;
       }
 
-      @Override
-      public final Address destination() {
-         return destination;
-      }
+      public DestinationMetrics metrics() {
+         DestinationMetrics m = this.metrics;
+         if (m != null)
+            return m;
 
-      @Override
-      public synchronized void resetSendTime() {
-         if (completed) {
-            return;
+         synchronized (this) {
+            if (this.metrics == null) {
+               DestinationMetrics created = manager.createDestinationMetrics(address(), adaptiveTimeout());
+               if (created != null) {
+                  this.metrics = created;
+               }
+            }
+            return this.metrics;
          }
-         sentTimeNanos = timeService.time();
       }
 
       @Override
-      public synchronized void onComplete() {
-         if (completed) {
-            return;
-         }
-         metrics.recordSyncMessage(timeService.timeDuration(sentTimeNanos, TimeUnit.NANOSECONDS));
-         completed = true;
+      public void recordSuccess(long durationNs) {
+         super.recordSuccess(durationNs);
+         DestinationMetrics m = metrics();
+         if (m != null)
+            m.recordSyncMessage(durationNs);
       }
 
       @Override
-      public synchronized void onTimeout() {
-         if (completed) {
-            return;
-         }
-         metrics.incrementTimedOutRequests();
-         completed = true;
+      public void recordTimeout() {
+         super.recordTimeout();
+         DestinationMetrics m = metrics();
+         if (m != null)
+            m.incrementTimedOutRequests();
+      }
+
+      @Override
+      public void onRemoved() {
+         DestinationMetrics m = this.metrics;
+         if (m != null)
+            m.unregister(manager.registry);
       }
    }
 

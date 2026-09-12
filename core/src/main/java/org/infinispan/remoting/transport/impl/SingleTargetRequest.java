@@ -31,6 +31,12 @@ public class SingleTargetRequest<T> extends AbstractRequest<Address, T> {
    public SingleTargetRequest(ResponseCollector<Address, T> wrapper, long requestId, RequestRepository repository, RequestTracker requestTracker) {
       super(requestId, wrapper, repository);
       this.requestTracker = new AtomicReference<>(Objects.requireNonNull(requestTracker));
+      whenComplete((ignored, t) -> {
+         RequestTracker tracker = this.requestTracker.getAndSet(null);
+         if (tracker != null) {
+            tracker.resolve(RequestTracker.Outcome.ABANDONED);
+         }
+      });
    }
 
    @Override
@@ -41,7 +47,7 @@ public class SingleTargetRequest<T> extends AbstractRequest<Address, T> {
             if (!tracker.destination().equals(sender)) {
                log.tracef("Received unexpected response to request %d from %s, target is %s", requestId, sender, tracker.destination());
             }
-            T result = addResponse(sender, tracker, response);
+            T result = addResponse(sender, tracker, response, RequestTracker.Outcome.SUCCESS);
             complete(result);
          }
       } catch (Exception e) {
@@ -56,7 +62,7 @@ public class SingleTargetRequest<T> extends AbstractRequest<Address, T> {
          if (tracker == null || members.contains(tracker.destination()) || requestTracker.getAndSet(null) != tracker) {
             return false;
          }
-         T result = addResponse(tracker.destination(), tracker, CacheNotFoundResponse.INSTANCE);
+         T result = addResponse(tracker.destination(), tracker, CacheNotFoundResponse.INSTANCE, RequestTracker.Outcome.ABANDONED);
          complete(result);
       } catch (Exception e) {
          completeExceptionally(e);
@@ -64,8 +70,8 @@ public class SingleTargetRequest<T> extends AbstractRequest<Address, T> {
       return true;
    }
 
-   private T addResponse(Address sender, RequestTracker tracker, Response response) {
-      tracker.onComplete();
+   private T addResponse(Address sender, RequestTracker tracker, Response response, RequestTracker.Outcome outcome) {
+      tracker.resolve(outcome);
       T result = responseCollector.addResponse(sender, response);
       if (result == null) {
          result = responseCollector.finish();
@@ -77,7 +83,7 @@ public class SingleTargetRequest<T> extends AbstractRequest<Address, T> {
    protected void onTimeout() {
       RequestTracker tracker = requestTracker.getAndSet(null);
       if (tracker != null) {
-         tracker.onTimeout();
+         tracker.resolve(RequestTracker.Outcome.TIMEOUT);
          String targetString = tracker.destination().toString();
          completeExceptionally(CLUSTER.requestTimedOut(requestId, targetString, Util.prettyPrintTime(getTimeoutMs())));
       }

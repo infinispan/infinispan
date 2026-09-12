@@ -16,6 +16,7 @@ import org.infinispan.remoting.transport.AbstractRequest;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
 import org.infinispan.remoting.transport.jgroups.JGroupsMetricsManager;
+import org.infinispan.remoting.transport.jgroups.RequestTracker;
 import org.infinispan.remoting.transport.jgroups.SingleSiteRequest;
 import org.infinispan.remoting.transport.jgroups.StaggeredRequest;
 import org.infinispan.util.logging.Log;
@@ -67,19 +68,33 @@ public class RequestRepository implements Lifecycle {
     * Creates a request targeting and expecting a response from a single cluster member.
     *
     * <p>
-    * If the repository has been stopped, the returned request is immediately cancelled.
+    * If the repository has been stopped, the returned request is immediately cancelled. If the target destination has
+    * enough backlog of pending requests, the request is cancelled immediately. Otherwise, if a timeout is provided,
+    * the requests will be scheduled to timeout with the appropriate allowance time based on the destination backlog.
     * </p>
     *
     * @param <T>       the result type produced by the collector
     * @param target    the address of the single expected respondent
+    * @param flags     flags associated with the command
     * @param collector gathers the response and produces the final result
     * @param timeout   timeout duration; if positive and a timeout executor is available, the request is cancelled with
     *                  a {@link org.infinispan.commons.TimeoutException} on expiry
     * @param unit      time unit for {@code timeout}
     * @return a completable request that completes when the collector produces a result
     */
-   public <T> Request<Address, T> singleRequest(Address target, ResponseCollector<Address, T> collector, long timeout, TimeUnit unit) {
-      SingleTargetRequest<T> request = new SingleTargetRequest<>(collector, newRequestId(), this, metricsManager.trackRequest(target));
+   public <T> Request<Address, T> singleRequest(Address target, long flags, ResponseCollector<Address, T> collector, long timeout, TimeUnit unit) {
+      RequestTracker tracker = metricsManager.trackRequest(target, flags);
+      SingleTargetRequest<T> request = new SingleTargetRequest<>(collector, newRequestId(), this, tracker);
+
+      if (timeout > 0 && tracker.shouldShed()) {
+         request.cancel(CONTAINER.requestShed(target, false));
+         return request;
+      }
+
+      if (timeout > 0 && timeoutExecutor != null) {
+         long adjustedTimeoutNs = tracker.adjustTimeout(unit.toNanos(timeout));
+         return handleRequest(request, adjustedTimeoutNs, TimeUnit.NANOSECONDS);
+      }
       return handleRequest(request, timeout, unit);
    }
 
