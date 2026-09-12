@@ -305,6 +305,16 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    @Override
+   public Collection<Address> getSources() {
+      transferMapsLock.lock();
+      try {
+         return new ArrayList<>(transfersBySource.keySet());
+      } finally {
+         transferMapsLock.unlock();
+      }
+   }
+
+   @Override
    public CompletionStage<CompletionStage<Void>> onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance) {
       final ConsistentHash newWriteCh = cacheTopology.getWriteConsistentHash();
       final CacheTopology previousCacheTopology = this.cacheTopology;
