@@ -13,11 +13,10 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.cache.IndexingMode;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.sampledomain.TypeA;
 import org.infinispan.query.Indexer;
-import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.IndexInfo;
 import org.infinispan.query.core.stats.SearchStatistics;
-import org.infinispan.query.model.TypeA;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.testing.annotation.TestForIssue;
@@ -49,8 +48,8 @@ public class LocalIndexerRemoveTest extends SingleCacheManagerTest {
    @Test
    public void test() throws Exception {
       Cache<Integer, TypeA> typesCache = cacheManager.getCache(CACHE_NAME);
-      Indexer indexer = Search.getIndexer(typesCache);
-      SearchStatistics searchStatistics = Search.getSearchStatistics(typesCache);
+      Indexer indexer = Indexer.of(typesCache);
+      SearchStatistics searchStatistics = SearchStatistics.of(typesCache);
 
       Map<Integer, TypeA> values = IntStream.range(0, ENTRIES).boxed()
             .collect(Collectors.toMap(Function.identity(), i -> new TypeA("value " + i)));

@@ -11,7 +11,7 @@ import java.util.Set;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
+import org.infinispan.query.Indexer;
 import org.infinispan.server.core.admin.AdminServerTask;
 
 /**
@@ -50,7 +50,7 @@ public class CacheReindexTask extends AdminServerTask<Void> {
 
       String name = requireParameter(parameters, "name");
       Cache<Object, Object> cache = cacheManager.getCache(name);
-      join(Search.getIndexer(cache).run());
+      join(Indexer.of(cache).run());
 
       return null;
    }

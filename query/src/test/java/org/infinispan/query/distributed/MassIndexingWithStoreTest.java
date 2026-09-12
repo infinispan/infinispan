@@ -1,7 +1,7 @@
 package org.infinispan.query.distributed;
 
 import org.infinispan.Cache;
-import org.infinispan.query.queries.faceting.Car;
+import org.infinispan.protostream.sampledomain.Car;
 import org.testng.annotations.Test;
 
 /**

@@ -17,7 +17,7 @@ public class RemoteNonIndexedQueryConditionsTest extends RemoteQueryConditionsTe
    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Indexing was not enabled on cache.*")
    @Override
    public void testIndexPresence() {
-      org.infinispan.query.Search.getIndexer(getEmbeddedCache());
+      org.infinispan.query.Indexer.of(getEmbeddedCache());
    }
 
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: The cache must be indexed in order to use full-text or spatial queries.")

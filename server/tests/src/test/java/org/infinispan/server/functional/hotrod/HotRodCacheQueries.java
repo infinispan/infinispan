@@ -33,11 +33,11 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.internal.InternalCacheNames;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.KeywordVector;
 import org.infinispan.protostream.sampledomain.Metadata;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
-import org.infinispan.protostream.sampledomain.User;
+import org.infinispan.protostream.sampledomain.bank.Address;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.functional.extensions.entities.Entities;
 import org.infinispan.server.test.api.TestClientDriver;
@@ -52,15 +52,13 @@ import org.junit.jupiter.params.provider.ValueSource;
  **/
 public class HotRodCacheQueries {
 
-   public static final String ENTITY_USER = "sample_bank_account.User";
-
    @InfinispanServer(ClusteredIT.class)
    public static TestClientDriver SERVERS;
 
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testAttributeQuery(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -69,7 +67,7 @@ public class HotRodCacheQueries {
       assertUser1(fromCache);
 
       // get user back from remote cache via query and check its attributes
-      Query<User> query = remoteCache.query("FROM sample_bank_account.User WHERE name = 'Tom'");
+      Query<User> query = remoteCache.query("FROM sample_domain.User WHERE name = 'Tom'");
       List<User> list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -80,12 +78,12 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testEmbeddedAttributeQuery(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
       // get user back from remote cache via query and check its attributes
-      Query<User> query = remoteCache.query("FROM sample_bank_account.User u WHERE u.addresses.postCode = '1234'");
+      Query<User> query = remoteCache.query("FROM sample_domain.User u WHERE u.addresses.postCode = '1234'");
       List<User> list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -96,7 +94,7 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testProjections(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -105,7 +103,7 @@ public class HotRodCacheQueries {
       assertUser1(fromCache);
 
       // get user back from remote cache via query and check its attributes
-      Query<Object[]> query = remoteCache.query("SELECT name, surname FROM sample_bank_account.User WHERE name = 'Tom'");
+      Query<Object[]> query = remoteCache.query("SELECT name, surname FROM sample_domain.User WHERE name = 'Tom'");
       List<Object[]> list = query.execute().list();
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -122,22 +120,22 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testUninverting(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
-      Query<User> query = remoteCache.query("FROM sample_bank_account.User WHERE name = 'John' ORDER BY id ASC");
+      Query<User> query = remoteCache.query("FROM sample_domain.User WHERE name = 'John' ORDER BY id ASC");
       assertEquals(0, query.execute().list().size());
    }
 
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testIteratorWithQuery(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
-      Query<User> simpleQuery = remoteCache.query("FROM sample_bank_account.User WHERE name = 'Tom'");
+      Query<User> simpleQuery = remoteCache.query("FROM sample_domain.User WHERE name = 'Tom'");
 
       List<Map.Entry<Object, Object>> entries = new ArrayList<>(1);
       try (CloseableIterator<Map.Entry<Object, Object>> iter = remoteCache.retrieveEntriesByQuery(simpleQuery, null, 3)) {
@@ -152,11 +150,11 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testIteratorWithQueryAndProjections(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
-      Query<Object[]> simpleQuery = remoteCache.query("SELECT surname, name FROM sample_bank_account.User WHERE name = 'Tom'");
+      Query<Object[]> simpleQuery = remoteCache.query("SELECT surname, name FROM sample_domain.User WHERE name = 'Tom'");
 
       List<Map.Entry<Object, Object>> entries = new ArrayList<>(1);
       try (CloseableIterator<Map.Entry<Object, Object>> iter = remoteCache.retrieveEntriesByQuery(simpleQuery, null, 3)) {
@@ -169,7 +167,7 @@ public class HotRodCacheQueries {
       assertEquals("Cat", projections[0]);
       assertEquals("Tom", projections[1]);
 
-      Query<Object[]> aggrQuery = remoteCache.query("SELECT name, count(name) FROM sample_bank_account.User GROUP BY name ORDER BY name");
+      Query<Object[]> aggrQuery = remoteCache.query("SELECT name, count(name) FROM sample_domain.User GROUP BY name ORDER BY name");
       projections = aggrQuery.list().get(0);
       assertEquals("Adrian", projections[0]);
       assertEquals(1L, (long) projections[1]);
@@ -179,11 +177,11 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testQueryViaRest(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
-      String query = "FROM sample_bank_account.User WHERE name='Adrian'";
+      String query = "FROM sample_domain.User WHERE name='Adrian'";
 
       RestClient restClient = SERVERS.rest().withClientConfiguration(new RestClientConfigurationBuilder()).get();
       try (RestResponse response = sync(restClient.cache(SERVERS.getMethodName()).query(query))) {
@@ -195,7 +193,7 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testManyInClauses(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -215,7 +213,7 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testWayTooManyInClauses(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
 
       // Exceed the bound set by infinispan.query.lucene.max-boolean-clauses
       Query<User> query = getUserQueryWithClauses(remoteCache, ClusteredIT.MAX_BOOLEAN_CLAUSES + 5);
@@ -232,13 +230,13 @@ public class HotRodCacheQueries {
       for (int i = 0; i < clauses - 1; i++) {
          values.add("test" + i);
       }
-      return remoteCache.query("from sample_bank_account.User where name in (" + values.stream().collect(Collectors.joining("\",\"", "\"", "\"")) + ")");
+      return remoteCache.query("from sample_domain.User where name in (" + values.stream().collect(Collectors.joining("\",\"", "\"", "\"")) + ")");
    }
 
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testDeleteStatement(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
@@ -247,18 +245,18 @@ public class HotRodCacheQueries {
       assertUser1(fromCache);
 
       // get user back from remote cache via query and check its attributes
-      Query<User> query = remoteCache.query("DELETE FROM sample_bank_account.User WHERE name = 'Tom'");
+      Query<User> query = remoteCache.query("DELETE FROM sample_domain.User WHERE name = 'Tom'");
       assertEquals(1, query.executeStatement());
    }
 
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testUpdateStatement(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());
 
-      Query<User> query = remoteCache.query("UPDATE FROM sample_bank_account.User SET name = 'Thomas' WHERE name = 'Tom'");
+      Query<User> query = remoteCache.query("UPDATE FROM sample_domain.User SET name = 'Thomas' WHERE name = 'Tom'");
       assertEquals(1, query.executeStatement());
 
       User updated = remoteCache.get(1);
@@ -272,13 +270,13 @@ public class HotRodCacheQueries {
    @Test
    public void testProjectionAndFilteringOnEmbeddedData() {
       RemoteCache<String, KeywordVector> remoteCache = createQueryableCache(SERVERS, true,
-            TestDomainSCI.INSTANCE, "sample_bank_account.KeywordVector");
+            TestDomainSCI.INSTANCE, "sample_domain.KeywordVector");
       for (int i = 0; i < 10; i++) {
          List<Metadata> metadata = Arrays.asList(new Metadata("key1", "value" + i), new Metadata("key2", "value" + i % 2));
          KeywordVector keywordVector = createImage(i, 50, metadata);
          remoteCache.put(keywordVector.getName(), keywordVector);
       }
-      Query<Object[]> queryEntityAndScoreFiltering = remoteCache.query("select i, score(i) from sample_bank_account.KeywordVector i join i.metadata m where m.key='key2' and m.value='value0'");
+      Query<Object[]> queryEntityAndScoreFiltering = remoteCache.query("select i, score(i) from sample_domain.KeywordVector i join i.metadata m where m.key='key2' and m.value='value0'");
       List<Object[]> listWithScoreFiltered = queryEntityAndScoreFiltering.list();
       assertThat(listWithScoreFiltered).hasSize(5);
    }
@@ -286,7 +284,7 @@ public class HotRodCacheQueries {
    @Test
    public void testVectorSearch() {
       RemoteCache<String, KeywordVector> remoteCache = createQueryableCache(SERVERS, true,
-            TestDomainSCI.INSTANCE, "sample_bank_account.KeywordVector");
+            TestDomainSCI.INSTANCE, "sample_domain.KeywordVector");
 
       KeywordVector center = null;
       for (int i = 0; i < 10; i++) {
@@ -299,13 +297,13 @@ public class HotRodCacheQueries {
          remoteCache.put(keywordVector.getName(), keywordVector);
       }
 
-      Query<KeywordVector> query = remoteCache.query("from sample_bank_account.KeywordVector i where i.byteEmbedding <-> [:a]~:k");
+      Query<KeywordVector> query = remoteCache.query("from sample_domain.KeywordVector i where i.byteEmbedding <-> [:a]~:k");
       query.setParameter("a", center.getByteEmbedding());
       query.setParameter("k", 3);
       List<KeywordVector> list = query.list();
       assertThat(list).extracting(KeywordVector::getName).containsExactly("bla-7", "bla-6", "bla-8");
 
-      query = remoteCache.query("from sample_bank_account.KeywordVector i where i.floatEmbedding <-> [:a]~:k");
+      query = remoteCache.query("from sample_domain.KeywordVector i where i.floatEmbedding <-> [:a]~:k");
       query.setParameter("a", center.getFloatEmbedding());
       query.setParameter("k", 3);
       list = query.list();

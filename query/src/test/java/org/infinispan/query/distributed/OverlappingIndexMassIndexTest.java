@@ -10,7 +10,7 @@ import java.util.List;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.Search;
+import org.infinispan.query.Indexer;
 import org.infinispan.query.helper.TestQueryHelperFactory;
 import org.infinispan.query.test.Block;
 import org.infinispan.query.test.QueryTestSCI;
@@ -86,6 +86,6 @@ public class OverlappingIndexMassIndexTest extends MultipleCacheManagersTest {
 
    protected void runMassIndexer() {
       Cache<?, ?> cache = caches.get(0);
-      join((Search.getIndexer(cache)).run());
+      join((Indexer.of(cache)).run());
    }
 }

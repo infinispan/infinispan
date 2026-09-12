@@ -19,7 +19,7 @@
          <indexing storage="local-heap">
             <indexed-entities>
                   <indexed-entity>org.infinispan.query.test.Person</indexed-entity>
-                  <indexed-entity>org.infinispan.query.queries.faceting.Car</indexed-entity>
+                  <indexed-entity>org.infinispan.protostream.sampledomain.Car</indexed-entity>
                </indexed-entities>
             </indexing>
          <state-transfer timeout="480000" enabled="true" />

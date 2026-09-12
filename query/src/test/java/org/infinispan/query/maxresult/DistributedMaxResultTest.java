@@ -10,8 +10,8 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.model.Developer;
-import org.infinispan.query.model.Game;
+import org.infinispan.protostream.sampledomain.Developer;
+import org.infinispan.protostream.sampledomain.Game;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.Test;
@@ -31,7 +31,7 @@ public class DistributedMaxResultTest extends MultipleCacheManagersTest {
                .stateTransfer().chunkSize(100)
             .indexing().enable()
                .storage(LOCAL_HEAP)
-               .addIndexedEntity("org.infinispan.query.model.Game")
+               .addIndexedEntity(Game.class.getName())
                .addIndexedEntity(Developer.class)
             .query().defaultMaxResults(50);
 
@@ -46,13 +46,13 @@ public class DistributedMaxResultTest extends MultipleCacheManagersTest {
          node1.put(i, new Game("Game " + i, "This is the game " + i + "# of a series"));
       }
 
-      Query<Game> query = node1.query("from org.infinispan.query.model.Game");
+      Query<Game> query = node1.query("from " +  Game.class.getName());
       QueryResult<Game> result = query.execute();
 
       assertThat(result.count().value()).isEqualTo(110);
       assertThat(result.list()).hasSize(50); // use custom default
 
-      query = node1.query("from org.infinispan.query.model.Game");
+      query = node1.query("from " + Game.class.getName());
       query.maxResults(200); // raise it
       result = query.execute();
 
@@ -68,13 +68,13 @@ public class DistributedMaxResultTest extends MultipleCacheManagersTest {
          node2.put(i, developer);
       }
 
-      Query<Object[]> query = node2.query("select count(d) from org.infinispan.query.model.Developer d");
+      Query<Object[]> query = node2.query(String.format("select count(d) from %s d", Developer.class.getName()));
       List<Object[]> result = query.list();
       assertThat(result).extracting(item -> item[0]).containsExactly(60L);
 
-      node2.query("delete from org.infinispan.query.model.Developer").execute();
+      node2.query("delete from " + Developer.class.getName()).execute();
 
-      query = node2.query("select count(d) from org.infinispan.query.model.Developer d");
+      query = node2.query(String.format("select count(d) from %s d",  Developer.class.getName()));
       result = query.list();
       assertThat(result).extracting(item -> item[0]).containsExactly(0L);
    }

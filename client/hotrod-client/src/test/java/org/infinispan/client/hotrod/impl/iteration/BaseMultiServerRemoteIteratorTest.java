@@ -46,8 +46,8 @@ import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoName;
 import org.infinispan.protostream.annotations.ProtoSchema;
-import org.infinispan.query.dsl.embedded.DslSCI;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
+import org.infinispan.protostream.sampledomain.bank.Account;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -73,7 +73,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
 
    @Override
    protected RemoteCacheManager createClient(int i) {
-      Configuration cfg = createHotRodClientConfigurationBuilder(server(i)).addContextInitializer(DslSCI.INSTANCE).build();
+      Configuration cfg = createHotRodClientConfigurationBuilder(server(i)).addContextInitializer(TestDomainSCI.INSTANCE).build();
       return new RemoteCacheManager(cfg);
    }
 
@@ -88,7 +88,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
    @Test
    public void testBatchSizes() {
       int maximumBatchSize = 120;
-      RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
+      RemoteCache<Integer, Account> cache = clients.get(0).getCache();
 
       populateCache(CACHE_SIZE, org.infinispan.client.hotrod.impl.iteration.Util::newAccount, cache);
       Set<Integer> expectedKeys = rangeAsSet(0, CACHE_SIZE);
@@ -153,7 +153,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
 
    @Test
    public void testFilterBySegment() {
-      RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
+      RemoteCache<Integer, Account> cache = clients.get(0).getCache();
       populateCache(CACHE_SIZE, org.infinispan.client.hotrod.impl.iteration.Util::newAccount, cache);
 
       CacheTopologyInfo cacheTopologyInfo = cache.getCacheTopologyInfo();
@@ -191,7 +191,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
 
    @Test
    public void testRetrieveMetadata() {
-      RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
+      RemoteCache<Integer, Account> cache = clients.get(0).getCache();
       cache.put(1, newAccount(1), 1, TimeUnit.DAYS);
       cache.put(2, newAccount(2), 2, TimeUnit.MINUTES, 30, TimeUnit.SECONDS);
       cache.put(3, newAccount(3));
@@ -271,7 +271,7 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
    }
 
    @ProtoSchema(
-         dependsOn = DslSCI.class,
+         dependsOn = TestDomainSCI.class,
          includeClasses = {
                ToHexConverterFactory.HexFilterConverter.class,
                SubstringFilterFactory.SubstringFilterConverter.class

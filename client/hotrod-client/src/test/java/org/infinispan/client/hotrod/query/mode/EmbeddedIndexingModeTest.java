@@ -14,9 +14,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.Search;
+import org.infinispan.protostream.sampledomain.Game;
 import org.infinispan.query.core.stats.QueryStatistics;
-import org.infinispan.query.model.Game;
+import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -111,7 +111,7 @@ public class EmbeddedIndexingModeTest extends SingleHotRodServerTest {
    }
 
    private static void autoIndexing(Cache<Object, Object> embCache, RemoteCache<Integer, Game> remoteCache) {
-      QueryStatistics queryStatistics = Search.getSearchStatistics(embCache).getQueryStatistics();
+      QueryStatistics queryStatistics = SearchStatistics.of(embCache).getQueryStatistics();
       queryStatistics.clear();
 
       // insert an entity using the embedded cache api
@@ -120,7 +120,7 @@ public class EmbeddedIndexingModeTest extends SingleHotRodServerTest {
       // insert another entity using the remote cache api
       remoteCache.put(2, new Game("Ultima IV: Quest of the Avatar", "It is the first in the \"Age of Enlightenment\" trilogy ..."));
 
-      Query<Game> query = embCache.query("from org.infinispan.query.model.Game where description : 'the' order by name");
+      Query<Game> query = embCache.query(String.format("from %s where description : 'the' order by name", Game.class.getName()));
       QueryResult<Game> result = query.execute();
 
       assertThat(result.count().exact()).isTrue();
@@ -131,7 +131,7 @@ public class EmbeddedIndexingModeTest extends SingleHotRodServerTest {
       // insert a third entity using the result get from the query
       remoteCache.put(3, result.list().get(0));
 
-      query = embCache.query("from org.infinispan.query.model.Game where description : 'the' order by name");
+      query = embCache.query(String.format("from %s where description : 'the' order by name", Game.class.getName()));
       result = query.execute();
 
       assertThat(result.count().value()).isEqualTo(3);
@@ -140,7 +140,7 @@ public class EmbeddedIndexingModeTest extends SingleHotRodServerTest {
    }
 
    private void manualIndexing(Cache<Object, Object> embCache, RemoteCache<Integer, Game> remoteCache) {
-      QueryStatistics queryStatistics = Search.getSearchStatistics(embCache).getQueryStatistics();
+      QueryStatistics queryStatistics = SearchStatistics.of(embCache).getQueryStatistics();
       queryStatistics.clear();
 
       // insert an entity using the embedded cache api
@@ -149,7 +149,7 @@ public class EmbeddedIndexingModeTest extends SingleHotRodServerTest {
       // insert another entity using the remote cache api
       remoteCache.put(2, new Game("Ultima IV: Quest of the Avatar", "It is the first in the \"Age of Enlightenment\" trilogy ..."));
 
-      Query<Game> query = embCache.query("from org.infinispan.query.model.Game where description : 'the' order by name");
+      Query<Game> query = embCache.query(String.format("from %s where description : 'the' order by name", Game.class.getName()));
       QueryResult<Game> result = query.execute();
 
       assertThat(result.count().value()).isZero();
@@ -165,7 +165,7 @@ public class EmbeddedIndexingModeTest extends SingleHotRodServerTest {
       // insert a third entity using the result get from the query
       remoteCache.put(3, result.list().get(0));
 
-      query = embCache.query("from org.infinispan.query.model.Game where description : 'the' order by name");
+      query = embCache.query(String.format("from %s where description : 'the' order by name",  Game.class.getName()));
       result = query.execute();
 
       assertThat(result.count().value()).isEqualTo(2);

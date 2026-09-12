@@ -9,7 +9,7 @@ import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.model.Game;
+import org.infinispan.protostream.sampledomain.Game;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.Test;
@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 @TestForIssue(jiraKey = "ISPN-15036")
 public class DistributedHitCountAccuracyTest extends MultipleCacheManagersTest {
 
-   private static final String QUERY_TEXT = "from org.infinispan.query.model.Game where description : 'game'";
+   private static final String QUERY_TEXT = "from " + Game.class.getName() + " where description : 'game'";
    private Cache<Integer, Game> node1;
 
    @Override
@@ -28,7 +28,7 @@ public class DistributedHitCountAccuracyTest extends MultipleCacheManagersTest {
             .clustering().hash().numOwners(2)
             .indexing().enable()
                .storage(LOCAL_HEAP)
-               .addIndexedEntity("org.infinispan.query.model.Game")
+               .addIndexedEntity(Game.class.getName())
             .query().hitCountAccuracy(10); // lower the default accuracy;
 
       createClusteredCaches(2, config);

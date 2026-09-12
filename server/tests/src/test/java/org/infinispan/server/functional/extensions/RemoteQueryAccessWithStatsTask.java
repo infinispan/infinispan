@@ -7,8 +7,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.protostream.sampledomain.User;
-import org.infinispan.query.Search;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.query.core.stats.SearchStatisticsSnapshot;
 import org.infinispan.tasks.ServerTask;
 import org.infinispan.tasks.TaskContext;
@@ -17,7 +16,7 @@ import org.infinispan.tasks.query.RemoteQueryAccess;
 public class RemoteQueryAccessWithStatsTask implements ServerTask<String> {
 
    private static final ThreadLocal<TaskContext> taskContext = new ThreadLocal<>();
-   private static final String QUERY = "FROM sample_bank_account.User WHERE name = :name order by id";
+   private static final String QUERY = "FROM sample_domain.User WHERE name = :name order by id";
    private static final String QUERY_PROJ_TEXT = "select id, name, surname " + QUERY;
 
    @Override
@@ -48,7 +47,7 @@ public class RemoteQueryAccessWithStatsTask implements ServerTask<String> {
       Json jsonProj = Json.array();
       proj.forEach(array -> jsonProj.asJsonList().add(Json.array(array)));
 
-      SearchStatisticsSnapshot statisticsSnapshot = Search.getClusteredSearchStatistics(cache)
+      SearchStatisticsSnapshot statisticsSnapshot = SearchStatisticsSnapshot.of(cache)
             .toCompletableFuture().get(10, TimeUnit.SECONDS);
       Json json = statisticsSnapshot.toJson();
 
