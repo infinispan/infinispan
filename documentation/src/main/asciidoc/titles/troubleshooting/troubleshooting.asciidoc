@@ -1,0 +1,26 @@
+//Directory attributes
+:stories: ../../stories
+:topics: ../topics
+:imagesdir: ../{topics}/images
+
+//Community doc attributes
+include::../{topics}/attributes/community-attributes.adoc[]
+
+//Community title attributes
+:toc2:
+:icons: font
+:toclevels: 3
+:numbered:
+:sectanchors:
+:stem: asciimath
+:context: troubleshooting
+
+//Title
+= Troubleshooting {brandname}
+
+Step-by-step runbooks for diagnosing and resolving common operational issues with {brandname}.
+Each runbook describes the symptoms you might observe, the diagnostic steps to confirm the root cause, and the actions to resolve the problem.
+These runbooks apply to both server and embedded deployments unless otherwise noted.
+
+//User stories
+include::stories.adoc[]
