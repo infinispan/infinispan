@@ -7,7 +7,7 @@ import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.model.Developer;
+import org.infinispan.protostream.sampledomain.Developer;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "org.infinispan.client.hotrod.query.projection.RemoteDistributedMetaProjectionTest")

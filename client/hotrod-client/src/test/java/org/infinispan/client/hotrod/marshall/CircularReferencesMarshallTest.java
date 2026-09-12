@@ -5,12 +5,12 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import java.util.Collections;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.company.FootballSchemaImpl;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.company.FootballTeam;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.company.Player;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.exception.ProtoStreamException;
+import org.infinispan.protostream.sampledomain.teams.FootballSchemaImpl;
+import org.infinispan.protostream.sampledomain.teams.FootballTeam;
+import org.infinispan.protostream.sampledomain.teams.Player;
 import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.Test;
 

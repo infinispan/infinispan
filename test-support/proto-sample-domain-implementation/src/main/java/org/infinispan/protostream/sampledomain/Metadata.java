@@ -7,24 +7,24 @@ import org.infinispan.protostream.annotations.ProtoField;
 
 @Indexed
 public class Metadata {
-    private final String key;
-    private final String value;
+   private final String key;
+   private final String value;
 
-    @ProtoFactory
-    public Metadata(String key, String value) {
-        this.key = key;
-        this.value = value;
-    }
+   @ProtoFactory
+   public Metadata(String key, String value) {
+      this.key = key;
+      this.value = value;
+   }
 
-    @Basic(projectable = true)
-    @ProtoField(1)
-    public String getKey() {
-        return key;
-    }
+   @Basic(projectable = true)
+   @ProtoField(1)
+   public String getKey() {
+      return key;
+   }
 
-    @Basic(projectable = true)
-    @ProtoField(2)
-    public String getValue() {
-        return value;
-    }
+   @Basic(projectable = true)
+   @ProtoField(2)
+   public String getValue() {
+      return value;
+   }
 }

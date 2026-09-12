@@ -3083,6 +3083,7 @@
                            <include>org.infinispan.api.mutiny</include>
                            <include>org.infinispan.api.protostream.builder</include>
                            <include>org.infinispan.api.sync</include>
+                           <include>org.infinispan.api.types</include>
                            <!-- infinispan-cachestore-jdbc -->
                            <include>org.infinispan.persistence.jdbc.configuration</include>
                            <!-- infinispan-cachestore-remote -->

@@ -30,13 +30,13 @@ public class JBMARRemoteNonIndexedQueryConditionsTest extends JBMARRemoteQueryCo
       Indexer.of(getEmbeddedCache());
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.query.objectfilter.ParsingException: ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.query.objectfilter.ParsingException: ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.protostream.sampledomain.bank.Transaction unless the property is indexed and analyzed.")
    @Override
    public void testFullTextTerm() {
       super.testFullTextTerm();
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.query.objectfilter.ParsingException: ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.query.dsl.embedded.testdomain.hsearch.TransactionHS unless the property is indexed and analyzed.")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.infinispan.query.objectfilter.ParsingException: ISPN028521: Full-text queries cannot be applied to property 'longDescription' in type org.infinispan.protostream.sampledomain.bank.Transaction unless the property is indexed and analyzed.")
    @Override
    public void testFullTextPhrase() {
       super.testFullTextPhrase();

@@ -18,10 +18,10 @@ Embedded caches::
 [source,java,options="nowrap",subs=attributes+]
 ----
 // Statistics for the local cluster member
-SearchStatistics statistics = Search.getSearchStatistics(cache);
+SearchStatistics statistics = SearchStatistics.of(cache);
 
 // Consolidated statistics for the whole cluster
-CompletionStage<SearchStatisticsSnapshot> statistics = Search.getClusteredSearchStatistics(cache)
+CompletionStage<SearchStatisticsSnapshot> statistics = SearchStatisticsSnapshot.of(cache)
 ----
 Remote caches::
 +

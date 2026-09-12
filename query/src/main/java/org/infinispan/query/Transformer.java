@@ -9,22 +9,8 @@ package org.infinispan.query;
  *
  * @author Manik Surtani
  * @since 4.0
+ * @deprecated use {@link org.infinispan.api.query.Transformer} instead
  */
-public interface Transformer {
-
-   /**
-    * Transforms a String into an Object.
-    *
-    * @param str cannot be null
-    * @return the Object that is encoded in the given String
-    */
-   Object fromString(String str);
-
-   /**
-    * Transforms an Object into a String.
-    *
-    * @param obj cannot be null
-    * @return the String representation of the object
-    */
-   String toString(Object obj);
+@Deprecated
+public interface Transformer extends org.infinispan.api.query.Transformer {
 }
