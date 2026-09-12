@@ -1,0 +1,2 @@
+com.fasterxml.jackson.core:jackson-databind:${version.jackson.databind}
+com.fasterxml.jackson.core:jackson-annotations:${version.jackson.annotations}

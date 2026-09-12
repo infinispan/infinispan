@@ -23,7 +23,7 @@ public class TranscoderMarshallerAdapter extends OneToManyTranscoder {
    private final Marshaller marshaller;
 
    public TranscoderMarshallerAdapter(Marshaller marshaller) {
-      super(marshaller.mediaType(), MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_UNKNOWN);
+      super(marshaller.mediaType(), MediaType.APPLICATION_OBJECT, MediaType.APPLICATION_UNKNOWN, MediaType.TEXT_PLAIN);
       this.marshaller = marshaller;
    }
 
@@ -34,10 +34,18 @@ public class TranscoderMarshallerAdapter extends OneToManyTranscoder {
             return content;
          }
          if (destinationType.match(marshaller.mediaType())) {
-            return contentType.equals(marshaller.mediaType()) ? content : marshaller.objectToByteBuffer(content);
+            if (contentType.equals(marshaller.mediaType())) return content;
+            if (contentType.match(MediaType.TEXT_PLAIN)) {
+               return marshaller.objectToByteBuffer(StandardConversions.convertTextToObject(content, contentType));
+            }
+            return marshaller.objectToByteBuffer(content);
          }
          if (destinationType.match(MediaType.APPLICATION_OBJECT)) {
             return marshaller.objectFromByteBuffer((byte[]) content);
+         }
+         if (destinationType.match(MediaType.TEXT_PLAIN)) {
+            Object obj = marshaller.objectFromByteBuffer((byte[]) content);
+            return obj.toString().getBytes(destinationType.getCharset());
          }
       } catch (InterruptedException | IOException | ClassNotFoundException e) {
          throw new CacheException(e);

@@ -173,11 +173,7 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
    }
 
    public void testBackupAndRestoreJson() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      EncodingConfigurationBuilder encoding = builder.encoding();
-      encoding.key().mediaType("application/x-java-object;type=java.lang.String");
-      encoding.value().mediaType(MediaType.APPLICATION_JSON_TYPE);
-      Configuration config = builder.build();
+      Configuration config = config(MediaType.TEXT_PLAIN_TYPE);
 
       String name = "testBackupAndRestoreJson";
       String cacheName = "cache";
@@ -186,7 +182,7 @@ public class BackupManagerImplTest extends AbstractInfinispanTest {
             (source, backupManager) -> {
                Cache<String, String> cache = source.administration().getOrCreateCache(cacheName, config);
                for (int i = 0; i < numEntries; i++)
-                  cache.put(""+i, String.format("{\"value\":\"%d\"}", i));
+                  cache.put("" + i, String.format("{\"value\":\"%d\"}", i));
                return backupManager.create(name, null);
             },
             (target, backupManager, backup) -> {

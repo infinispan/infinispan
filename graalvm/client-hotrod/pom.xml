@@ -165,6 +165,13 @@
                         <log4j.configurationFile>${project.basedir}/../../server/tests/target/test-classes/configuration/log4j2.xml</log4j.configurationFile>
                         <log4j2.contextSelector>org.apache.logging.log4j.core.selector.BasicContextSelector</log4j2.contextSelector>
                         <java.util.logging.manager>org.apache.logging.log4j.jul.LogManager</java.util.logging.manager>
+                        <!-- versions for dependencies resolved by the tests -->
+                        <version.bouncycastle>${version.bouncycastle}</version.bouncycastle>
+                        <version.jboss.marshalling>${version.jboss.marshalling}</version.jboss.marshalling>
+                        <version.nashorn>${version.nashorn}</version.nashorn>
+                        <version.ow2.asm>${version.ow2.asm}</version.ow2.asm>
+                        <version.rocksdb>${version.rocksdb}</version.rocksdb>
+                        <version.xstream>${version.xstream}</version.xstream>
                      </systemPropertyVariables>
                   </configuration>
                </plugin>
