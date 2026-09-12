@@ -78,12 +78,7 @@ jobs:
           registry: quay.io
 
       - name: Push to Quay.io
-        id: push-to-quay
-        uses: redhat-actions/push-to-registry@v3
-        with:
-          registry: quay.io/infinispan-test
-          image: server
-          tags: ${{ steps.build-image.outputs.tags }}
+        run: podman manifest push ${{ inputs.name }}:${{ inputs.tag }} quay.io/infinispan-test/server:${{ inputs.tag }} --all --tls-verify=true
 
       - name: Print Quay.io image url
-        run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
+        run: echo "Image pushed to quay.io/infinispan-test/server:${{ inputs.tag }}"
