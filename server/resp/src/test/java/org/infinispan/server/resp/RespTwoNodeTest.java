@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -41,9 +42,13 @@ import io.lettuce.core.ScoredValue;
 import io.lettuce.core.SortArgs;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.json.DefaultJsonParser;
 import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.json.JsonValue;
+import io.lettuce.core.output.ArrayOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 
@@ -537,6 +542,47 @@ public class RespTwoNodeTest extends BaseMultipleRespTest {
       redisCmd2.rpush(keyA, "val2");
       assertThat(redisCmd1.lrange(keyA, 0,-1)).containsExactlyInAnyOrder("val1","val2");
       assertThat(redisCmd2.lrange(keyA, 0,-1)).containsExactlyInAnyOrder("val1","val2");
+   }
+
+   public void testLMovem() {
+      RedisCommands<String, String> r0 = redisConnection1.sync();
+      RedisCommands<String, String> r1 = redisConnection2.sync();
+
+      String srcKey0 = getStringKeyForCache(respCache(0));
+      String dstKey1 = getStringKeyForCache(respCache(1));
+      String srcKey1 = getStringKeyForCache(respCache(1));
+      String dstKey0 = getStringKeyForCache(respCache(0));
+
+      r0.rpush(srcKey0, "a", "b", "c");
+
+      ProtocolKeyword lmovem = new ProtocolKeyword() {
+         private final byte[] bytes = "LMOVEM".getBytes(StandardCharsets.US_ASCII);
+         @Override
+         public byte[] getBytes() {
+            return bytes;
+         }
+
+         @Override
+         public String name() {
+            return "LMOVEM";
+         }
+      };
+      var codec = StringCodec.UTF8;
+
+      // Node 1 moves 2 elements from node 0 to node 1
+      List<Object> result = r1.dispatch(lmovem, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey(srcKey0).addKey(dstKey1)
+                  .add("LEFT").add("RIGHT").add("COUNT").add("2").add("OBO"));
+      assertThat(result).containsExactly("a", "b");
+      assertThat(r0.lrange(srcKey0, 0, -1)).containsExactly("c");
+      assertThat(r1.lrange(dstKey1, 0, -1)).containsExactly("a", "b");
+
+      // Node 0 moves remaining from node 0 to node 0 (local)
+      result = r0.dispatch(lmovem, new ArrayOutput<>(codec),
+            new CommandArgs<>(codec).addKey(srcKey0).addKey(dstKey0)
+                  .add("LEFT").add("LEFT").add("COUNT").add("5").add("BULK"));
+      assertThat(result).containsExactly("c");
+      assertThat(r0.lrange(dstKey0, 0, -1)).containsExactly("c");
    }
 
    @Test
