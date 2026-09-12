@@ -97,6 +97,7 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
       "gzip",
       "iproute",
       "lsof",
+      "crypto-policies-scripts",
       "tar",
       "vim-minimal"
    };
@@ -299,7 +300,10 @@ public class ContainerInfinispanServerDriver extends AbstractInfinispanServerDri
             if (!configuration.env().isEmpty()) {
                builder.env(configuration.env());
             }
-
+            if (configuration.properties().containsKey(TestSystemPropertyNames.INFINISPAN_TEST_SERVER_FIPS_MODE)) {
+               builder.user("root");
+               builder.run("update-crypto-policies", "--set", "FIPS");
+            }
             builder
                .user(IMAGE_USER)
                .withStatement(new RawStatement("COPY", "--chown=" + IMAGE_USER + ":" + IMAGE_USER + " test " + INFINISPAN_SERVER_HOME + "/server"))
