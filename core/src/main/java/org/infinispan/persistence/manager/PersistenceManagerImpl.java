@@ -46,6 +46,7 @@ import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -89,6 +90,7 @@ import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
 import org.infinispan.persistence.support.SingleSegmentPublisher;
 import org.infinispan.reactive.FlowableTimeoutAfterRequest;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.concurrent.NonBlockingManager;
@@ -114,6 +116,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Inject Configuration configuration;
    @Inject GlobalConfiguration globalConfiguration;
    @Inject ComponentRef<AdvancedCache<Object, Object>> cache;
+   @Inject InternalCacheRegistry internalCacheRegistry;
+   @ComponentName(KnownComponentNames.CACHE_NAME)
+   @Inject String cacheName;
    @Inject KeyPartitioner keyPartitioner;
    @Inject TimeService timeService;
    @Inject @ComponentName(KnownComponentNames.PERSISTENCE_MARSHALLER)
@@ -235,6 +240,16 @@ public class PersistenceManagerImpl implements PersistenceManager {
                      interval, MILLISECONDS, t -> !(t instanceof Error)));
       }
       return storeStartup.doOnComplete(() -> {
+         // Ignore internal caches for purge on startup since we can't change their behavior yet
+         if (!internalCacheRegistry.isInternalCache(cacheName)
+               && configuration.clustering().cacheMode() != CacheMode.LOCAL) {
+            for (StoreConfiguration storeConfiguration : storeConfigurations) {
+               if (!storeConfiguration.shared() && !storeConfiguration.purgeOnStartup()) {
+                  CONFIG.nonSharedStoreWithoutPurgeOnStartup(storeConfiguration.getClass().getSimpleName());
+               }
+            }
+         }
+
          boolean hasMaxIdle = configuration.expiration().maxIdle() > 0;
          boolean hasLifespan = configuration.expiration().lifespan() > 0;
 
