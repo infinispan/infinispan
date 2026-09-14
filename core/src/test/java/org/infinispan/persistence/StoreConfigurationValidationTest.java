@@ -1,10 +1,11 @@
 package org.infinispan.persistence;
 
+import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.stream.StreamSupport;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.layout.PatternLayout;
@@ -18,9 +19,13 @@ import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.registry.InternalCacheRegistry;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.testing.skip.StringLogAppender;
 import org.testng.annotations.Test;
@@ -32,7 +37,7 @@ import org.testng.annotations.Test;
  * @since 9.0
  */
 @Test(groups = "unit", testName = "persistence.StoreConfigurationValidationTest")
-public class StoreConfigurationValidationTest {
+public class StoreConfigurationValidationTest extends AbstractInfinispanTest {
 
    @Test(expectedExceptions = CacheConfigurationException.class,
          expectedExceptionsMessageRegExp = "ISPN000549:.*")
@@ -77,40 +82,83 @@ public class StoreConfigurationValidationTest {
             .validate();
    }
 
+   @Test(groups = "functional")
    public void testWarningNonSharedStoreWithoutPurge() {
-      Thread testThread = Thread.currentThread();
       StringLogAppender logAppender = new StringLogAppender("org.infinispan.CONFIG",
             Level.WARN,
-            t -> t == testThread,
+            t -> true,
             PatternLayout.newBuilder().setPattern("%m").build());
       logAppender.install();
       try {
-         ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+         ConfigurationBuilder builder = new ConfigurationBuilder();
          builder.clustering()
                .cacheMode(CacheMode.DIST_SYNC)
                .persistence()
                .addStore(DummyInMemoryStoreConfigurationBuilder.class);
-         builder.build();
-         assertEquals(1, logAppender.size());
-         assertTrue(logAppender.get(0).contains("ISPN000728"));
+         EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(builder);
+         try {
+            cm.getCache();
+            long warnCount = StreamSupport.stream(logAppender.spliterator(), false)
+                  .filter(s -> s.contains("ISPN000728")).count();
+            assertEquals(1, warnCount);
+         } finally {
+            killCacheManagers(cm);
+         }
       } finally {
          logAppender.uninstall();
       }
    }
 
+   @Test(groups = "functional")
    public void testNoWarningNonSharedStoreWithoutPurgeLocalCache() {
-      Thread testThread = Thread.currentThread();
       StringLogAppender logAppender = new StringLogAppender("org.infinispan.CONFIG",
             Level.WARN,
-            t -> t == testThread,
+            t -> true,
             PatternLayout.newBuilder().setPattern("%m").build());
       logAppender.install();
       try {
-         ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+         ConfigurationBuilder builder = new ConfigurationBuilder();
          builder.persistence()
                .addStore(DummyInMemoryStoreConfigurationBuilder.class);
-         builder.build();
-         assertEquals(0, logAppender.size());
+         EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder);
+         try {
+            cm.getCache();
+            long warnCount = StreamSupport.stream(logAppender.spliterator(), false)
+                  .filter(s -> s.contains("ISPN000728")).count();
+            assertEquals(0, warnCount);
+         } finally {
+            killCacheManagers(cm);
+         }
+      } finally {
+         logAppender.uninstall();
+      }
+   }
+
+   @Test(groups = "functional")
+   public void testNoWarningNonSharedStoreWithoutPurgeInternalCache() {
+      StringLogAppender logAppender = new StringLogAppender("org.infinispan.CONFIG",
+            Level.WARN,
+            t -> true,
+            PatternLayout.newBuilder().setPattern("%m").build());
+      logAppender.install();
+      try {
+         ConfigurationBuilder internalCacheConfig = new ConfigurationBuilder();
+         internalCacheConfig.clustering()
+               .cacheMode(CacheMode.DIST_SYNC)
+               .persistence()
+               .addStore(DummyInMemoryStoreConfigurationBuilder.class);
+         EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager();
+         try {
+            InternalCacheRegistry icr = TestingUtil.extractGlobalComponent(cm, InternalCacheRegistry.class);
+            icr.registerInternalCache("__internal_test__", internalCacheConfig.build(),
+                  EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE));
+            cm.getCache("__internal_test__");
+            long warnCount = StreamSupport.stream(logAppender.spliterator(), false)
+                  .filter(s -> s.contains("ISPN000728")).count();
+            assertEquals(0, warnCount);
+         } finally {
+            killCacheManagers(cm);
+         }
       } finally {
          logAppender.uninstall();
       }
