@@ -2,107 +2,98 @@ package org.infinispan.persistence.rocksdb;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 import org.infinispan.commons.util.Util;
-import org.rocksdb.ColumnFamilyDescriptor;
-import org.rocksdb.ColumnFamilyHandle;
-import org.rocksdb.ColumnFamilyOptions;
-import org.rocksdb.DBOptions;
-import org.rocksdb.FlushOptions;
-import org.rocksdb.RocksDB;
-import org.rocksdb.RocksDBException;
-import org.testng.annotations.AfterMethod;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.marshall.persistence.impl.MarshalledEntryUtil;
+import org.infinispan.persistence.rocksdb.configuration.RocksDBStoreConfigurationBuilder;
+import org.infinispan.persistence.support.EnsureNonBlockingStore;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestDataSCI;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
+import org.infinispan.testing.Testing;
+import org.infinispan.util.PersistenceMockUtil;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 /**
- * Verifies that flushing the metadata column family after writing metadata
- * allows RocksDB to reclaim WAL files.
+ * Verifies that {@link RocksDBStore} flushes the metadata column family after writing metadata,
+ * which allows RocksDB to reclaim WAL files.
  *
  * @see <a href="https://github.com/infinispan/infinispan/issues/17732">#17732</a>
  */
 @Test(groups = "unit", testName = "persistence.rocksdb.RocksDBWalTest")
-public class RocksDBWalTest {
+public class RocksDBWalTest extends AbstractInfinispanTest {
 
    static {
-      RocksDB.loadLibrary();
+      // Pre-load the native library before BlockHound is active so that the one-time
+      // System.loadLibrary() call inside RocksDB.loadLibrary() is not intercepted as
+      // a blocking operation during store start.
+      org.rocksdb.RocksDB.loadLibrary();
    }
 
-   private final Path tmpDir = Path.of(System.getProperty("java.io.tmpdir"), "rocksdb-wal-test-" + System.nanoTime());
+   private final String tmpDirectory = Testing.tmpDirectory(this.getClass());
 
-   @AfterMethod(alwaysRun = true)
-   void cleanup() {
-      Util.recursiveFileRemove(tmpDir);
+   @AfterClass(alwaysRun = true)
+   protected void clearTempDir() {
+      Util.recursiveFileRemove(tmpDirectory);
    }
 
-   public void testMetaCfFlushAllowsWalReclamation() throws RocksDBException, IOException {
-      long walCountWithFlush = runWithMetaCfFlush(true);
-      long walCountWithoutFlush = runWithMetaCfFlush(false);
+   /**
+    * Starts the store, writes enough data to force many data CF memtable flushes (so the meta-cf
+    * write is in an older WAL that the data CF has already flushed past), then checks that the
+    * number of live WAL files is small. Without the meta-cf flush in the writeMetadata method
+    * the meta-cf's unflushed sequence number pins the old WAL file and it cannot be reclaimed, so
+    * WAL files accumulate without bound.
+    */
+   public void testWriteMetadataFlushesMetaCfAllowingWalReclamation() throws Exception {
+      ConfigurationBuilder builder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
+      builder.persistence().addStore(RocksDBStoreConfigurationBuilder.class)
+            .segmented(false)
+            .location(tmpDirectory)
+            .expiredLocation(tmpDirectory)
+            // Tiny write buffer on the data CF forces many automatic memtable flushes while
+            // writing, so the WAL file containing the meta-cf write (from start()) is left far
+            // behind. Without flushing the meta-cf, that WAL stays pinned.
+            .addProperty(RocksDBStore.COLUMN_FAMILY_PROPERTY_NAME_WITH_SUFFIX + "write_buffer_size", "4096");
+      Configuration configuration = builder.build();
 
-      assertTrue(walCountWithFlush <= 2,
-            "With meta-cf flush, expected at most 2 WAL files but found " + walCountWithFlush);
-      assertTrue(walCountWithoutFlush > 2,
-            "Without meta-cf flush, expected WAL file accumulation but found only " + walCountWithoutFlush);
-   }
+      TestObjectStreamMarshaller marshaller = new TestObjectStreamMarshaller(TestDataSCI.INSTANCE);
+      PersistenceMockUtil.InvocationContextBuilder ctxBuilder =
+            new PersistenceMockUtil.InvocationContextBuilder(getClass(), configuration, marshaller);
 
-   private long runWithMetaCfFlush(boolean flushMetaCf) throws RocksDBException, IOException {
-      Path dbPath = tmpDir.resolve(flushMetaCf ? "with-flush" : "without-flush");
-      File dir = dbPath.toFile();
-      dir.mkdirs();
+      EnsureNonBlockingStore<Object, Object> store =
+            new EnsureNonBlockingStore<>(new RocksDBStore<>(), k -> Math.abs(k.hashCode() % 256));
+      store.startAndWait(ctxBuilder.build());
 
-      ColumnFamilyOptions dataCfOpts = new ColumnFamilyOptions()
-            .setWriteBufferSize(4096);
-      ColumnFamilyOptions metaCfOpts = new ColumnFamilyOptions();
-
-      List<ColumnFamilyDescriptor> descriptors = new ArrayList<>();
-      descriptors.add(new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY, dataCfOpts));
-      descriptors.add(new ColumnFamilyDescriptor("meta-cf".getBytes(), metaCfOpts));
-
-      List<ColumnFamilyHandle> handles = new ArrayList<>();
-      DBOptions dbOptions = new DBOptions()
-            .setCreateIfMissing(true)
-            .setCreateMissingColumnFamilies(true);
-
-      try (RocksDB db = RocksDB.open(dbOptions, dbPath.toString(), descriptors, handles)) {
-         ColumnFamilyHandle defaultCf = handles.get(0);
-         ColumnFamilyHandle metaCf = handles.get(1);
-
-         // Simulate writeMetadata()
-         db.put(metaCf, "metadata".getBytes(), "version-data".getBytes());
-
-         if (flushMetaCf) {
-            try (FlushOptions flushOptions = new FlushOptions().setWaitForFlush(true)) {
-               db.flush(flushOptions, metaCf);
-            }
-         }
-
-         // Write enough data to the default CF to trigger multiple memtable flushes
-         byte[] value = new byte[1024];
-         for (int i = 0; i < 500; i++) {
-            db.put(defaultCf, ("key-" + i).getBytes(), value);
-         }
-
-         // Flush the data CF to allow WAL cleanup
-         try (FlushOptions flushOptions = new FlushOptions().setWaitForFlush(true)) {
-            db.flush(flushOptions, defaultCf);
-         }
-
-         for (ColumnFamilyHandle h : handles) {
-            h.close();
-         }
+      // Write enough data to trigger many automatic data-CF memtable flushes.
+      // With a 4096-byte write buffer each ~1 KB entry nearly fills one memtable,
+      // so 500 writes yield ~500 flushes, leaving the meta-cf write far behind in WAL history.
+      for (int i = 0; i < 500; i++) {
+         InternalCacheEntry entry = TestInternalCacheEntryFactory.create("key-" + i, new byte[1024]);
+         store.write(MarshalledEntryUtil.create(entry, marshaller));
       }
-      dbOptions.close();
-      dataCfOpts.close();
-      metaCfOpts.close();
 
-      try (Stream<Path> files = Files.list(dbPath)) {
-         return files.filter(p -> p.toString().endsWith(".log")).count();
+      // Count WAL files while the store is still open (before close flushes everything).
+      // If meta-cf was flushed by writeMetadata(), RocksDB can reclaim WAL files as the
+      // data CF flushes them. If not, the early WAL containing the meta-cf write stays pinned.
+      Path dataDir = Paths.get(Testing.tmpDirectory(getClass()), "mock-cache", "data");
+      long walCount;
+      try (Stream<Path> files = Files.list(dataDir)) {
+         walCount = files.filter(p -> p.toString().endsWith(".log")).count();
       }
+
+      store.stopAndWait();
+      marshaller.stop();
+
+      assertTrue(walCount <= 2, "Expected at most 2 WAL files after writeMetadata() flush, but found " + walCount);
    }
 }
