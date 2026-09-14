@@ -201,6 +201,7 @@ import jakarta.transaction.TransactionManager;
  * <h2>Cost analysis</h2>
  *
  * <table>
+ *   <caption>Entry transfer cost by conflict scenario</caption>
  *   <tr><th>Scenario</th><th>Before</th><th>After</th></tr>
  *   <tr><td>No conflicts (common case)</td>
  *       <td>Fetch all entries from all segments</td>

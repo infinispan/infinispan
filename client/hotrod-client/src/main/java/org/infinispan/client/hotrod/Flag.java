@@ -69,7 +69,6 @@ public enum Flag implements org.infinispan.api.common.Flag {
     * This flag affects the following methods:
     * <ul>
     *    <li>{@link RemoteCache#get(Object)}</li>
-    *    <li>{@link RemoteCache#getVersioned(Object)}</li>
     *    <li>{@link RemoteCache#getWithMetadata(Object)}</li>
     * </ul>
     * <p>

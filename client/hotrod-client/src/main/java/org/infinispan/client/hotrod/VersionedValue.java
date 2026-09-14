@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod;
 
 /**
- * Besides the key and value, also contains an version. To be used in versioned operations, e.g. {@link
+ * Besides the key and value, also contains a version. To be used in versioned operations, e.g. {@link
  * org.infinispan.client.hotrod.RemoteCache#removeWithVersion(Object, long)}.
  *
  * @author Mircea.Markus@jboss.com

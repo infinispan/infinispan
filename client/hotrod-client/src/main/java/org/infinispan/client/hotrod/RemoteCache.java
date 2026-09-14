@@ -24,13 +24,13 @@ import org.reactivestreams.Publisher;
  * interface and documented as such.
   * <b>New operations</b>: besides the operations inherited from {@link BasicCache}, RemoteCache also adds new
  * operations to optimize/reduce network traffic: e.g. versioned put operation.
-  * <b>Concurrency</b>: implementors of this interface will support multi-threaded access, similar to the way {@link
+  * <b>Concurrency</b>: implementors of this interface will support multithreaded access, similar to the way {@link
  * BasicCache} supports it.
   * <b>Return values</b>: previously existing values for certain {@link java.util.Map} operations are not returned, null
  * is returned instead. E.g. {@link java.util.Map#put(Object, Object)} returns the previous value associated to the
  * supplied key. In case of RemoteCache, this returns null.
   * <b>Changing default behavior through {@link org.infinispan.client.hotrod.Flag}s</b>: it is possible to change the
- * default cache behaviour by using flags on an per invocation basis. E.g.
+ * default cache behaviour by using flags on a per-invocation basis. E.g.
  * <pre>
  *      RemoteCache cache = getRemoteCache();
  *      Object oldValue = cache.withFlags(Flag.FORCE_RETURN_VALUE).put(aKey, aValue);
@@ -56,9 +56,9 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    /**
     * Removes the given entry only if its version matches the supplied version. A typical use case looks like this:
     * <pre>
-    * VersionedEntry ve = remoteCache.getVersioned(key);
+    * MetadataValue&lt;V&gt; mv = remoteCache.getWithMetadata(key);
     * //some processing
-    * remoteCache.removeWithVersion(key, ve.getVersion();
+    * remoteCache.removeWithVersion(key, mv.getVersion();
     * </pre>
     * Lat call (removeWithVersion) will make sure that the entry will only be removed if it hasn't been changed in
     * between.
@@ -256,7 +256,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * Publish entries from the server matching a query.
     * <p>
     * Any subscriber that subscribes to the returned Publisher must not block. It is therefore recommended to offload
-    * any blocking or long running operations to a different thread and not use the invoking one. Failure to do so
+    * any blocking or long-running operations to a different thread and not use the invoking one. Failure to do so
     * may cause concurrent operations to stall.
     * @param filterQuery {@link Query}
     * @param segments    The segments to utilize. If null all segments will be utilized. An empty set will filter out all entries.
@@ -274,7 +274,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * Publish entries with metadata information
     * <p>
     * Any subscriber that subscribes to the returned Publisher must not block. It is therefore recommended to offload
-    * any blocking or long running operations to a different thread and not use the invoking one. Failure to do so
+    * any blocking or long-running operations to a different thread and not use the invoking one. Failure to do so
     * may cause concurrent operations to stall.
     * @param segments    The segments to utilize. If null all segments will be utilized. An empty set will filter out all entries.
     * @param batchSize   The number of entries transferred from the server at a time.
@@ -331,7 +331,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
 
    /**
     * This method is identical to {@link #keySet()} except that it will only return keys that map to the given segments.
-    * Note that these segments will be determined by the remote server. Thus you should be aware of how many segments
+    * Note that these segments will be determined by the remote server. Thus, you should be aware of how many segments
     * it has configured and hashing algorithm it is using. If the segments and hashing algorithm are not the same
     * this method may return unexpected keys.
     * @param segments the segments of keys to return - null means all available
@@ -347,7 +347,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * Due to this collection being backed by the remote cache, each invocation on this collection may require remote
     * invocations to retrieve or update the remote cache. The main benefit of this collection being backed by the remote
     * cache is that this collection internally does not require having to store any values locally in memory and allows
-    * for the user to iteratively retrieve values from the cache which is more memory conservative.
+    * for the user to iteratively retrieve values from the cache which is more memory-conservative.
     * <p>
     * If you do wish to create a copy of this collection (requires all entries in memory), the user may invoke
     * <code>values().stream().collect(Collectors.toList())</code> to copy the data locally. Then all operations on the
@@ -363,7 +363,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
 
    /**
     * This method is identical to {@link #values()} except that it will only return values that map to the given segments.
-    * Note that these segments will be determined by the remote server. Thus you should be aware of how many segments
+    * Note that these segments will be determined by the remote server. Thus, you should be aware of how many segments
     * it has configured and hashing algorithm it is using. If the segments and hashing algorithm are not the same
     * this method may return unexpected values.
     * @param segments the segments of values to return - null means all available
@@ -383,7 +383,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
     * <p>
     * The {@link CloseableIteratorSet#remove(Object)} method requires two round trips to the server to properly remove
     * an entry. This is because they first must retrieve the value and version
-    * to see if it matches and if it does remove it using it's version.
+    * to see if it matches and if it does remove it using its version.
     * <p>
     * If you do wish to create a copy of this set (requires all entries in memory), the user may invoke
     * <code>entrySet().stream().collect(Collectors.toSet())</code> to copy the data locally. Then all operations on the
@@ -399,7 +399,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
 
    /**
     * This method is identical to {@link #entrySet()} except that it will only return entries that map to the given segments.
-    * Note that these segments will be determined by the remote server. Thus you should be aware of how many segments
+    * Note that these segments will be determined by the remote server. Thus, you should be aware of how many segments
     * it has configured and hashing algorithm it is using. If the segments and hashing algorithm are not the same
     * this method may return unexpected entries.
     * @param segments the segments of entries to return - null means all available
@@ -511,7 +511,7 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    }
 
    /**
-    * Retrieves all of the entries for the provided keys.  A key will not be present in
+    * Retrieves all the entries for the provided keys.  A key will not be present in
     * the resulting map if the entry was not found in the cache.
     * @param keys The keys to find values for
     * @return The entries that were present for the given keys
