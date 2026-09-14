@@ -28,8 +28,6 @@ jobs:
 
       - name: Build Infinispan
         uses: ./.github/actions/build-infinispan
-        with:
-          gpg-private-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
 
       - name: Server version
         run: |
@@ -39,11 +37,12 @@ jobs:
       - name: Publish SNAPSHOT to Central
         run: |
           mvn -B -Drelease-mode=upstream -Pdistribution -Pcommunity-release \
-          -DskipTests deploy \
+          -DskipTests -Dgpg.signer=bc deploy \
           -Dinfinispan.brand.version="${SERVER_VERSION}" \
           -Dmaven.snapshots.repo.id=central \
           -Dmaven.snapshots.repo.url=https://central.sonatype.com/repository/maven-snapshots
         env:
           MAVEN_USERNAME: ${{ secrets.SONATYPE_CENTRAL_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.SONATYPE_CENTRAL_PASSWORD }}
+          MAVEN_GPG_KEY: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}
