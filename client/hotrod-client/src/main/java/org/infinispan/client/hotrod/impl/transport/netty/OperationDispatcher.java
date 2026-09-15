@@ -319,11 +319,32 @@ public class OperationDispatcher {
       return null;
    }
 
+   /**
+    * Deterministically compute a target server for the given cache name.
+    *
+    * <p>
+    * This method ensures that multiple independent operations on the same cache name will consistently route to the
+    * same server.
+    * </p>
+    *
+    * @param cacheName the cache name to route by
+    * @return the target server address for this cache name
+    */
+   public SocketAddress addressForCache(String cacheName) {
+      List<InetSocketAddress> topologyServers = getServers(cacheName);
+      if (topologyServers == null)
+         topologyServers = getClusterInfo().getInitialServers();
+      return topologyServers.get(Math.floorMod(cacheName.hashCode(), topologyServers.size()));
+   }
+
    public <E> CompletionStage<E> executeOnSingleAddress(HotRodOperation<E> operation, SocketAddress socketAddress) {
       // We do an empty check, as contains will perform hashCode on the socketAddress creating a String object
       if (!connectionFailedServers.isEmpty() && connectionFailedServers.contains(socketAddress)) {
-         log.tracef("Server %s is suspected, trying another for %s", socketAddress, operation);
-         socketAddress = getBalancer(operation.getCacheName()).nextServer(connectionFailedServers);
+         SocketAddress alternative = getBalancer(operation.getCacheName()).nextServer(connectionFailedServers);
+         if (!connectionFailedServers.contains(alternative)) {
+            log.tracef("Server %s is suspected, trying %s for %s", socketAddress, alternative, operation);
+            socketAddress = alternative;
+         }
       }
       log.tracef("Dispatching %s to %s", operation, socketAddress);
       long stamp = lock.tryOptimisticRead();
@@ -991,7 +1012,7 @@ public class OperationDispatcher {
       return getCacheInfo(cacheName).getTopologyId();
    }
 
-   public Collection<InetSocketAddress> getServers(String cacheName) {
+   public List<InetSocketAddress> getServers(String cacheName) {
       long stamp = lock.readLock();
       try {
          return topologyInfo.getServers(cacheName);

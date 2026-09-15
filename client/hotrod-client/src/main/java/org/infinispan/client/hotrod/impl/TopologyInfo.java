@@ -64,7 +64,10 @@ public final class TopologyInfo {
    }
 
    public List<InetSocketAddress> getServers(String cacheName) {
-      return getCacheInfo(nameOrDefault(cacheName)).getServers();
+      CacheInfo ci = getCacheInfo(nameOrDefault(cacheName));
+      if (ci == null)
+         return null;
+      return ci.getServers();
    }
 
    public Collection<InetSocketAddress> getAllServers() {
