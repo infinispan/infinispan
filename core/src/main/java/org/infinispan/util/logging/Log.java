@@ -2248,8 +2248,8 @@ public interface Log extends BasicLogger {
    @Description("The backup configuration for the cache specifies the fully qualified class of a custom failure policy implementation. This is valid with the custom failure policy only. Change the cache configuration to use 'failure-policy=\"CUSTOM\"' or remove the failure policy class.")
    CacheConfigurationException failurePolicyClassNotCompatibleWith(String remoteSite, BackupFailurePolicy policy);
 
-   @Message(value = "Initial state transfer timed out for cache %s on %s", id = 658)
-   TimeoutException initialStateTransferTimeout(String cacheName, Address localAddress);
+   @Message(value = "Initial state transfer timed out for cache %s on %s. Active sources: %s", id = 658)
+   TimeoutException initialStateTransferTimeout(String cacheName, Address localAddress, Collection<Address> sources);
 
    @Message(value = "Component %s failed to start", id = 659)
    CacheConfigurationException componentFailedToStart(String componentName, @Cause Throwable t);

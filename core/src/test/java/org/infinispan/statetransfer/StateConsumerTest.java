@@ -261,6 +261,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       log.debugf("Rebalancing. Added segments=%s, old segments=%s", newSegments, oldSegments);
 
       assertTrue(stateConsumer.hasActiveTransfers());
+      assertFalse(stateConsumer.getSources().isEmpty());
       assertEquals(flatRequestedSegments, newSegments);
       assertEquals(stateConsumer.inflightRequestCount(), newSegments.size());
    }

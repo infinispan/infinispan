@@ -241,7 +241,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             initialStateTransferComplete.get(configuration.clustering().stateTransfer().timeout(),
                                              TimeUnit.MILLISECONDS);
          } catch (TimeoutException e) {
-            throw log.initialStateTransferTimeout(cacheName, rpcManager.getAddress());
+            throw log.initialStateTransferTimeout(cacheName, rpcManager.getAddress(), stateConsumer.getSources());
          } catch (CacheException e) {
             throw e;
          } catch (Exception e) {
