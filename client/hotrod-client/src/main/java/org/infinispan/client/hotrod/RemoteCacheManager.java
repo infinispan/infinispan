@@ -7,6 +7,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
@@ -539,7 +540,7 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
          dispatcher.addCacheTopologyInfoIfAbsent(cacheName);
          HotRodOperation<PingResponse> op = managerOpFactory.newPingOperation(cacheName);
          // Verify if the cache exists on the server first
-         pingResponse = dispatcher.await(dispatcher.execute(op));
+         pingResponse = dispatcher.await(dispatcher.executeOnSingleAddress(op, dispatcher.addressForCache(cacheName)));
 
          // If ping not successful assume that the cache does not exist
          if (pingResponse.isCacheNotFound()) {
@@ -559,11 +560,12 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
                return null;
             }
             // Create and re-ping
+            SocketAddress targetAddress = dispatcher.addressForCache(cacheName);
             HotRodOperation<String> createCacheOp = managerOpFactory.executeOperation("@@cache@getorcreate", params);
-            dispatcher.await(dispatcher.execute(createCacheOp));
+            dispatcher.await(dispatcher.executeOnSingleAddress(createCacheOp, targetAddress));
             // Execute create and then execute ping after
             HotRodOperation<PingResponse> pingcacheOp = managerOpFactory.newPingOperation(cacheName);
-            pingResponse = dispatcher.await(dispatcher.execute(pingcacheOp));
+            pingResponse = dispatcher.await(dispatcher.executeOnSingleAddress(pingcacheOp, targetAddress));
          }
       } else {
          pingResponse = PingResponse.EMPTY;
