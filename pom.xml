@@ -211,7 +211,7 @@
       <versionx.org.aspectj.aspectjweaver>1.9.25.1</versionx.org.aspectj.aspectjweaver>
       <versionx.org.assertj.assertj-core>3.27.7</versionx.org.assertj.assertj-core>
       <versionx.org.apache.mina.mina>2.2.9</versionx.org.apache.mina.mina>
-      <versionx.org.codehaus.mojo.versions-maven-plugin>2.21.0</versionx.org.codehaus.mojo.versions-maven-plugin>
+      <versionx.org.codehaus.mojo.versions-maven-plugin>2.22.0</versionx.org.codehaus.mojo.versions-maven-plugin>
       <versionx.org.codehaus.mojo.xml-maven-plugin>1.2.2</versionx.org.codehaus.mojo.xml-maven-plugin>
       <versionx.org.javassist.javassist>3.29.1-GA</versionx.org.javassist.javassist>
       <versionx.org.jboss.arquillian.container.arquillian-weld-embedded>4.0.0.Final</versionx.org.jboss.arquillian.container.arquillian-weld-embedded>
