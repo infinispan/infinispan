@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -54,7 +55,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       params.put(CACHE_NAME, string(name));
       if (template != null) params.put(CACHE_TEMPLATE, string(template));
       if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@create", params)));
+      operationDispatcher.await(submitOperation(name, "@@cache@create", params));
       return cacheManager.getCache(name);
    }
 
@@ -69,7 +70,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       params.put(CACHE_NAME, string(name));
       if (configuration != null) params.put(CACHE_CONFIGURATION, string(configuration.toStringConfiguration(name)));
       if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@create", params)));
+      operationDispatcher.await(submitOperation(name, "@@cache@create", params));
       return cacheManager.getCache(name);
    }
 
@@ -79,7 +80,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       params.put(CACHE_NAME, string(name));
       if (template != null) params.put(CACHE_TEMPLATE, string(template));
       if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@getorcreate", params)));
+      operationDispatcher.await(submitOperation(name, "@@cache@getorcreate", params));
       return cacheManager.getCache(name);
    }
 
@@ -94,7 +95,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       params.put(CACHE_NAME, string(name));
       if (configuration != null) params.put(CACHE_CONFIGURATION, string(configuration.toStringConfiguration(name)));
       if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@getorcreate", params)));
+      operationDispatcher.await(submitOperation(name, "@@cache@getorcreate", params));
       return cacheManager.getCache(name);
    }
 
@@ -104,7 +105,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       Map<String, byte[]> params = new HashMap<>(2);
       params.put(CACHE_NAME, string(name));
       if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@remove", params)));
+      operationDispatcher.await(submitOperation(name, "@@cache@remove", params));
    }
 
    @Override
@@ -123,7 +124,8 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
 
    @Override
    public void reindexCache(String name) throws HotRodClientException {
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@reindex", Collections.singletonMap(CACHE_NAME, string(name)))));
+      Map<String, byte[]> params = Collections.singletonMap(CACHE_NAME, string(name));
+      operationDispatcher.await(submitOperation(name, "@@cache@reindex", params));
    }
 
    @Override
@@ -132,12 +134,13 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       HotRodOperation<String> op = new TimeoutHotRodOperation<>(
             operationsFactory.executeOperation("@@cache@reindex", Collections.singletonMap(CACHE_NAME, string(name))),
             timeoutMillis);
-      Util.await(operationDispatcher.execute(op), timeoutMillis);
+      Util.await(operationDispatcher.executeOnSingleAddress(op, operationDispatcher.addressForCache(name)), timeoutMillis);
    }
 
    @Override
    public void updateIndexSchema(String name) throws HotRodClientException {
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@updateindexschema", Collections.singletonMap(CACHE_NAME, string(name)))));
+      Map<String, byte[]> params = Collections.singletonMap(CACHE_NAME, string(name));
+      operationDispatcher.await(submitOperation(name, "@@cache@updateindexschema", params));
    }
 
    @Override
@@ -146,7 +149,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       HotRodOperation<String> op = new TimeoutHotRodOperation<>(
             operationsFactory.executeOperation("@@cache@updateindexschema", Collections.singletonMap(CACHE_NAME, string(name))),
             timeoutMillis);
-      Util.await(operationDispatcher.execute(op), timeoutMillis);
+      Util.await(operationDispatcher.executeOnSingleAddress(op, operationDispatcher.addressForCache(name)), timeoutMillis);
    }
 
    @Override
@@ -160,7 +163,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
          params.put(FLAGS, flags(flags));
       }
 
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@updateConfigurationAttribute", params)));
+      operationDispatcher.await(submitOperation(name, "@@cache@updateConfigurationAttribute", params));
    }
 
    @Override
@@ -203,5 +206,10 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
 
    protected static byte[] string(String s) {
       return s.getBytes(HotRodConstants.HOTROD_STRING_CHARSET);
+   }
+
+   private CompletionStage<String> submitOperation(String name, String operation, Map<String, byte[]> params) {
+      HotRodOperation<String> op = operationsFactory.executeOperation(operation, params);
+      return operationDispatcher.executeOnSingleAddress(op, operationDispatcher.addressForCache(name));
    }
 }
