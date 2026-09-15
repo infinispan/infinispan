@@ -5,7 +5,7 @@ ARG OPENJDK_PACKAGE=""
 # Packages needed by the builder
 ARG BUILDER_PACKAGES="file unzip wget"
 # Packages to be installed in the target image
-ARG MAIN_PACKAGES="coreutils-single curl grep gzip iproute libstdc++ lsof procps-ng sed tar vim-minimal ${OPENJDK_PACKAGE}"
+ARG MAIN_PACKAGES="coreutils-single crypto-policies-scripts curl grep gzip iproute libstdc++ lsof procps-ng sed tar vim-minimal ${OPENJDK_PACKAGE}"
 # Packages to be removed
 ARG REMOVE_PACKAGES="alsa-lib avahi-libs cups-filesystem cups-libs gawk p11-kit"
 # The path to the root filesystem in the builder
@@ -37,6 +37,8 @@ ARG BRAND_NAME=Infinispan
 ARG BRAND_VERSION
 # The base image
 ARG BASE_IMAGE=scratch
+# Set to FIPS to enable FIPS crypto policy
+ARG CRYPTO_POLICY=""
 
 # Builder
 FROM registry.access.redhat.com/ubi10 AS builder
@@ -52,6 +54,7 @@ ARG MAIN_PACKAGES
 ARG REMOVE_PACKAGES
 ARG TARGETARCH
 ARG WORKDIR
+ARG CRYPTO_POLICY
 
 # Add the JDK distribution
 ADD $JDK_DIST /tmp/jdk
@@ -69,6 +72,13 @@ RUN dnf ${DNF_FLAGS} install ${MAIN_PACKAGES}
 # Install the JDK distribution
 ADD src/main/docker/install-jdk.sh /tmp/
 RUN /tmp/install-jdk.sh ${NEWROOT} /tmp/jdk ${OPENJDK_PACKAGE}
+
+# Set the crypto policy if specified
+RUN if [ -n "${CRYPTO_POLICY}" ]; then \
+      mkdir -p ${NEWROOT}/proc/self && touch ${NEWROOT}/proc/self/mountinfo && \
+      chroot ${NEWROOT} update-crypto-policies --set ${CRYPTO_POLICY} && \
+      rm -rf ${NEWROOT}/proc/self; \
+    fi
 
 # Remove unwanted packages. Ignore errors
 RUN rpm -r ${NEWROOT} --erase --nodeps --allmatches ${REMOVE_PACKAGES} || true
