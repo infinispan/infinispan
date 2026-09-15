@@ -14,9 +14,9 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metrics.config.MicrometerMeterRegistryConfiguration;
+import org.infinispan.remoting.transport.jgroups.BaseJGroupsMetricManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsMetricsManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsMetricsManagerImpl;
-import org.infinispan.remoting.transport.jgroups.NoOpJGroupsMetricManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -63,7 +63,7 @@ public final class MetricsComponentFactory implements ComponentFactory, AutoInst
       } else if (componentName.equals(JGroupsMetricsManager.class.getName())) {
          if (createMetricRegistry(globalConfig.classLoader()) == NoMetricRegistry.NO_OP_INSTANCE) {
             // if no registry available in the classpath, do not try to register/collect metrics in there.
-            return NoOpJGroupsMetricManager.INSTANCE;
+            return new BaseJGroupsMetricManager();
          } else {
             return new JGroupsMetricsManagerImpl(globalConfig.metrics().histograms(), globalConfig.metrics().prefix());
          }
