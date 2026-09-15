@@ -1,4 +1,4 @@
-package org.infinispan.spring.remote.provider;
+package org.infinispan.spring.common.marshalling;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
