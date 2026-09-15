@@ -23,16 +23,17 @@ import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.dsl.embedded.testdomain.Account;
-import org.infinispan.query.dsl.embedded.testdomain.Address;
-import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
-import org.infinispan.query.dsl.embedded.testdomain.Transaction;
-import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.configuration.cache.TransactionMode;
+import org.infinispan.protostream.sampledomain.NotIndexed;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
+import org.infinispan.protostream.sampledomain.bank.Account;
+import org.infinispan.protostream.sampledomain.bank.Address;
+import org.infinispan.protostream.sampledomain.bank.Transaction;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.query.objectfilter.ParsingException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -47,15 +48,15 @@ import org.testng.annotations.Test;
  */
 @Test(groups = {"functional", "smoke"}, testName = "query.dsl.embedded.QueryConditionsTest")
 public class QueryConditionsTest extends AbstractQueryTest {
-   protected final String ACCOUNT_TYPE = getModelFactory().getAccountTypeName();
-   protected final String TRANSACTION_TYPE = getModelFactory().getTransactionTypeName();
-   protected final String USER_TYPE = getModelFactory().getUserTypeName();
+   protected final String ACCOUNT_TYPE = getAccountTypeName();
+   protected final String TRANSACTION_TYPE = getTransactionTypeName();
+   protected final String USER_TYPE = getUserTypeName();
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
-      cfg.transaction().transactionMode(TransactionMode.TRANSACTIONAL).indexing().enable().storage(LOCAL_HEAP).addIndexedEntity(getModelFactory().getUserImplClass()).addIndexedEntity(getModelFactory().getAccountImplClass()).addIndexedEntity(getModelFactory().getTransactionImplClass());
-      createClusteredCaches(1, DslSCI.INSTANCE, cfg);
+      cfg.transaction().mode(TransactionMode.NON_XA).indexing().enable().storage(LOCAL_HEAP).addIndexedEntity(User.class).addIndexedEntity(Account.class).addIndexedEntity(Transaction.class);
+      createClusteredCaches(1, TestDomainSCI.INSTANCE, cfg);
    }
 
    protected boolean testNullCollections() {
@@ -65,7 +66,7 @@ public class QueryConditionsTest extends AbstractQueryTest {
    @BeforeClass(alwaysRun = true)
    protected void populateCache() throws Exception {
       // create the test objects
-      User user1 = getModelFactory().makeUser();
+      User user1 = makeUser();
       user1.setId(1);
       user1.setName("John");
       user1.setSurname("Doe");
@@ -76,13 +77,13 @@ public class QueryConditionsTest extends AbstractQueryTest {
       user1.setCreationDate(Instant.parse("2011-12-03T10:15:30Z"));
       user1.setPasswordExpirationDate(Instant.parse("2011-12-03T10:15:30Z"));
 
-      Address address1 = getModelFactory().makeAddress();
+      Address address1 = makeAddress();
       address1.setStreet("Main Street");
       address1.setPostCode("X1234");
       address1.setNumber(156);
       user1.setAddresses(Collections.singletonList(address1));
 
-      User user2 = getModelFactory().makeUser();
+      User user2 = makeUser();
       user2.setId(2);
       user2.setName("Spider");
       user2.setSurname("Man");
@@ -92,17 +93,17 @@ public class QueryConditionsTest extends AbstractQueryTest {
       user2.setCreationDate(Instant.parse("2011-12-03T10:15:30Z"));
       user2.setPasswordExpirationDate(Instant.parse("2011-12-03T10:15:30Z"));
 
-      Address address2 = getModelFactory().makeAddress();
+      Address address2 = makeAddress();
       address2.setStreet("Old Street");
       address2.setPostCode("Y12");
       address2.setNumber(-12);
-      Address address3 = getModelFactory().makeAddress();
+      Address address3 = makeAddress();
       address3.setStreet("Bond Street");
       address3.setPostCode("ZZ");
       address3.setNumber(312);
       user2.setAddresses(Arrays.asList(address2, address3));
 
-      User user3 = getModelFactory().makeUser();
+      User user3 = makeUser();
       user3.setId(3);
       user3.setName("Spider");
       user3.setSurname("Woman");
@@ -115,21 +116,21 @@ public class QueryConditionsTest extends AbstractQueryTest {
          user3.setAddresses(new ArrayList<>());
       }
 
-      Account account1 = getModelFactory().makeAccount();
+      Account account1 = makeAccount();
       account1.setId(1);
       account1.setDescription("John Doe's first bank account");
       account1.setCreationDate(makeDate("2013-01-03"));
 
-      Account account2 = getModelFactory().makeAccount();
+      Account account2 = makeAccount();
       account2.setId(2);
       account2.setDescription("John Doe's second bank account");
       account2.setCreationDate(makeDate("2013-01-04"));
 
-      Account account3 = getModelFactory().makeAccount();
+      Account account3 = makeAccount();
       account3.setId(3);
       account3.setCreationDate(makeDate("2013-01-20"));
 
-      Transaction transaction0 = getModelFactory().makeTransaction();
+      Transaction transaction0 = makeTransaction();
       transaction0.setId(0);
       transaction0.setDescription("Birthday present");
       transaction0.setAccountId(1);
@@ -138,7 +139,7 @@ public class QueryConditionsTest extends AbstractQueryTest {
       transaction0.setDebit(false);
       transaction0.setValid(true);
 
-      Transaction transaction1 = getModelFactory().makeTransaction();
+      Transaction transaction1 = makeTransaction();
       transaction1.setId(1);
       transaction1.setDescription("Feb. rent payment");
       transaction1.setLongDescription("Feb. rent payment");
@@ -148,7 +149,7 @@ public class QueryConditionsTest extends AbstractQueryTest {
       transaction1.setDebit(true);
       transaction1.setValid(true);
 
-      Transaction transaction2 = getModelFactory().makeTransaction();
+      Transaction transaction2 = makeTransaction();
       transaction2.setId(2);
       transaction2.setDescription("Starbucks");
       transaction2.setLongDescription("Starbucks");
@@ -158,7 +159,7 @@ public class QueryConditionsTest extends AbstractQueryTest {
       transaction2.setDebit(true);
       transaction2.setValid(true);
 
-      Transaction transaction3 = getModelFactory().makeTransaction();
+      Transaction transaction3 = makeTransaction();
       transaction3.setId(3);
       transaction3.setDescription("Hotel");
       transaction3.setAccountId(2);
@@ -167,7 +168,7 @@ public class QueryConditionsTest extends AbstractQueryTest {
       transaction3.setDebit(true);
       transaction3.setValid(true);
 
-      Transaction transaction4 = getModelFactory().makeTransaction();
+      Transaction transaction4 = makeTransaction();
       transaction4.setId(4);
       transaction4.setDescription("Last january");
       transaction4.setLongDescription("Last january");
@@ -177,7 +178,7 @@ public class QueryConditionsTest extends AbstractQueryTest {
       transaction4.setDebit(true);
       transaction4.setValid(true);
 
-      Transaction transaction5 = getModelFactory().makeTransaction();
+      Transaction transaction5 = makeTransaction();
       transaction5.setId(5);
       transaction5.setDescription("-Popcorn");
       transaction5.setLongDescription("-Popcorn");
@@ -203,7 +204,7 @@ public class QueryConditionsTest extends AbstractQueryTest {
       getCacheForWrite().put("transaction_" + transaction5.getId(), transaction5);
 
       for (int i = 0; i < 50; i++) {
-         Transaction transaction = getModelFactory().makeTransaction();
+         Transaction transaction = makeTransaction();
          transaction.setId(50 + i);
          transaction.setDescription("Expensive shoes " + i);
          transaction.setLongDescription("Expensive shoes " + i);
@@ -225,10 +226,10 @@ public class QueryConditionsTest extends AbstractQueryTest {
    public void testIndexPresence() {
       SearchMapping searchMapping = TestingUtil.extractComponent((Cache<?, ?>) getCacheForQuery(), SearchMapping.class);
 
-      verifyClassIsIndexed(searchMapping, getModelFactory().getUserImplClass());
-      verifyClassIsIndexed(searchMapping, getModelFactory().getAccountImplClass());
-      verifyClassIsIndexed(searchMapping, getModelFactory().getTransactionImplClass());
-      verifyClassIsNotIndexed(searchMapping, getModelFactory().getAddressImplClass());
+      verifyClassIsIndexed(searchMapping, User.class);
+      verifyClassIsIndexed(searchMapping, Account.class);
+      verifyClassIsIndexed(searchMapping, Transaction.class);
+      verifyClassIsNotIndexed(searchMapping, Address.class);
    }
 
    private void verifyClassIsNotIndexed(SearchMapping searchMapping, Class<?> type) {

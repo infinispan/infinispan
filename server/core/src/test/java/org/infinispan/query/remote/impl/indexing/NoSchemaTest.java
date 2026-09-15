@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -25,7 +26,7 @@ public class NoSchemaTest extends MultipleCacheManagersTest {
       builder.clustering().hash().numSegments(20).numOwners(1);
       builder.indexing().enable()
             .storage(LOCAL_HEAP)
-            .addIndexedEntity("sample_bank_account.User");
+            .addIndexedEntity(User.ENTITY_NAME);
       builder.encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM);
       return builder;
    }

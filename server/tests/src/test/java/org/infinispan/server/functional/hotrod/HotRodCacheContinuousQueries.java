@@ -1,6 +1,5 @@
 package org.infinispan.server.functional.hotrod;
 
-import static org.infinispan.server.functional.hotrod.HotRodCacheQueries.ENTITY_USER;
 import static org.infinispan.server.test.core.Common.createQueryableCache;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -15,7 +14,7 @@ import org.infinispan.commons.api.query.ContinuousQuery;
 import org.infinispan.commons.api.query.ContinuousQueryListener;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.protostream.sampledomain.TestDomainSCIImpl;
-import org.infinispan.protostream.sampledomain.User;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.jupiter.InfinispanServer;
@@ -34,14 +33,14 @@ public class HotRodCacheContinuousQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testQueries(boolean indexed) {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCIImpl.INSTANCE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCIImpl.INSTANCE, User.ENTITY_NAME);
 
       remoteCache.put(1, createUser(1, 25));
       remoteCache.put(2, createUser(2, 25));
       remoteCache.put(3, createUser(3, 20));
       assertEquals(3, remoteCache.size());
 
-      Query<User> query = remoteCache.query("FROM sample_bank_account.User WHERE name = 'user1' AND age > 20");
+      Query<User> query = remoteCache.query("FROM sample_domain.User WHERE name = 'user1' AND age > 20");
 
       final BlockingQueue<Integer> joined = new LinkedBlockingQueue<>();
       final BlockingQueue<Integer> updated = new LinkedBlockingQueue<>();

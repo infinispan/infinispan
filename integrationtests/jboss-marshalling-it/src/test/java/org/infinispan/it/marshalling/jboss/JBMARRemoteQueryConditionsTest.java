@@ -17,6 +17,10 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
+import org.infinispan.protostream.sampledomain.bank.Account;
+import org.infinispan.protostream.sampledomain.bank.Address;
+import org.infinispan.protostream.sampledomain.bank.Transaction;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.query.dsl.embedded.QueryConditionsTest;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -81,9 +85,9 @@ public class JBMARRemoteQueryConditionsTest extends QueryConditionsTest {
       builder.encoding().value().mediaType(MediaType.APPLICATION_OBJECT_TYPE);
       builder.indexing().enable()
             .storage(LOCAL_HEAP)
-            .addIndexedEntity(getModelFactory().getUserImplClass())
-            .addIndexedEntity(getModelFactory().getAccountImplClass())
-            .addIndexedEntity(getModelFactory().getTransactionImplClass());
+            .addIndexedEntity(User.class)
+            .addIndexedEntity(Account.class)
+            .addIndexedEntity(Transaction.class);
       return builder;
    }
 
@@ -99,10 +103,10 @@ public class JBMARRemoteQueryConditionsTest extends QueryConditionsTest {
    public void testIndexPresence() {
       SearchMapping searchMapping = TestingUtil.extractComponent(cache, SearchMapping.class);
 
-      verifyClassIsIndexed(searchMapping, getModelFactory().getUserImplClass());
-      verifyClassIsIndexed(searchMapping, getModelFactory().getAccountImplClass());
-      verifyClassIsIndexed(searchMapping, getModelFactory().getTransactionImplClass());
-      verifyClassIsNotIndexed(searchMapping, getModelFactory().getAddressImplClass());
+      verifyClassIsIndexed(searchMapping, User.class);
+      verifyClassIsIndexed(searchMapping, Account.class);
+      verifyClassIsIndexed(searchMapping, Transaction.class);
+      verifyClassIsNotIndexed(searchMapping, Address.class);
    }
 
    private void verifyClassIsNotIndexed(SearchMapping searchMapping, Class<?> type) {

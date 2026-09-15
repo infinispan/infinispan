@@ -26,8 +26,8 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.query.dsl.embedded.DslSCI;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
+import org.infinispan.protostream.sampledomain.bank.Account;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -42,13 +42,13 @@ public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager(DslSCI.INSTANCE, hotRodCacheConfiguration());
+      return TestCacheManagerFactory.createCacheManager(TestDomainSCI.INSTANCE, hotRodCacheConfiguration());
    }
 
    @Override
    protected RemoteCacheManager getRemoteCacheManager() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
-      builder.addServer().host("127.0.0.1").port(hotrodServer.getPort()).addContextInitializer(DslSCI.INSTANCE);
+      builder.addServer().host("127.0.0.1").port(hotrodServer.getPort()).addContextInitializer(TestDomainSCI.INSTANCE);
       return new RemoteCacheManager(builder.build());
    }
 
@@ -134,7 +134,7 @@ public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest {
    }
 
    public void testEntities() {
-      RemoteCache<Integer, AccountHS> cache = remoteCacheManager.getCache();
+      RemoteCache<Integer, Account> cache = remoteCacheManager.getCache();
 
       int cacheSize = 50;
       populateCache(cacheSize, Util::newAccount, cache);
@@ -149,7 +149,7 @@ public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest {
 
       assertEquals(cacheSize, entries.size());
 
-      Set<AccountHS> values = extractValues(entries);
+      Set<Account> values = extractValues(entries);
 
       assertForAll(values, v -> v != null);
       assertForAll(values, v -> v.getId() < cacheSize);
@@ -157,9 +157,9 @@ public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest {
 
    public void testFilterConverter() {
       hotrodServer.addKeyValueFilterConverterFactory(FILTER_CONVERTER_FACTORY_NAME, () ->
-            new AbstractKeyValueFilterConverter<Integer, AccountHS, String>() {
+            new AbstractKeyValueFilterConverter<Integer, Account, String>() {
                @Override
-               public String filterAndConvert(Integer key, AccountHS value, Metadata metadata) {
+               public String filterAndConvert(Integer key, Account value, Metadata metadata) {
                   if (!(key % 2 == 0)) {
                      return null;
                   }
@@ -167,7 +167,7 @@ public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest {
                }
             });
 
-      RemoteCache<Integer, AccountHS> cache = remoteCacheManager.getCache();
+      RemoteCache<Integer, Account> cache = remoteCacheManager.getCache();
 
       int cacheSize = 50;
       populateCache(cacheSize, Util::newAccount, cache);

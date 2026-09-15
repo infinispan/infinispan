@@ -13,9 +13,9 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.Search;
+import org.infinispan.protostream.sampledomain.Item;
 import org.infinispan.query.core.stats.QueryStatistics;
-import org.infinispan.query.model.Item;
+import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -106,7 +106,7 @@ public class PojoKeyEntriesRemoteQueryTest extends SingleHotRodServerTest {
    }
 
    private void expectedIndexedQueries(int expectedIndexedQueries) {
-      QueryStatistics queryStatistics = Search.getSearchStatistics(cache).getQueryStatistics();
+      QueryStatistics queryStatistics = SearchStatistics.of(cache).getQueryStatistics();
       assertThat(queryStatistics.getLocalIndexedQueryCount()).isEqualTo(expectedIndexedQueries);
       assertThat(queryStatistics.getHybridQueryCount()).isZero();
       assertThat(queryStatistics.getNonIndexedQueryCount()).isZero();

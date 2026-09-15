@@ -16,7 +16,7 @@ import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
-import org.infinispan.protostream.sampledomain.User;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.compatibility.Compatibility;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfiguration;
@@ -40,7 +40,7 @@ public class RollingUpgradeIndexingIT {
                </persistence>
                <indexing startup-mode="REINDEX">
                   <indexed-entities>
-                     <indexed-entity>sample_bank_account.User</indexed-entity>
+                     <indexed-entity>sample_domain.User</indexed-entity>
                   </indexed-entities>
                </indexing>
             </distributed-cache>
@@ -102,7 +102,7 @@ public class RollingUpgradeIndexingIT {
             () -> {
                RestResponse stats = sync(rest.cache(cacheName).searchStats());
                System.out.println(stats.body());
-               return stats.body().contains("types\":{\"sample_bank_account.User\":{\"count\":1");
+               return stats.body().contains("types\":{\"sample_domain.User\":{\"count\":1");
             },
             ruh.getFromDriver().getTimeout(), 1, TimeUnit.SECONDS);
       RemoteCache<String, User> cache = ruh.getRemoteCacheManager().getCache(cacheName);

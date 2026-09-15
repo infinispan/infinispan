@@ -6,6 +6,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.testng.annotations.Test;
 
 /**
@@ -26,7 +27,7 @@ public class MultiHotRodServerIspnDirQueryTest extends MultiHotRodServerQueryTes
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
       builder.indexing().enable()
             .storage(LOCAL_HEAP)
-            .addIndexedEntity("sample_bank_account.User");
+            .addIndexedEntity(User.ENTITY_NAME);
 
       for (EmbeddedCacheManager cm : cacheManagers) {
          cm.defineConfiguration(TEST_CACHE, builder.build());

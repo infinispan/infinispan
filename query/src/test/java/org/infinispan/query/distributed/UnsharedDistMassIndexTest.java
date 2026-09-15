@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
-import org.infinispan.query.queries.faceting.Car;
+import org.infinispan.protostream.sampledomain.Car;
 import org.testng.annotations.Test;
 
 /**
@@ -24,7 +24,7 @@ public class UnsharedDistMassIndexTest extends DistributedMassIndexingTest {
    @Override
    protected void verifyFindsCar(Cache cache, int expectedCount, String carMake) {
       String q = String.format("FROM %s WHERE make:'%s'", Car.class.getName(), carMake);
-      Query cacheQuery = cache.query(q);
+      Query<Car> cacheQuery = cache.query(q);
       assertEquals(expectedCount, cacheQuery.execute().list().size());
    }
 }

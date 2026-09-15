@@ -50,6 +50,7 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.protostream.schema.Schema;
+import org.infinispan.protostream.types.java.CommonTypesSchema;
 import org.infinispan.server.persistence.PersistenceIT;
 import org.infinispan.server.test.api.HotRodClientDriver;
 import org.infinispan.server.test.api.TestClientDriver;
@@ -252,11 +253,12 @@ public class Common {
    public static <K, V> RemoteCache<K, V> createQueryableCache(TestClientDriver server, boolean indexed, Schema protoschema, String entityName) {
       ConfigurationBuilder config = new ConfigurationBuilder();
       ProtoStreamMarshaller protoStreamMarshaller = new ProtoStreamMarshaller();
-      if (protoschema != null) {
-          FileDescriptorSource descriptor = FileDescriptorSource.fromString(protoschema.getName(), protoschema.getContent());
-          protoStreamMarshaller.getSerializationContext().registerProtoFiles(descriptor);
-          config.marshaller(protoStreamMarshaller);
-      }
+       if (protoschema != null) {
+           protoStreamMarshaller.register(new CommonTypesSchema());
+           FileDescriptorSource descriptor = FileDescriptorSource.fromString(protoschema.getName(), protoschema.getContent());
+           protoStreamMarshaller.getSerializationContext().registerProtoFiles(descriptor);
+           config.marshaller(protoStreamMarshaller);
+       }
 
       config.addContextInitializer(TestDomainSCI.INSTANCE);
       HotRodClientDriver<?> hotRodTestClientDriver = server.hotrod().withClientConfiguration(config);
