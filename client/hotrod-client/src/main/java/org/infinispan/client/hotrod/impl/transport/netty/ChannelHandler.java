@@ -127,6 +127,14 @@ public class ChannelHandler {
          if (watcher != null) {
             watcher.stop();
          }
+         // Close all operation channels first to prevent reconnection attempts
+         // during event loop shutdown. Without this, a channel closed by the
+         // server can trigger handleChannelFailure -> reconnect -> Bootstrap.connect
+         // which spawns a new event loop thread that outlives the shutdown.
+         for (OperationChannel oc : channels.values()) {
+            oc.close();
+         }
+         channels.clear();
          // We only want to shutdown the EventLoop when using the default TransportFactory. This way users can control
          // the lifecycle of the EventLoop themselves.
          if (configuration.transportFactory() == TransportFactory.DEFAULT) {
