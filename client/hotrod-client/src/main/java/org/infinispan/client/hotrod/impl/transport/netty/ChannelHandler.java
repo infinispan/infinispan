@@ -85,7 +85,7 @@ public class ChannelHandler {
          this.watcher = null;
       } else if (ssl.sslContext() == null) {
          this.sslContext = initSslContext(ssl);
-         this.watcher = new FileWatcher();
+         this.watcher = new FileWatcher().start();
       } else {
          this.sslContext = new JdkSslContext(ssl.sslContext(), true, null, IdentityCipherSuiteFilter.INSTANCE,
                null, ClientAuth.NONE, null, false);

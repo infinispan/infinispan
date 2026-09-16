@@ -371,51 +371,54 @@ public class CoreConfigurationSerializer extends AbstractStoreSerializer impleme
    }
 
    private void writeSecurity(ConfigurationWriter writer, GlobalConfiguration configuration) {
-      GlobalAuthorizationConfiguration authorization = configuration.security().authorization();
-      AttributeSet attributes = authorization.attributes();
-      if (attributes.isModified() && authorization.enabled()) {
+      if (configuration.security().isModified()) {
          writer.writeStartElement(Element.SECURITY);
-         writer.writeStartElement(Element.AUTHORIZATION);
-         attributes.write(writer, GlobalAuthorizationConfiguration.GROUP_ONLY_MAPPING, Attribute.GROUP_ONLY_MAPPING);
-         attributes.write(writer, GlobalAuthorizationConfiguration.AUDIT_LOGGER, Attribute.AUDIT_LOGGER);
-         PrincipalRoleMapper mapper = authorization.principalRoleMapper();
-         if (mapper != null) {
-            if (mapper instanceof IdentityRoleMapper) {
-               writer.writeEmptyElement(Element.IDENTITY_ROLE_MAPPER);
-            } else if (mapper instanceof CommonNameRoleMapper) {
-               writer.writeEmptyElement(Element.COMMON_NAME_ROLE_MAPPER);
-            } else if (mapper instanceof ClusterRoleMapper clusterRoleMapper) {
-               NameRewriter rewriter = clusterRoleMapper.nameRewriter();
-               if (rewriter instanceof RegexNameRewriter regexNameRewriter) {
-                  writer.writeStartElement(Element.CLUSTER_ROLE_MAPPER);
-                  writer.writeStartElement(Element.NAME_REWRITER);
-                  writer.writeStartElement(Element.REGEX_PRINCIPAL_TRANSFORMER);
-                  writer.writeAttribute(Attribute.PATTERN, regexNameRewriter.getPattern().pattern());
-                  writer.writeAttribute(Attribute.REPLACEMENT, regexNameRewriter.getReplacement());
-                  writer.writeAttribute(Attribute.REPLACE_ALL, regexNameRewriter.isReplaceAll());
-                  writer.writeEndElement();
-                  writer.writeEndElement();
-                  writer.writeEndElement();
+         configuration.security().attributes().write(writer);
+         GlobalAuthorizationConfiguration authorization = configuration.security().authorization();
+         AttributeSet attributes = authorization.attributes();
+         if (attributes.isModified() && authorization.enabled()) {
+            writer.writeStartElement(Element.AUTHORIZATION);
+            attributes.write(writer, GlobalAuthorizationConfiguration.GROUP_ONLY_MAPPING, Attribute.GROUP_ONLY_MAPPING);
+            attributes.write(writer, GlobalAuthorizationConfiguration.AUDIT_LOGGER, Attribute.AUDIT_LOGGER);
+            PrincipalRoleMapper mapper = authorization.principalRoleMapper();
+            if (mapper != null) {
+               if (mapper instanceof IdentityRoleMapper) {
+                  writer.writeEmptyElement(Element.IDENTITY_ROLE_MAPPER);
+               } else if (mapper instanceof CommonNameRoleMapper) {
+                  writer.writeEmptyElement(Element.COMMON_NAME_ROLE_MAPPER);
+               } else if (mapper instanceof ClusterRoleMapper clusterRoleMapper) {
+                  NameRewriter rewriter = clusterRoleMapper.nameRewriter();
+                  if (rewriter instanceof RegexNameRewriter regexNameRewriter) {
+                     writer.writeStartElement(Element.CLUSTER_ROLE_MAPPER);
+                     writer.writeStartElement(Element.NAME_REWRITER);
+                     writer.writeStartElement(Element.REGEX_PRINCIPAL_TRANSFORMER);
+                     writer.writeAttribute(Attribute.PATTERN, regexNameRewriter.getPattern().pattern());
+                     writer.writeAttribute(Attribute.REPLACEMENT, regexNameRewriter.getReplacement());
+                     writer.writeAttribute(Attribute.REPLACE_ALL, regexNameRewriter.isReplaceAll());
+                     writer.writeEndElement();
+                     writer.writeEndElement();
+                     writer.writeEndElement();
+                  } else {
+                     writer.writeEmptyElement(Element.CLUSTER_ROLE_MAPPER);
+                  }
                } else {
-                  writer.writeEmptyElement(Element.CLUSTER_ROLE_MAPPER);
+                  writer.writeStartElement(Element.CUSTOM_ROLE_MAPPER);
+                  writer.writeAttribute(Attribute.CLASS, mapper.getClass().getName());
+                  writer.writeEndElement();
                }
-            } else {
-               writer.writeStartElement(Element.CUSTOM_ROLE_MAPPER);
-               writer.writeAttribute(Attribute.CLASS, mapper.getClass().getName());
-               writer.writeEndElement();
             }
-         }
-         if (!authorization.isDefaultRoles()) {
-            writer.writeStartMap(Element.ROLES);
-            for (Role role : authorization.roles().values()) {
-               writer.writeMapItem(Element.ROLE, Attribute.NAME, role.getName());
-               writer.writeAttribute(Attribute.PERMISSIONS, role.getPermissions().stream().map(Enum::name).collect(Collectors.toList()));
-               writer.writeEndMapItem();
+            if (!authorization.isDefaultRoles()) {
+               writer.writeStartMap(Element.ROLES);
+               for (Role role : authorization.roles().values()) {
+                  writer.writeMapItem(Element.ROLE, Attribute.NAME, role.getName());
+                  writer.writeAttribute(Attribute.PERMISSIONS, role.getPermissions().stream().map(Enum::name).collect(Collectors.toList()));
+                  writer.writeEndMapItem();
+               }
+               writer.writeEndMap();
             }
-            writer.writeEndMap();
+            writer.writeEndElement(); // AUTHORIZATION
          }
-         writer.writeEndElement();
-         writer.writeEndElement();
+         writer.writeEndElement(); // SECURITY
       }
    }
 

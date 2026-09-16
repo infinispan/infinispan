@@ -24,6 +24,7 @@ public class FileWatcherTest {
    @Test
    public void testFileWatcher() throws IOException, InterruptedException {
       try(FileWatcher watcher = new FileWatcher()) {
+         watcher.start();
          Path tmpDir = Paths.get(Testing.tmpDirectory(FileWatcherTest.class));
          Files.createDirectories(tmpDir);
          Path a = tmpDir.resolve("a");

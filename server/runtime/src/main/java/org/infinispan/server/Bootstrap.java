@@ -82,7 +82,7 @@ public class Bootstrap extends Main {
       this.exitHandler = exitHandler;
    }
 
-   public static void main(String[] args) {
+   static void main(String[] args) {
       Bootstrap bootstrap = new Bootstrap(System.out, System.err, new DefaultExitHandler(), System.getProperties());
       bootstrap.run(args);
    }

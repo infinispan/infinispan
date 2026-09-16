@@ -519,6 +519,8 @@ public class Server extends BaseServerManagement implements AutoCloseable {
 
                // Change status
                SecurityActions.postStartProtocolServer(protocolServers.values());
+               // Start the file watcher
+               watcher.start();
                log.serverStarted(Version.getBrandName(), Version.getBrandVersion(), uptime());
                this.status = ComponentStatus.RUNNING;
                if (Boolean.getBoolean("infinispan.shutdown.immediately")) {

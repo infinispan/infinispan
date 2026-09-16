@@ -1,7 +1,7 @@
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="urn:infinispan:config:12.1 https://infinispan.org/schemas/infinispan-config-12.1.xsd
-                          urn:org:jgroups http://www.jgroups.org/schema/jgroups-4.2.xsd"
+                          urn:org:jgroups https://www.jgroups.org/schema/jgroups-4.2.xsd"
       xmlns="urn:infinispan:config:12.1"
       xmlns:ispn="urn:infinispan:config:12.1">
    <jgroups transport="org.infinispan.remoting.transport.jgroups.JGroupsTransport">
@@ -102,7 +102,7 @@
                  initial-cluster-size="4" initial-cluster-timeout="30000">
          <property name="key">value</property>
       </transport>
-      <security>
+      <security cache-size="10000" cache-timeout="500000">
          <authorization audit-logger="org.infinispan.security.audit.NullAuditLogger">
             <identity-role-mapper/>
             <roles>
