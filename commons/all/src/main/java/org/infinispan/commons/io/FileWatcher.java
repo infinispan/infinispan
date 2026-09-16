@@ -28,7 +28,14 @@ public class FileWatcher implements Runnable, AutoCloseable {
       watched = new ConcurrentHashMap<>();
       thread = new Thread(this, "FileWatcher");
       Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
-      thread.start();
+   }
+
+   public FileWatcher start() {
+      if (!thread.isAlive()) {
+         log.debug("Starting FileWatcher");
+         thread.start();
+      }
+      return this;
    }
 
    public void unwatch(Path path) {

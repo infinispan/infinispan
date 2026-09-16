@@ -43,6 +43,7 @@ import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.cache.TracingConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalSecurityConfiguration;
 import org.infinispan.configuration.global.GlobalStateConfiguration;
 import org.infinispan.configuration.global.JGroupsConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
@@ -190,6 +191,14 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             String value = storeProperties.getProperty("test_property");
             assertEquals("foo_bar", value);
 
+         }
+      },
+      INFINISPAN_121(12, 1) {
+         @Override
+         public void check(ConfigurationBuilderHolder holder, int schemaMajor, int schemaMinor) {
+            GlobalSecurityConfiguration security = getGlobalConfiguration(holder).security();
+            assertEquals(10000, security.securityCacheSize());
+            assertEquals(500000, security.securityCacheTimeout());
          }
       },
       INFINISPAN_120(12, 0) {
