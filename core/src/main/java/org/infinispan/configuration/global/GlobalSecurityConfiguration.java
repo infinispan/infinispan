@@ -17,8 +17,8 @@ import org.infinispan.configuration.parsing.Element;
 @BuiltBy(GlobalSecurityConfigurationBuilder.class)
 public class GlobalSecurityConfiguration extends ConfigurationElement<GlobalSecurityConfiguration> {
    private final GlobalAuthorizationConfiguration authorization;
-   public static final AttributeDefinition<Integer> CACHE_SIZE = AttributeDefinition.builder("securityCacheSize", 1000).build();
-   public static final AttributeDefinition<Long> CACHE_TIMEOUT = AttributeDefinition.builder("securityCacheTimeout", TimeUnit.MINUTES.toMillis(5)).build();
+   public static final AttributeDefinition<Integer> CACHE_SIZE = AttributeDefinition.builder("cache-size", 1000).since(12, 1).build();
+   public static final AttributeDefinition<Long> CACHE_TIMEOUT = AttributeDefinition.builder("cache-timeout", TimeUnit.MINUTES.toMillis(5)).since(12, 1).build();
 
 
    static AttributeSet attributeDefinitionSet() {

@@ -27,6 +27,7 @@ public class SslContextFactoryTest {
    @Test
    public void testSslContextFactoryWatch() throws IOException {
       try (FileWatcher watcher = new FileWatcher()) {
+         watcher.start();
          Path tmpDir = Paths.get(Testing.tmpDirectory(SslContextFactoryTest.class));
          Files.createDirectories(tmpDir);
          Path keystore = createCertificateKeyStore("keystore", SECRET, tmpDir);

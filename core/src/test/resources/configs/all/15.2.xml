@@ -103,7 +103,7 @@
                  initial-cluster-size="4" initial-cluster-timeout="30000" raft-members="a-node b-node">
          <property name="key">value</property>
       </transport>
-      <security>
+      <security cache-size="10000" cache-timeout="500000">
          <authorization audit-logger="org.infinispan.security.audit.NullAuditLogger">
             <identity-role-mapper/>
             <roles>
