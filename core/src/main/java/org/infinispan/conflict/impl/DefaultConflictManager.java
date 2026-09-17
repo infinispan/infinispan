@@ -412,7 +412,10 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
             )
             .filter(DefaultConflictManager::hasConflict)
             .timeout(conflictTimeout, TimeUnit.MILLISECONDS)
-            .doOnCancel(() -> stateReceiver.cancelRequests(topology.getTopologyId()))
+            .doOnCancel(() -> {
+               stateReceiver.cancelRequests(topology.getTopologyId());
+               streamInProgress.set(false);
+            })
             .doOnError(t -> {
                if (log.isTraceEnabled()) log.tracef("Cache %s conflict detection error: %s", cacheName, t.getMessage());
                stateReceiver.cancelRequests(topology.getTopologyId());
