@@ -20,6 +20,9 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.impl.InternalRemoteCache;
+import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
+import org.infinispan.client.hotrod.impl.operations.IterationStartResponse;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.util.CloseableIterator;
@@ -184,5 +187,18 @@ public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest {
 
       Set<Integer> keys = extractKeys(entries);
       assertForAll(keys, v -> v % 2 == 0);
+   }
+
+   @Test
+   public void testDelayedIterationStartResponse() {
+      InternalRemoteCache<?, ?> internalCache = (InternalRemoteCache<?, ?>) remoteCacheManager.getCache();
+      HotRodOperation<IterationStartResponse> startOp = internalCache.getOperationsFactory()
+            .newIterationStartOperation(null, null, null, 10, false);
+      IterationStartResponse response = internalCache.getDispatcher().execute(startOp).toCompletableFuture().join();
+      assertEquals(1, hotrodServer.getIterationManager().activeIterations());
+
+      startOp.handleDelayedResponse(response, null);
+
+      eventuallyEquals(0, () -> hotrodServer.getIterationManager().activeIterations());
    }
 }

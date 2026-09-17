@@ -302,6 +302,8 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                   Object resp = operation.createResponse(in, status, this, codec, unmarshaller);
                   if (!operation.asCompletableFuture().isDone()) {
                      dispatcher.handleResponse((HotRodOperation<Object>) operation, receivedMessageId, ctx.channel(), resp, null);
+                  } else {
+                     ((HotRodOperation<Object>) operation).handleDelayedResponse(resp, ctx.channel());
                   }
                } catch (Signal signal) {
                   throw signal;
