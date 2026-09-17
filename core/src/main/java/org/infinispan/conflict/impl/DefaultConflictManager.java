@@ -412,9 +412,16 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
             )
             .filter(DefaultConflictManager::hasConflict)
             .timeout(conflictTimeout, TimeUnit.MILLISECONDS)
-            .doOnError(t -> stateReceiver.cancelRequests(topology.getTopologyId()))
             .doOnCancel(() -> stateReceiver.cancelRequests(topology.getTopologyId()))
-            .doFinally(() -> streamInProgress.set(false));
+            .doOnError(t -> {
+               if (log.isTraceEnabled()) log.tracef("Cache %s conflict detection error: %s", cacheName, t.getMessage());
+               stateReceiver.cancelRequests(topology.getTopologyId());
+               streamInProgress.set(false);
+            })
+            // Note that we have to set streamInProgress to false in both doOnComplete and doOnError instead
+            // of doFinally since the latter is invoked after things like blockingStream complete but the former two
+            // are notified before that happens.
+            .doOnComplete(() -> streamInProgress.set(false));
    }
 
    private Flowable<Map<Address, CacheEntry<K, V>>> processSegmentAsync(
