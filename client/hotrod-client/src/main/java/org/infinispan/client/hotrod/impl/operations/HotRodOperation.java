@@ -45,4 +45,21 @@ public interface HotRodOperation<T> {
    boolean isInstanceOf(Class<? extends HotRodOperation<?>> klass);
 
    <O extends HotRodOperation<?>> O unwrap(Class<O> klass);
+
+   /**
+    * Invoked when a response for this operation is received and decoded from the server, but the operation's
+    * {@link #asCompletableFuture() CompletableFuture} has already completed (for example, due to a client-side
+    * socket timeout or cancellation).
+    * <p>
+    * While most operations require no action upon receiving a delayed response, stateful operations (such as
+    * starting an iteration or stream) may have allocated server-side resources associated with this response.
+    * Implementations can override this method to clean up those resources (e.g., sending an end operation to the
+    * server or releasing retained buffers) so they are not leaked.
+    * </p>
+    *
+    * @param responseValue the decoded response value
+    * @param channel the channel on which the response was received
+    */
+   default void handleDelayedResponse(T responseValue, Channel channel) {
+   }
 }
