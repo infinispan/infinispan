@@ -104,6 +104,11 @@ public abstract class DelegatingHotRodOperation<T> implements HotRodOperation<T>
    }
 
    @Override
+   public void handleDelayedResponse(T responseValue, Channel channel) {
+      delegate.handleDelayedResponse(responseValue, channel);
+   }
+
+   @Override
    public String toString() {
       return getClass().getSimpleName() + "{" +
             "delegate=" + delegate +

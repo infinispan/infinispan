@@ -1,13 +1,19 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.lang.invoke.MethodHandles;
+import java.net.SocketAddress;
+
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.topology.CacheInfo;
 import org.infinispan.client.hotrod.impl.transport.netty.ByteBufUtil;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
 import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.IntSet;
 
 import io.netty.buffer.ByteBuf;
@@ -18,6 +24,7 @@ import io.netty.channel.Channel;
  * @since 8.0
  */
 public class IterationStartOperation extends AbstractCacheOperation<IterationStartResponse> {
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private final String filterConverterFactory;
    private final byte[][] filterParameters;
@@ -61,5 +68,25 @@ public class IterationStartOperation extends AbstractCacheOperation<IterationSta
    @Override
    public boolean supportRetry() {
       return false;
+   }
+
+   @Override
+   public void handleDelayedResponse(IterationStartResponse responseValue, Channel channel) {
+      if (responseValue != null && responseValue.getIterationId() != null && responseValue.getIterationId().length > 0) {
+         byte[] iterationId = responseValue.getIterationId();
+         if (log.isDebugEnabled()) {
+            log.debugf("Closing iteration %s after response was received following operation completion",
+                  new String(iterationId, HotRodConstants.HOTROD_STRING_CHARSET));
+         }
+         HotRodOperation<IterationEndResponse> endOp = internalRemoteCache.getOperationsFactory()
+               .newIterationEndOperation(iterationId);
+         OperationDispatcher dispatcher = internalRemoteCache.getDispatcher();
+         SocketAddress socketAddress = channel != null ? ChannelRecord.of(channel) : responseValue.getSocketAddress();
+         if (socketAddress != null) {
+            dispatcher.executeOnSingleAddress(endOp, socketAddress);
+         } else {
+            dispatcher.execute(endOp);
+         }
+      }
    }
 }
