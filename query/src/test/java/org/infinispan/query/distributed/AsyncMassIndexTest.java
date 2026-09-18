@@ -10,14 +10,14 @@ import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.Search;
+import org.infinispan.query.Indexer;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.query.test.Transaction;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
 /**
- * Test for the non blocking MassIndexer
+ * Test for the non-blocking MassIndexer
  *
  * @author gustavonalle
  * @since 7.1
@@ -55,7 +55,7 @@ public class AsyncMassIndexTest extends MultipleCacheManagersTest {
       int elements = 50;
       populate(elements);
 
-      CompletableFuture<Void> future = Search.getIndexer(cache).run().toCompletableFuture();
+      CompletableFuture<Void> future = Indexer.of(cache).run().toCompletableFuture();
 
       final CountDownLatch endLatch = new CountDownLatch(1);
       future.whenComplete((v, t) -> endLatch.countDown());

@@ -8,8 +8,8 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.model.Game;
-import org.infinispan.query.model.NonIndexedGame;
+import org.infinispan.protostream.sampledomain.Game;
+import org.infinispan.protostream.sampledomain.NonIndexedGame;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.testing.annotation.TestForIssue;
@@ -28,7 +28,7 @@ public class CustomDefaultMaxResultTest extends SingleCacheManagerTest {
             .indexing()
                .enable()
                .storage(LOCAL_HEAP)
-               .addIndexedEntity("org.infinispan.query.model.Game");
+               .addIndexedEntity(Game.class.getName());
 
       ConfigurationBuilder notIndexed = new ConfigurationBuilder();
       notIndexed
@@ -52,13 +52,13 @@ public class CustomDefaultMaxResultTest extends SingleCacheManagerTest {
          games.put(i, new NonIndexedGame("Game " + i, "This is the game " + i + "# of a series"));
       }
 
-      Query<NonIndexedGame> query = games.query("from org.infinispan.query.model.NonIndexedGame");
+      Query<NonIndexedGame> query = games.query("from " + NonIndexedGame.class.getName());
       QueryResult<NonIndexedGame> result = query.execute();
 
       assertThat(result.count().value()).isEqualTo(110);
       assertThat(result.list()).hasSize(50); // use custom default
 
-      query = games.query("from org.infinispan.query.model.NonIndexedGame");
+      query = games.query("from " + NonIndexedGame.class.getName());
       query.maxResults(200); // raise it
       result = query.execute();
 
@@ -77,13 +77,13 @@ public class CustomDefaultMaxResultTest extends SingleCacheManagerTest {
          games.put(i, new Game("Game " + i, "This is the game " + i + "# of a series"));
       }
 
-      Query<Game> query = games.query("from org.infinispan.query.model.Game");
+      Query<Game> query = games.query("from " + Game.class.getName());
       QueryResult<Game> result = query.execute();
 
       assertThat(result.count().value()).isEqualTo(110);
       assertThat(result.list()).hasSize(50); // use custom default
 
-      query = games.query("from org.infinispan.query.model.Game");
+      query = games.query("from " + Game.class.getName());
       query.maxResults(200); // raise it
       result = query.execute();
 

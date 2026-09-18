@@ -4,7 +4,6 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.MediaType;
@@ -12,7 +11,10 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
+import org.infinispan.protostream.sampledomain.bank.Account;
+import org.infinispan.protostream.sampledomain.bank.Transaction;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -57,9 +59,9 @@ public class RemoteQueryNonQueryableCacheTest extends SingleHotRodServerTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.indexing().enable()
             .storage(LOCAL_HEAP)
-            .addIndexedEntity("sample_bank_account.User")
-            .addIndexedEntity("sample_bank_account.Account")
-            .addIndexedEntity("sample_bank_account.Transaction");
+            .addIndexedEntity(User.ENTITY_NAME)
+            .addIndexedEntity(Account.ENTITY_NAME)
+            .addIndexedEntity(Transaction.ENTITY_NAME);
       return builder.build();
    }
 
@@ -78,7 +80,7 @@ public class RemoteQueryNonQueryableCacheTest extends SingleHotRodServerTest {
 
    private void executeQuery(String cacheName) {
       RemoteCache<String, User> remoteCache = remoteCacheManager.getCache(cacheName);
-      Query<User> q = remoteCache.query("FROM sample_bank_account.User");
+      Query<User> q = remoteCache.query("FROM sample_domain.User");
       q.execute();
    }
 }

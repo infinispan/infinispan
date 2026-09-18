@@ -22,7 +22,6 @@ import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.query.Indexer;
-import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.query.core.stats.SearchStatisticsSnapshot;
 import org.infinispan.query.impl.ComponentRegistryUtils;
@@ -86,10 +85,10 @@ public class SearchAdminResource implements ResourceHandler {
       String scopeParam = request.getParameter("scope");
       boolean pretty = isPretty(request);
       if ("cluster".equalsIgnoreCase(scopeParam)) {
-         CompletionStage<SearchStatisticsSnapshot> stats = Search.getClusteredSearchStatistics(cache);
+         CompletionStage<SearchStatisticsSnapshot> stats = SearchStatisticsSnapshot.of(cache);
          return stats.thenApply(s -> asJsonResponse(invocationHelper.newResponse(request), s.toJson(), pretty));
       } else {
-         return Search.getSearchStatistics(cache).computeSnapshot().thenApply(s -> asJsonResponse(invocationHelper.newResponse(request), s.toJson(), pretty));
+         return SearchStatistics.of(cache).computeSnapshot().thenApply(s -> asJsonResponse(invocationHelper.newResponse(request), s.toJson(), pretty));
       }
    }
 
@@ -113,7 +112,7 @@ public class SearchAdminResource implements ResourceHandler {
       if ("cluster".equalsIgnoreCase(scopeParam)) {
          throw new CacheException("NotImplemented");
       } else {
-         SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
+         SearchStatistics searchStatistics = SearchStatistics.of(cache);
          Security.doAs(request.getSubject(), () -> searchStatistics.getQueryStatistics().clear());
          return completedFuture(responseBuilder.build());
       }

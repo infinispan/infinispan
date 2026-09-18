@@ -1,4 +1,4 @@
-import org.infinispan.commons.api.query.geo.LatLng; // <1>
+import org.infinispan.api.types.LatLng; // <1>
 
 @Proto
 @Indexed

@@ -14,10 +14,9 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
+import org.infinispan.protostream.sampledomain.bank.Account;
 
 /**
  * @author gfernandes
@@ -37,21 +36,14 @@ class Util {
       assertTrue(elements.stream().allMatch(condition));
    }
 
-   static AccountHS newAccount(int id) {
-      AccountHS account = new AccountHS();
+   static Account newAccount(int id) {
+      Account account = new Account();
       account.setId(id);
       account.setDescription("description for " + id);
       account.setCreationDate(new Date());
       return account;
    }
 
-   static AccountPB newAccountPB(int id) {
-      AccountPB account = new AccountPB();
-      account.setId(id);
-      account.setDescription("description for " + id);
-      account.setCreationDate(new Date());
-      return account;
-   }
 
    static Set<Integer> rangeAsSet(int minimum, int maximum) {
       return IntStream.range(minimum, maximum).boxed().collect(Collectors.toSet());

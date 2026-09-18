@@ -51,6 +51,7 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.protostream.schema.Schema;
+import org.infinispan.protostream.types.java.CommonTypesSchema;
 import org.infinispan.server.persistence.PersistenceIT;
 import org.infinispan.server.test.api.HotRodClientDriver;
 import org.infinispan.server.test.api.TestClientDriver;
@@ -266,6 +267,7 @@ public class Common {
       ConfigurationBuilder config = new ConfigurationBuilder();
       ProtoStreamMarshaller protoStreamMarshaller = new ProtoStreamMarshaller();
       if (protoschema != null) {
+         protoStreamMarshaller.register(new CommonTypesSchema());
          FileDescriptorSource descriptor = FileDescriptorSource.fromString(protoschema.getName(), protoschema.getContent());
          protoStreamMarshaller.getSerializationContext().registerProtoFiles(descriptor);
          config.marshaller(protoStreamMarshaller);
