@@ -7,6 +7,8 @@ import static org.infinispan.test.TestingUtil.v;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +54,13 @@ public class MemcachedRequestLimitTest extends MemcachedSingleNodeTest {
 
    private static final int MAX_CONTENT_LENGTH = 128;
 
+   public MemcachedRequestLimitTest() {
+      // The test handlers install a 1 byte frame decoder, which means a request is never handed to the decoder in the
+      // same read as another one. The pipelining test below relies on real reads to spot a request being charged for
+      // bytes it already accounted for in an earlier read
+      decoderReplay = false;
+   }
+
    @Override
    protected void startServer(MemcachedServer server, MemcachedServerConfigurationBuilder builder) {
       super.startServer(server, builder.maxContentLength(Integer.toString(MAX_CONTENT_LENGTH)));
@@ -65,6 +74,35 @@ public class MemcachedRequestLimitTest extends MemcachedSingleNodeTest {
    public void testValueTooLong(Method m) {
       OperationFuture<Boolean> f = client.set(k(m), 0, v(m, "v".repeat(MAX_CONTENT_LENGTH)));
       Exceptions.expectException(ExecutionException.class, CancellationException.class, () -> f.get(10, TimeUnit.SECONDS));
+   }
+
+   /**
+    * A request under the limit must still be accepted when the read it arrives in ends in the middle of it. The bytes
+    * such a request consumed before the split used to be counted twice, so enough pipelined requests to span several
+    * reads would see one rejected once a split landed far enough into a request.
+    */
+   public void testManyPipelinedRequestsNearLimit() throws Exception {
+      // Enough requests, each just under the limit, that they cannot all be delivered in a single read
+      int opCount = 512;
+      List<OperationFuture<Boolean>> futures = new ArrayList<>(opCount);
+      List<String> keys = new ArrayList<>(opCount);
+      List<String> values = new ArrayList<>(opCount);
+      for (int i = 0; i < opCount; ++i) {
+         String key = "k" + i;
+         // Varying the size keeps the requests from lining up with the read boundaries the same way every time, a
+         // read has to end in the middle of a request for the double counting to show
+         int valueLength = 84 - key.length() - i % 11;
+         keys.add(key);
+         values.add(Character.toString('a' + i % 26).repeat(valueLength));
+         futures.add(client.set(key, 0, values.get(i)));
+      }
+
+      for (int i = 0; i < opCount; ++i) {
+         assertEquals(Boolean.TRUE, futures.get(i).get(30, TimeUnit.SECONDS));
+      }
+      for (int i = 0; i < opCount; ++i) {
+         assertEquals(values.get(i), client.get(keys.get(i)));
+      }
    }
 
    public void testExcessDataDoesNotCorruptSubsequentConnection(Method m) throws Exception {

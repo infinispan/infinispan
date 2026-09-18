@@ -42,13 +42,6 @@ init {
    public RespDecoder(RespServer server) {
       super(server);
    }
-
-   protected int bytesAvailable(ByteBuf buf) {
-      if (maxContentLength > 0) {
-         return Math.max(maxContentLength - requestBytes - buf.readerIndex() + posBefore, 0);
-      }
-      return -1;
-   }
 }
 
 beforedecode {
@@ -63,7 +56,7 @@ beforedecode {
 
 // this is the root
 root request
-   : { posBefore = buf.readerIndex(); }
+   : { startRequest(buf); }
      singleByte { if (singleByte != ARRAY) throw new UnsupportedOperationException("Only array types are supported, received: " + singleByte); reusedList.clear(); }
      number
      singleByte
