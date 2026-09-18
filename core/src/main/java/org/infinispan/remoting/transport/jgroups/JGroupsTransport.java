@@ -35,8 +35,10 @@ import java.util.function.Supplier;
 import javax.management.ObjectName;
 import javax.sql.DataSource;
 
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TracedCommand;
+import org.infinispan.commands.statetransfer.StateTransferCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.IllegalLifecycleStateException;
@@ -53,6 +55,7 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.TransportConfiguration;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.external.JGroupsProtocolComponent;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -960,7 +963,8 @@ public class JGroupsTransport implements Transport {
       if (target.equals(address)) {
          return CompletableFuture.completedFuture(collector.finish());
       }
-      Request<Address, T> request = requests.singleRequest(target, collector, timeout, unit);
+      long flags = commandFlags(command);
+      Request<Address, T> request = requests.singleRequest(target, flags, collector, timeout, unit);
       logRequest(request.getRequestId(), command, target, "single");
       if (request.onNewView(clusterView.getMembersSet())) {
          // The request is completed, destination not found in view. We can return immediately.
@@ -1128,6 +1132,13 @@ public class JGroupsTransport implements Transport {
       } else {
          return DisabledInfinispanSpan.instance().makeCurrent();
       }
+   }
+
+   private long commandFlags(ReplicableCommand command) {
+      long flags = command instanceof FlagAffectedCommand fac ? fac.getFlagsBitSet() : 0L;
+      if (command instanceof StateTransferCommand)
+         flags |= FlagBitSets.STATE_TRANSFER_PROGRESS;
+      return flags;
    }
 
    private void sendCommandCheckingView(Address destination, Object command, long requestId, DeliverOrder deliverOrder) {

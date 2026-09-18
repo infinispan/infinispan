@@ -13,9 +13,10 @@ public interface JGroupsMetricsManager {
     * Track the latency for a synchronous request.
     *
     * @param destination The destination address. Cannot be null.
+    * @param flags       The command to track
     * @return A {@link RequestTracker} implementation with the send time already set.
     */
-   RequestTracker trackRequest(Address destination);
+   RequestTracker trackRequest(Address destination, long flags);
 
    /**
     * Records a message sent to a {@code destination}.
