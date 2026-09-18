@@ -1,16 +1,24 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.lang.invoke.MethodHandles;
+import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
 import org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 public class PutStreamStartOperation extends AbstractKeyOperation<PutStreamResponse> {
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+
    public static final long VERSION_PUT = 0;
    public static final long VERSION_PUT_IF_ABSENT = -1;
    private final long version;
@@ -50,5 +58,24 @@ public class PutStreamStartOperation extends AbstractKeyOperation<PutStreamRespo
    @Override
    public short responseOpCode() {
       return HotRodConstants.START_PUT_STREAM_RESPONSE;
+   }
+
+   @Override
+   public void handleDelayedResponse(PutStreamResponse responseValue, Channel channel) {
+      if (responseValue != null) {
+         if (log.isDebugEnabled()) {
+            log.debugf("Closing put stream %d after response was received following operation completion",
+                  responseValue.id());
+         }
+         HotRodOperation<Void> endOp = internalRemoteCache.getOperationsFactory()
+               .newPutStreamEndOperation(responseValue.id());
+         OperationDispatcher dispatcher = internalRemoteCache.getDispatcher();
+         SocketAddress socketAddress = ChannelRecord.of(channel != null ? channel : responseValue.channel());
+         if (socketAddress != null) {
+            dispatcher.executeOnSingleAddress(endOp, socketAddress);
+         } else {
+            dispatcher.execute(endOp);
+         }
+      }
    }
 }
