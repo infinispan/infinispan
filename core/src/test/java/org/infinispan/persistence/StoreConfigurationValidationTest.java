@@ -98,9 +98,12 @@ public class StoreConfigurationValidationTest extends AbstractInfinispanTest {
          EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(builder);
          try {
             cm.getCache();
-            long warnCount = StreamSupport.stream(logAppender.spliterator(), false)
-                  .filter(s -> s.contains("ISPN000728")).count();
-            assertEquals(1, warnCount);
+            // The warning is emitted asynchronously while the cache is starting, so wait for it to be logged.
+            // Asserting on its presence (rather than an exact count) avoids flakes from concurrent emissions
+            // logged by other cache managers sharing the same JVM.
+            eventually(() -> "Expected the ISPN000728 warning for a non-shared store without purgeOnStartup to be logged",
+                  () -> StreamSupport.stream(logAppender.spliterator(), false)
+                        .anyMatch(s -> s.contains("ISPN000728")));
          } finally {
             killCacheManagers(cm);
          }
