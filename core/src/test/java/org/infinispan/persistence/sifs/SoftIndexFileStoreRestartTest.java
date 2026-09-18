@@ -1,5 +1,7 @@
 package org.infinispan.persistence.sifs;
 
+import static org.infinispan.persistence.sifs.SoftIndexFileStoreTestUtils.readStatsSize;
+import static org.infinispan.persistence.sifs.SoftIndexFileStoreTestUtils.readUsedSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -202,11 +204,11 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
 
       SoftIndexFileStoreTestUtils.StatsValue stats = SoftIndexFileStoreTestUtils.readStatsFile(tmpDirectory, cacheName, log);
 
-      assertEquals(actualSize, stats.getStatsSize());
+      eventuallyEquals(actualSize, () -> readStatsSize(tmpDirectory, cacheName, log));
 
       // Make sure the previous size is the same
       if (previousUsedSize >= 0) {
-         assertEquals(previousUsedSize, actualSize - stats.getFreeSize(), "Restart attempt: " + iterationCount);
+         eventuallyEquals("Restart attempt: " + iterationCount, previousUsedSize, () -> readUsedSize(tmpDirectory, cacheName, log));
       }
       runnable.run();
       // Recreate the cache manager for next run(s)
@@ -245,7 +247,7 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
 
       SoftIndexFileStoreTestUtils.StatsValue stats = SoftIndexFileStoreTestUtils.readStatsFile(tmpDirectory, cacheName, log);
 
-      assertEquals(actualSize, stats.getStatsSize());
+      eventuallyEquals(actualSize, () -> readStatsSize(tmpDirectory, cacheName, log));
 
       createCacheManagers();
 
@@ -265,9 +267,7 @@ public class SoftIndexFileStoreRestartTest extends BaseDistStoreTest<Integer, St
 
       actualSize = SoftIndexFileStoreTestUtils.dataDirectorySize(tmpDirectory, cacheName);
 
-      stats = SoftIndexFileStoreTestUtils.readStatsFile(tmpDirectory, cacheName, log);
-
-      assertEquals(actualSize, stats.getStatsSize());
+      eventuallyEquals(actualSize, () -> readStatsSize(tmpDirectory, cacheName, log));
 
       // Other tests need a cache manager still
       createCacheManagers();

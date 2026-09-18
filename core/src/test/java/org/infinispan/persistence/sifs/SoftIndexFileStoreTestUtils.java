@@ -29,6 +29,31 @@ public class SoftIndexFileStoreTestUtils {
       }
    }
 
+   /**
+    * Reads the stats file and returns the stats size. Used for retrying assertions
+    * when stats may not be immediately available after restart.
+    */
+   public static long readStatsSize(String tmpDirectory, String cacheName, Log log) {
+      try {
+         return readStatsFile(tmpDirectory, cacheName, log).getStatsSize();
+      } catch (IOException e) {
+         throw new RuntimeException(e);
+      }
+   }
+
+   /**
+    * Reads the stats file and returns (statsSize - freeSize). Used for retrying assertions
+    * when stats may not be immediately available after restart.
+    */
+   public static long readUsedSize(String tmpDirectory, String cacheName, Log log) {
+      try {
+         StatsValue stats = readStatsFile(tmpDirectory, cacheName, log);
+         return stats.getStatsSize() - stats.getFreeSize();
+      } catch (IOException e) {
+         throw new RuntimeException(e);
+      }
+   }
+
    public static StatsValue readStatsFile(String tmpDirectory, String cacheName, Log log) throws IOException {
       long statsSize = 0;
       long freeSize = 0;
