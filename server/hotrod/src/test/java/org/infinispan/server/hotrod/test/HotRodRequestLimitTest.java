@@ -137,4 +137,68 @@ public class HotRodRequestLimitTest extends HotRodSingleNodeTest {
       HotRodTestingUtil.assertStatus(putResp, Success);
       assertSuccess(client().get(key, 0), value);
    }
+
+   /**
+    * Regression test for ISPN-18130: pipelined requests are rejected when preceding request approaches max-content-length.
+    * <p>
+    * The bug: requestBytes from a completed request is incorrectly charged to the next pipelined request,
+    * causing the second request to be rejected with TooLongFrameException even when it's well under the limit.
+    * This happens because requestBytes is accumulated per decode() call but reset() runs per request inside the
+    * while loop, so the finally block adds the first request's bytes on top of the second request's counter.
+    * <p>
+    * This test verifies that when a large first request is pipelined with a second request where the put details
+    * (header, cache name, key) fit but the value doesn't, the first entry is written but the second is not.
+    */
+   public void testPipelinedSmallRequestAfterLargeRequest() throws ExecutionException, InterruptedException, TimeoutException {
+      HotRodClient client = client();
+
+      // First put: sized to consume nearly all of MAX_CONTENT_LENGTH
+      // The protocol overhead is roughly 20-30 bytes (header, cache name, key length, etc.)
+      // We want the total request to be just under MAX_CONTENT_LENGTH so it succeeds,
+      // but close enough that when its requestBytes are mis-attributed to the next request,
+      // the next request will have its budget exhausted
+      byte[] firstKey = new byte[]{1, 2};
+      // Make the first request consume approximately MAX_CONTENT_LENGTH - 30 bytes total
+      // This leaves ~30 bytes overhead for protocol framing
+      byte[] firstValue = new byte[MAX_CONTENT_LENGTH - 30];
+      Arrays.fill(firstValue, (byte) 1);
+
+      Op firstOp = new Op(0xA0, client.protocolVersion(), (byte) 0x01, client.defaultCacheName(),
+            firstKey, -1, -1, firstValue, 0, 0, (byte) 1, 0);
+
+      // Second put: the put details including the key fit in the remaining budget,
+      // but the value doesn't. Due to the bug, even this small value will cause rejection
+      // because the first request's bytes are incorrectly charged to it.
+      byte[] secondKey = new byte[]{3, 4};
+      byte[] secondValue = new byte[]{5, 6, 7, 8};
+
+      Op secondOp = new Op(0xA0, client.protocolVersion(), (byte) 0x01, client.defaultCacheName(),
+            secondKey, -1, -1, secondValue, 0, 0, (byte) 1, 0);
+
+      // Pipeline both operations - this ensures they're written together
+      // so the second request's bytes arrive in the same socket read as the tail of the first
+      client.writeOps(firstOp, secondOp)
+            .get(10, TimeUnit.SECONDS);
+
+      ClientHandler handler = (ClientHandler) client.getChannel().pipeline().last();
+      // Channel can be killed before we even get the response
+      if (handler == null) {
+         assertFalse(client.getChannel().isActive());
+         return;
+      }
+
+      // The first operation should work fine and write the entry
+      CompletionStage<TestResponse> firstResponseStage = handler.waitForResponse(firstOp.id);
+      CompletionStage<TestResponse> secondResponseStage = handler.waitForResponse(secondOp.id);
+
+      TestResponse firstResponse = firstResponseStage.toCompletableFuture().get(client.rspTimeoutSeconds, TimeUnit.SECONDS);
+      HotRodTestingUtil.assertStatus(firstResponse, Success);
+      // The second operation should also succeed since it's small
+      TestResponse secondResponse = secondResponseStage.toCompletableFuture().get(client.rspTimeoutSeconds, TimeUnit.SECONDS);
+      HotRodTestingUtil.assertStatus(secondResponse, Success);
+      // Verify both entries were actually written
+      restartClient();
+      assertSuccess(client().get(firstKey, 0), firstValue);
+      assertSuccess(client().get(secondKey, 0), secondValue);
+   }
 }
