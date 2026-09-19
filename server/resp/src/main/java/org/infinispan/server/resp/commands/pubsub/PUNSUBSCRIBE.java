@@ -53,7 +53,7 @@ public class PUNSUBSCRIBE extends RespCommand implements Resp3Command, PubSubRes
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
-      SubscriberHandler subscriberHandler = new SubscriberHandler(handler.respServer(), handler);
+      SubscriberHandler subscriberHandler = new SubscriberHandler(handler);
       return subscriberHandler.handleRequest(ctx, this, arguments);
    }
 }
