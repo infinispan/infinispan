@@ -15,7 +15,7 @@ public class PublishSubscribeClusteredTest extends PublishSubscribeTest {
 
    @Override
    public Object[] factory() {
-      return new Object[] {
+      return new Object[]{
             new PublishSubscribeClusteredTest().withCacheMode(CacheMode.DIST_SYNC),
             new PublishSubscribeClusteredTest().withCacheMode(CacheMode.REPL_SYNC),
       };

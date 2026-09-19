@@ -20,7 +20,7 @@ public class PUBSUB extends FamilyCommand {
    private static final RespCommand[] PUBSUB_COMMANDS;
 
    static {
-      PUBSUB_COMMANDS = new RespCommand[] {
+      PUBSUB_COMMANDS = new RespCommand[]{
             new CHANNELS(),
             new NUMPAT(),
       };

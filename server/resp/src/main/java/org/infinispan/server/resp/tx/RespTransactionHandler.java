@@ -3,9 +3,11 @@ package org.infinispan.server.resp.tx;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.server.resp.CacheRespRequestHandler;
+import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.RespCommand;
 import org.infinispan.server.resp.RespRequestHandler;
 import org.infinispan.server.resp.RespServer;
@@ -40,11 +42,25 @@ import io.netty.channel.ChannelHandlerContext;
 public class RespTransactionHandler extends CacheRespRequestHandler {
 
    private final List<TransactionCommand> queued;
+   private final Function<AdvancedCache<byte[], byte[]>, Resp3Handler> nextHandlerSupplier;
    private boolean failed;
 
    public RespTransactionHandler(RespServer respServer, AdvancedCache<byte[], byte[]> cache) {
+      this(respServer, cache, cacheToUse -> respServer.newHandler(cacheToUse));
+   }
+
+   public RespTransactionHandler(RespServer respServer, AdvancedCache<byte[], byte[]> cache,
+                                 Function<AdvancedCache<byte[], byte[]>, Resp3Handler> nextHandlerSupplier) {
       super(respServer, cache);
       this.queued = new ArrayList<>();
+      this.nextHandlerSupplier = nextHandlerSupplier;
+   }
+
+   /**
+    * The handler to use once the transaction is over, either by {@code EXEC} or {@code DISCARD}.
+    */
+   public Resp3Handler nextHandler() {
+      return nextHandlerSupplier.apply(cache());
    }
 
    @Override
@@ -53,9 +69,9 @@ public class RespTransactionHandler extends CacheRespRequestHandler {
       // Subscribe commands discard the queue and enter into pub-sub. See: https://github.com/redis/redis/pull/9928
       // Doing specific checks here instead of implementing on the commands, so we can update this later, if necessary.
       if (command instanceof SUBSCRIBE || command instanceof PSUBSCRIBE) {
-         CompletionStage<?> drop = dropTransaction(ctx);
-         SubscriberHandler subscriberHandler = new SubscriberHandler(respServer(), respServer().newHandler(cache()));
-         return subscriberHandler.handleRequest(ctx, command, arguments).thenCombine(drop, (handler, ignore) -> handler);
+          CompletionStage<?> drop = dropTransaction(ctx);
+          SubscriberHandler subscriberHandler = new SubscriberHandler(respServer().newHandler(cache()));
+          return subscriberHandler.handleRequest(ctx, command, arguments).thenCombine(drop, (handler, ignore) -> handler);
       }
 
       // Transaction commands take precedence and are not queued.
@@ -64,6 +80,14 @@ public class RespTransactionHandler extends CacheRespRequestHandler {
          return tx.perform(this, ctx, arguments);
       }
 
+      return queueCommand(ctx, command, arguments);
+   }
+
+   /**
+    * Queues a command for execution by {@code EXEC}. The command is verified for syntax errors, and Redis verifies
+    * the number of arguments. Any error message is written to the socket.
+    */
+   public CompletionStage<RespRequestHandler> queueCommand(ChannelHandlerContext ctx, RespCommand command, List<byte[]> arguments) {
       // Queued commands need to be parsed for syntax errors. Redis verify the number of arguments.
       // This method already writes any error message to the socket.
       if (!isCommandValid(command, arguments)) return myStage();
