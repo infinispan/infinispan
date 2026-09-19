@@ -2,18 +2,28 @@ package org.infinispan.server.resp.pubsub;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.infinispan.server.resp.test.RespTestingUtil.ADMIN;
+import static org.infinispan.server.resp.test.RespTestingUtil.OK;
 import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
 import static org.infinispan.test.TestingUtil.getListeners;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.security.Security;
 import org.infinispan.server.resp.SingleNodeRespBaseTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 
@@ -23,8 +33,8 @@ public class PublishSubscribeTest extends SingleNodeRespBaseTest {
    @Override
    public Object[] factory() {
       return new Object[]{
-         new PublishSubscribeTest(),
-         new PublishSubscribeTest().withAuthorization()
+            new PublishSubscribeTest(),
+            new PublishSubscribeTest().withAuthorization()
       };
    }
 
@@ -32,7 +42,7 @@ public class PublishSubscribeTest extends SingleNodeRespBaseTest {
    protected Object[][] booleans() {
       // Reset disabled for now as the client isn't sending a reset command to the
       // server
-      return new Object[][] { { true }, { false } };
+      return new Object[][]{{true}, {false}};
    }
 
    public void testPubSubChannels() throws Exception {
@@ -218,7 +228,7 @@ public class PublishSubscribeTest extends SingleNodeRespBaseTest {
       connection.unsubscribe("channel", "test");
 
       int subscriptions = 3;
-      for (String channel : new String[] { "channel2", "doesn't-exist", "channel", "test" }) {
+      for (String channel : new String[]{"channel2", "doesn't-exist", "channel", "test"}) {
          value = handOffQueue.poll(10, TimeUnit.SECONDS);
          assertThat(value).isEqualTo("unsubscribed-" + channel + "-" + Math.max(0, --subscriptions));
       }
@@ -290,7 +300,7 @@ public class PublishSubscribeTest extends SingleNodeRespBaseTest {
       connection.unsubscribe("foo", "bar", "quux");
 
       // Should get unsubscribe confirmations - count stays at 1 (still subscribed to "dummy")
-      for (String channel : new String[] { "foo", "bar", "quux" }) {
+      for (String channel : new String[]{"foo", "bar", "quux"}) {
          String value = handOffQueue.poll(10, TimeUnit.SECONDS);
          assertThat(value).withFailMessage("Didn't receive unsubscribe notification for " + channel).isNotNull();
          assertThat(value).startsWith("unsubscribed-" + channel + "-");
@@ -429,7 +439,7 @@ public class PublishSubscribeTest extends SingleNodeRespBaseTest {
       connection.punsubscribe("foo.*", "bar.*", "quux.*");
 
       // Should get punsubscribe confirmations with count reflecting remaining subs
-      for (String pattern : new String[] { "foo.*", "bar.*", "quux.*" }) {
+      for (String pattern : new String[]{"foo.*", "bar.*", "quux.*"}) {
          String value = handOffQueue.poll(10, TimeUnit.SECONDS);
          assertThat(value).withFailMessage("Didn't receive punsubscribe notification for " + pattern).isNotNull();
          assertThat(value).startsWith("punsubscribed-" + pattern + "-");
@@ -493,7 +503,7 @@ public class PublishSubscribeTest extends SingleNodeRespBaseTest {
       assertThat(value2).isNotNull();
 
       // One should be message, the other pmessage (order may vary)
-      assertThat(new String[] { value1, value2 }).containsExactlyInAnyOrder(
+      assertThat(new String[]{value1, value2}).containsExactlyInAnyOrder(
             "message-foo.bar-hello",
             "pmessage-foo.*-foo.bar-hello"
       );
@@ -563,11 +573,260 @@ public class PublishSubscribeTest extends SingleNodeRespBaseTest {
       }
    }
 
+   // --- RESP3: any command is allowed while in the subscribed state ---
+
+   @Test
+   public void testCommandsInSubscribedState() throws Exception {
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      try {
+         BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+         connection.subscribe("channel2");
+         assertSubscription(handOffQueue, "channel2");
+
+         // Since RESP3, regular commands are allowed while in the subscribed state.
+         assertThat(connection.set("key1", "value1")).isEqualTo(OK);
+         assertThat(connection.get("key1")).isEqualTo("value1");
+         assertThat(connection.incr("counter")).isEqualTo(1L);
+         assertThat(connection.incr("counter")).isEqualTo(2L);
+         assertThat(connection.ping()).isEqualTo(PONG);
+
+         // The subscription is preserved and messages keep being delivered.
+         RedisCommands<String, String> redis = redisConnection.sync();
+         redis.publish("channel2", "still-subscribed");
+         assertThat(handOffQueue.poll(10, TimeUnit.SECONDS)).isEqualTo("message-channel2-still-subscribed");
+
+         connection.unsubscribe("channel2");
+      } finally {
+         closePubSubConnection(connection);
+      }
+   }
+
+   @Test
+   public void testCommandsInPatternSubscribedState() throws Exception {
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      try {
+         BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+         connection.psubscribe("pat.*");
+         assertPSubscription(handOffQueue, "pat.*");
+
+         // Since RESP3, regular commands are allowed while in the subscribed state.
+         assertThat(connection.set("key1", "value1")).isEqualTo(OK);
+         assertThat(connection.get("key1")).isEqualTo("value1");
+         assertThat(connection.ping()).isEqualTo(PONG);
+
+         // The pattern subscription is preserved and messages keep being delivered.
+         RedisCommands<String, String> redis = redisConnection.sync();
+         redis.publish("pat.channel", "still-subscribed");
+         assertThat(handOffQueue.poll(10, TimeUnit.SECONDS)).isEqualTo("pmessage-pat.*-pat.channel-still-subscribed");
+
+         connection.punsubscribe("pat.*");
+      } finally {
+         closePubSubConnection(connection);
+      }
+   }
+
+   @Test
+   public void testMultiExecInSubscribedState() throws Exception {
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      try {
+         BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+         connection.subscribe("channel2");
+         assertSubscription(handOffQueue, "channel2");
+
+         assertThat(connection.multi()).isEqualTo(OK);
+         assertThat(connection.getStatefulConnection().isMulti()).isTrue();
+
+         assertThat(connection.set("tx-key", "tx-value")).isNull();
+
+         TransactionResult result = connection.exec();
+         assertThat(result.wasDiscarded()).isFalse();
+         assertThat(result).hasSize(1).allMatch(OK::equals);
+         assertThat(connection.getStatefulConnection().isMulti()).isFalse();
+
+         assertThat(connection.get("tx-key")).isEqualTo("tx-value");
+
+         // The subscription is preserved and messages keep being delivered.
+         RedisCommands<String, String> redis = redisConnection.sync();
+         redis.publish("channel2", "boom");
+         assertThat(handOffQueue.poll(10, TimeUnit.SECONDS)).isEqualTo("message-channel2-boom");
+
+         connection.unsubscribe("channel2");
+      } finally {
+         closePubSubConnection(connection);
+      }
+   }
+
+   @Test
+   public void testDiscardInSubscribedState() throws Exception {
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      try {
+         BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+         connection.subscribe("channel2");
+         assertSubscription(handOffQueue, "channel2");
+
+         assertThat(connection.multi()).isEqualTo(OK);
+         assertThat(connection.set("tx-key", "tx-value")).isNull();
+         assertThat(connection.discard()).isEqualTo(OK);
+         assertThat(connection.getStatefulConnection().isMulti()).isFalse();
+
+         assertThat(connection.get("tx-key")).isNull();
+
+         // The subscription is preserved and messages keep being delivered.
+         RedisCommands<String, String> redis = redisConnection.sync();
+         redis.publish("channel2", "boom");
+         assertThat(handOffQueue.poll(10, TimeUnit.SECONDS)).isEqualTo("message-channel2-boom");
+
+         connection.unsubscribe("channel2");
+      } finally {
+         closePubSubConnection(connection);
+      }
+   }
+
+   @Test
+   public void testWatchInSubscribedState() throws Exception {
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      try {
+         BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+         connection.subscribe("channel2");
+         assertSubscription(handOffQueue, "channel2");
+
+         assertThat(connection.watch("watched-key")).isEqualTo(OK);
+         assertThat(connection.multi()).isEqualTo(OK);
+         assertThat(connection.set("watched-key", "value")).isNull();
+
+         TransactionResult result = connection.exec();
+         assertThat(result.wasDiscarded()).isFalse();
+         assertThat(result).hasSize(1).allMatch(OK::equals);
+
+         assertThat(connection.get("watched-key")).isEqualTo("value");
+
+         connection.unsubscribe("channel2");
+      } finally {
+         closePubSubConnection(connection);
+      }
+   }
+
+   @Test
+   public void testCommandsAfterUnsubscribeAll() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      try {
+         BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+         connection.subscribe("channel2");
+         assertSubscription(handOffQueue, "channel2");
+
+         // Unsubscribe from all channels. The connection stays in the subscribed state.
+         connection.unsubscribe();
+         String value = handOffQueue.poll(10, TimeUnit.SECONDS);
+         assertThat(value).withFailMessage("Didn't receive unsubscribe notification").isNotNull();
+         assertThat(value).startsWith("unsubscribed-channel2-");
+
+         // No active channels remain.
+         assertThat(redis.pubsubChannels()).isEmpty();
+
+         // Regular commands are still allowed in the subscribed state.
+         assertThat(connection.set("key1", "value1")).isEqualTo(OK);
+         assertThat(connection.get("key1")).isEqualTo("value1");
+         assertThat(connection.ping()).isEqualTo(PONG);
+      } finally {
+         closePubSubConnection(connection);
+      }
+   }
+
+   @Test
+   public void testResetDropsSubscription() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      try {
+         BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+         connection.subscribe("channel2");
+         assertSubscription(handOffQueue, "channel2");
+         assertThat(redis.pubsubChannels()).containsExactly("channel2");
+
+         // RESET discards the subscriptions without sending unsubscribe confirmations.
+         assertThat(connection.dispatch(new SimpleCommand("RESET"), new StatusOutput<>(StringCodec.UTF8), new CommandArgs<>(StringCodec.UTF8)))
+               .isEqualTo("RESET");
+
+         // No unsubscribe confirmation was sent, only the subscription message.
+         assertThat(handOffQueue.poll(1, TimeUnit.SECONDS)).isNull();
+         eventually(() -> redis.pubsubChannels().isEmpty());
+      } finally {
+         closePubSubConnection(connection);
+      }
+   }
+
+   @Test
+   public void testSelectDropsSubscription() throws Exception {
+      ConfigurationBuilder builder = defaultRespConfiguration();
+      amendConfiguration(builder);
+
+      if (isAuthorizationEnabled()) {
+         Security.doAs(ADMIN, () -> manager(0).createCache("1", builder.build()));
+      } else {
+         manager(0).createCache("1", builder.build());
+      }
+
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      RedisPubSubCommands<String, String> connection = createPubSubConnection();
+      try {
+         BlockingQueue<String> handOffQueue = addPubSubListener(connection);
+
+         connection.subscribe("channel2");
+         assertSubscription(handOffQueue, "channel2");
+         assertThat(redis.pubsubChannels()).containsExactly("channel2");
+
+         // SELECT discards the subscriptions without sending unsubscribe confirmations.
+         assertThat(connection.select(1)).isEqualTo(OK);
+         assertThat(handOffQueue.poll(1, TimeUnit.SECONDS)).isNull();
+         eventually(() -> redis.pubsubChannels().isEmpty());
+
+         // The connection now operates on the selected cache.
+         assertThat(connection.set("key1", "value1")).isEqualTo(OK);
+         assertThat(connection.get("key1")).isEqualTo("value1");
+         assertThat(redis.get("key1")).isNull();
+      } finally {
+         closePubSubConnection(connection);
+      }
+   }
+
+   private static class SimpleCommand implements ProtocolKeyword {
+      private final String name;
+
+      private SimpleCommand(String name) {
+         this.name = name;
+      }
+
+      @Override
+      public byte[] getBytes() {
+         return name.getBytes(StandardCharsets.UTF_8);
+      }
+
+      @Override
+      public String toString() {
+         return name;
+      }
+   }
+
    protected RedisPubSubCommands<String, String> createPubSubConnection() {
       return client.connectPubSub().sync();
    }
 
-   private void assertSubscription(BlockingQueue<String> queue, String ... channels) throws InterruptedException {
+   private void closePubSubConnection(RedisPubSubCommands<String, String> connection) throws Exception {
+      connection.getStatefulConnection().closeAsync().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      eventually(() -> redisConnection.sync().pubsubChannels().isEmpty());
+   }
+
+   private void assertSubscription(BlockingQueue<String> queue, String... channels) throws InterruptedException {
       int i = 1;
       for (String channel : channels) {
          String value = queue.poll(10, TimeUnit.SECONDS);
@@ -575,11 +834,11 @@ public class PublishSubscribeTest extends SingleNodeRespBaseTest {
       }
    }
 
-   private void assertPSubscription(BlockingQueue<String> queue, String ... patterns) throws InterruptedException {
+   private void assertPSubscription(BlockingQueue<String> queue, String... patterns) throws InterruptedException {
       assertPSubscription(queue, 1, patterns);
    }
 
-   private void assertPSubscription(BlockingQueue<String> queue, int startCount, String ... patterns) throws InterruptedException {
+   private void assertPSubscription(BlockingQueue<String> queue, int startCount, String... patterns) throws InterruptedException {
       int i = startCount;
       for (String pattern : patterns) {
          String value = queue.poll(10, TimeUnit.SECONDS);
@@ -587,7 +846,7 @@ public class PublishSubscribeTest extends SingleNodeRespBaseTest {
       }
    }
 
-   private void assertUnsubscribe(BlockingQueue<String> queue, String ... channels) throws  InterruptedException {
+   private void assertUnsubscribe(BlockingQueue<String> queue, String... channels) throws InterruptedException {
       int i = channels.length;
       for (String channel : channels) {
          String value = queue.poll(10, TimeUnit.SECONDS);

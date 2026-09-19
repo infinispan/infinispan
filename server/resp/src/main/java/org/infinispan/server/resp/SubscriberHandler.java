@@ -17,14 +17,22 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
+import org.infinispan.server.resp.commands.AuthResp3Command;
 import org.infinispan.server.resp.commands.PubSubResp3Command;
+import org.infinispan.server.resp.commands.TransactionResp3Command;
+import org.infinispan.server.resp.commands.connection.RESET;
+import org.infinispan.server.resp.commands.connection.SELECT;
 import org.infinispan.server.resp.commands.pubsub.KeyChannelUtils;
 import org.infinispan.server.resp.commands.pubsub.RespCacheListener;
+import org.infinispan.server.resp.commands.tx.DISCARD;
+import org.infinispan.server.resp.commands.tx.EXEC;
+import org.infinispan.server.resp.commands.tx.MULTI;
 import org.infinispan.server.resp.logging.Log;
 import org.infinispan.server.resp.meta.ClientMetadata;
 import org.infinispan.server.resp.serialization.Resp3Type;
 import org.infinispan.server.resp.serialization.bytebuf.ByteBufResponseWriter;
 import org.infinispan.server.resp.serialization.bytebuf.ByteBufferUtils;
+import org.infinispan.server.resp.tx.RespTransactionHandler;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -32,13 +40,14 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.AttributeKey;
 import io.netty.util.CharsetUtil;
 
-public class SubscriberHandler extends CacheRespRequestHandler {
+public class SubscriberHandler extends Resp3Handler {
    private static final Log log = Log.getLog(SubscriberHandler.class);
    private static final AttributeKey<Long> SUBSCRIPTIONS_COUNTER = AttributeKey.newInstance("channel-subscriptions");
    private final Resp3Handler resp3Handler;
+   private RespTransactionHandler transactionHandler;
 
-   public SubscriberHandler(RespServer respServer, Resp3Handler prevHandler) {
-      super(respServer, prevHandler.cache());
+   public SubscriberHandler(Resp3Handler prevHandler) {
+      super(prevHandler);
       this.resp3Handler = prevHandler;
    }
 
@@ -136,16 +145,78 @@ public class SubscriberHandler extends CacheRespRequestHandler {
 
    @Override
    public void handleChannelDisconnect(ChannelHandlerContext ctx) {
+      if (transactionHandler != null) {
+         transactionHandler.handleChannelDisconnect(ctx);
+         transactionHandler = null;
+      }
       removeAllListeners();
+   }
+
+   @Override
+   protected void commandNotFound() {
+      super.commandNotFound();
+      if (transactionHandler != null) {
+         transactionHandler.errorInTransactionContext();
+      }
    }
 
    @Override
    protected CompletionStage<RespRequestHandler> actualHandleRequest(ChannelHandlerContext ctx, RespCommand command, List<byte[]> arguments) {
       initializeIfNecessary(ctx);
+      if (transactionHandler != null) {
+         return handleInTransaction(ctx, command, arguments);
+      }
       if (command instanceof PubSubResp3Command pubSubsCommand) {
          return pubSubsCommand.perform(this, ctx, arguments);
       }
+      if (command instanceof MULTI) {
+         // Transactions are allowed in the subscribed state. The transaction executes against this handler,
+         // so pub/sub commands queued for EXEC are applied to the current subscriptions.
+         writer().ok();
+         transactionHandler = new RespTransactionHandler(respServer(), cache(), ignored -> this);
+         return myStage;
+      }
+      if (command instanceof AuthResp3Command) {
+         // HELLO and AUTH are handled by the previous handler. A successful authentication returns a new handler,
+         // adopt its cache and keep the subscribed state.
+         return resp3Handler.handleRequest(ctx, command, arguments).handleAsync((handler, t) -> {
+            if (t == null && handler != resp3Handler && handler instanceof CacheRespRequestHandler cacheHandler) {
+               setCache(cacheHandler.cache());
+            }
+            return this;
+         }, ctx.channel().eventLoop());
+      }
+      if (command instanceof SELECT) {
+         // Like RESET, SELECT discards the subscriptions without sending unsubscribe confirmations.
+         discardSubscriptions(ctx);
+      }
+      // Since RESP3, any command is allowed while in the subscribed state.
       return super.actualHandleRequest(ctx, command, arguments);
+   }
+
+   private CompletionStage<RespRequestHandler> handleInTransaction(ChannelHandlerContext ctx, RespCommand command, List<byte[]> arguments) {
+      RespTransactionHandler tx = transactionHandler;
+      tx.initializeIfNecessary(ctx);
+      if (command instanceof TransactionResp3Command transactionCommand) {
+         if (transactionCommand instanceof MULTI) {
+            writer().customError("MULTI calls can not be nested");
+            return myStage;
+         }
+         if (transactionCommand instanceof EXEC || transactionCommand instanceof DISCARD) {
+            // The transaction executes against this handler. Exit the transaction state before execution, so
+            // the queued commands are not queued again while they are being performed.
+            transactionHandler = null;
+         }
+         return transactionCommand.perform(tx, ctx, arguments).thenApply(handler -> this);
+      }
+      if (command instanceof RESET) {
+         // RESET is executed immediately and exits the transaction, dropping the queued commands and watchers.
+         CompletionStage<?> drop = tx.dropTransaction(ctx);
+         transactionHandler = null;
+         return ((PubSubResp3Command) command).perform(this, ctx, arguments).thenCombine(drop, (handler, ignore) -> handler);
+      }
+      // All other commands, including pub/sub commands, are queued for EXEC.
+      return tx.queueCommand(ctx, command, arguments).thenApply(handler -> this);
    }
 
    public CompletionStage<Void> handleStageListenerError(CompletionStage<Void> stage, byte[] keyChannel, boolean subscribeOrUnsubscribe) {
@@ -160,10 +231,15 @@ public class SubscriberHandler extends CacheRespRequestHandler {
       });
    }
 
-   public void removeAllListeners() {
-      removeAllFrom(specificChannelSubscribers);
-      removeAllFrom(patternSubscribers);
-   }
+    public void removeAllListeners() {
+       removeAllFrom(specificChannelSubscribers);
+       removeAllFrom(patternSubscribers);
+    }
+
+    public void discardSubscriptions(ChannelHandlerContext ctx) {
+       removeAllListeners();
+       ctx.channel().attr(SUBSCRIPTIONS_COUNTER).set(null);
+    }
 
    private void removeAllFrom(Map<WrappedByteArray, RespCacheListener> subscribers) {
       for (Iterator<Map.Entry<WrappedByteArray, RespCacheListener>> iterator = subscribers.entrySet().iterator(); iterator.hasNext(); ) {
