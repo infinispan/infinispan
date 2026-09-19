@@ -37,10 +37,10 @@ public class RESET extends RespCommand implements Resp3Command, PubSubResp3Comma
       return handler.myStage();
    }
 
-   @Override
-   public CompletionStage<RespRequestHandler> perform(SubscriberHandler handler, ChannelHandlerContext ctx,
-                                                      List<byte[]> arguments) {
-      handler.removeAllListeners();
-      return handler.resp3Handler().handleRequest(ctx, this, arguments);
-   }
+    @Override
+    public CompletionStage<RespRequestHandler> perform(SubscriberHandler handler, ChannelHandlerContext ctx,
+                                                       List<byte[]> arguments) {
+       handler.discardSubscriptions(ctx);
+       return handler.resp3Handler().handleRequest(ctx, this, arguments);
+    }
 }
