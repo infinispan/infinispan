@@ -120,7 +120,7 @@ public class ConcurrentCacheStartupTest extends MultipleCacheManagersTest {
       Cache<String, String> cacheA = getCacheFuture.get(30, TimeUnit.SECONDS);
       assertThat(cacheA).isNotNull();
       assertThat(cacheA.get("key")).isEqualTo("value");
-      assertThat(startupManager(cm2).getState(CACHE_A)).isEqualTo(CacheStartupState.READY);
+      eventually(() -> startupManager(cm2).getState(CACHE_A) == CacheStartupState.READY);
    }
 
    private EmbeddedCacheManager startSecondNodeWithDelay(String delayedCache,
