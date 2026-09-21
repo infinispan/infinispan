@@ -26,6 +26,10 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 public class Configuration extends ConfigurationElement<Configuration> implements BasicConfiguration {
    public static final AttributeDefinition<String> CONFIGURATION = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CONFIGURATION, null, String.class).immutable().build();
    public static final AttributeDefinition<Boolean> SIMPLE_CACHE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SIMPLE_CACHE, false).immutable().build();
+   public static final AttributeDefinition<Boolean> INTERNAL = AttributeDefinition.builder("internal", false)
+         .immutable()
+         .autoPersist(false)
+         .build();
    @SuppressWarnings("unchecked")
    public static final AttributeDefinition<Set<String>> ALIASES = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ALIASES, null, (Class<Set<String>>) (Class<?>) Set.class)
          .since(15, 0)
@@ -37,10 +41,11 @@ public class Configuration extends ConfigurationElement<Configuration> implement
 
 
    public static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(Configuration.class, CONFIGURATION, SIMPLE_CACHE, ALIASES);
+      return new AttributeSet(Configuration.class, CONFIGURATION, SIMPLE_CACHE, INTERNAL, ALIASES);
    }
 
    private final Attribute<Boolean> simpleCache;
+   private final Attribute<Boolean> internal;
    private final ClusteringConfiguration clusteringConfiguration;
    private final EncodingConfiguration encodingConfiguration;
    private final ExpirationConfiguration expirationConfiguration;
@@ -93,6 +98,7 @@ public class Configuration extends ConfigurationElement<Configuration> implement
             unsafeConfiguration);
       this.template = template;
       this.simpleCache = attributes.attribute(SIMPLE_CACHE);
+      this.internal = attributes.attribute(INTERNAL);
       this.clusteringConfiguration = clusteringConfiguration;
       this.encodingConfiguration = encodingConfiguration;
       this.expirationConfiguration = expirationConfiguration;
@@ -121,6 +127,10 @@ public class Configuration extends ConfigurationElement<Configuration> implement
 
    public boolean simpleCache() {
       return simpleCache.get();
+   }
+
+   public boolean isInternalCache() {
+      return internal.get();
    }
 
    public ClusteringConfiguration clustering() {

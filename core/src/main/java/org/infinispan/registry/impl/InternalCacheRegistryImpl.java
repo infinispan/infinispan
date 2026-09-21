@@ -63,6 +63,7 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
       }
       ConfigurationBuilder builder = new ConfigurationBuilder().read(configuration, Combine.DEFAULT);
       builder.statistics().disable(); // Internal caches must not be included in stats counts
+      builder.internalCache(true); // Mark as internal cache to skip non-shared store warnings
       if (flags.contains(Flag.GLOBAL) && globalConfiguration.isClustered()) {
          // TODO: choose a merge policy
          builder.clustering()

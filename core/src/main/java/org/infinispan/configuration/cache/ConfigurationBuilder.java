@@ -3,6 +3,7 @@ package org.infinispan.configuration.cache;
 import static java.util.Arrays.asList;
 import static org.infinispan.configuration.cache.Configuration.ALIASES;
 import static org.infinispan.configuration.cache.Configuration.CONFIGURATION;
+import static org.infinispan.configuration.cache.Configuration.INTERNAL;
 import static org.infinispan.configuration.cache.Configuration.SIMPLE_CACHE;
 import static org.infinispan.util.logging.Log.CONFIG;
 
@@ -77,6 +78,15 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    @Override
    public boolean simpleCache() {
       return attributes.attribute(SIMPLE_CACHE).get();
+   }
+
+   public ConfigurationBuilder internalCache(boolean internal) {
+      attributes.attribute(INTERNAL).set(internal);
+      return this;
+   }
+
+   public boolean internalCache() {
+      return attributes.attribute(INTERNAL).get();
    }
 
    @Override

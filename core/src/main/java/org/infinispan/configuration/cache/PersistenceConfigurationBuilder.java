@@ -158,7 +158,7 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
             if (storeConfiguration.transactional() && !isLocalCache) {
                throw CONFIG.clusteredTransactionalStoreMustBeShared(storeConfiguration.getClass().getSimpleName());
             }
-            if (!isLocalCache && !storeConfiguration.purgeOnStartup()) {
+            if (!isLocalCache && !storeConfiguration.purgeOnStartup() && !builder.internalCache()) {
                CONFIG.nonSharedStoreWithoutPurgeOnStartup(storeConfiguration.getClass().getSimpleName());
             }
          }
