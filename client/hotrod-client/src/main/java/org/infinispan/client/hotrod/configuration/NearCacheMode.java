@@ -7,8 +7,6 @@ package org.infinispan.client.hotrod.configuration;
  */
 public enum NearCacheMode {
 
-   // TODO: Add SELECTIVE (or similar) when ISPN-5545 implemented
-
    /**
     * Near caching is disabled.
     */
