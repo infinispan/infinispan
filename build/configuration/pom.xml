@@ -36,6 +36,9 @@
 
       <!-- === Branding Configuration === -->
       <infinispan.brand.name>Infinispan</infinispan.brand.name>
+      <version_10.x>10.x</version_10.x>
+      <version_11.x>11.x</version_11.x>
+      <version_16.x>16.x</version_16.x>
       <infinispan.brand.prefix>infinispan</infinispan.brand.prefix>
       <infinispan.brand.short-name>infinispan</infinispan.brand.short-name>
       <infinispan.brand.version>${project.version}</infinispan.brand.version>
