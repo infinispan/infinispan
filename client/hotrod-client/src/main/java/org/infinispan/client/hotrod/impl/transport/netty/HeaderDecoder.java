@@ -366,7 +366,9 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
 
       final short hashFunctionVersion;
       final SocketAddress[][] segmentOwners;
-      if (dispatcher.getClientIntelligence().getValue() == ClientIntelligence.HASH_DISTRIBUTION_AWARE.getValue()) {
+      ClientIntelligence configuredIntelligence = dispatcher.getClientIntelligence();
+      ClientIntelligence effectiveIntelligence = configuredIntelligence.getEffectiveIntelligence();
+      if (effectiveIntelligence == ClientIntelligence.HASH_DISTRIBUTION_AWARE) {
          // Only read the hash if we asked for it
          hashFunctionVersion = buf.readUnsignedByte();
          int numSegments = ByteBufUtil.readVInt(buf);
