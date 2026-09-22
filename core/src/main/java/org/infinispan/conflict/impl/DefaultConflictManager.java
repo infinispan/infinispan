@@ -412,19 +412,24 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
             )
             .filter(DefaultConflictManager::hasConflict)
             .timeout(conflictTimeout, TimeUnit.MILLISECONDS)
-            .doOnCancel(() -> {
-               stateReceiver.cancelRequests(topology.getTopologyId());
-               streamInProgress.set(false);
-            })
+            .doOnCancel(() -> streamInProgress.set(false))
             .doOnError(t -> {
                if (log.isTraceEnabled()) log.tracef("Cache %s conflict detection error: %s", cacheName, t.getMessage());
-               stateReceiver.cancelRequests(topology.getTopologyId());
                streamInProgress.set(false);
             })
             // Note that we have to set streamInProgress to false in both doOnComplete and doOnError instead
             // of doFinally since the latter is invoked after things like blockingStream complete but the former two
             // are notified before that happens.
-            .doOnComplete(() -> streamInProgress.set(false));
+            .doOnComplete(() -> streamInProgress.set(false))
+            // Cancelling the outstanding segment requests has to happen once the rest of the pipeline is torn down,
+            // hence doFinally rather than doOnCancel: doFinally propagates cancel() upstream before running the
+            // action, so the Flowable.fromCompletionStage() subscribers of fullSegmentFetchFlowable() have already
+            // detached from their futures by the time cancelRequests() completes them with a CancellationException.
+            // From doOnCancel the action runs first, and that exception is then emitted into a pipeline which is
+            // already cancelled, leaving RxJava no option but to route it to the global undeliverable handler.
+            // On error this is equivalent to the previous doOnError call, and on completion it is a no-op as every
+            // request has already removed itself.
+            .doFinally(() -> stateReceiver.cancelRequests(topology.getTopologyId()));
    }
 
    private Flowable<Map<Address, CacheEntry<K, V>>> processSegmentAsync(
@@ -538,8 +543,8 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       CompositeDisposable subscription = conflictSubscription;
       if (subscription != null && !subscription.isDisposed()) {
          if (log.isTraceEnabled()) log.tracef("Cache %s cancelling conflict resolution", cacheName);
-         // Disposing runs doOnCancel -> stateReceiver.cancelRequests(topologyId), doOnDispose -> cancel the
-         // stage and doFinally -> streamInProgress.set(false) for this attempt, and only this attempt.
+         // Disposing runs doOnCancel -> streamInProgress.set(false), doOnDispose -> cancel the stage and
+         // doFinally -> stateReceiver.cancelRequests(topologyId) for this attempt, and only this attempt.
          subscription.dispose();
       }
    }
