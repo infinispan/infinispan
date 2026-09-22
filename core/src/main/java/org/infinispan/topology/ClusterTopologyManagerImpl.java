@@ -637,8 +637,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
       return config.clustering().partitionHandling().resolveConflictsOnMerge();
    }
 
-   void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology) {
-      ReplicableCommand command = new RebalanceStartCommand(cacheName, transport.getAddress(), cacheTopology, viewId);
+   void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode) {
+      ReplicableCommand command = new RebalanceStartCommand(cacheName, transport.getAddress(), cacheTopology,
+                                                            availabilityMode, viewId);
       helper.executeOnClusterAsync(transport, command);
    }
 

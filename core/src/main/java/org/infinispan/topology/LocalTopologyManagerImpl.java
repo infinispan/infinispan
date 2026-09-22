@@ -763,7 +763,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
    @Override
    public CompletionStage<Void> handleRebalance(final String cacheName, final CacheTopology cacheTopology,
-                                                final int viewId, final Address sender) {
+                                                final AvailabilityMode availabilityMode, final int viewId,
+                                                final Address sender) {
       if (!running) {
          log.debugf("Ignoring rebalance request %s for cache %s, the local cache manager is not running",
                     cacheTopology.getTopologyId(), cacheName);
@@ -780,7 +781,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       eventLogger.context(cacheName)
             .info(EventLogCategory.LIFECYCLE, MESSAGES.cacheRebalanceStart(cacheTopology.getMembers(), cacheTopology.getPhase(), cacheTopology.getTopologyId()));
       return withView(viewId, cacheStatus.getJoinInfo().getTimeout(), MILLISECONDS)
-            .thenCompose(ignored -> orderOnCache(cacheName, () -> doHandleRebalance(viewId, cacheStatus, cacheTopology, cacheName, sender)))
+            .thenCompose(ignored -> orderOnCache(cacheName, () -> doHandleRebalance(viewId, cacheStatus, cacheTopology, availabilityMode, cacheName, sender)))
             .handle((ignore, throwable) -> {
                Collection<Address> members = cacheTopology.getMembers();
                int topologyId = cacheTopology.getTopologyId();
@@ -803,7 +804,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    }
 
    private CompletionStage<Void> doHandleRebalance(int viewId, LocalCacheStatus cacheStatus,
-                                                   CacheTopology cacheTopology,
+                                                   CacheTopology cacheTopology, AvailabilityMode availabilityMode,
                                                    String cacheName, Address sender) {
       CacheTopology existingTopology;
       synchronized (cacheStatus) {
@@ -829,8 +830,15 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
                                                     cacheTopology.getActualMembers(),
                                                     cacheTopology.getMembersPersistentUUIDs());
 
-      CompletionStage<Void> stage =
-            resetLocalTopologyBeforeRebalance(cacheName, cacheTopology, existingTopology, handler);
+      // Apply the availability mode before starting the state transfer: the rebalance start and the topology update
+      // that would otherwise carry it are not ordered, so this may be the first time we learn the cache is available
+      // again, and the state transfer itself is refused while the partition is degraded.
+      CompletionStage<Void> stage = availabilityMode != null ?
+            cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode) :
+            CompletableFutures.completedNull();
+
+      stage = stage.thenCompose(
+            ignored -> resetLocalTopologyBeforeRebalance(cacheName, cacheTopology, existingTopology, handler));
 
       return stage.thenCompose(ignored -> {
          log.debugf("Starting local rebalance for cache %s, topology = %s", cacheName, cacheTopology);

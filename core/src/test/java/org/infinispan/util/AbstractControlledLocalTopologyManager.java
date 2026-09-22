@@ -88,10 +88,11 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    }
 
    @Override
-   public final CompletionStage<Void> handleRebalance(String cacheName, CacheTopology cacheTopology, int viewId,
+   public final CompletionStage<Void> handleRebalance(String cacheName, CacheTopology cacheTopology,
+                                                      AvailabilityMode availabilityMode, int viewId,
                                                       Address sender) {
       return TestingUtil.sequence(beforeHandleRebalance(cacheName, cacheTopology, viewId),
-            () -> delegate.handleRebalance(cacheName, cacheTopology, viewId, sender));
+            () -> delegate.handleRebalance(cacheName, cacheTopology, availabilityMode, viewId, sender));
    }
 
    @Override

@@ -342,7 +342,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
                             () -> Mocks.callRealMethod(invocation));
          }
          return invocation.callRealMethod();
-      }).when(spyLocalTopologyManager).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt(),
+      }).when(spyLocalTopologyManager).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), any(), anyInt(),
                                                           any(Address.class));
       TestingUtil.replaceComponent(manager, LocalTopologyManager.class, spyLocalTopologyManager, true);
    }
@@ -385,7 +385,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             update2MembersFuture.completeExceptionally(new TestException());
          }
          return invocation.callRealMethod();
-      }).when(spyLocalTopologyManager2).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt(),
+      }).when(spyLocalTopologyManager2).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), any(), anyInt(),
                                                         any(Address.class));
       TestingUtil.replaceComponent(manager(1), LocalTopologyManager.class, spyLocalTopologyManager2, true);
 

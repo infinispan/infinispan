@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -48,12 +49,22 @@ public class RebalanceStartCommand extends AbstractCacheControlCommand {
    @ProtoField(8)
    final int viewId;
 
+   /**
+    * The availability mode of the cache when the coordinator started the rebalance.
+    * <p>
+    * {@code null} when the command was sent by a coordinator older than 16.3, in which case the receiver must keep
+    * its current availability mode.
+    */
+   @ProtoField(10)
+   final AvailabilityMode availabilityMode;
+
    private final List<Address> actualMembers;
 
    @ProtoFactory
    RebalanceStartCommand(String cacheName, WrappedMessage currentCH, WrappedMessage pendingCH,
                                 CacheTopology.Phase phase, List<UUID> persistentUUIDs,
-                                int rebalanceId, int topologyId, int viewId, List<Address> actualMembers) {
+                                int rebalanceId, int topologyId, int viewId, List<Address> actualMembers,
+                                AvailabilityMode availabilityMode) {
       this.cacheName = cacheName;
       this.currentCH = currentCH;
       this.pendingCH = pendingCH;
@@ -63,9 +74,11 @@ public class RebalanceStartCommand extends AbstractCacheControlCommand {
       this.topologyId = topologyId;
       this.viewId = viewId;
       this.actualMembers = actualMembers;
+      this.availabilityMode = availabilityMode;
    }
 
-   public RebalanceStartCommand(String cacheName, Address origin, CacheTopology cacheTopology, int viewId) {
+   public RebalanceStartCommand(String cacheName, Address origin, CacheTopology cacheTopology,
+                                AvailabilityMode availabilityMode, int viewId) {
       super(origin);
       this.cacheName = cacheName;
       this.topologyId = cacheTopology.getTopologyId();
@@ -75,6 +88,7 @@ public class RebalanceStartCommand extends AbstractCacheControlCommand {
       this.phase = cacheTopology.getPhase();
       this.actualMembers = cacheTopology.getActualMembers();
       this.persistentUUIDs = cacheTopology.getMembersPersistentUUIDs();
+      this.availabilityMode = availabilityMode;
       this.viewId = viewId;
    }
 
@@ -82,12 +96,16 @@ public class RebalanceStartCommand extends AbstractCacheControlCommand {
    public CompletionStage<?> invokeAsync(GlobalComponentRegistry gcr) throws Throwable {
       CacheTopology topology = new CacheTopology(topologyId, rebalanceId, getCurrentCH(), getPendingCH(), phase, actualMembers, persistentUUIDs);
       return gcr.getLocalTopologyManager()
-            .handleRebalance(cacheName, topology, viewId, origin);
+            .handleRebalance(cacheName, topology, availabilityMode, viewId, origin);
    }
 
    @ProtoField(9)
    List<Address> getActualMembers() {
       return actualMembers;
+   }
+
+   public AvailabilityMode getAvailabilityMode() {
+      return availabilityMode;
    }
 
    public String getCacheName() {
@@ -127,6 +145,7 @@ public class RebalanceStartCommand extends AbstractCacheControlCommand {
             ", persistentUUIDs=" + persistentUUIDs +
             ", rebalanceId=" + rebalanceId +
             ", topologyId=" + topologyId +
+            ", availabilityMode=" + availabilityMode +
             ", viewId=" + viewId +
             '}';
    }
