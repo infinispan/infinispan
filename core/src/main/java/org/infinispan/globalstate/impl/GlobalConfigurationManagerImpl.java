@@ -3,6 +3,8 @@ package org.infinispan.globalstate.impl;
 import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.lang.invoke.MethodHandles;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
@@ -432,7 +434,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    private void applyLocalAttributes(String cacheName, Configuration configuration) {
-      Optional<ScopedPersistentState> optional = globalStateManager.readScopedState(LOCAL_ATTRS_SCOPE_PREFIX + cacheName);
+      Optional<ScopedPersistentState> optional = globalStateManager.readScopedState(escapeCacheName(LOCAL_ATTRS_SCOPE_PREFIX, cacheName));
       if (optional.isEmpty())
          return;
 
@@ -441,7 +443,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    private void writeLocalAttributes(String cacheName, Configuration source) {
-      ScopedPersistentState scopedState = new ScopedPersistentStateImpl(LOCAL_ATTRS_SCOPE_PREFIX + cacheName);
+      ScopedPersistentState scopedState = new ScopedPersistentStateImpl(escapeCacheName(LOCAL_ATTRS_SCOPE_PREFIX, cacheName));
       ConfigurationUtil.collectLocalAttributesInto(source, scopedState);
       globalStateManager.writeScopedState(scopedState);
    }
@@ -571,7 +573,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    }
 
    CompletionStage<Void> removeCacheLocally(String name) {
-      globalStateManager.deleteScopedState(LOCAL_ATTRS_SCOPE_PREFIX + name);
+      globalStateManager.deleteScopedState(escapeCacheName(LOCAL_ATTRS_SCOPE_PREFIX, name));
       return localConfigurationManager.removeCache(name, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class))
             .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, ConfigurationChangedEvent.CACHE, name, null));
    }
@@ -579,4 +581,9 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    CompletionStage<Void> removeTemplateLocally(String name) {
       return localConfigurationManager.removeTemplate(name, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class)).thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, ConfigurationChangedEvent.TEMPLATE, name, null));
    }
+
+   private static String escapeCacheName(String prefix, String cacheName) {
+      return prefix + URLEncoder.encode(cacheName, StandardCharsets.UTF_8);
+   }
+
 }
