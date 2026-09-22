@@ -335,7 +335,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
                   () -> Mocks.callRealMethod(invocation));
          }
          return invocation.callRealMethod();
-      }).when(spyLocalTopologyManager).handleRebalance(eq(cacheName), any(CacheTopology.class), anyInt(),
+      }).when(spyLocalTopologyManager).handleRebalance(eq(cacheName), any(CacheTopology.class), any(), anyInt(),
             any(Address.class));
       TestingUtil.replaceComponent(manager, LocalTopologyManager.class, spyLocalTopologyManager, true);
    }

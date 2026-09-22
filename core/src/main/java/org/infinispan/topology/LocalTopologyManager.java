@@ -70,8 +70,15 @@ public interface LocalTopologyManager {
 
    /**
     * Performs the state transfer.
+    *
+    * @param availabilityMode the availability mode the coordinator had when it started the rebalance, or {@code null}
+    *                         to keep the current one. Sent along with the topology because a rebalance start and a
+    *                         topology update are not ordered relative to each other, so a rebalance start can install
+    *                         a topology newer than the last topology update carrying an availability mode, which would
+    *                         then be discarded as stale.
     */
-   CompletionStage<Void> handleRebalance(String cacheName, CacheTopology cacheTopology, int viewId, Address sender);
+   CompletionStage<Void> handleRebalance(String cacheName, CacheTopology cacheTopology,
+                                         AvailabilityMode availabilityMode, int viewId, Address sender);
 
    /**
     * @return the current topology for a cache.

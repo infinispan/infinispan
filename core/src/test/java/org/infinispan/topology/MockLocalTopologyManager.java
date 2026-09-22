@@ -108,9 +108,10 @@ class MockLocalTopologyManager implements LocalTopologyManager {
    }
 
    @Override
-   public CompletionStage<Void> handleRebalance(String cacheName, CacheTopology cacheTopology, int viewId, Address sender) {
+   public CompletionStage<Void> handleRebalance(String cacheName, CacheTopology cacheTopology,
+                                                AvailabilityMode availabilityMode, int viewId, Address sender) {
       status = new CacheStatusResponse(status.getCacheJoinInfo(), cacheTopology, status.getStableTopology(),
-            status.getAvailabilityMode(), status.joinedMembers(), null);
+            availabilityMode != null ? availabilityMode : status.getAvailabilityMode(), status.joinedMembers(), null);
       topologies.add(cacheTopology);
       return CompletableFutures.completedNull();
    }

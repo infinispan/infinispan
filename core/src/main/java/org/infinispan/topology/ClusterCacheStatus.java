@@ -1273,7 +1273,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             CLUSTER.startingRebalancePhase(cacheName, newTopology);
             eventLogger.info(EventLogCategory.CLUSTER, MESSAGES.cacheRebalanceStart(
                     newTopology.getMembers(), newTopology.getPhase(), newTopology.getTopologyId()));
-            clusterTopologyManager.broadcastRebalanceStart(cacheName, newTopology);
+            clusterTopologyManager.broadcastRebalanceStart(cacheName, newTopology, getAvailabilityMode());
          } else if (updateStableTopology) {
             stableTopology = currentTopology;
             clusterTopologyManager.broadcastStableTopologyUpdate(cacheName, stableTopology);

@@ -102,7 +102,8 @@ public class ClusterCacheStatusTest extends AbstractInfinispanTest {
    }
 
    private void verifyRebalanceStart() {
-      verify(topologyManager).broadcastRebalanceStart(CACHE_NAME, status.getCurrentTopology());
+      verify(topologyManager).broadcastRebalanceStart(CACHE_NAME, status.getCurrentTopology(),
+                                                      AvailabilityMode.AVAILABLE);
    }
 
    private void verifyStableTopologyUpdate() {
