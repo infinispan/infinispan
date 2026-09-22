@@ -550,6 +550,40 @@ public class GlobalStateTest extends AbstractInfinispanTest {
       }
    }
 
+   public void testNonGlobalAttributeWithSlashesInCacheName(Method m) {
+      String state1 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "1");
+      GlobalConfigurationBuilder global1 = statefulGlobalBuilder(state1, true);
+      String state2 = tmpDirectory(this.getClass().getSimpleName(), m.getName() + "2");
+      GlobalConfigurationBuilder global2 = statefulGlobalBuilder(state2, true);
+      EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(false, global1, new ConfigurationBuilder(), new TransportFlags());
+      EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(false, global2, new ConfigurationBuilder(), new TransportFlags());
+      try {
+         cm1.start();
+         cm2.start();
+
+         String cacheName = String.format("test%scache%sname", File.separator, File.separator);
+
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true);
+         cm1.administration().getOrCreateCache(cacheName, builder.build());
+
+         // Update the non-global attribute
+         builder.clustering().stateTransfer().awaitInitialTransfer(false);
+         cm1.administration().withFlags(CacheContainerAdmin.AdminFlag.UPDATE).getOrCreateCache(cacheName, builder.build());
+
+         // Verify the scoped state was written successfully despite slashes in the cache name
+         GlobalStateManager gsm1 = TestingUtil.extractGlobalComponent(cm1, GlobalStateManager.class);
+         String escapedScope = "___local-attrs." + cacheName;
+         Optional<ScopedPersistentState> scopedState = gsm1.readScopedState(escapedScope);
+         assertThat(scopedState).isPresent();
+
+         String attrKey = StateTransferConfiguration.AWAIT_INITIAL_TRANSFER.name();
+         assertThat(scopedState.get().getProperty(attrKey)).isEqualTo("false");
+      } finally {
+         TestingUtil.killCacheManagers(cm1, cm2);
+      }
+   }
+
    private GlobalConfigurationBuilder statefulGlobalBuilder(String stateDirectory, boolean clear) {
       if (clear) Util.recursiveFileRemove(stateDirectory);
       GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
