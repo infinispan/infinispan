@@ -3,9 +3,11 @@ package org.infinispan.commons.util.concurrent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 import org.infinispan.commons.util.Util;
@@ -133,7 +135,8 @@ public class FileSystemLock {
    }
 
    private String lockFileName() {
-      return String.format("%s.lck", name);
+      String sanitizedName = URLEncoder.encode(name, StandardCharsets.UTF_8);
+      return String.format("%s.lck", sanitizedName);
    }
 
    @Override
