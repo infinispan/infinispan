@@ -11,6 +11,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
@@ -140,6 +142,7 @@ public final class GlobalStateHandler implements GlobalStateManager {
    }
 
    private File getStateFile(String scope) {
-      return new File(root, scope + ".state");
+      String sanitizedScope = URLEncoder.encode(scope, StandardCharsets.UTF_8);
+      return new File(root, sanitizedScope + ".state");
    }
 }

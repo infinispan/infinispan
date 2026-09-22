@@ -82,6 +82,20 @@ public class SoftIndexFileStoreFunctionalTest extends BaseStoreFunctionalTest {
       return persistence;
    }
 
+   public void testSimpleOpsWithSlashName() {
+      // Just a really weird name to make the lock scape the data folder.
+      // /tmp/infinispanTempFiles/<test name>/<cache name> is the prefix.
+      String cacheName = "../../../../../my/test/cache";
+      ConfigurationBuilder cb = getDefaultCacheConfiguration();
+      createCacheStoreConfig(cb.persistence(), cacheName, false);
+      TestingUtil.defineConfiguration(cacheManager, cacheName, cb.build());
+
+      Cache<String, Object> cache = cacheManager.getCache(cacheName);
+
+      cache.put("key", "value");
+      assertEquals("value", cache.get("key"));
+   }
+
    public void testWritingSameKeyShortTimes() {
       String cacheName = "testWritingSameKeyShortTimes";
       ConfigurationBuilder cb = getDefaultCacheConfiguration();

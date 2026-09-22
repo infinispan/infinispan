@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "globalstate.GracefulShutdownTest")
 public class GracefulShutdownTest extends MultipleCacheManagersTest {
 
-   private static final String CACHE_NAME = "testCache";
+   private static final String CACHE_NAME = "test/cache";
    private static final int NUM_NODES = 5;
 
    @Override
