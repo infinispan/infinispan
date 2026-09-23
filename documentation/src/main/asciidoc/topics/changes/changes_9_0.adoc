@@ -19,7 +19,7 @@ and `eagerLockingSingleNode()` does not need a replacement because it was a no-o
 
 === Removed async transaction support
 
-Asynchronous mode is no longer supported in transactional caches and it will automatically use the synchronous cache mode.
+Asynchronous mode is no longer supported in transactional caches, and it will automatically use the synchronous cache mode.
 In addition, the second phase of a transaction commit is done synchronously.
 The following methods (and related) are deprecated:
 
@@ -27,7 +27,7 @@ The following methods (and related) are deprecated:
 * `TransactionConfigurationBuilder.syncRollbackPhase(boolean)`
 
 === Deprecated all the dummy related transaction classes.
-The following classes have been deprecated and they will be removed in the future:
+The following classes have been deprecated, and they will be removed in the future:
 
 * `DummyBaseTransactionManager`: replaced by `EmbeddedBasedTransactionManager`;
 * `DummyNoXaXid` and `DummyXid`: replaced by `EmbeddedXid`;
@@ -116,7 +116,7 @@ The total order protocol now uses the `remote-command-executor`. The attribute `
 link:https://github.com/brettwooldridge/HikariCP[HikariCP] offers superior performance to c3p0 and is now the default implementation.
 Additional properties for HikariCP can be provided by placing a `hikari.properties` file on the classpath or by specifying
 the path to the file via `PooledConnectionFactoryConfiguration.propertyFile` or `properties-file` in the connection pool's
-xml config. N.B. a properties file specified explicitly in the configuration is loaded instead of the `hikari.properties`
+XML config. N.B. a properties file specified explicitly in the configuration is loaded instead of the `hikari.properties`
 file on the class path and Connection pool characteristics which are explicitly set in PooledConnectionFactoryConfiguration
 always override the values loaded from a properties file.
 
@@ -139,7 +139,7 @@ store.
 A new annotation, `@Store`, has been added for persistence stores. This allows a store's properties to be
 explicitly defined and validated against the provided store configuration.  Existing stores should be updated to use this
 annotation and the store's configuration class should also declare the `@ConfigurationFor` annotation.  If neither of these
-annotations are present on the store or configuration class, then a your store will continue to function as before, albeit
+annotations are present on the store or configuration class, then a store will continue to function as before, albeit
 with a warning that additional store validation cannot be completed.
 
 === Server authentication changes
