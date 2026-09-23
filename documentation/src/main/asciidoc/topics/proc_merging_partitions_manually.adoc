@@ -14,5 +14,5 @@ include::code_examples/EmbeddedConflictManager.java[]
 
 [NOTE]
 ====
-Although the `ConflictManager::getConflicts` stream is processed per entry, the underlying spliterator lazily loads cache entries on a per segment basis.
+Although the `ConflictManager::getConflicts` stream is processed per entry, the underlying spliterator lazily loads cache entries on a per-segment basis.
 ====

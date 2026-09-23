@@ -9,7 +9,7 @@ Customize the Cache Manager with the following configuration beans:
 
 [NOTE]
 ====
-You can create one `InfinispanRemoteConfigurer` bean only. However you can create multiple configurations with the other beans.
+You can create one `InfinispanRemoteConfigurer` bean only. However, you can create multiple configurations with the other beans.
 ====
 
 .InfinispanRemoteConfigurer Bean

@@ -46,6 +46,6 @@ scripts can still invoke clustered operations.
 parameter and return values. This property is useful for remote clients that
 support particular data formats only.
 
-Currently you can set only `text/plain; charset=utf-8` to use the String UTF-8
+Currently, you can set only `text/plain; charset=utf-8` to use the String UTF-8
 format for data.
 |===

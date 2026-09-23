@@ -1,7 +1,7 @@
 == LDAP user and group mapping process with {brandname}
 
 This example illustrates the process of loading and internally mapping LDAP users and groups to {brandname} subjects.
-The following is a LDIF (LDAP Data Interchange Format) file, which describes multiple LDAP entries:
+The following is an LDIF (LDAP Data Interchange Format) file, which describes multiple LDAP entries:
 
 .LDIF
 [source,ldif,options="nowrap",subs=attributes+]

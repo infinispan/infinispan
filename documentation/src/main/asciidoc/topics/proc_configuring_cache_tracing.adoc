@@ -16,7 +16,7 @@ Several categories are potentially traced:
 * Persistence. All the operations involving persistence via a cache store and/or cache loader.
 
 Each of category can be enabled/disabled at start time or runtime listing them in the `categories` list attribute.
-By default only the container category is enabled.
+By default, only the container category is enabled.
 
 There is also the `Security` category, to trace security audit events.
 This category is configured globally, not only at cache level, since their events can have different scopes (cache, container or server),

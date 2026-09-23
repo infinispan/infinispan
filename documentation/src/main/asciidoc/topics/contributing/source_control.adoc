@@ -49,13 +49,13 @@ When changes have been tested and are ready to be contributed back to the projec
 NOTE:
 It is desirable to work off a _topic branch_, even when using your own, forked repository.
 A topic branch is created for every feature or bug fix you do.
-Typically you would create one topic branch per issue,
+Typically, you would create one topic branch per issue,
 but if several patches are related it's acceptable to have several commits in the same branch;
-however different changes should always be identified by different commits. 
+however different changes should always be identified by different commits.
 
 Before you push your work onto your fork of the repository on GitHub (your _origin_), it is often a good idea to review your commits.
 Consolidating them (squashing) or breaking them up as necessary and cleaning up commit messages should all be done while still working off your local clone.
-Also, prior to issuing a pull request, you should make sure you rebase your branch against the upstream branch you expect it to be merged into. 
+Also, prior to issuing a pull request, you should make sure you rebase your branch against the upstream branch you expect it to be merged into.
 Also, only submit pull requests for your topic branch - not for your main!
 
 TIP: The section on _Public Small Project_ in link:http://progit.org/book/ch5-2.html[Chapter 5, Section 2] of Pro Git has more information on this style of workflow.
@@ -79,7 +79,7 @@ TIP: The section on _Public Small Project_ in link:http://progit.org/book/ch5-2.
 
 . Sync with upstream again so that your changes now appear in your main branch
 
-If your topic branch has been open for a while and you are afraid changes upstream may clash with your changes, it makes sense to rebase your topic branch before you issue a pull request. To do this:
+If your topic branch has been open for a while, and you are afraid that changes upstream may clash with your changes, it makes sense to rebase your topic branch before you issue a pull request. To do this:
 
 . Sync your main branch with upstream
 
@@ -105,7 +105,7 @@ If your topic branch has been open for a while and you are afraid changes upstre
 
 TIP:  If you are sharing your forked {brandname} repo with others, then do not rebase! Use a merge instead.
 
-==== Multi-step coordination between developers using forked repositories
+==== Multistep coordination between developers using forked repositories
 Sometimes a feature/task is rather complex to implement and requires competence from multiple areas of the projects.
 In such occasions it is not uncommon for developers to coordinate feature implementation using personal forks of {brandname} prior to finally issuing request to integrate into {brandname} main repository on GitHub.
 
@@ -188,7 +188,7 @@ It's like the good rule of never commit when you're drunk (drunk coding, however
 
 .Never use `--force` on `git push`
 WARNING: Using `--force` while pushing on a shared repository such as _upstream_ you could effectively erase other committed patches.
-No one should ever use this option unless unanimously approved on the public mailing list: the most dangerous aspect of it is that nobody gets any notification if this happens, and we might think issues are solved but you silently removed the fix and it's history from the repository.
+No one should ever use this option unless unanimously approved on the public mailing list: the most dangerous aspect of it is that nobody gets any notification if this happens, and we might think issues are solved, but you silently removed the fix, and it's history from the repository.
 
 ==== Cutting releases
 Releases can only be cut by Project Admins, and must be done off a recently updated (`git fetch` and `git pull origin`) clone of the upstream repo.
@@ -210,7 +210,7 @@ For {brandname}, it makes sense to create a topic branch and name it after the i
 ==== Topic Branches Affecting More Than One Release Branch
 Most topic branches will only affect a single release branch, e.g. features targeted at the current unstable release will only affect the main release branch.
 So a topic branch should be created based off main.
-However, occasionally, fixes may apply to both release branches 4.2.x as well as main. In this case, the following workflow should apply:
+However, occasionally, fixes may apply to both release branches 4.2.x and main. In this case, the following workflow should apply:
 
 . Create topic branch off 4.2.x. For example:
 

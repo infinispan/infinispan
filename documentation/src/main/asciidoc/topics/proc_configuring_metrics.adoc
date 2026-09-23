@@ -7,7 +7,7 @@
 * Histograms provide details about operation execution times such as read,
 write, and remove times.
 
-By default, {brandname} generates gauges when you enable statistics but you can also configure it to generate histograms.
+By default, {brandname} generates gauges when you enable statistics, but you can also configure it to generate histograms.
 
 [NOTE]
 ====

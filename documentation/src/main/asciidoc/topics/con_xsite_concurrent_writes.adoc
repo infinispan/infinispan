@@ -22,7 +22,7 @@ A client puts "k1=2" in **LON** and the vector clock is `1,0`, which
 {brandname} replicates to **NYC**.
 A client then puts "k1=3" in **NYC** and the vector clock updates to `1,1`, which {brandname} replicates to **LON**.
 
-However if a client puts "k1=5" in **LON** at the same time that a client puts "k1=8" in **NYC**, {brandname} detects a conflicting entry because the vector value for "k1" is not strictly greater or less between **LON** and **NYC**.
+However, if a client puts "k1=5" in **LON** at the same time that a client puts "k1=8" in **NYC**, {brandname} detects a conflicting entry because the vector value for "k1" is not strictly greater or less between **LON** and **NYC**.
 
 When it finds conflicting entries, by default, {brandname} uses the Java `compareTo(String
 anotherString)` method to compare cluster names.
@@ -55,8 +55,8 @@ This SPI allows you to create custom conflict resolution logic tailored to your 
 In addition, the following built-in merge policies are available:
 
 * `ALWAYS_REMOVE`: Removes the entry from all clusters if a conflict occurs.
-* `PREFER_NON_NULL`: When a write (non-null) and a remove (null) conflict occurs, the write operation takes precedence.
-* `PREFER_NULL`: When a write and a remove conflict occurs, the remove operation (setting the entry to 'null') takes precedence.
+* `PREFER_NON_NULL`: When a write operation (non-null) and a remove operation (null) conflict occurs, the write operation takes precedence.
+* `PREFER_NULL`: When a write operation and a remove operation conflict occurs, the remove operation (setting the entry to 'null') takes precedence.
 
 [role="_additional-resources"]
 .Additional resources

@@ -14,7 +14,7 @@ You can access {brandname} caches in your applications through resource lookup.
 
 .Procedure
 
-. You can lookup {brandname} caches in your applications like this:
+. You can look up {brandname} caches in your applications like this:
 +
 [source,java,options="nowrap"]
 ----

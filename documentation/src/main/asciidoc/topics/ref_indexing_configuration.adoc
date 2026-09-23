@@ -220,7 +220,7 @@ To configure how {brandname} merges index segments, you use the `index-merge` su
 |Maximum size of segments, in MB, for background merges. Segments larger than this size are never merged in the background. Settings this to a lower value helps reduce memory requirements and avoids some merging operations at the cost of optimal search speed. This attribute is ignored when forcefully merging an index and `max-forced-size` applies instead.
 
 |`max-forced-size`
-|Maximum size of segments, in MB, for forced merges and overrides the `max-size` attribute. Set this to the same value as `max-size` or lower. However setting the value too low degrades search performance because documents are deleted.
+|Maximum size of segments, in MB, for forced merges and overrides the `max-size` attribute. Set this to the same value as `max-size` or lower. However, setting the value too low degrades search performance because documents are deleted.
 
 |`calibrate-by-deletes`
 |Whether the number of deleted entries in an index should be taken into account when counting the entries in the segment. Setting `false` will lead to more frequent merges caused by `max-entries`, but will more aggressively merge segments with many deleted documents, improving query performance.

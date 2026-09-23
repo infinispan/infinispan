@@ -64,7 +64,7 @@ docker compose down -v
 [id='tls']
 == TLS clusters
 
-To setup a tls cluster a set of certificates is needed so that client and server can verify each other identity.
+To set up a tls cluster a set of certificates is needed so that client and server can verify each other identity.
 To create all the certs and organized them in trust and key store, run the following
 [source,bash,options="nowrap",subs=attributes+]
 ----

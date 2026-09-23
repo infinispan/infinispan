@@ -2,7 +2,7 @@
 = Updating index schema
 The update index schema operation lets you add schema changes with a minimal downtime.
 Instead of removing previously indexed data and recreating the index schema, {brandname} adds new fields to the existing schema.
-Updating index schema is much faster than rebuilding the index but you can update schema only when your changes do not affect fields that were already indexed.
+Updating index schema is much faster than rebuilding the index, but you can update schema only when your changes do not affect fields that were already indexed.
 
 
 [IMPORTANT]

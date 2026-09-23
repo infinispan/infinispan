@@ -7,7 +7,7 @@ Events trigger a notification which is dispatched to listeners.   Listeners are 
 
 Both Cache and CacheManager implement Listenable, which means you can attach listeners to either a cache or a Cache Manager, to receive either cache-level or Cache Manager-level notifications.
 
-For example, the following class defines a listener to print out some information every time a new entry is added to the cache, in a non blocking fashion:
+For example, the following class defines a listener to print out some information every time a new entry is added to the cache, in a non-blocking fashion:
 
 [source,java]
 ----

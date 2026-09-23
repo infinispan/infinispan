@@ -22,6 +22,6 @@ cache.get(k) -> v1
 ----
 
 The reason is that read can return the value from any owner, depending on how fast the primary owner replies.
-The write is not atomic across all the owners.
+The write operation is not atomic across all the owners.
 In fact, the primary commits the update only after it receives a confirmation from the backup.
 While the primary is waiting for the confirmation message from the backup, reads from the backup will see the new value, but reads from the primary will see the old one.
