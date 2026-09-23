@@ -53,6 +53,7 @@ import org.infinispan.telemetry.InfinispanTelemetry;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * Protobuf schema manipulation Resource
@@ -91,21 +92,24 @@ public class ProtobufResource extends BaseCacheResource implements ResourceHandl
             .getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME, request);
       boolean pretty = isPretty(request);
 
-      return CompletableFuture.supplyAsync(() ->
-                  Flowable.fromIterable(cache.keySet())
-                        .filter(key -> !((String) key).endsWith(RemoteSchemasAdmin.SchemaErrors.ERRORS_KEY_SUFFIX))
-                        .map(schemaName -> {
-                           ProtoSchema protoSchema = new ProtoSchema();
-                           protoSchema.name = (String) schemaName;
-                           protoSchema.error = getSchemaError(protoSchema.name, cache);
-                           return protoSchema;
-                        })
-                        .sorted(Comparator.comparing(s -> s.name))
-                        .collect(Collectors.toList())
-                        .map(protoSchemas -> asJsonResponse(invocationHelper.newResponse(request), Json.make(protoSchemas), pretty))
-                        .toCompletionStage()
-            , invocationHelper.getExecutor())
-            .thenCompose(Function.identity());
+      return Flowable.fromPublisher(cache.cachePublisher().keyPublisher(Function.identity()).publisherWithoutSegments())
+            .filter(key -> !((String) key).endsWith(RemoteSchemasAdmin.SchemaErrors.ERRORS_KEY_SUFFIX))
+            .concatMapSingle(key -> {
+               String schemaName = (String) key;
+               // The error entry is absent for a valid schema, so the mapping has to happen inside the stage:
+               // a Single cannot carry the null the lookup completes with
+               return Single.fromCompletionStage(cache.getAsync(schemaName + RemoteSchemasAdmin.SchemaErrors.ERRORS_KEY_SUFFIX)
+                     .thenApply(errorObj -> {
+                        ProtoSchema protoSchema = new ProtoSchema();
+                        protoSchema.name = schemaName;
+                        protoSchema.error = createErrorContent(schemaName, (String) errorObj);
+                        return protoSchema;
+                     }));
+            })
+            .sorted(Comparator.comparing(s -> s.name))
+            .collect(Collectors.toList())
+            .map(protoSchemas -> asJsonResponse(invocationHelper.newResponse(request), Json.make(protoSchemas), pretty))
+            .toCompletionStage();
    }
 
    private ValidationError getSchemaError(String schemaName, AdvancedCache<Object, Object> cache) {
