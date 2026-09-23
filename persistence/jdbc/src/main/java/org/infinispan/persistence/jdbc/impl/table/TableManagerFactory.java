@@ -32,28 +32,18 @@ public class TableManagerFactory {
 
    public static <K, V> TableManager<K, V> getManager(DbMetaData metaData, InitializationContext ctx,
          ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config, String cacheName) {
-      switch (metaData.getType()) {
-         case DB2:
-         case DB2_390:
-            return new DB2TableManager(ctx, connectionFactory, config, metaData, cacheName);
-         case H2:
-            return new H2TableManager(ctx, connectionFactory, config, metaData, cacheName);
-         case MARIA_DB:
-         case MYSQL:
-            return new MyTableOperations(ctx, connectionFactory, config, metaData, cacheName);
-         case ORACLE:
-            return new OracleTableManager(ctx, connectionFactory, config, metaData, cacheName);
-         case POSTGRES:
-            return new PostgresTableManager(ctx, connectionFactory, config, metaData, cacheName);
-         case SQLITE:
-            return new SQLiteTableManager(ctx, connectionFactory, config, metaData, cacheName);
-         case SYBASE:
-            return new SybaseTableManager(ctx, connectionFactory, config, metaData, cacheName);
-         case SQL_SERVER:
-            return new SqlServerTableManager(ctx, connectionFactory, config, metaData, cacheName);
-         default:
-            return new GenericTableManager(ctx, connectionFactory, config, metaData, cacheName);
-      }
+      return switch (metaData.getType()) {
+         case DB2, DB2_390 -> new DB2TableManager(ctx, connectionFactory, config, metaData, cacheName);
+         case H2 -> new H2TableManager(ctx, connectionFactory, config, metaData, cacheName);
+         case MARIA_DB, MYSQL -> new MyTableOperations(ctx, connectionFactory, config, metaData, cacheName);
+         case ORACLE, ORACLE_XE -> new OracleTableManager(ctx, connectionFactory, config, metaData, cacheName);
+         case COCKROACHDB, POSTGRES -> new PostgresTableManager(ctx, connectionFactory, config, metaData, cacheName);
+         case SQLITE -> new SQLiteTableManager(ctx, connectionFactory, config, metaData, cacheName);
+         case SYBASE -> new SybaseTableManager(ctx, connectionFactory, config, metaData, cacheName);
+         case SQL_SERVER -> new SqlServerTableManager(ctx, connectionFactory, config, metaData, cacheName);
+         // Dialects without a dedicated implementation use the SQL:2003 syntax
+         case ACCESS, DERBY, FIREBIRD, HSQL, INFORMIX, INTERBASE, SQL2003 -> new GenericTableManager(ctx, connectionFactory, config, metaData, cacheName);
+      };
    }
 
    private static DbMetaData getDbMetaData(ConnectionFactory connectionFactory, JdbcStringBasedStoreConfiguration config) {
