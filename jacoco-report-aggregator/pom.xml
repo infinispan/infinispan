@@ -354,6 +354,7 @@
                                 <exclude>org/infinispan/server/hotrod/HotRodDecoder.class</exclude>
                                 <exclude>**/*$___Marshaller_*.class</exclude>
                                 <exclude>org/infinispan/commons/jdkspecific/OffHeapMemory.class</exclude>
+                                <exclude>org/infinispan/commons/jdkspecific/SSLParametersHelper.class</exclude>
                                 <exclude>org/infinispan/**/test/**</exclude>
                             </excludes>
                         </configuration>
