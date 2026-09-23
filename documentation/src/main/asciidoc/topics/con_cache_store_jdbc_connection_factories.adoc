@@ -65,7 +65,7 @@ include::code_examples/PersistenceJdbcConnectionDatasource.java[]
 [discrete]
 == Simple connections
 
-Simple connection factories create database connections on a per invocation basis and are intended for use with test or development environments only.
+Simple connection factories create database connections on a per-invocation basis and are intended for use with test or development environments only.
 
 .XML
 [source,xml,options="nowrap",subs=attributes+,role="primary"]

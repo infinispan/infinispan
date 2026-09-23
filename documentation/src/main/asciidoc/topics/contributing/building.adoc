@@ -29,7 +29,7 @@ TIP: Maven places it's output in `target/`
 | `mvn test` |Runs the TestNG unit test suite on the compiled code. Will also compile the tests. See the testing section below for more information on running different test groups. The default test group run is the "unit" group.
 | `mvn package` | Packages the module as a JAR file, the resulting JAR file will be in target/
 | `mvn package -DskipTests` |Creates a JAR file without running tests
-| `mvn package -DskipTests -P minimal-distribution` |Creates a reduced version of the distribution with all modules,scripts...etc but no javadoc or source code. This is very handy to quickly build the distribution in order to run some tests.
+| `mvn package -DskipTests -P minimal-distribution` |Creates a reduced version of the distribution with all modules,scripts...etc but no Javadoc or source code. This is very handy to quickly build the distribution in order to run some tests.
 | `mvn install -DskipTests` |Installs the artifacts in your local repo for use by other projects/modules, including inter-module dependencies within the same project.
 | `mvn install -P distribution` | In addition to install, will also use Maven's assembly plugin to build ZIP files for distribution (in target/distribution ). Contents of various distribution are controlled by the files in src/main/resources/assemblies .
 | `mvn deploy` |Builds and deploy the project to the JBoss snapshots repository.

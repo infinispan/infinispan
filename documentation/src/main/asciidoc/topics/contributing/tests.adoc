@@ -2,7 +2,7 @@
 Tests are written using the link:http://testng.org/[TestNG] framework.
 
 == Running the tests
-The default run executes all tests in the functional, unit, xsite, and arquillian groups. To just run the tests with txt and xml output the command is:
+The default run executes all tests in the functional, unit, xsite, and arquillian groups. To just run the tests with txt and XML output the command is:
 
  $ mvn test
 
@@ -126,7 +126,7 @@ For example, if we pass JVM parameter `-Dinfinispan.cluster.stack=udp` test suit
 
  $ mvn -Dinfinispan.cluster.stack=udp test
 
-Each permutation uses its own report directory, and its own html output file name.
+Each permutation uses its own report directory, and its own HTML output file name.
 This allows you to execute multiple permutations without wiping the results from the previous run.
 Note that due to the way Maven operates, only one permutation can be executed per `mvn` invocation.
 So automating multiple runs requires shell scripting, or some other execution framework to make multiple calls to Maven.
@@ -148,7 +148,7 @@ If you follow these guidelines you will find your tests are more reliable:
 * _Each test class is run in a single thread_
 There is no need to synchronize unit test's fixture, as test methods will be run in sequence.
 However, multiple test classes are executed in parallel.
-* _Each test class must have an unique test name_
+* _Each test class must have a unique test name_
 As a convention, the name of the test should be the fully qualified class name of the test class with the `org.infinispan` prefix removed.
 For example, given a test class `org.infinispan.mypackage.MyTest` the name of the test should be `mypackage.MyTest`.
 This convention guarantees a unique name.
@@ -169,26 +169,26 @@ Tests inheriting from these template method classes will only create a cache/clu
 This helps keep the execution time down.
 * *Never* rely on `Thread.sleep()`. When running in heavily threaded environments this will most often not work.
 For example, if using ASYNC_REPL , don't use a `sleep(someValue)` and expect the data will be replicated to another cache instance after this delay has elapsed.
-Instead, use a ReplicationListener (look up javadocs for more information on this class).
-Generally speaking, if you expect something will happen and you don't have a guarantee when, a good approach is to try that expectation in a loop, several times, with an generous (5-10secs) timeout. For example:
+Instead, use a ReplicationListener (look up Javadocs for more information on this class).
+Generally speaking, if you expect something will happen, and you don't have a guarantee when, a good approach is to try that expectation in a loop, several times, with a generous (5-10secs) timeout. For example:
 
 [source,java]
 ----
 while (Systet.currentTimeMillis() - startTime < timeout) {
    if (conditionMeet()) break;
-   Thread.sleep(50);
+   Thread.sleep(50);
 }
 
 ----
 
 * `Thread.sleep(10)` may not work in certain OS/JRE combos (e.g. Windows XP/Sun JRE 1.5).
 Use values grater than 10 for these statements, e.g. 50. Otherwise, a `System.currentTimeMillis()` might return same value when called before and after such a sleep statement.
-* For each cache that is create with `TestCacheManagerFactory.createXyzCacheManager()` the test harness will allocate a unique JMX domain name which can be obtained through `CacheManager.getJmxDomain()`.
+* For each cache that is created with `TestCacheManagerFactory.createXyzCacheManager()` the test harness will allocate a unique JMX domain name which can be obtained through `CacheManager.getJmxDomain()`.
 This ensures that no JMX collisions will takes place between any tests executed in parallel.
 If you want to enforce a JMX domain name, this can be done by using one of the `TestCacheManagerFactory.createCacheManagerEnforceJmxDomain` methods.
 These methods must be used with care, and you are responsible for ensuring no domain name collisions happen when the parallel suite is executed.
 * Use obscure words. Insert uncommon or obscure words into the cache that has been generated with a random word generator.
-In a multi-threaded environment like {brandname}'s testsuite, grepping for these words can greatly help the debugging process.
+In a multithreaded environment like {brandname}'s testsuite, grepping for these words can greatly help the debugging process.
 You may find link:http://watchout4snakes.com/creativitytools/RandomWord/RandomWordPlus.aspx[this random word generator] useful.
 * Use the test method name as the key. Grab the test method and use it as part of the cached key.
 You can dynamically grab the test method using code like this:

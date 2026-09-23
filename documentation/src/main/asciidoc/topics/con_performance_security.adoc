@@ -37,7 +37,7 @@ For Hot Rod endpoints, the `SCRAM` scheme is similar to `DIGEST` with extra leve
 |`GSSAPI` / `GS2-KRB5`
 |`SPNEGO`
 |A Kerberos server, Key Distribution Center (KDC), handles authentication and issues tokens to users. {brandname} performance benefits from the fact that a separate system handles user authentication operations.
-However these mechanisms can lead to network bottlenecks depending on the performance of the KDC service itself.
+However, these mechanisms can lead to network bottlenecks depending on the performance of the KDC service itself.
 
 |`OAUTHBEARER`
 |`BEARER_TOKEN`
@@ -49,7 +49,7 @@ However these mechanisms can lead to network bottlenecks depending on the perfor
 
 If the trust store contains only the signing certificate, which is typically a Certificate Authority (CA), any client that presents a certificate signed by the CA can connect to {brandname}. This offers lower security and is vulnerable to MITM attacks but is faster than authenticating the public certificate of each client.
 
-If the trust store contains all client certificates in addition to the signing certificate, only those clients that present a signed certificate that is present in the trust store can connect to {brandname}. In this case {brandname} compares the common Common Name (CN) from the certificate that the client presents with the trust store in addition to verifying that the certificate is signed, adding more overhead.
+If the trust store contains all client certificates in addition to the signing certificate, only those clients that present a signed certificate that is present in the trust store can connect to {brandname}. In this case {brandname} compares the Common Name (CN) from the certificate that the client presents with the trust store in addition to verifying that the certificate is signed, adding more overhead.
 
 |===
 
@@ -76,4 +76,4 @@ RBAC is the best way to implement a policy of least privilege for user access to
 
 Adding another layer of security to protect your data will always carry a performance cost.
 Authorization adds some latency to operations because {brandname} validates each one against an Access Control List (ACL) before allowing users to manipulate data.
-However the overall impact to performance from authorization is much lower than encryption so the cost to benefit generally balances out.
+However, the overall impact to performance from authorization is much lower than encryption so the cost to benefit generally balances out.

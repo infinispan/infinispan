@@ -9,7 +9,7 @@ When the cluster in NYC comes back online, state transfer occurs from LON to NYC
 This operation prevents stale reads from clients but has a performance penalty for the cluster that receives state transfer.
 
 You can distribute the increase in processing that state transfer operations require across the cluster.
-However the performance impact from state transfer operations depends entirely on the environment and factors such as the type and size of the data set.
+However, the performance impact from state transfer operations depends entirely on the environment and factors such as the type and size of the data set.
 
 [discrete]
 == Conflict resolution for Active/Active deployments
@@ -23,7 +23,7 @@ The following example illustrates how concurrent writes result in a conflicting 
 include::asciidoc_examples/xsite_async_conflicts.adoc[]
 ----
 
-In an Active/Active site configuration, you should never use the synchronous backup strategy because concurrent writes result in deadlocks and you lose data.
+In an Active/Active site configuration, you should never use the synchronous backup strategy because concurrent writes result in deadlocks, and you lose data.
 With the asynchronous backup strategy (`strategy=async`), {brandname} gives you a choice cross-site merge policies for handling concurrent writes.
 
 In terms of performance, merge policies that {brandname} uses to resolve conflicts do require additional computation but generally do not incur a significant penalty.

@@ -7,7 +7,7 @@ Writes to data in memory result in writes to persistent storage.
 If {brandname} evicts data from memory, then data in persistent storage
 includes entries that are evicted from memory. In this way persistent storage
 is a superset of the in-memory cache.
-This is recommended when you require highest consistency as the store will be able to be read again after a crash.
+This is recommended when you require the highest consistency as the store will be able to be read again after a crash.
 
 If you do not configure eviction, then data in persistent storage provides a
 copy of data in memory.

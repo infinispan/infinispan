@@ -29,6 +29,6 @@ The remaining nodes join the cluster immediately, triggering state transfer but 
 Local cache stores configured to purge on startup will be emptied when the server starts.
 Local cache stores marked as `purge=false` will be available after a server restarts but might contain stale entries.
 
-If you shutdown clustered nodes with the [command]`shutdown server` command, you must restart each server in reverse order to avoid potential issues related to data loss and stale entries in the cache. +
-For example, if you shutdown `server1` and then shutdown `server2`, you should first start `server2` and then start `server1`.
+If you shut down clustered nodes with the [command]`shutdown server` command, you must restart each server in reverse order to avoid potential issues related to data loss and stale entries in the cache. +
+For example, if you shut down `server1` and then shutdown `server2`, you should first start `server2` and then start `server1`.
 However, restarting clustered nodes in reverse order does not completely prevent data loss and stale entries.

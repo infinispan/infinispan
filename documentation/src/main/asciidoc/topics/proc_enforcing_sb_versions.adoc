@@ -2,7 +2,7 @@
 = Enforcing {brandname} Versions
 
 This starter uses a high-level API to ensure compatibility between major versions of {brandname}.
-However you can enforce a specific version of {brandname} with the `infinispan-bom` module.
+However, you can enforce a specific version of {brandname} with the `infinispan-bom` module.
 
 .Procedure
 

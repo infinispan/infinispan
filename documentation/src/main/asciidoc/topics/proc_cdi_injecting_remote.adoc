@@ -72,5 +72,5 @@ public class Config {
 }
 ----
 +
-<1> Creates the bean once for the application. Producers that create Cache Managers should always include the `@ApplicationScoped` annotation to avoid creating multiple Cache Managers, which are heavy weight objects.
+<1> Creates the bean once for the application. Producers that create Cache Managers should always include the `@ApplicationScoped` annotation to avoid creating multiple Cache Managers, which are heavyweight objects.
 <2> Creates a new `RemoteCacheManager` instance that is bound to the `@RemoteGreetingCache` qualifier.
