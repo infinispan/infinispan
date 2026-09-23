@@ -61,4 +61,4 @@ infinispan:
 ----
 
 +
-. Save and close your properties or yaml file.
+. Save and close your properties or YAML file.

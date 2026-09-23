@@ -13,7 +13,7 @@ This allows nodes to locate keys without making multicast requests or maintainin
 The `numSegments` property configures the number of segments available.
 However, the number of segments cannot change unless the cluster is restarted.
 
-Likewise the key-to-segment mapping cannot change.
+Likewise, the key-to-segment mapping cannot change.
 Keys must always map to the same segments regardless of cluster topology changes.
 It is important that the key-to-segment mapping evenly distributes the number of segments allocated to each node while minimizing the number of segments that must move when the cluster topology changes.
 

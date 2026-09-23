@@ -5,7 +5,7 @@ _Clustered counters_ are counters which are distributed and shared among all nod
 Counters can have different consistency levels: strong and weak.
 
 Although a strong/weak consistent counter has separate interfaces, both support updating its value,
-return the current value and they provide events when its value is updated.
+return the current value, and they provide events when its value is updated.
 Details are provided below in this document to help you choose which one fits best your uses-case.
 
 == Installation and Configuration
@@ -21,7 +21,7 @@ include::dependencies_maven/clustered_counters.xml[]
 The counters can be configured {brandname} configuration file or on-demand via the `CounterManager` interface detailed
 later in this document.
 A counters configured in {brandname} configuration file is created at boot time when the `EmbeddedCacheManager` is starting.
-These counters are started eagerly and they are available in all the cluster's nodes.
+These counters are started eagerly, and they are available in all the cluster's nodes.
 
 .configuration.xml
 [source,xml,options="nowrap",subs=attributes+]
@@ -95,7 +95,7 @@ include::code_examples/CounterManagerRemote.java[]
 There is a difference between remove a counter via the `Strong/WeakCounter` interfaces and the `CounterManager`.
 The `CounterManager.remove(String)` removes the counter value from the cluster and removes all the listeners registered
 in the counter in the local counter instance.
-In addition, the counter instance is no longer reusable and it may return an invalid results.
+In addition, the counter instance is no longer reusable, and it may return an invalid results.
 
 On the other side, the `Strong/WeakCounter` removal only removes the counter value.
 The instance can still be reused and the listeners still works.
@@ -105,7 +105,7 @@ NOTE: The counter is re-created if it is accessed after a removal.
 == The Counter
 
 A counter can be strong (`StrongCounter`) or weakly consistent (``WeakCounter``) and both is identified by a name.
-They have a specific interface but they share some logic, namely, both of them are asynchronous
+They have a specific interface, but they share some logic, namely, both of them are asynchronous
 ( a `CompletableFuture` is returned by each operation), provide an update event and can be reset to its initial value.
 
 If you do not want to use the async API, it is possible to return a synchronous counter via `sync()` method.
@@ -158,7 +158,7 @@ include::code_examples/CounterStrongMethod.java[]
 * `addAndGet()` adds a delta to the counter's value and returns the new value.
 * `compareAndSet()` and `compareAndSwap()` atomically set the counter's value if the current value is the expected.
 
-NOTE: A operation is considered completed when the ``CompletableFuture`` is completed.
+NOTE: An operation is considered completed when the ``CompletableFuture`` is completed.
 
 NOTE: The difference between compare-and-set and compare-and-swap is that the former returns true if the operation succeeds
 while the later returns the previous value.
@@ -224,8 +224,8 @@ NOTE: The `lifespan` parameter is an experimental capability and may be removed 
 
 The `WeakCounter` stores the counter's value in multiple keys in {brandname} cache.
 The number of keys created is configured by the `concurrency-level` attribute.
-Each key stores a partial state of the counter's value and it can be updated concurrently.
-It main advantage over the `StrongCounter` is the lower contention in the cache.
+Each key stores a partial state of the counter's value, and it can be updated concurrently.
+Its main advantage over the `StrongCounter` is the lower contention in the cache.
 On other hand, the read of its value is more expensive and bounds are not allowed.
 
 WARNING: The reset operation should be handled with caution.
@@ -249,13 +249,13 @@ The `WeakCounter` adds the following methods:
 include::code_examples/CounterWeakMethod.java[]
 ----
 
-They are similar to the `StrongCounter` methods but they do not return the new value.
+They are similar to the `StrongCounter` methods, but they do not return the new value.
 
 ==== Uses cases
 
 The weak counter fits best in uses cases where the result of the update operation is not needed or the counter's value
 is not required too often.
-Collecting statistics is a good example of such an use case.
+Collecting statistics is a good example of such a use case.
 
 ==== Examples
 
@@ -284,7 +284,7 @@ The `CounterListener` has the following interface:
 include::code_examples/CounterListener.java[]
 ----
 
-The `Handle` object returned has the main goal to remove the `CounterListener` when it is not longer needed.
+The `Handle` object returned has the main goal to remove the `CounterListener` when it is no longer needed.
 Also, it allows to have access to the `CounterListener` instance that is it handling.
 It has the following interface:
 

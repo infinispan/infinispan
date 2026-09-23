@@ -176,7 +176,7 @@ parameters associated with this key.
 
 The final type of operations are read-write operations, and within
 this category CAS-like (Compare-And-Swap) operations can be found.
-This type of operations require previous value associated with the key
+These types of operations require previous value associated with the key
 to be read and for locks to be acquired before executing the function.
 The vast majority of operations within
 link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`]
@@ -203,7 +203,7 @@ link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#replace-K-V-V-[`Concur
 is a replace function that compares the
 value present in the map and if it is equal to the value passed in as
 first parameter, the second value is stored, returning a boolean
-indicating whether the replace was successfully completed. This operation
+indicating whether the replace operation was successfully completed. This operation
 can be implemented using the read-write map API:
 
 [source,java]
@@ -238,7 +238,7 @@ as version information, lifespan, and last accessed/used time.
 Some of these can be provided by the user, such as version and lifespan, but others are computed internally and can only be queried, such as last accessed/used time.
 
 The functional map API provides a flexible way to store metadata parameters
-along with an cache entry. To be able to store a metadata parameter, it must
+along with a cache entry. To be able to store a metadata parameter, it must
 extend
 link:{javadocroot}/org/infinispan/functional/MetaParam.Lookup.html[`MetaParam.Writable`]
 interface, and implement the methods to allow the
@@ -436,7 +436,7 @@ include::code_examples/WriteOnlyMapSerializable.java[]
 
 {brandname} provides overloads for all functional methods that make lambdas
 passed directly to the API serializable by default; the compiler automatically selects
-this overload if that is possible. Therefore you can call
+this overload if that is possible. Therefore, you can call
 
 [source,java]
 ----

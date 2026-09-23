@@ -40,7 +40,7 @@ include::properties/hotrod-client-tls.properties[]
 ----
 
 ====
-See xref:server-setup/java_client_server_setup.adoc#tls[Server Setup] to startup a server.
+See xref:server-setup/java_client_server_setup.adoc#tls[Server Setup] to start up a server.
 
 [role="_additional-resources"]
 .Additional resources

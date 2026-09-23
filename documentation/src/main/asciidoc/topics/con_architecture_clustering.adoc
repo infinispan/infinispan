@@ -325,9 +325,9 @@ Orig -> Orig: All ACKs received\nCommandAckCollector completes\nCompletableFutur
 The steps in detail:
 
 . The originator creates a `CommandAckCollector` to track responses, then sends the write command to the primary owner.
-. The primary owner executes the write on its data container, obtains a per-segment sequence number from `TriangleOrderManager`, and sends `BackupWriteCommand` to all backup owners in parallel.
+. The primary owner executes the write operation on its data container, obtains a per-segment sequence number from `TriangleOrderManager`, and sends `BackupWriteCommand` to all backup owners in parallel.
 . The primary returns its result to the originator immediately, without waiting for backup acknowledgments. This allows it to release its lock and process other writes.
-. Each backup owner waits until the command's sequence number is the next expected for that segment (guaranteeing per-segment ordering), applies the write, then sends an acknowledgment directly to the originator.
+. Each backup owner waits until the command's sequence number is the next expected for that segment (guaranteeing per-segment ordering), applies the write operation, then sends an acknowledgment directly to the originator.
 . The originator's `CommandAckCollector` completes the `CompletableFuture` once it has received the primary result and all backup ACKs. If any ACK does not arrive within the remote timeout, the operation fails.
 
 ==== Per-segment ordering

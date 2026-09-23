@@ -3,7 +3,7 @@
 === Encoding
 
 Conversions of cache data between `application/x-java-object` and `application/json` are deprecated and will be removed
-in a future version. For JSON support, it is recommend to configure the cache with `application/x-protostream` encoding.
+in a future version. For JSON support, it is recommended to configure the cache with `application/x-protostream` encoding.
 
 === OSGi
 

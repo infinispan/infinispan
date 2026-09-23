@@ -3,7 +3,7 @@
 Cache stores can organize data into hash space segments to which keys map. Stores are segmented by default.
 
 Segmented stores increase read performance for bulk operations; for example,
-streaming over data (`Cache.size`, `Cache.entrySet.stream`), pre-loading the
+streaming over data (`Cache.size`, `Cache.entrySet.stream`), preloading the
 cache, and doing state transfer operations.
 
 

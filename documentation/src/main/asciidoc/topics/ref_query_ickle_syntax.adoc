@@ -76,7 +76,7 @@ operator still has higher priority than `or` even though `or` was invoked first.
 FROM org.infinispan.sample.Book WHERE title LIKE '%Data Grid%' OR author.name = 'Manik' AND description like '%clustering%'
 ----
 
-Boolean negation has highest precedence among logical operators and applies only to the next simple attribute condition.
+Boolean negation has the highest precedence among logical operators and applies only to the next simple attribute condition.
 
 [source,sql]
 ----
@@ -156,7 +156,7 @@ FROM org.infinispan.sample.Book WHERE title like '%Data Grid%' ORDER BY publicat
 == Nested objects joins
 
 When multivalued link:{query_docs}#indexing-annotations-overview_indexing-caches[`NESTED` embedded entities] are defined on a parent entity,
-it is possible to treat the parent / embedded relation as a one to many relation.
+it is possible to treat the parent / embedded relation as a one-to-many relation.
 This means that the `join` operator can be used to select all the parent entities that contain an embedded
 entity satisfying some conditions.
 This is in general not possible if the embedded reference is marked as `FLATTENED`, because in this case the

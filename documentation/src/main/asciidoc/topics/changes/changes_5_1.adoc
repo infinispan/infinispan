@@ -2,13 +2,13 @@
 === API
 
 The cache and Cache Manager hierarchies have changed slightly in 5.1 with the introduction of
-link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/api/BasicCache.html[`BasicCache`]
+link:${javadocroot}/org/infinispan/api/BasicCache.html[`BasicCache`]
 and
-link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/api/BasicCacheContainer.html[`BasicCacheContainer`]
+link:${javadocroot}/org/infinispan/api/BasicCacheContainer.html[`BasicCacheContainer`]
 , which are parent classes of existing
-link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/Cache.html[`Cache`]
+link:${javadocroot}/org/infinispan/Cache.html[`Cache`]
 and
-link:https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/manager/CacheContainer.html[`CacheContainer`]
+link:${javadocroot}/org/infinispan/manager/CacheContainer.html[`CacheContainer`]
 classes respectively. The important thing is that Hot Rod clients must now code
 against `BasicCache` and `BasicCacheContainer` rather than `Cache` and `CacheContainer`.
 So previous code that was written like this will no longer compile.
@@ -112,7 +112,7 @@ Configuration c2 = new ConfigurationBuilder()
 
 ----
 
-This completely replaces the old system of defining a set of overrides on bean properties. Note that this means the behaviour of Infinispan configuration is somewhat different when used programmatically. Whilst before, you could define a default configuration, and any overrides would be applied on top of _your_ defaults when defined, now you must explicitly read in your defaults to the builder. This allows for much greater flexibility in your code (you can have a as many "default" configurations as you want), and makes your code more explicit and type safe (finding references works).
+This completely replaces the old system of defining a set of overrides on bean properties. Note that this means the behaviour of Infinispan configuration is somewhat different when used programmatically. Whilst before, you could define a default configuration, and any overrides would be applied on top of _your_ defaults when defined, now you must explicitly read in your defaults to the builder. This allows for much greater flexibility in your code (you can have as many "default" configurations as you want), and makes your code more explicit and type safe (finding references works).
 
 The schema is unchanged from before. Infinispan 4.0 configurations are currently not being parsed. To upgrade, change the schema definition from:
 
@@ -138,7 +138,7 @@ to
 
 ----
 
-The schema documentation has changed format, as it is now produced using the standard tool `xsddoc`. This should be a significant improvement, as better navigation is offered. Some elements and attributes are missing docs right now, and these are being added. As an added benefit, your IDE should now show documentation when an xsd referenced (as above)
+The schema documentation has changed format, as it is now produced using the standard tool `xsddoc`. This should be a significant improvement, as better navigation is offered. Some elements and attributes are missing docs right now, and these are being added. As an added benefit, your IDE should now show documentation when an XSD is referenced (as above)
 
 Support for this configuration style for modules (such as cache stores) is being added. In the meantime, please use the old configuration or XML if you require support for cache store module configuration.
 

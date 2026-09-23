@@ -56,7 +56,7 @@ image::import_maven2.png[]
 
 . Select {brandname} modules that you want to import.
 
-. Finally, from {brandname} 5.0 onwards, annotation processing is used to allow log messages to be internationalized.  This processing can be done directly from Eclipse as part of compilation but it requires some set up:
+. Finally, from {brandname} 5.0 onwards, annotation processing is used to allow log messages to be internationalized.  This processing can be done directly from Eclipse as part of compilation, but it requires some set up:
 
 ..  Open the properties for infinispan-core and locate Annotation Processing
 
@@ -77,18 +77,18 @@ When you start link:http://www.jetbrains.com/idea/[IntelliJ IDEA], you will be g
 
 image::idea-12-import.jpg[]
 
-If you have already obtained a copy of the {brandname} sources via Github (see _'Source Control'_), then follow: _Import Project -> /directory/to/downloaded/sources_ .
+If you have already obtained a copy of the {brandname} sources via GitHub (see _'Source Control'_), then follow: _Import Project -> /directory/to/downloaded/sources_ .
 IntelliJ will automatically make use of Maven to import the project since it will detect a `pom.xml` file in the base directory.
 
-If you have not obtained the sources already, you can use the Git integration in IntelliJ IDEA 12. Click on _Check out from Version Control -> Github_.
-After entering your Github credentials, you will then be prompted to enter the git repository URL along with the location that you want to check out the source code to.
+If you have not obtained the sources already, you can use the Git integration in IntelliJ IDEA 12. Click on _Check out from Version Control -> GitHub_.
+After entering your GitHub credentials, you will then be prompted to enter the git repository URL along with the location that you want to check out the source code to.
 
 image::idea-12-git.png[]
 
 ===== Compiler settings
 
 From {brandname} 5.0 onwards, annotation processing is used to allow log messages to be internationalized.
-This processing can be done directly from IntelliJ as part of compilation but it requires some set up:
+This processing can be done directly from IntelliJ as part of compilation, but it requires some set up:
 
 . Go to Preferences -> Compiler -> Annotation Processor" and click on _Enable annotation processing_
 . Add an annotation processor with "Processor FQN Name" as `org.jboss.logging.LoggingToolsProcessor`
@@ -99,7 +99,7 @@ image::idea-12-annotations.png[]
 TIP: There can sometimes be issues with the generated logging classes on rebuild (particularly when you switch Git branches).
 If these issues do crop up then simply run `mvn clean install -DskipTests` on the command line to clear them out.
 
-TIP: If you are running a multi-core environment (e.g. quad-core or above) then you can follow the instructions on making use of parallelized compilation in IntelliJ 12. Information on how to do this can be found link:http://blogs.jetbrains.com/idea/2012/12/intellij-idea-12-compiler-twice-as-fast/[here] .
+TIP: If you are running a multicore environment (e.g. quad-core or above) then you can follow the instructions on making use of parallelized compilation in IntelliJ 12. Information on how to do this can be found link:http://blogs.jetbrains.com/idea/2012/12/intellij-idea-12-compiler-twice-as-fast/[here] .
 
 ===== Code Style
 Download the code style JAR file from link:https://github.com/infinispan/infinispan/blob/main/ide-settings/intellij/IntelliJ_IDEA_Code_Style.jar?raw=true[here] and import this into IntelliJ IDEA.
@@ -159,7 +159,7 @@ void fiveTransactionsHaveCompleted(String param1, String param2);
 
 
 And then, instead of calling `log.info(...)`, you call the method, for example `log.fiveTransactionsHaveCompleted(param1, param2)`.
-If what you're trying to log is an error or similar message and you want an exception to be logged as cause, simply use `@Cause` annotation:
+If what you're trying to log is an error or similar message, and you want an exception to be logged as cause, simply use `@Cause` annotation:
 
 
 [source,java]

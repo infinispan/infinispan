@@ -14,7 +14,7 @@ The more copies you maintain, the lower performance will be, but also the lower 
 {brandname} splits the owners of a key into one *primary owner*, which coordinates writes to the key, and zero or more *backup owners*.
 
 The following diagram shows a write operation that a client sends to a backup owner.
-In this case the backup node forwards the write to the primary owner, which then replicates the write to the backup.
+In this case the backup node forwards the write operation to the primary owner, which then replicates the write operation to the backup.
 
 ifdef::community[]
 image::replication_ispn.png[align="center", title="Cluster replication"]

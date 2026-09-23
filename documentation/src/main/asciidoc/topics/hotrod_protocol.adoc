@@ -33,7 +33,7 @@ makes no assumptions about their types.
 
 Some clarifications about the other types:
 
-* vInt : Variable-length integers are defined defined as compressed,
+* vInt : Variable-length integers are defined as compressed,
 positive integers  where the high-order bit of each byte indicates whether
 more bytes need to be  read. The low-order seven bits are appended as
 increasingly more significant bits in the resulting integer value making it
@@ -124,7 +124,7 @@ the default cache.
 This name must match the name of predefined cache in the Infinispan
 configuration file.
 | Flags               | vInt       |  A variable length number representing
-flags passed to the system. Each flags is represented by a bit. Note that
+flags passed to the system. Each flag is represented by a bit. Note that
 since this field is sent as variable length, the most significant bit in a
 byte is used to determine whether more bytes need to be read, hence this bit
 does not represent any flag. Using this model allows for flags to be combined
@@ -138,7 +138,7 @@ in a short space. Here are the current values for each flag: +
 view in the client. Basic clients will only send 0 in this field.
 When topology-aware or hash-distribution-aware clients will send 0 until they
 have received a reply from the server with the current view id.
-Afterwards, they should send that view id until they receive a new view id
+Afterward, they should send that view id until they receive a new view id
 in a response.
 | Transaction Type    | 1 byte     | This is a 1 byte field, containing one
 of the following well-known supported transaction types (For this version of
@@ -288,7 +288,7 @@ that Hot Rod client can use to access it.
 | m1: Port                                     | 2 bytes (Unsigned Short) |
 Port that Hot Rod clients can use to communicat with this cluster member.
 | m1: Hashcode                                 | 4 bytes                  |
-32 bit integer representing the hashcode of a cluster member that a Hot Rod
+32-bit integer representing the hashcode of a cluster member that a Hot Rod
 client can use identify in which cluster member a key is located having
 applied the CSA to it.
 | m2: Host/IP length                           | vInt                     |
@@ -301,7 +301,7 @@ applied the CSA to it.
 It is important to note that since hash headers rely on the consistent hash
 algorithm used by the server and this is a factor of the cache interacted with,
 hash-distribution-aware headers can only be returned to operations that target
-a particular cache. Currently ping command does not target any cache
+a particular cache. Currently, ping command does not target any cache
 (this is to change as per link:https://jira.jboss.org/jira/browse/ISPN-424[ISPN-424])
 , hence calls to ping command with hash-topology-aware client settings will
 return a hash-distribution-aware header with "Num Key Owners",
@@ -448,11 +448,11 @@ Integer.MAX_VALUE. However, Java cannot create a single array that’s bigger
 than Integer.MAX_VALUE, hence the protocol is limiting vint array lengths to
 Integer.MAX_VALUE.
 | Key                 | byte array | Byte array containing the key whose value is being requested.
-| Lifespan            | vInt       | Number of seconds that a entry during
+| Lifespan            | vInt       | Number of seconds that an entry during
 which the entry is allowed to life. If number of seconds is bigger than 30 days,
 this number of seconds is treated as UNIX time and so, represents the number
 of seconds since 1/1/1970. If set to 0, lifespan is unlimited.
-| Max Idle            | vInt       | Number of seconds that a entry can be
+| Max Idle            | vInt       | Number of seconds that an entry can be
 idle before it is evicted from the cache. If 0, no max idle time.
 | Value Length        | vInt       | Length of value
 | Value               | byte-array | Value to be stored
@@ -526,11 +526,11 @@ Integer.MAX_VALUE. However, Java cannot create a single array that’s bigger
 than Integer.MAX_VALUE, hence the protocol is limiting vint array lengths to
 Integer.MAX_VALUE.
 | Key                 | byte array | Byte array containing the key whose value is being requested.
-| Lifespan            | vInt       | Number of seconds that a entry during
+| Lifespan            | vInt       | Number of seconds that an entry during
 which the entry is allowed to life. If number of seconds is bigger than 30 days,
 this number of seconds is treated as UNIX time and so, represents the number
 of seconds since 1/1/1970. If set to 0, lifespan is unlimited.
-| Max Idle            | vInt       | Number of seconds that a entry can be
+| Max Idle            | vInt       | Number of seconds that an entry can be
 idle before it is evicted from the cache. If 0, no max idle time.
 | Entry Version       | 8 bytes    | Use the value returned by GetWithVersion operation.
 | Value Length        | vInt       | Length of value
@@ -828,7 +828,7 @@ single key, requests a set of keys. The Hot Rod protocol does not include such
 operation but remote Hot Rod clients could implement this type of
 operations by either parallelizing/pipelining individual get requests.
 Another possibility would be for remote clients to use async or non-blocking
-get requests. For example, if a client wants N keys, it could send send N
+get requests. For example, if a client wants N keys, it could send N
 async get requests and then wait for all the replies. Finally, multi-get is
 not to be confused with bulk-get operations. In bulk-gets, either all or a
 number of keys are retrieved, but the client does not know which keys to
@@ -921,7 +921,7 @@ Globally configured number of copies for each Infinispan distributed key
 Hash function version, pointing to a specific hash function in use.
 See link:#hot_rod_hash_functions[Hot Rod hash functions] for details.
 | Hash space size                              | vInt                     |
-Modulus used by Infinispan for for all module arithmetic related to hash
+Modulus used by Infinispan for all module arithmetic related to hash
 code generation. Clients will likely require this information in order to
 apply the correct hash calculation to the keys.
 | Num servers in topology                      | vInt                     |
@@ -942,7 +942,7 @@ that Hot Rod client can use to access it.
 | m1: Port                                     | 2 bytes (Unsigned Short) |
 Port that Hot Rod clients can use to communicat with this cluster member.
 | m1: Hashcode                                 | 4 bytes                  |
-32 bit integer representing the hashcode of a cluster member that a Hot Rod
+32-bit integer representing the hashcode of a cluster member that a Hot Rod
 client can use identify in which cluster member a key is located having
 applied the CSA to it.
 | m2: Host/IP length                           | vInt                     |
@@ -1233,7 +1233,7 @@ operation failed because the key was present and its value follows in the
 response. If the putIfAbsent worked, there would have not been a previous value,
 and hence it does not make sense returning anything extra.
 * Replace response returns `0x03` status code only when replace happened and the
-previous or replaced value follows in the response. If the replace did not happen,
+previous or replaced value follows in the response. If the replace operation did not happen,
 it means that the cache entry was not present, and hence there is no previous value
 that can be returned.
 * ReplaceIfUnmodified returns `0x03` status code only when replace happened and
@@ -1354,7 +1354,7 @@ Response (0x24):
 |==============================================================================
 
 The purpose of this operation is to authenticate a client against a server using SASL. The authentication process, depending
-on the chosen mech, might be a multi-step operation. Once complete the connection becomes authenticated
+on the chosen mech, might be a multistep operation. Once complete the connection becomes authenticated
 
 .Add client listener for remote events
 
@@ -1390,7 +1390,7 @@ factory parameter
 | Converter factory name | string | Optional name of the converter
 factory to be used with this listener. The factory is used to transform the
 contents of the events sent to clients. By default, when no converter is in use,
-events are well defined, according to the type of event generated. However,
+events are well-defined, according to the type of event generated. However,
 there might be situations where users want to add extra information to the event,
 or they want to reduce the size of the events. In these cases, a converter can
 be used to transform the event contents. The given converter factory name
@@ -1451,7 +1451,7 @@ Response (0x2A):
 | Field Name          | Size       | Value
 | Header | variable | Response header
 | Size | vInt | Size of the remote cache, which is calculated globally in the
-clustered set ups, and if present, takes cache store contents into account as
+clustered set-ups, and if present, takes cache store contents into account as
 well.
 |==============================================================================
 
@@ -1735,7 +1735,7 @@ Response (0x36):
 | Header              | variable   | Response header
 | Response status     | 1 byte     |
 +0x00+ = success, if execution completed successfully +
-+0x05+ = for non existent IterationId  +
++0x05+ = for non-existent IterationId  +
 |==============================================================================
 
 == Hot Rod Protocol 2.4
@@ -1750,7 +1750,7 @@ hints on whether the server has compatibility mode enabled or not:
 * `0x07`: Success status and return previous value, with compatibility mode is enabled.
 * `0x08`: Not executed and return previous value, with compatibility mode is enabled.
 
-The Iteration Start operation can optionally send parameters if a custom filter is provided and
+The Iteration Start operation can optionally send parameters if a custom filter is provided, and
 it is parametrised:
 
 === Operations
@@ -2034,7 +2034,7 @@ factory parameter
 | Converter factory name | string | Optional name of the converter
 factory to be used with this listener. The factory is used to transform the
 contents of the events sent to clients. By default, when no converter is in use,
-events are well defined, according to the type of event generated. However,
+events are well-defined, according to the type of event generated. However,
 there might be situations where users want to add extra information to the event,
 or they want to reduce the size of the events. In these cases, a converter can
 be used to transform the event contents. The given converter factory name
@@ -2051,7 +2051,7 @@ present in the request.
 | ... | |
 | Listener even type interests  | vInt       |  A variable length number representing listener event type interests.
 Each event type is represented by a bit.
-Each flags is represented by a bit.
+Each flag is represented by a bit.
 Note that since this field is sent as variable length, the most significant bit in a byte is used to determine whether more bytes need to be read, hence this bit does not represent any flag.
 Using this model allows for flags to be combined in a short space.
 Here are the current values for each flag: +
@@ -2863,7 +2863,7 @@ The response stays the same.
 Removes transaction information in the server.
 
 * Fetch In-Doubt Transactions Request:
-Fetches all in-doubt transactions's Xid.
+Fetches all in-doubt transaction Xid.
 
 .Prepare Request V2
 
@@ -3349,7 +3349,7 @@ TIP: This version of the protocol is implemented since Infinispan 15.1
 
 This version officially drops support for the previous GET_STREAM and PUT_STREAM operations added in 2.6.
 
-Instead new operations have been added to support stream commands without having to dedicate
+Instead, new operations have been added to support stream commands without having to dedicate
 a socket for the entirety of the get or set operation.
 
 * GetStreamStart for starting a remote streamed get operation

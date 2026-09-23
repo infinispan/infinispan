@@ -2,7 +2,7 @@
 <property name="hibernate.cache.region.factory_class" value="infinispan"/>
 <!--
    Force using local configuration when only using a single node.
-   Otherwise a clustered configuration is loaded.
+   Otherwise, a clustered configuration is loaded.
 -->
 <property name="hibernate.cache.infinispan.cfg"
      value="org/infinispan/hibernate/cache/commons/builder/infinispan-configs-local.xml"/>
