@@ -31,8 +31,8 @@ Client listeners receive subsequent events each time a cache operation modifies 
 
 {brandname} determines when to send `Join`, `Update`, or `Leave` events to client listeners as follows:
 
-* If the query on both the old and new value does not match, {brandname} does not sent an event.
+* If the query on both the old and new value does not match, {brandname} does not send an event.
 * If the query on the old value does not match but the new value does, {brandname} sends a `Join` event.
 * If the query on both the old and new values match, {brandname} sends an `Update` event.
 * If the query on the old value matches but the new value does not, {brandname} sends a `Leave` event.
-* If the query on the old value matches and the entry is then deleted or it expires, {brandname} sends a `Leave` event.
+* If the query on the old value matches and the entry is then deleted, or it expires, {brandname} sends a `Leave` event.

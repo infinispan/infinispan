@@ -128,7 +128,7 @@ ConfigurationBuilder b = new ConfigurationBuilder()
 
 ====
 However, Infinispan does not recommend using `SingleFileStore`.
-Instead you should use `SoftIndexFileStore` for file-based cache stores because it offers better scalability.
+Instead, you should use `SoftIndexFileStore` for file-based cache stores because it offers better scalability.
 
 Find out more details about configuring file-based cache stores in the _Configuration Guide_.
 

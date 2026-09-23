@@ -79,11 +79,11 @@ builder.transaction()
 Default is `REPEATABLE_READ`.
 * `locking` - configures whether the cache uses optimistic or pessimistic locking. Check section link:#tx_locking[Transaction Locking] for more details.
 Default is `OPTIMISTIC`.
-* `auto-commit` - if enable, the user does not need to start a transaction manually for a single operation. The transaction is automatically started and committed.
+* `auto-commit` - if enabled, the user does not need to start a transaction manually for a single operation. The transaction is automatically started and committed.
  Default is `true`.
 * `complete-timeout` - the duration in milliseconds to keep information about completed transactions. Default is `60000`.
 * `mode` - configures whether the cache is transactional or not. Default is `NONE`. The available options are:
-** `NONE` - non transactional cache
+** `NONE` - non-transactional cache
 ** `FULL_XA` - XA transactional cache with recovery enabled. Check section link:#tx_recovery[Transaction recovery] for more details about recovery.
 ** `NON_DURABLE_XA` - XA transactional cache with recovery disabled.
 ** `NON_XA` - transactional cache with integration via {sync} instead of XA.
@@ -152,7 +152,7 @@ From a lock acquisition perspective, pessimistic transactions obtain locks on ke
 
 . A lock request is sent to the primary owner (can be an explicit lock request or an operation)
 . The primary owner tries to acquire the lock:
-.. If it succeed, it sends back a positive reply;
+.. If it succeeds, it sends back a positive reply;
 .. Otherwise, a negative reply is sent and the transaction is rollback.
 
 As an example:
@@ -176,7 +176,7 @@ NOTE: For conditional operations, the validation is performed in the originator.
 With optimistic transactions locks are being acquired at transaction prepare time and are only being held up to the point the transaction commits (or rollbacks).
 This is different from the 5.0 default locking model where local locks are being acquire on writes and cluster locks are being acquired during prepare time.
 
-. The prepare is sent to all the owners.
+. The prepare operation is sent to all the owners.
 . The primary owners try to acquire the locks needed:
 .. If locking succeeds, it performs the write skew check.
 .. If the write skew check succeeds (or is disabled), send a positive reply.
@@ -199,7 +199,7 @@ From a use case perspective, optimistic transactions should be used when there i
 That is because the optimistic transactions rollback if data has changed between the time it was read and the time it was committed (with write skew check enabled).
 
 On the other hand, pessimistic transactions might be a better fit when there is high contention on the keys and transaction rollbacks are less desirable.
-Pessimistic transactions are more costly by their nature: each write operation potentially involves a RPC for lock acquisition.
+Pessimistic transactions are more costly by their nature: each write operation potentially involves an RPC for lock acquisition.
 
 [[tx_write_skew]]
 == Write Skews

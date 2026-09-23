@@ -87,7 +87,7 @@ The cluster is homogeneous, where nodes are the primary and the backup owners of
 
 Backed by a consistent hash, compatible with the hash-slot algorithm in Resp clients, entries are distributed across cluster members.
 {brandname} automatically redirects requests to the proper entry owner.
-As a result, hash tags in keys and the `-MOVED` error response for requests are not required even for multi-key operations accessing keys with different owners.
+As a result, hashtags in keys and the `-MOVED` error response for requests are not required even for multi-key operations accessing keys with different owners.
 
 [TIP]
 ====

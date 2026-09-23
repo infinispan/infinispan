@@ -3,7 +3,7 @@
 
 Monitor the site status of your backup locations to detect interruptions in the communication between the sites.
 When a remote site status changes to `offline`, {brandname} stops replicating your data to the backup location.
-Your data become out of sync and you must fix the inconsistencies before bringing the clusters back online.
+Your data become out of sync, and you must fix the inconsistencies before bringing the clusters back online.
 
 Monitoring cross-site events is necessary for early problem detection.
 Use one of the following monitoring strategies:
@@ -30,7 +30,7 @@ The following example demonstrates how you can use a Python script to poll the s
 include::python/monitor_site_status.py[]
 ----
 
-When a site status changes from `online` to `offline` or vice-versa, the function `on_event` is invoked.
+When a site status changes from `online` to `offline` or vice versa, the function `on_event` is invoked.
 
 If you want to use this script, you must specify the following variables:
 

@@ -24,7 +24,7 @@ The downside to write-through mode is that synchronous writes add latency and de
 `Cache.put()` calls result in application threads waiting until writes to persistent storage complete.
 
 |**Write-behind**
-|{brandname} synchronously writes data to the cache but then adds the modification to a queue so that the write to persistent storage happens asynchronously, which decreases consistency but reduces latency of write operations.
+|{brandname} synchronously writes data to the cache but then adds the modification to a queue so that the write operation to persistent storage happens asynchronously, which decreases consistency but reduces latency of write operations.
 
 When the cache store cannot handle the number of write operations, {brandname} delays new writes until the number of pending write operations goes below the configured modification queue size, in a similar way to write-through.
 If the store is normally fast enough but latency spikes occur during bursts of cache writes, you can increase the modification queue size to contain the bursts and reduce the latency.
@@ -41,11 +41,11 @@ Passivation and activation can potentially result in {brandname} performing mult
 For example, if an entry is not available in memory, {brandname} brings it back into memory which is one read operation and a delete operation to remove it from persistent storage.
 Additionally, if the cache has reached the size limit, then {brandname} performs another write operation to passivate a newly evicted entry.
 
-.Pre-loading caches with data
+.Preloading caches with data
 
-Another aspect of persistent storage that can affect {brandname} cluster performance is pre-loading caches.
+Another aspect of persistent storage that can affect {brandname} cluster performance is preloading caches.
 This capability populates your caches with data when {brandname} clusters start so they are "warm" and can handle reads and writes straight away.
-Pre-loading caches can slow down {brandname} cluster start times and result in out of memory exceptions if the amount of data in persistent storage is greater than the amount of available RAM.
+Preloading caches can slow down {brandname} cluster start times and result in out of memory exceptions if the amount of data in persistent storage is greater than the amount of available RAM.
 
 [role="_additional-resources"]
 .Additional resources

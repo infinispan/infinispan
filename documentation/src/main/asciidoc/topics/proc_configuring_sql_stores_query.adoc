@@ -104,7 +104,7 @@ Parameters in `DELETE` statements must match parameters in `SELECT` statements e
 
 Variables in `UPSERT` statements must have the same number of uniquely named variables that `SELECT` and `SELECT ALL` statements return.
 For example, if `SELECT` returns `foo` and `bar` this statement must take only `:foo` and `:bar` as variables.
-However you can apply the same named variable more than once in a statement.
+However, you can apply the same named variable more than once in a statement.
 
 SQL queries can include `JOIN`, `ON`, and any other clauses that the database supports.
 ====

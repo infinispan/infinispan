@@ -2,7 +2,7 @@
 = Merge policies
 
 Merge policies control how {brandname} resolves conflicts between replicas when bringing cluster partitions together.
-You can use one of the merge policies that {brandname} provides or you can create a custom implementation of the `EntryMergePolicy` API.
+You can use one of the merge policies that {brandname} provides, or you can create a custom implementation of the `EntryMergePolicy` API.
 
 .{brandname} merge policies
 [%autowidth,cols="1,1,1",stripes=even]

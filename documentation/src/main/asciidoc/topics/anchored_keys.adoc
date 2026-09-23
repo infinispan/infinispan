@@ -136,7 +136,7 @@ The client always contacts the primary owner, so any read has a
 Writes require the primary to send the value to one node and the anchor address
 to all the other nodes, which is currently done with `N-1` unicast RPCs.
 
-In theory it would be possible to send in parallel one unicast RPC for the value and one multicast RPC for the address,
+In theory, it would be possible to send in parallel one unicast RPC for the value and one multicast RPC for the address,
 but that would need additional logic to ignore the address on the anchor owner
 and with TCP multicast RPCs are implemented as parallel unicasts anyway.
 

@@ -7,7 +7,7 @@ When memory pressure subsides, {brandname} gradually restores the container to i
 
 When using a shared eviction container, size-based eviction (`max-size-container`) is generally preferred over count-based eviction (`max-count-container`).
 A shared container may hold entries of varying sizes across different caches, so a count-based limit may not accurately reflect the actual memory usage required.
-Size-based eviction tracks the an approximate size of each entry individually, providing a more accurate representation of memory consumption.
+Size-based eviction tracks an approximate size of each entry individually, providing a more accurate representation of memory consumption.
 
 NOTE: Dynamic eviction is not guaranteed to prevent `OutOfMemoryError` exceptions.
 It is designed to ease memory pressure during situations such as operations that temporarily require additional memory or a large influx of requests.

@@ -21,7 +21,7 @@ Spatial queries are not supported by non-indexed queries.
 This option uses a type-level indexing annotation `@GeoPoint` for each spatial field to be defined.
 One or more `@GeoPoint`s can be added to the indexed entity.
 
-The only mandatory attribute is the `fieldName` attribute and it is used to denote the field name in the index domain.
+The only mandatory attribute is the `fieldName` attribute, and it is used to denote the field name in the index domain.
 If more than one `@GeoPoint` are defined on the same entity, their names must be different.
 
 For each of them, the same entity must have two double-typed fields:
@@ -49,7 +49,7 @@ include::code_examples/TrainRoute.java[]
 <7> The `arrival` 's longitude.
 ====
 
-Also a single point can be defined, here is an example:
+Also, a single point can be defined, here is an example:
 
 .Restaurant
 ====
@@ -138,7 +138,7 @@ include::code_examples/GeoQueries.java[tags=restaurants_withinCircleKm]
 === Spatial predicate: `box`
 
 This predicate selects entities having points contained in a given rectangle (or box).
-The `within box` predicate has arity 4 and it takes as argument:
+The `within box` predicate has arity 4, and it takes as argument:
 
 1. The latitude of the top left box point.
 2. The longitude of the top left box point.

@@ -49,7 +49,7 @@ For example, {brandname} simultaneously transfers state from **LON** to **NYC** 
 [NOTE]
 ====
 To avoid temporary network disconnects triggering state transfer operations, there are two conditions that backup locations must meet to go offline.
-The status of a backup location must be offline and it must not be included in the cross-site view.
+The status of a backup location must be offline, and it must not be included in the cross-site view.
 ====
 
 The automatic state transfer is also triggered when a cache starts.

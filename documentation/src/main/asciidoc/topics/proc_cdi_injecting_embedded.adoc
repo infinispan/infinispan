@@ -73,7 +73,7 @@ public class Config {
 +
 [NOTE]
 ====
-Cache managers are heavy weight objects. Having more than one Cache Manager
+Cache managers are heavyweight objects. Having more than one Cache Manager
 running in your application can degrade performance. When injecting multiple
 caches, either add the qualifier of each cache to the Cache Manager producer
 method or do not add any qualifier.

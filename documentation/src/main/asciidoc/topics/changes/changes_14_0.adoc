@@ -53,7 +53,7 @@ The same configuration should be changed to the following instead.
 
 === Fetch Persistent State Remove
 
-The store property named fetch-persistent-state has been deprecated and removed from xml configuration.
+The store property named fetch-persistent-state has been deprecated and removed from XML configuration.
 Instead, the first configured non-shared store that allows for bulk loading will be used for state transfer of entries.
 This reduces configuration complexity and does not allow for a configuration that could lose data due to not
 transferring entries stored in a store.

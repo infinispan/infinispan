@@ -1,7 +1,7 @@
 = Concurrent Updates
 Data structures, such as {brandname} link:{javadocroot}/org/infinispan/Cache.html[Cache], that are accessed and modified concurrently can suffer from data consistency issues unless there are mechanisms to guarantee data correctness. {brandname} Cache, since it implements link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html[ConcurrentMap] , provides operations such as link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#replace-K-V-V-[conditional replace] , link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#putIfAbsent-K-V-[putIfAbsent] , and link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#remove-java.lang.Object-java.lang.Object-[conditional remove] to its clients in order to guarantee data correctness. It even allows clients to operate against cache instances within JTA transactions, hence providing the necessary data consistency guarantees.
 
-However, when it comes to Hot Rod protocol backed servers, clients do not yet have the ability to start remote transactions but they can call instead versioned operations to mimic the conditional methods provided by the embedded {brandname} cache instance API.  The following is a real example to understand how it works.
+However, when it comes to Hot Rod protocol backed servers, clients do not yet have the ability to start remote transactions, but they can call instead versioned operations to mimic the conditional methods provided by the embedded {brandname} cache instance API.  The following is a real example to understand how it works.
 
 == Data Consistency Problem
 Imagine you have two ATMs that connect using Hot Rod to a bank where an account's balance is stored.  Two closely followed operations to retrieve the latest balance could return 500 CHF (swiss francs) as shown below:
@@ -18,12 +18,12 @@ image::server_modules_7.png[Concurrent updates]
 This would be wrong.
 Two concurrent updates have resulted in an incorrect account balance.
 The second update should not have been allowed since the balance the second ATM had was incorrect.
-Even if the ATM would have retrieved the balance before calculating the new balance, someone could have updated between the new balance being retrieved and the update.
+Even if the ATM had retrieved the balance before calculating the new balance, someone could have updated between the new balance being retrieved and the update.
 Before finding out how to solve this issue in a client-server scenario with Hot Rod, consider how this is solved when {brandname} clients run in peer-to-peer mode where clients and {brandname} live within the same JVM.
 
 === Embedded-mode Solution
 
-If the ATM and the {brandname} instance storing the bank account lived in the same JVM, the ATM could use the link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#replace-K-V-V-[conditional replace API] referred at the beginning of this article.  So, it could send the previous known value to verify whether it has changed since it was last read.  By doing so, the first operation could double check that the balance is still 500 CHF when it was to update to 100 CHF.  Now, when the second operation comes, the current balance would not be 500 CHF any more and hence the conditional replace call would fail, hence avoiding data consistency issues:
+If the ATM and the {brandname} instance storing the bank account lived in the same JVM, the ATM could use the link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#replace-K-V-V-[conditional replace API] referred at the beginning of this article.  So, it could send the previous known value to verify whether it has changed since it was last read.  By doing so, the first operation could double-check that the balance is still 500 CHF when it was to update to 100 CHF.  Now, when the second operation comes, the current balance would not be 500 CHF anymore and hence the conditional replace call would fail, hence avoiding data consistency issues:
 
 image::server_modules_8.png[align="center", title="P2P solution"]
 

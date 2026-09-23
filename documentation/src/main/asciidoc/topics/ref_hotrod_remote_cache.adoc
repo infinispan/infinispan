@@ -25,9 +25,9 @@ batch size can be configured via system property
 `infinispan.client.hotrod.batch_size` or through the link:{javadocroot}/org/infinispan/client/hotrod/configuration/ConfigurationBuilder.html#batchSize-int-[ConfigurationBuilder] when configuring the
 `RemoteCacheManager`.
 
-Also the `retrieveEntries` iterator returned is `Closeable` as such the
+Also, the `retrieveEntries` iterator returned is `Closeable` as such the
 iterators from `keySet`, `entrySet` and `values` return an `AutoCloseable`
-variant. Therefore you should always close these `Iterator`s when you are done
+variant. Therefore, you should always close these `Iterator`s when you are done
 with them.
 
 [source,java]
@@ -41,7 +41,7 @@ try (CloseableIterator<Map.Entry<K, V>> iterator = remoteCache.entrySet().iterat
 
 Previous version of `RemoteCache` allowed for the retrieval of a deep copy
 of the `keySet`. This is still possible with the new backing map, but you
-have to copy the contents yourself. Also you can do this with `entrySet` and
+have to copy the contents yourself. Also, you can do this with `entrySet` and
 `values`, which was not supported before.
 
 [source,java]

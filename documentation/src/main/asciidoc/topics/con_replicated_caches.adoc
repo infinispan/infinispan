@@ -6,7 +6,7 @@ Each node can perform read operations locally.
 
 Replicated caches provide a quick and easy way to share state across a cluster, but is suitable for clusters of less than ten nodes.
 Because the number of replication requests scales linearly with the number of nodes in the cluster, using replicated caches with larger clusters reduces performance.
-However you can use UDP multicasting for replication requests to improve performance.
+However, you can use UDP multicasting for replication requests to improve performance.
 
 Each key has a primary owner, which serializes data container updates in order to provide consistency.
 

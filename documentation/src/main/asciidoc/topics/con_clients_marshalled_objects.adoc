@@ -8,7 +8,7 @@ When reading from the server, the client marshaller performs the opposite operat
 
 Your cache encoding must be compatible with the Hot Rod client marshaller.
 For example, if you configure a cache encoding as `application/x-protostream`, you can use the ProtoStream marshaller with your clients to operate on that cache.
-However if the client marshaller uses an encoding that {brandname} cannot convert to and from `application/x-protostream`, {brandname} throws an error message.
+However, if the client marshaller uses an encoding that {brandname} cannot convert to and from `application/x-protostream`, {brandname} throws an error message.
 
 If you use `JavaSerializationMarshaller` or `GenericJBossMarshaller` you should encode caches with the `application/x-java-serialized-object` or `application/x-jboss-marshalling` media type, respectively.
 

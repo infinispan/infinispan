@@ -129,7 +129,7 @@ During initialization, JGroups will try to discover other members in the cluster
 
 == Jumbo Frames
 
-By default the maximum transmission unit (MTU) is 1500 bytes.
+By default, the maximum transmission unit (MTU) is 1500 bytes.
 Jumbo frames should be enabled when the MTU is larger than the default, or when smaller messages are aggregated to be larger than 1500 bytes.
 By enabling jumbo frames, more data is sent per ethernet frame.
 The MTU may be increased to a value up to 9000 bytes.

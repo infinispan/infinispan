@@ -14,7 +14,7 @@ In order to use all the latest features, make sure you change the namespace decl
 The default transaction enlistment model has changed ( link:https://issues.jboss.org/browse/ISPN-1284[ISPN-1284] ) from link:{jdkdocroot}/javax/transaction/xa/XAResource.html[`XAResource`] to link:{jdkdocroot}/javax/transaction/Synchronization.html[`Synchronization`].
 Also now, if the `XAResource` enlistment is used, then recovery is enabled by default.
 
-In practical terms, if you were using the default values, this should not cause any backward compatibility issues but an increase in performance of about 5-7%. However in order to use the old configuration defaults, you need to configure the following:
+In practical terms, if you were using the default values, this should not cause any backward compatibility issues but an increase in performance of about 5-7%. However, in order to use the old configuration defaults, you need to configure the following:
 
 [source,xml]
 ----

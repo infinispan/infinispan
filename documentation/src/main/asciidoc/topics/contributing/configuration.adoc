@@ -13,14 +13,14 @@ We call the configuration group XXX in the steps below.
 
 . Add the property to the relevant XXXConfiguration class.
 Add a private final field, add a parameter to the constructor, and assign the value to the field in the constructor body.
-Add a accessor for the property. If the property should be mutable at runtime, then add a mutator as well.
+Add an accessor for the property. If the property should be mutable at runtime, then add a mutator as well.
 Most configuration properties are not mutable at runtime - if the configuration is runtime mutable, then {brandname} needs to take notice of this update whilst the cache is running (you can't cache the value of the configuration in your implementation class).
 Mutators and accessors don't use the classic JavaBean pattern of prepending accessors with "get" and mutators with "set".
 Instead, the name of the property is used for an accessor.
 A mutator is an overloaded version of the accessor which takes a parameter, the new value.
 
 . Add the property to the matching XXXConfigurationBuilder.
-You'll need to add a mutable field to the class, and initialise it to it's default value in the field declaration.
+You'll need to add a mutable field to the class, and initialise it to its default value in the field declaration.
 Add a mutator (following the above pattern).
 
 . The `create()` method is called by the parent object in order to instantiate the XXXConfiguration object from the builder.
@@ -48,8 +48,8 @@ The constructors visibility should be "default".
 
 . Create the XXXConfigurationBuilder object.
 It should subclass the relevant configuration child builder – use the YYYConfigurationChildBuilder as the superclass.
-This will ensure that all builder methods that allow the user to "escape" are provided correctly (i.e provide access to other grouping elements), and also require you to provide a `create()` and `validate()` method.
-The constructor needs to take the the YYYConfigurationBuilder as an argument, and pass this to the superclass (this simply allows access to the root of the builder tree using the `getBuilder()` method).
+This will ensure that all builder methods that allow the user to "escape" are provided correctly (i.e. provide access to other grouping elements), and also require you to provide a `create()` and `validate()` method.
+The constructor needs to take the YYYConfigurationBuilder as an argument, and pass this to the superclass (this simply allows access to the root of the builder tree using the `getBuilder()` method).
 
 . Follow the property adding guide to add any properties you need to the builder.
 The `create()` method needs to return a new instance of the XXXConfiguration object.

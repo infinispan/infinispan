@@ -13,7 +13,7 @@ You can find code examples for other Hot Rod clients in the link:{code_tutorials
 
 .Procedure
 
-* Invoke the `remoteCache()` method as part of your the `ConfigurationBuilder`.
+* Invoke the `remoteCache()` method as part of the `ConfigurationBuilder`.
 * Set the `configuration` or `configuration_uri` properties in the `hotrod-client.properties` file on your classpath.
 
 [tabs]

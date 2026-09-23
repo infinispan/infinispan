@@ -18,7 +18,7 @@ The connection pool configuration is deprecated and no longer used.
 
 Previously a RemoteCache would store its Flag settings in a ThreadLocal
 which was then cleared when an invocation of the cache was done.
-This does not work with Virtual Threads and is very error prone if the
+This does not work with Virtual Threads and is very error-prone if the
 same RemoteCache is shared between threads.
 
 Instead, now withFlags will return a new instance if new flags are applied

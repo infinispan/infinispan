@@ -26,7 +26,7 @@ In the "L1 cache" diagram:
 
 Enabling L1 improves performance for read operations but requires primary owner nodes to broadcast invalidation messages when entries are modified.
 This ensures that {brandname} removes any out of date replicas across the cluster.
-However this also decreases performance of write operations and increases memory usage, reducing overall capacity of caches.
+However, this also decreases performance of write operations and increases memory usage, reducing overall capacity of caches.
 
 [NOTE]
 ====

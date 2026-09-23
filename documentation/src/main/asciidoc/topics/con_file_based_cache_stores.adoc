@@ -8,7 +8,7 @@ For clustered caches, file-based cache stores are unique to each {brandname} nod
 ====
 Never use filesystem-based cache stores on shared file systems, such as an NFS or Samba share, because they do not provide file locking capabilities and data corruption can occur.
 
-Additionally if you attempt to use transactional caches with shared file systems, unrecoverable failures can happen when writing to files during the commit phase.
+Additionally, if you attempt to use transactional caches with shared file systems, unrecoverable failures can happen when writing to files during the commit phase.
 ====
 
 [discrete]

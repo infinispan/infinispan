@@ -66,7 +66,7 @@ and the second element will contain the score of the matching.
 == Filtering entities
 
 Instead of applying the kNN search to the entire population of entities of a given type,
-you can limiting the searching set applying classic predicates (match, full-text-search, range, ...) to the kNN queries,
+you can limit the searching set applying classic predicates (match, full-text-search, range, ...) to the kNN queries,
 defining a filtering clause.
 
 A filtering clause can contain any kind of predicates with the only exception of kNN predicates that cannot be included.

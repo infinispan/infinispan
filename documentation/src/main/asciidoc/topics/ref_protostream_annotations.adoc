@@ -11,7 +11,7 @@ You should refer to the documentation in the link:{protostreamdocroot}/org/infin
 `@Proto` defines a Protocol Buffers message without the requirement of having to annotate all fields with the `@ProtoField` annotation.
 
 * Use this annotation to quickly generate messages from records or classes with public fields.
-* Fields must be public and they will be assigned incremental numbers based on the declaration order.
+* Fields must be public, and they will be assigned incremental numbers based on the declaration order.
 * It is possible to override the automated defaults for a field by using the `ProtoField` annotation.
 
 [WARNING]
@@ -147,7 +147,7 @@ You should not add this annotation to classes because {brandname} uses it intern
 
 [NOTE]
 ====
-{brandname} does not recommend using this annotation because it is no longer supported by Google and is likely to be removed in future.
+{brandname} does not recommend using this annotation because it is no longer supported by Google and is likely to be removed in the future.
 ====
 
 [discrete]

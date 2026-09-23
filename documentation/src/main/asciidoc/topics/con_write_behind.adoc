@@ -24,7 +24,7 @@ store to complete. However, data in the cache store remains inconsistent with
 data in the cache until the modification queue is processed. For this reason,
 write-behind mode is suitable for cache stores with low latency, such as
 unshared and local file-based cache stores, where the time between the
-write to the cache and the write to the cache store is as small as possible.
+write operation to the cache and the write operation to the cache store is as small as possible.
 
 [discrete]
 == Write-behind configuration

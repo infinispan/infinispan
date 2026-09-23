@@ -23,7 +23,7 @@ include::code_examples/InfinispanCacheConfigurerDefault.java[]
 [NOTE]
 ====
 You can create one `InfinispanGlobalConfigurer` bean only.
-However you can create multiple configurations with the other beans.
+However, you can create multiple configurations with the other beans.
 ====
 
 .InfinispanCacheConfigurer Bean

@@ -35,7 +35,7 @@ You get the best possible performance for read and write operations along with e
 == Data guarantees
 
 Because each node contains all entries, replicated caches provide more protection against data loss than distributed caches.
-On a cluster of three nodes, two nodes can crash and you do not lose data from a replicated cache.
+On a cluster of three nodes, two nodes can crash, and you do not lose data from a replicated cache.
 
 In that same scenario, a distributed cache with two owners would lose data.
 To avoid data loss with distributed caches, you can increase the number of replicas across the cluster by configuring more owners for each entry with either the `owners` attribute declaratively or the `numOwners()` method programmatically.
@@ -87,7 +87,7 @@ When replication requests fail due to other errors, {brandname} throws exception
 With asynchronous replication, {brandname} does not provide any confirmation for replication requests.
 This has the same effect for applications as all requests being successful.
 On the {brandname} cluster, however, the primary owner has the correct entry and {brandname} replicates it to backup nodes at some point in the future.
-In the case that the primary owner crashes then backup nodes might not have a copy of the entry or they might have an out of date copy.
+In the case that the primary owner crashes then backup nodes might not have a copy of the entry, or they might have an out of date copy.
 
 Cluster topology changes can also lead to data inconsistency with asynchronous replication.
 For example, consider a {brandname} cluster that has multiple primary owners.
