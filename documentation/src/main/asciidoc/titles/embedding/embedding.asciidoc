@@ -21,9 +21,9 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :embedded_caches:
 
 //Title
-= Embedding Infinispan caches in Java applications
+= Embedding {brandname} caches in Java applications
 
-Add Infinispan libraries to your Java project and create embedded caches that store data in the same memory space where you execute application code.
+Add {brandname} libraries to your Java project and create embedded caches that store data in the same memory space where you execute application code.
 
 //User stories
 include::stories.adoc[]

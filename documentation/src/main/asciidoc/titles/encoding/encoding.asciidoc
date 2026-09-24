@@ -16,10 +16,10 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :context: encoding
 
 //Title
-= Encoding Infinispan caches and marshalling data
+= Encoding {brandname} caches and marshalling data
 
 Remote and embedded caches can store keys and values in different encodings, or media types.
-Infinispan also includes an implementation of the ProtoStream API to marshall Java objects as Protocol Buffers (Protobuf).
+{brandname} also includes an implementation of the ProtoStream API to marshall Java objects as Protocol Buffers (Protobuf).
 
 //User stories
 include::stories.adoc[]
