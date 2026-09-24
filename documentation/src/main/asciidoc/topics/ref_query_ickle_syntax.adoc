@@ -16,6 +16,33 @@ The parser syntax has some notable rules:
 * `!=` is accepted instead of `<>`.
 * Boosting cannot be applied to `>`,`>=`,`<`,`\<=` operators. Ranges may be used to achieve the same result.
 
+== Query statements
+
+A query retrieves entities from {brandname} caches with the following syntax:
+
+[source,sql,title="Query Statement in Ickle"]
+----
+[SELECT projection [, ...]] FROM <entityName> [WHERE condition] [GROUP BY field [, ...] [HAVING condition]] [ORDER BY field [ASC | DESC] [, ...]]
+----
+
+The following railroad diagram illustrates the syntax of a query:
+
+[syntrax, select-statement-syntax, format=svg]
+....
+stack(
+  line(opt(line('SELECT', '/projection-list')), 'FROM', '/<entityName>'),
+  opt('WHERE', '/condition'),
+  opt(line('GROUP BY', '/field-list', opt('HAVING', '/condition'))),
+  opt(line('ORDER BY', loop('/sort-item', None)))
+)
+....
+
+* The `SELECT` clause is optional. If omitted, the whole entity matching the conditions is returned.
+Projections are described in link:#projections_with_select_statements_{context}[Projections with SELECT statements].
+* WHERE and HAVING conditions can use any of the filtering operators listed below (`=`, `!=`, `<`, `<=`, `>`, `>=`, `in`, `like`, and `between`), combined with boolean logic.
+Full-text predicates for analyzed fields are described in link:#full-text-search_{context}[Full-text queries].
+* GROUP BY, HAVING, and ORDER BY clauses only apply to projection queries that use grouping and aggregation or sorting, as described later in this section.
+
 == Filtering operators
 
 Ickle support many filtering operators that can be used for both indexed and non-indexed fields.
@@ -94,6 +121,7 @@ Changing the precedence of logical operators is achieved with parenthesis:
 FROM org.infinispan.sample.Book WHERE author.name = 'Manik' AND ( title like '%Data Grid%' OR description like '% clustering%')
 ----
 
+[id='projections_with_select_statements_{context}']
 == Projections with SELECT statements
 In some use cases returning the whole domain object is overkill if only a small subset of the attributes are actually
 used by the application, especially if the domain entity has embedded entities. The query language allows you to specify
@@ -107,6 +135,21 @@ a projected attribute.
 # and return only their title and publication year
 SELECT title, publicationYear FROM org.infinispan.sample.Book WHERE title like '%Data Grid%' OR description like '%Data Grid%'
 ----
+
+The following railroad diagram illustrates the forms that may appear as projection items in a `SELECT` clause:
+
+[syntrax, projection-item-syntax, format=svg]
+....
+loop(
+  line(choice(
+      '/attribute',
+      '/entity reference',
+      line('version(', '/alias', ')'),
+      line('score(', '/alias', ')'),
+      line(choice('avg','count','max','min','sum'), '(', '/attribute or path', ')')
+  )) , ','
+)
+....
 
 === Project cache entry version
 It is possible to project the cache entry version, using the `version` projection function.
@@ -287,6 +330,16 @@ You can delete entities from {brandname} caches with the following syntax:
 DELETE FROM <entityName> [WHERE condition]
 ----
 
+The following railroad diagram illustrates the syntax of a DELETE statement:
+
+[syntrax, delete-statement-syntax, format=svg]
+....
+line(
+  'DELETE', 'FROM', '/<entityName>',
+  opt('WHERE', '/condition')
+)
+....
+
 * Reference only single entities with `<entityName>`. DELETE queries cannot use joins.
 * WHERE conditions are optional.
 
@@ -307,20 +360,38 @@ You can update entities in {brandname} caches with the following syntax:
 
 [source,sql,title="Update Query in Ickle"]
 ----
-UPDATE FROM <entityName> SET <field> = <value> [, SET <field> = <value>]* [WHERE condition]
+UPDATE FROM <entityName> {SET | ADD | REMOVE} <field> = <value> [, ...]* [WHERE condition]
 ----
+
+The following railroad diagram illustrates the syntax of an UPDATE statement:
+
+[syntrax, update-statement-syntax, format=svg]
+....
+stack(
+  line('UPDATE', 'FROM', '/<entityName>'),
+  loop(line(choice('SET', 'ADD', 'REMOVE'), '/<field>', '=', '/<value>'), ','),
+  opt('WHERE', '/condition')
+)
+....
 
 * Reference only single entities with `<entityName>`. UPDATE queries cannot use joins.
 * WHERE conditions are optional.
-* Use `SET` to assign a new value to a field.
-* Use `ADD` to add values to a collection field.
-* Use `REMOVE` to remove values from a collection field.
+* Use `SET` to assign a new value to a field. When the target is a collection, the list replaces the entire existing collection.
+* Use `ADD` to add values to a collection field without replacing its contents.
+* Use `REMOVE` to remove values from a collection field without affecting other members.
 
 Values can be:
 
-* A single constant: `SET name = 'John'`
-* A list of constants in parentheses: `ADD tags = ('new', 'updated')`
-* A list of constants in square brackets: `ADD tags = ['new', 'updated']`
+* A single constant: `SET name = 'John'`, `ADD tags = 'newTag'`
+* A list of constants in parentheses: `ADD tags = ('tag1', 'tag2')`, `REMOVE tags = ('oldTag')`
+* A list of constants in square brackets: `SET tags = ['a', 'b']`, `REMOVE tags = ['c']`
+
+The following example sets a new title, adds two tags, and removes one tag from all books whose price is greater than 100:
+
+[source,sql]
+----
+UPDATE FROM org.infinispan.sample.Book SET title = 'Updated Title', ADD tags = ('sale', 'featured'), REMOVE tags = ['discount'] WHERE price > 100
+----
 
 UPDATE queries cannot use any of the following:
 
