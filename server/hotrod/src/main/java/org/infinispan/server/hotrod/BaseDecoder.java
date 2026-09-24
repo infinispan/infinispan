@@ -16,6 +16,7 @@ import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.telemetry.InfinispanTelemetry;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
@@ -95,6 +96,34 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
          server.getClientListenerRegistry().findAndWriteEvents(channel);
          server.getClientCounterNotificationManager().channelActive(channel);
       }
+   }
+
+   /**
+    * Discards the bytes still buffered by this decoder and closes the connection after a fatal protocol error.
+    * <p>
+    * Closing a channel is asynchronous, so more data may still be delivered to the decoder afterwards. Everything
+    * that is left of the rejected request, as well as anything received until the close completes, must be dropped:
+    * the state machine is stopped in the middle of the rejected request and would otherwise re-interpret those bytes
+    * as the continuation of it, potentially turning them into a spurious request which would be executed.
+    */
+   protected void discardAndClose(ChannelHandlerContext ctx) {
+      closing = true;
+      discardReadableBytes(internalBuffer());
+      ctx.close();
+   }
+
+   @Override
+   protected void callDecode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
+      if (closing) {
+         // See discardAndClose: nothing received after a fatal protocol error may reach the state machine
+         discardReadableBytes(in);
+         return;
+      }
+      super.callDecode(ctx, in, out);
+   }
+
+   private static void discardReadableBytes(ByteBuf buf) {
+      buf.skipBytes(buf.readableBytes());
    }
 
    @Override
