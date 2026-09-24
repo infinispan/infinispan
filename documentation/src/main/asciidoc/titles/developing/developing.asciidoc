@@ -22,10 +22,10 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :remote_caches:
 
 //Title
-= Infinispan Developer Guide
+= {brandname} Developer Guide
 
 This guide is no longer maintained.
-Please visit the link:../../index.html[Infinispan documentation index].
+Please visit the link:../../index.html[{brandname} documentation index].
 
 //User stories
 //include::stories.adoc[]

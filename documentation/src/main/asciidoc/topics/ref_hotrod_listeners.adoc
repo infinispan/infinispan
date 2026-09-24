@@ -477,7 +477,7 @@ cache.addClientListener(new CustomEventPrintListener(), new Object[]{1}, null);
 Hot Rod servers can store data in different formats, but in spite of that,
 Java Hot Rod client users can still develop `CacheEventConverter` or `CacheEventFilter`
 instances that work on typed objects. By default, filters and converter will use data as POJO
-(application/x-java-object,) but it is possible to override the desired format by overriding the
+(application/x-java-object) but it is possible to override the desired format by overriding the
 method `format()` from the filter/converter. If the format returns `null`, the filter/converter will receive
 data as it is stored.
 

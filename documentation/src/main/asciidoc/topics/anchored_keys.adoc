@@ -65,7 +65,7 @@ in order to retrieve the value.
 
 == Configuration
 
-The module is still very young and does not yet support many Infinispan features.
+The module is still very young and does not yet support many {brandname} features.
 
 Eventually, if it proves useful, it may become another cache mode.
 For now, configuring a cache with anchored keys requires a replicated cache with a custom element `anchored-keys`:
