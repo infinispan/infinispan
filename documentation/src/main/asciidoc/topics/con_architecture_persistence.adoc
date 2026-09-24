@@ -57,7 +57,7 @@ class RocksDBStore implements NonBlockingStore {
 class RemoteStore implements NonBlockingStore {
   Loads/stores entries
   from a remote
-  Infinispan cluster.
+  {brandname} cluster.
 }
 
 class CustomStore implements NonBlockingStore {

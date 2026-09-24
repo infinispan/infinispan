@@ -17,14 +17,14 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :context: upgrades
 
 //Title
-= Upgrading Infinispan deployments
+= Upgrading {brandname} deployments
 
-Learn how to upgrade and migrate your Infinispan deployments to the latest version or between later versions.
-Find out how to perform rolling upgrades of Infinispan Server deployments and how to migrate persistent data between cache stores.
+Learn how to upgrade and migrate your {brandname} deployments to the latest version or between later versions.
+Find out how to perform rolling upgrades of {brandname} Server deployments and how to migrate persistent data between cache stores.
 
 == {brandname} Version Details
 
-Learn about link:{changes_docs}[changes] in Infinispan versions before you upgrade.
+Learn about link:{changes_docs}[changes] in {brandname} versions before you upgrade.
 
 //User stories
 include::stories.adoc[]

@@ -19,7 +19,7 @@ The {brandname} Server container image is available at the following registries:
 
 == Container execution
 
-Start an instance of Infinispan Server by executing the following command:
+Start an instance of {brandname} Server by executing the following command:
 
 [tabs]
 ====
@@ -77,7 +77,7 @@ infinispan.client.hotrod.sasl_mechanism=DIGEST-SHA-256
 
 == Identities Batch
 User identities and roles can be defined by providing a cli batch file via the `IDENTITIES_BATCH` env variable.
-All the cli commands defined in this file are executed before the server is started, therefore it iss only possible to execute offline commands otherwise the container will fail. For example, including `create cache ...` in the batch would fail as it requires a connection to an Infinispan server.
+All the cli commands defined in this file are executed before the server is started, therefore it iss only possible to execute offline commands otherwise the container will fail. For example, including `create cache ...` in the batch would fail as it requires a connection to an {brandname} server.
 
 {brandname} provides implicit roles for some users.
 
@@ -115,9 +115,9 @@ include::cmd_examples/server_podman_identities_batch.adoc[]
 ====
 
 == Server Configuration
-The Infinispan image passes all container arguments to the created server, therefore it is possible to configure the server in the same manner as a non-containerised deployment.
+The {brandname} image passes all container arguments to the created server, therefore it is possible to configure the server in the same manner as a non-containerised deployment.
 
-Below shows how a https://docs.docker.com/storage/volumes/[docker volume] can be created and mounted in order to run the Infinispan image with the local configuration file `my-infinispan-config.xml` located in the users current working directory.
+Below shows how a https://docs.docker.com/storage/volumes/[docker volume] can be created and mounted in order to run the {brandname} image with the local configuration file `my-infinispan-config.xml` located in the users current working directory.
 
 [tabs]
 ====

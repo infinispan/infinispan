@@ -18,7 +18,7 @@ include::../{topics}/attributes/community-attributes.adoc[]
 //Title
 = JCache (JSR-107) with Infinispan
 
-Infinispan implements the JCache API (also known as JSR-107 and `javax.cache`).
+{brandname} implements the JCache API (also known as JSR-107 and `javax.cache`).
 
 //User stories
 include::stories.adoc[]

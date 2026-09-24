@@ -4,7 +4,7 @@
 Applications running in environments where {brandname} is not the default cache provider for Hibernate ORM
 will need to depend on the correct cache provider version.
 
-With the divergence of Jakarta packages compared to Java EE, Hibernate ORM 6.x is the only version Infinispan supports
+With the divergence of Jakarta packages compared to Java EE, Hibernate ORM 6.x is the only version {brandname} supports
 using the `jakarta` namespace.
 Therefore, if you need to use `javax` namespace you will still need to utilize Hibernate ORM 5.3.
 

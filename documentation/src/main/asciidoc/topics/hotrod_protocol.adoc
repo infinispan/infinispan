@@ -266,16 +266,16 @@ See previous section.
 | Topology Id                                  | vInt                     |
 Topology ID
 | Num Key Owners                               | 2 bytes (Unsigned Short) |
-Globally configured number of copies for each Infinispan distributed key
+Globally configured number of copies for each {brandname} distributed key
 | Hash Function Version                        | 1 byte                   |
 Hash function version, pointing to a specific hash function in use.
 See link:#hot_rod_hash_functions[Hot Rod hash functions] for details.
 | Hash space size                              | vInt                     |
-Modulus used by Infinispan for for all module arithmetic related to hash
+Modulus used by {brandname} for for all module arithmetic related to hash
 code generation. Clients will likely require this information in order to
 apply the correct hash calculation to the keys.
 | Num servers in topology                      | vInt                     |
-Number of Infinispan Hot Rod servers running within the cluster.
+Number of {brandname} Hot Rod servers running within the cluster.
 This could be a subset of the entire cluster if only a fraction of those
 nodes are running Hot Rod servers.
 | m1: Host/IP length                           | vInt                     |

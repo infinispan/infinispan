@@ -167,7 +167,7 @@ interface "javax.transaction\n.xa.XAResource" as XA {
 
 class SynchronizationAdapter implements Sync {
   Bridges JTA callbacks
-  to Infinispan 2PC.
+  to {brandname} 2PC.
   Default mode.
 }
 

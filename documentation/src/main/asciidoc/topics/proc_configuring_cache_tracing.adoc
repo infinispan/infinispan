@@ -53,7 +53,7 @@ include::yaml/tracing_cache_config.yaml[]
 == Enable/disable tracing at runtime
 
 The cache-level tracing attribute `enable` is a mutable attribute,
-it means it can be changed at runtime without the need to restart the Infinispan cluster.
+it means it can be changed at runtime without the need to restart the {brandname} cluster.
 
 To change a mutable attribute both HotRod and REST APIs can be used.
 

@@ -89,7 +89,7 @@ The filtering queries is a way to apply the classic indexed search to the new ve
 
 It is always required to specify the **dimension** of the vector field.
 
-The other mapping attributes are optional, since Infinispan will have a default for each of them.
+The other mapping attributes are optional, since {brandname} will have a default for each of them.
 You can configure them, for instance, to tune the desired accuracy / performance.
 
 === Similarity

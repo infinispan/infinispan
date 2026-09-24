@@ -1,4 +1,4 @@
-= Infinispan {infinispanversion} documentation index
+= {brandname} {infinispanversion} documentation index
 
 User guides and documentation written and maintained by the Infinispan community.
 Visit link:https://infinispan.org/documentation[infinispan.org/documentation] for more guides.
@@ -11,7 +11,7 @@ Visit link:https://infinispan.org/documentation[infinispan.org/documentation] fo
 [discrete]
 == Welcome to Infinispan
 
-Infinispan provides distributed, in-memory data storage for modern cloud-native application workloads.
+{brandname} provides distributed, in-memory data storage for modern cloud-native application workloads.
 
 [unstyled]
 * link:titles/getting_started/getting_started.html[Getting started with Infinispan]
@@ -19,23 +19,23 @@ Infinispan provides distributed, in-memory data storage for modern cloud-native 
 * link:titles/changes/changes.html[Changes between Infinispan versions]
 
 [discrete]
-== Deploying and operating Infinispan clusters
+== Deploying and operating {brandname} clusters
 
-Plan, configure, deploy, and manage Infinispan clusters.
+Plan, configure, deploy, and manage {brandname} clusters.
 
 [unstyled]
-* link:titles/server/server.html[Infinispan Server Guide]
-* link:titles/container_image/container_image.html[Infinispan Server Container Image Guide]
+* link:titles/server/server.html[{brandname} Server Guide]
+* link:titles/container_image/container_image.html[{brandname} Server Container Image Guide]
 * link:titles/cli/cli.html[Using the Command Line Interface (CLI)]
 * link:titles/rest/rest.html[Using the REST API]
 * link:titles/security/security.html[Security guide]
 * link:titles/tuning/tuning.html[Performance considerations and tuning guidelines]
-* link:titles/upgrading/upgrading.html[Upgrading Infinispan deployments]
+* link:titles/upgrading/upgrading.html[Upgrading {brandname} deployments]
 
 [discrete]
 == Developing applications with Infinispan
 
-Use Infinispan caching capabilities to boost application performance with a fault-tolerant and elastically scalable data store.
+Use {brandname} caching capabilities to boost application performance with a fault-tolerant and elastically scalable data store.
 
 [unstyled]
 * link:titles/configuring/configuring.html[Configuring caches]

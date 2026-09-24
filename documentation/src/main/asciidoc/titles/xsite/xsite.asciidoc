@@ -16,9 +16,9 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :context: cross-site
 
 //Title
-= Infinispan cross-site replication
+= {brandname} cross-site replication
 
-Cross-site replication configures Infinispan to back up data across clusters. With cross-site replication you create global clusters that span multiple geographic locations to protect against disaster and ensure continuity of service.
+Cross-site replication configures {brandname} to back up data across clusters. With cross-site replication you create global clusters that span multiple geographic locations to protect against disaster and ensure continuity of service.
 
 //User stories
 include::stories.adoc[]

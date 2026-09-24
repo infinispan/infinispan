@@ -169,20 +169,6 @@ Tests inheriting from these template method classes will only create a cache/clu
 This helps keep the execution time down.
 * *Never* rely on `Thread.sleep()`. When running in heavily threaded environments this will most often not work.
 For example, if using ASYNC_REPL , don't use a `sleep(someValue)` and expect the data will be replicated to another cache instance after this delay has elapsed.
-Instead, use a ReplicationListener (look up Javadocs for more information on this class).
-Generally speaking, if you expect something will happen, and you don't have a guarantee when, a good approach is to try that expectation in a loop, several times, with a generous (5-10secs) timeout. For example:
-
-[source,java]
-----
-while (Systet.currentTimeMillis() - startTime < timeout) {
-   if (conditionMeet()) break;
-   Thread.sleep(50);
-}
-
-----
-
-* `Thread.sleep(10)` may not work in certain OS/JRE combos (e.g. Windows XP/Sun JRE 1.5).
-Use values grater than 10 for these statements, e.g. 50. Otherwise, a `System.currentTimeMillis()` might return same value when called before and after such a sleep statement.
 * For each cache that is created with `TestCacheManagerFactory.createXyzCacheManager()` the test harness will allocate a unique JMX domain name which can be obtained through `CacheManager.getJmxDomain()`.
 This ensures that no JMX collisions will takes place between any tests executed in parallel.
 If you want to enforce a JMX domain name, this can be done by using one of the `TestCacheManagerFactory.createCacheManagerEnforceJmxDomain` methods.
