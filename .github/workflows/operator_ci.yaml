@@ -75,7 +75,7 @@ jobs:
 
   tests:
     needs: image
-    uses: infinispan/infinispan-operator/.github/workflows/ci.yml@0532de17ae863ec9c7ab1a8913fbced86517d365 # main
+    uses: infinispan/infinispan-operator/.github/workflows/ci.yml@79cd8cdb9d9ebc4a4162b0ea5a298aa3ae5d8f52 # main
     with:
       operand: ${{ needs.image.outputs.image }}
       operandArtifact: operand-image
