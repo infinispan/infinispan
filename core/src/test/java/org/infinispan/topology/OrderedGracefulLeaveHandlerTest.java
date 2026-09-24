@@ -6,9 +6,9 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -247,7 +247,7 @@ public class OrderedGracefulLeaveHandlerTest {
     * </p>
     */
    private static final class ManualExecutor implements Executor {
-      private final Queue<Runnable> tasks = new ArrayDeque<>();
+      private final Queue<Runnable> tasks = new ConcurrentLinkedQueue<>();
 
       @Override
       public void execute(Runnable command) {
