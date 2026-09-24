@@ -1,7 +1,7 @@
 [id='virtual-threads-{context}']
 = Virtual Threads Support
 
-Infinispan supports virtual threads, which can significantly improve application responsiveness and scalability under high concurrency.
+{brandname} supports virtual threads, which can significantly improve application responsiveness and scalability under high concurrency.
 By default, they are enabled if you are running on JDK 21 or higher.
 
 [WARNING]

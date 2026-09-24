@@ -62,5 +62,5 @@ include::code_examples/RemoteQuery.java[]
 
 [role="_additional-resources"]
 .Additional resources
-* link:{encoding_docs}[Encoding Infinispan caches and marshalling data]
+* link:{encoding_docs}[Encoding {brandname} caches and marshalling data]
 * link:{encoding_docs}#protostream-annotations_marshalling[Encoding {brandname} caches and marshalling data: ProtoStream annotations]

@@ -186,7 +186,7 @@ include::xml/indexing_index_writer.xml[]
 |Maximum amount of memory that can be used for buffering added entries and deletions before they are flushed to the index storage. Large values result in faster indexing but use more memory. For faster indexing performance you should set this attribute instead of `max-buffered-entries`. When used in combination with the `max-buffered-entries` attribute, a flush occurs for whichever event happens first.
 
 |`thread-pool-size`
-|This configuration is ignored since Infinispan 15.0. The indexing engine now uses the Infinispan thread pools.
+|This configuration is ignored since {brandname} 15.0. The indexing engine now uses the {brandname} thread pools.
 
 |`queue-count`
 |Default 4. Number of internal queues to use for each indexed type. Each queue holds a batch of modifications that is applied to the index and queues are processed in parallel. Increasing the number of queues will lead to an increase of indexing throughput, but only if the bottleneck is CPU.

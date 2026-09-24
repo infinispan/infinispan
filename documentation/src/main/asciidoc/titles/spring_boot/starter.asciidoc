@@ -15,10 +15,10 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :stem: asciimath
 :context: starter
 
-= Infinispan Spring Boot Starter
+= {brandname} Spring Boot Starter
 
-The Spring Boot Starter provides a set of managed transitive dependencies that include everything your project needs to use Infinispan caches.
-This starter gives you a convenient way to use Infinispan with Spring Boot but is optional.
-You can also simply add Infinispan dependencies to your Spring Boot project.
+The Spring Boot Starter provides a set of managed transitive dependencies that include everything your project needs to use {brandname} caches.
+This starter gives you a convenient way to use {brandname} with Spring Boot but is optional.
+You can also simply add {brandname} dependencies to your Spring Boot project.
 
 include::stories.adoc[]

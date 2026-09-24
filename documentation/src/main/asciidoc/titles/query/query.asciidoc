@@ -16,9 +16,9 @@ include::../{topics}/attributes/community-attributes.adoc[]
 :context: query
 
 //Title
-= Querying Infinispan caches
+= Querying {brandname} caches
 
-Use the Ickle query language with Infinispan caches to efficiently and quickly gain real-time insights into your data.
+Use the Ickle query language with {brandname} caches to efficiently and quickly gain real-time insights into your data.
 Learn how to configure indexing and perform queries on remote and embedded caches.
 
 //User stories
