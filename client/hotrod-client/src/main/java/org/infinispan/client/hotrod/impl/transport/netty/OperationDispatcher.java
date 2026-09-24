@@ -119,7 +119,10 @@ public class OperationDispatcher {
       this.timeService = timeService;
       this.clientListenerNotifier = clientListenerNotifier;
       this.maxRetries = configuration.maxRetries();
-      this.awaitTimeout = Math.max(TimeUnit.MINUTES.toMillis(2), configuration.socketTimeout());
+      // The blocking await must outlive the longest timeout an operation can be given, otherwise the caller would be
+      // interrupted before the operation itself had a chance to report a proper timeout
+      this.awaitTimeout = Math.max(Math.max(TimeUnit.MINUTES.toMillis(2), configuration.socketTimeout()),
+            configuration.longRunningOperationTimeout());
 
       this.connectionFailedServers = configuration.serverFailureTimeout() > 0 ?
             Collections.newSetFromMap(Caffeine.newBuilder()

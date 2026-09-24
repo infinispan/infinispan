@@ -143,10 +143,9 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
          dispatcher.handleResponse(operation, messageId, channel, null, noOpException);
          throw noOpException;
       }
-      long timeout = operation.timeout();
       // Custom timeouts do not work with the RingBuffer due to not ordering based on timeout
       // AddClientListenerOperation can delay its timeout so we also don't allow it
-      if (timeout > 0 || operation.isInstanceOf(AddClientListenerOperation.class)) {
+      if (operation.timeout() > 0 || operation.isLongRunning() || operation.isInstanceOf(AddClientListenerOperation.class)) {
          Long messageIdLong = messageId;
          HotRodOperation<?> prev = incomplete.put(messageIdLong, operation);
          assert prev == null;
@@ -165,13 +164,25 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
       return messageId;
    }
 
+   /**
+    * Resolves the timeout to apply to the given operation. An explicit timeout set on the operation always wins,
+    * otherwise long running operations use the dedicated timeout and everything else the socket timeout.
+    */
+   private long timeoutFor(HotRodOperation<?> op) {
+      long timeout = op.timeout();
+      if (timeout > 0) {
+         return timeout;
+      }
+      return op.isLongRunning() ? configuration.longRunningOperationTimeout() : configuration.socketTimeout();
+   }
+
    private void scheduleTimeout(HotRodOperation<?> op, Long messageIdLong) {
-      long timeout = op.timeout() > 0 ? op.timeout() : configuration.socketTimeout();
+      long timeout = timeoutFor(op);
       log.tracef("Scheduling timeout for %d ms", timeout);
       ScheduledFuture<?> future = channel.eventLoop().schedule(() -> {
          timeouts.remove(messageIdLong);
          dispatcher.handleResponse(op, messageIdLong, channel, null,
-               new SocketTimeoutException(this + " timed out after " + configuration.socketTimeout() + " ms"));
+               new SocketTimeoutException(this + " timed out after " + timeout + " ms"));
       }, timeout, TimeUnit.MILLISECONDS);
       timeouts.put(messageIdLong, future);
    }

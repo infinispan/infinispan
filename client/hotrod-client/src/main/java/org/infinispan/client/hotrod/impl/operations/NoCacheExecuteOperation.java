@@ -43,4 +43,9 @@ public class NoCacheExecuteOperation extends AbstractNoCacheHotRodOperation<Stri
    public short responseOpCode() {
       return HotRodConstants.EXEC_RESPONSE;
    }
+
+   @Override
+   public boolean isLongRunning() {
+      return true;
+   }
 }

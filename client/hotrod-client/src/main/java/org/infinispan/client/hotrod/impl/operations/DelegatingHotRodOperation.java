@@ -94,6 +94,11 @@ public abstract class DelegatingHotRodOperation<T> implements HotRodOperation<T>
    }
 
    @Override
+   public boolean isLongRunning() {
+      return delegate.isLongRunning();
+   }
+
+   @Override
    public boolean isInstanceOf(Class<? extends HotRodOperation<?>> klass) {
       return delegate.isInstanceOf(klass);
    }

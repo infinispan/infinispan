@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl;
 
+import static org.infinispan.client.hotrod.logging.Log.HOTROD;
+
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -38,14 +40,26 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    private final OperationDispatcher operationDispatcher;
    private final EnumSet<AdminFlag> flags;
    private final Consumer<String> remover;
+   /**
+    * The timeout in milliseconds explicitly requested by the user, or {@code 0} to use the timeout configured via
+    * {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#longRunningOperationTimeout(long, TimeUnit)}.
+    */
+   private final long timeoutMillis;
 
    public RemoteCacheManagerAdminImpl(RemoteCacheManager cacheManager, ManagerOperationsFactory operationsFactory,
                                       OperationDispatcher operationDispatcher, EnumSet<AdminFlag> flags, Consumer<String> remover) {
+      this(cacheManager, operationsFactory, operationDispatcher, flags, remover, 0);
+   }
+
+   private RemoteCacheManagerAdminImpl(RemoteCacheManager cacheManager, ManagerOperationsFactory operationsFactory,
+                                       OperationDispatcher operationDispatcher, EnumSet<AdminFlag> flags,
+                                       Consumer<String> remover, long timeoutMillis) {
       this.cacheManager = cacheManager;
       this.operationsFactory = operationsFactory;
       this.operationDispatcher = operationDispatcher;
       this.flags = flags;
       this.remover = remover;
+      this.timeoutMillis = timeoutMillis;
    }
 
    @Override
@@ -53,8 +67,8 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       Map<String, byte[]> params = new HashMap<>(2);
       params.put(CACHE_NAME, string(name));
       if (template != null) params.put(CACHE_TEMPLATE, string(template));
-      if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@create", params)));
+      addFlags(params);
+      execute("@@cache@create", params);
       return cacheManager.getCache(name);
    }
 
@@ -68,8 +82,8 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       Map<String, byte[]> params = new HashMap<>(2);
       params.put(CACHE_NAME, string(name));
       if (configuration != null) params.put(CACHE_CONFIGURATION, string(configuration.toStringConfiguration(name)));
-      if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@create", params)));
+      addFlags(params);
+      execute("@@cache@create", params);
       return cacheManager.getCache(name);
    }
 
@@ -78,8 +92,8 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       Map<String, byte[]> params = new HashMap<>(2);
       params.put(CACHE_NAME, string(name));
       if (template != null) params.put(CACHE_TEMPLATE, string(template));
-      if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@getorcreate", params)));
+      addFlags(params);
+      execute("@@cache@getorcreate", params);
       return cacheManager.getCache(name);
    }
 
@@ -93,8 +107,8 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       Map<String, byte[]> params = new HashMap<>(2);
       params.put(CACHE_NAME, string(name));
       if (configuration != null) params.put(CACHE_CONFIGURATION, string(configuration.toStringConfiguration(name)));
-      if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@getorcreate", params)));
+      addFlags(params);
+      execute("@@cache@getorcreate", params);
       return cacheManager.getCache(name);
    }
 
@@ -103,50 +117,51 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       remover.accept(name);
       Map<String, byte[]> params = new HashMap<>(2);
       params.put(CACHE_NAME, string(name));
-      if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@remove", params)));
+      addFlags(params);
+      execute("@@cache@remove", params);
    }
 
    @Override
    public RemoteCacheManagerAdmin withFlags(AdminFlag... flags) {
       EnumSet<AdminFlag> newFlags = EnumSet.copyOf(this.flags);
       Collections.addAll(newFlags, flags);
-      return new RemoteCacheManagerAdminImpl(cacheManager, operationsFactory, operationDispatcher, newFlags, remover);
+      return new RemoteCacheManagerAdminImpl(cacheManager, operationsFactory, operationDispatcher, newFlags, remover, timeoutMillis);
    }
 
    @Override
    public RemoteCacheManagerAdmin withFlags(EnumSet<AdminFlag> flags) {
       EnumSet<AdminFlag> newFlags = EnumSet.copyOf(this.flags);
       newFlags.addAll(flags);
-      return new RemoteCacheManagerAdminImpl(cacheManager, operationsFactory, operationDispatcher, newFlags, remover);
+      return new RemoteCacheManagerAdminImpl(cacheManager, operationsFactory, operationDispatcher, newFlags, remover, timeoutMillis);
+   }
+
+   @Override
+   public RemoteCacheManagerAdmin withTimeout(long timeout, TimeUnit timeUnit) {
+      long newTimeoutMillis = timeUnit.toMillis(timeout);
+      if (newTimeoutMillis <= 0) {
+         throw HOTROD.invalidAdminOperationTimeout(timeout, timeUnit);
+      }
+      return new RemoteCacheManagerAdminImpl(cacheManager, operationsFactory, operationDispatcher, flags, remover, newTimeoutMillis);
    }
 
    @Override
    public void reindexCache(String name) throws HotRodClientException {
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@reindex", Collections.singletonMap(CACHE_NAME, string(name)))));
+      execute("@@cache@reindex", Collections.singletonMap(CACHE_NAME, string(name)));
    }
 
    @Override
    public void reindexCache(String name, long timeout, TimeUnit timeUnit) throws HotRodClientException {
-      long timeoutMillis = timeUnit.toMillis(timeout);
-      HotRodOperation<String> op = new TimeoutHotRodOperation<>(
-            operationsFactory.executeOperation("@@cache@reindex", Collections.singletonMap(CACHE_NAME, string(name))),
-            timeoutMillis);
-      Util.await(operationDispatcher.execute(op), timeoutMillis);
+      withTimeout(timeout, timeUnit).reindexCache(name);
    }
 
    @Override
    public void updateIndexSchema(String name) throws HotRodClientException {
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@updateindexschema", Collections.singletonMap(CACHE_NAME, string(name)))));
+      execute("@@cache@updateindexschema", Collections.singletonMap(CACHE_NAME, string(name)));
    }
 
    @Override
    public void updateIndexSchema(String name, long timeout, TimeUnit timeUnit) throws HotRodClientException {
-      long timeoutMillis = timeUnit.toMillis(timeout);
-      HotRodOperation<String> op = new TimeoutHotRodOperation<>(
-            operationsFactory.executeOperation("@@cache@updateindexschema", Collections.singletonMap(CACHE_NAME, string(name))),
-            timeoutMillis);
-      Util.await(operationDispatcher.execute(op), timeoutMillis);
+      withTimeout(timeout, timeUnit).updateIndexSchema(name);
    }
 
    @Override
@@ -155,12 +170,8 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       params.put(CACHE_NAME, string(name));
       params.put(ATTRIBUTE, string(attribute));
       params.put(VALUE, string(value));
-
-      if (flags != null && !flags.isEmpty()) {
-         params.put(FLAGS, flags(flags));
-      }
-
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@updateConfigurationAttribute", params)));
+      addFlags(params);
+      execute("@@cache@updateConfigurationAttribute", params);
    }
 
    @Override
@@ -168,16 +179,16 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       Map<String, byte[]> params = new HashMap<>(2);
       params.put(CACHE_NAME, string(name));
       if (configuration != null) params.put(CACHE_CONFIGURATION, string(configuration.toStringConfiguration(name)));
-      if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@template@create", params)));
+      addFlags(params);
+      execute("@@template@create", params);
    }
 
    @Override
    public void removeTemplate(String name) {
       Map<String, byte[]> params = new HashMap<>(2);
       params.put(CACHE_NAME, string(name));
-      if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@template@remove", params)));
+      addFlags(params);
+      execute("@@template@remove", params);
    }
 
    @Override
@@ -185,15 +196,34 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       Map<String, byte[]> params = new HashMap<>(4);
       params.put(CACHE_NAME, string(cacheName));
       params.put(ALIAS_NAME, string(aliasName));
-      if (flags != null && !flags.isEmpty()) {
-         params.put(FLAGS, flags(flags));
-      }
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@assignAlias", params)));
+      addFlags(params);
+      execute("@@cache@assignAlias", params);
    }
 
    @Override
    public RemoteSchemasAdmin schemas() {
       return new RemoteSchemasAdminImpl(operationsFactory, operationDispatcher, cacheManager);
+   }
+
+   private void addFlags(Map<String, byte[]> params) {
+      if (flags != null && !flags.isEmpty()) {
+         params.put(FLAGS, flags(flags));
+      }
+   }
+
+   /**
+    * Executes an administration task, blocking until it completes. Administration operations are long running by
+    * default, so they honour {@code longRunningOperationTimeout} unless the user requested an explicit timeout via
+    * {@link #withTimeout(long, TimeUnit)}.
+    */
+   private void execute(String taskName, Map<String, byte[]> params) {
+      HotRodOperation<String> op = operationsFactory.executeOperation(taskName, params);
+      if (timeoutMillis > 0) {
+         // The caller must not be released before the operation itself has had the chance to time out
+         Util.await(operationDispatcher.execute(new TimeoutHotRodOperation<>(op, timeoutMillis)), timeoutMillis);
+      } else {
+         operationDispatcher.await(operationDispatcher.execute(op));
+      }
    }
 
    private static byte[] flags(EnumSet<AdminFlag> flags) {

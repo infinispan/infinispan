@@ -238,6 +238,22 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder transactionTimeout(long timeout, TimeUnit timeUnit);
 
    /**
+    * Sets the timeout for operations that are expected to take considerably longer than a regular single key
+    * operation, for example administration operations, bulk operations, queries, iteration or server task execution.
+    * <p>
+    * Operations that are not identified as long running keep using {@link #socketTimeout(int)} instead. Individual
+    * operations may still override this value, for example
+    * {@link org.infinispan.client.hotrod.RemoteCacheManagerAdmin#withTimeout(long, TimeUnit)}.
+    * <p>
+    * It defaults to 1 minute.
+    *
+    * @param timeout the timeout, must be greater than zero
+    * @param timeUnit the unit of the timeout
+    * @return this builder
+    */
+   ConfigurationBuilder longRunningOperationTimeout(long timeout, TimeUnit timeUnit);
+
+   /**
     * Set the TransportFactory. It defaults to {@link org.infinispan.client.hotrod.impl.transport.netty.DefaultTransportFactory}
     * Defaults to {@link TransportFactory#DEFAULT}. If any other factory is used, any event loop created/used via
     * {@link TransportFactory#createEventLoopGroup(int, ExecutorService)} will not be closed upon shutdown of the

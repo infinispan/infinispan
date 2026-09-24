@@ -27,4 +27,9 @@ public class SizeOperation extends AbstractCacheOperation<Integer> {
    public short responseOpCode() {
       return SIZE_RESPONSE;
    }
+
+   @Override
+   public boolean isLongRunning() {
+      return true;
+   }
 }

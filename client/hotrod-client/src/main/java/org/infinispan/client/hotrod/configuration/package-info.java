@@ -75,6 +75,14 @@
  *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#socketTimeout(int) timeout} for socket read/writes</td>
  *       </tr>
  *       <tr>
+ *          <td><b>infinispan.client.hotrod.long_running_operation_timeout</b></td>
+ *          <td>Long</td>
+ *          <td>60000</td>
+ *          <td>The {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#longRunningOperationTimeout(long, java.util.concurrent.TimeUnit) timeout}
+ *          for operations which are expected to take considerably longer than a regular single key operation, such as
+ *          administration operations, bulk operations, queries, iteration or server task execution</td>
+ *       </tr>
+ *       <tr>
  *          <td><b>infinispan.client.hotrod.connect_timeout</b></td>
  *          <td>Integer</td>
  *          <td>2000</td>

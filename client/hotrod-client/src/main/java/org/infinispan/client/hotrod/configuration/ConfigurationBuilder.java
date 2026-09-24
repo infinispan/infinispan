@@ -98,6 +98,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private int dnsResolverNegativeTTL = 0;
    private RemoteCacheManagerMetricsRegistry metricRegistry;
    private long transactionTimeout = ConfigurationProperties.DEFAULT_TRANSACTION_TIMEOUT;
+   private long longRunningOperationTimeout = ConfigurationProperties.DEFAULT_LONG_RUNNING_OPERATION_TIMEOUT;
 
 
    public ConfigurationBuilder() {
@@ -363,6 +364,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
+   public ConfigurationBuilder longRunningOperationTimeout(long timeout, TimeUnit timeUnit) {
+      this.longRunningOperationTimeout = timeUnit.toMillis(timeout);
+      return this;
+   }
+
+   @Override
    public ConfigurationBuilder transportFactory(TransportFactory transportFactory) {
       this.transportFactory = transportFactory;
       return this;
@@ -437,6 +444,10 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       }
       if (typed.containsKey(ConfigurationProperties.SO_TIMEOUT)) {
          this.socketTimeout((int) typed.getDurationProperty(ConfigurationProperties.SO_TIMEOUT, socketTimeout, true));
+      }
+      if (typed.containsKey(ConfigurationProperties.LONG_RUNNING_OPERATION_TIMEOUT)) {
+         this.longRunningOperationTimeout(typed.getDurationProperty(ConfigurationProperties.LONG_RUNNING_OPERATION_TIMEOUT,
+               longRunningOperationTimeout, true), TimeUnit.MILLISECONDS);
       }
       if (typed.containsKey(ConfigurationProperties.TCP_NO_DELAY)) {
          this.tcpNoDelay(typed.getBooleanProperty(ConfigurationProperties.TCP_NO_DELAY, tcpNoDelay, true));
@@ -538,6 +549,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (maxRetries < 0) {
          throw HOTROD.invalidMaxRetries(maxRetries);
       }
+      if (longRunningOperationTimeout <= 0) {
+         throw HOTROD.invalidLongRunningOperationTimeout(longRunningOperationTimeout);
+      }
       Set<String> clusterNameSet = new HashSet<>(clusters.size());
       for (ClusterConfigurationBuilder clusterConfigBuilder : clusters) {
          if (!clusterNameSet.add(clusterConfigBuilder.getClusterName())) {
@@ -584,7 +598,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
             forceReturnValues, buildMarshaller, buildMarshallerClass, protocolVersion, servers, socketTimeout,
             security.create(), tcpNoDelay, tcpKeepAlive, maxRetries,
             serverClusterConfigs, allowListRegExs, batchSize, transactionTimeout, statistics.create(), features,
-            contextInitializers, remoteCaches, transportFactory, tracingPropagationEnabled, metricRegistry, serverFailureTimeout);
+            contextInitializers, remoteCaches, transportFactory, tracingPropagationEnabled, metricRegistry, serverFailureTimeout,
+            longRunningOperationTimeout);
    }
 
    // Method that handles default marshaller - needed as a placeholder
@@ -636,6 +651,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.maxRetries = template.maxRetries();
       this.allowListRegExs.addAll(template.serialAllowList());
       this.transactionTimeout = template.transactionTimeout();
+      this.longRunningOperationTimeout = template.longRunningOperationTimeout();
       this.statistics.read(template.statistics(), combine);
       this.contextInitializers.clear();
       this.contextInitializers.addAll(template.getContextInitializers());

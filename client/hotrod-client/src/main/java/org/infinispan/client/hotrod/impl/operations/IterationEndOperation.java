@@ -51,4 +51,9 @@ public class IterationEndOperation extends AbstractCacheOperation<IterationEndRe
       // No data format sent for ending an iteration operation
       return null;
    }
+
+   @Override
+   public boolean isLongRunning() {
+      return true;
+   }
 }

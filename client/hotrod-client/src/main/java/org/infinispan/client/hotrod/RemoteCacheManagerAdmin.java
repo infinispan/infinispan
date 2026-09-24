@@ -166,6 +166,21 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
    void assignAlias(String aliasName, String cacheName) throws HotRodClientException;
 
    /**
+    * Returns an instance of {@link RemoteCacheManagerAdmin} which applies the supplied timeout to every administration
+    * operation it performs, overriding
+    * {@link org.infinispan.client.hotrod.configuration.ConfigurationBuilder#longRunningOperationTimeout(long, TimeUnit)}.
+    * <p>
+    * Use this for operations which are known to take longer than usual, for example creating a cache backed by a slow
+    * persistence store.
+    *
+    * @param timeout the timeout value, must be greater than zero
+    * @param timeUnit the time unit
+    * @return a new instance of {@link RemoteCacheManagerAdmin} using the supplied timeout
+    * @since 16.0
+    */
+   RemoteCacheManagerAdmin withTimeout(long timeout, TimeUnit timeUnit);
+
+   /**
     * Returns the Schemas Management API.
     * This API is marked Experimental and is subject of evolutions or breaking changes.
     * @since 16.0

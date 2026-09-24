@@ -135,4 +135,9 @@ public class IterationNextOperation<K, E> extends AbstractCacheOperation<Iterati
    public boolean supportRetry() {
       return false;
    }
+
+   @Override
+   public boolean isLongRunning() {
+      return true;
+   }
 }

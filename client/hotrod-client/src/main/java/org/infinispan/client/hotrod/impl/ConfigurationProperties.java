@@ -39,6 +39,7 @@ public class ConfigurationProperties {
    public static final String HASH_FUNCTION_PREFIX = ICH + "hash_function_impl";
    // Connection properties
    public static final String SO_TIMEOUT = ICH + "socket_timeout";
+   public static final String LONG_RUNNING_OPERATION_TIMEOUT = ICH + "long_running_operation_timeout";
    public static final String CONNECT_TIMEOUT = ICH + "connect_timeout";
    public static final String PROTOCOL_VERSION = ICH + "protocol_version";
    public static final String TRANSPORT_FACTORY = ICH + "transport_factory";
@@ -125,6 +126,7 @@ public class ConfigurationProperties {
    // defaults
    public static final int DEFAULT_HOTROD_PORT = 11222;
    public static final int DEFAULT_SO_TIMEOUT = 2_000;
+   public static final long DEFAULT_LONG_RUNNING_OPERATION_TIMEOUT = 60_000L;
    public static final int DEFAULT_CONNECT_TIMEOUT = 2_000;
    public static final int DEFAULT_MAX_RETRIES = 3;
    public static final int DEFAULT_BATCH_SIZE = 10_000;

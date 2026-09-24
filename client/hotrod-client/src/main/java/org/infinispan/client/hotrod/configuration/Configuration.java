@@ -22,6 +22,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.HASH_FUN
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_ALLOWLIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_FILE_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_PASSWORD;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.LONG_RUNNING_OPERATION_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MARSHALLER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MAX_RETRIES;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION;
@@ -110,6 +111,7 @@ public class Configuration implements org.infinispan.api.configuration.Configura
    private final RemoteCacheManagerMetricsRegistry metricRegistry;
    private final int serverFailureTimeout;
    private final long transactionTimeout;
+   private final long longRunningOperationTimeout;
 
    public Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory, ClassLoader classLoader,
                         ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl,
@@ -123,7 +125,7 @@ public class Configuration implements org.infinispan.api.configuration.Configura
                         List<SerializationContextInitializer> contextInitializers,
                         Map<String, RemoteCacheConfiguration> remoteCaches,
                         TransportFactory transportFactory, boolean tracingPropagationEnabled, RemoteCacheManagerMetricsRegistry metricRegistry,
-                        int serverFailureTimeout) {
+                        int serverFailureTimeout, long longRunningOperationTimeout) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategyFactory = balancingStrategyFactory;
       this.maxRetries = maxRetries;
@@ -157,6 +159,7 @@ public class Configuration implements org.infinispan.api.configuration.Configura
       this.tracingPropagationEnabled = tracingPropagationEnabled;
       this.metricRegistry = Objects.requireNonNullElse(metricRegistry, RemoteCacheManagerMetricsRegistry.DISABLED);
       this.serverFailureTimeout = serverFailureTimeout;
+      this.longRunningOperationTimeout = longRunningOperationTimeout;
    }
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {
@@ -230,6 +233,16 @@ public class Configuration implements org.infinispan.api.configuration.Configura
 
    public int socketTimeout() {
       return socketTimeout;
+   }
+
+   /**
+    * The timeout, in milliseconds, applied to operations that are expected to take considerably longer than a regular
+    * single key operation, see {@link ConfigurationBuilder#longRunningOperationTimeout(long, TimeUnit)}.
+    *
+    * @return time in milliseconds
+    */
+   public long longRunningOperationTimeout() {
+      return longRunningOperationTimeout;
    }
 
    public SecurityConfiguration security() {
@@ -357,6 +370,7 @@ public class Configuration implements org.infinispan.api.configuration.Configura
             + ", statistics=" + statistics
             + ", metricRegistry=" + metricRegistry
             + ", serverFailureTimeout=" + serverFailureTimeout
+            + ", longRunningOperationTimeout=" + longRunningOperationTimeout
             + "]";
    }
 
@@ -383,6 +397,7 @@ public class Configuration implements org.infinispan.api.configuration.Configura
       properties.setProperty(MARSHALLER, marshallerClass().getName());
       properties.setProperty(PROTOCOL_VERSION, version().toString());
       properties.setProperty(SO_TIMEOUT, socketTimeout());
+      properties.setProperty(LONG_RUNNING_OPERATION_TIMEOUT, Long.toString(longRunningOperationTimeout));
       properties.setProperty(TCP_NO_DELAY, tcpNoDelay());
       properties.setProperty(TCP_KEEP_ALIVE, tcpKeepAlive());
       properties.setProperty(MAX_RETRIES, maxRetries());

@@ -12,6 +12,7 @@ import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 
 import javax.transaction.xa.Xid;
 
@@ -464,5 +465,11 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Server error received after operation %s already timed out on %s: this is the actual cause of the timeout", id = 4127)
    void delayedServerError(Object operation, SocketAddress address, @Cause Throwable cause);
+
+   @Message(value = "Invalid long_running_operation_timeout (value=%s). Value should be greater than zero.", id = 4128)
+   CacheConfigurationException invalidLongRunningOperationTimeout(long longRunningOperationTimeout);
+
+   @Message(value = "Invalid administration operation timeout (value=%s %s). Value should be at least one millisecond.", id = 4129)
+   IllegalArgumentException invalidAdminOperationTimeout(long timeout, TimeUnit timeUnit);
 
 }

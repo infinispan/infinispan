@@ -30,6 +30,11 @@ All properties are prefixed with `infinispan.client.hotrod.` (abbreviated as `IC
 |int
 |`2000` (2 seconds)
 
+|`long_running_operation_timeout`
+|Read timeout in milliseconds for operations that are expected to take considerably longer than a regular single key operation, such as administration operations, bulk operations (`getAll`, `putAll`, `clear`, `size`), queries, iteration and server task execution. Operations that are not long running keep using `socket_timeout`.
+|long
+|`60000` (1 minute)
+
 |`tcp_no_delay`
 |Enable/disable TCP_NODELAY (Nagle's algorithm). When true, packets are sent immediately without buffering.
 |boolean

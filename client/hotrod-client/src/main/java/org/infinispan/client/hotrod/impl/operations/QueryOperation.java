@@ -111,4 +111,9 @@ public final class QueryOperation<T> extends AbstractCacheOperation<BaseQueryRes
       return (BaseQueryResponse<T>) querySerializer.readQueryResponse(
             internalRemoteCache.getMarshaller(), remoteQuery, responseBytes);
    }
+
+   @Override
+   public boolean isLongRunning() {
+      return true;
+   }
 }

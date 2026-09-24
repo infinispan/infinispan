@@ -76,4 +76,9 @@ public class GetAllOperation<K, V> extends AbstractCacheOperation<Map<K, V>> {
    public short responseOpCode() {
       return GET_ALL_RESPONSE;
    }
+
+   @Override
+   public boolean isLongRunning() {
+      return true;
+   }
 }

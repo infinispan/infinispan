@@ -53,4 +53,9 @@ public class CacheExecuteOperation<E> extends AbstractCacheOperation<E> {
    public Object getRoutingObject() {
       return key;
    }
+
+   @Override
+   public boolean isLongRunning() {
+      return true;
+   }
 }

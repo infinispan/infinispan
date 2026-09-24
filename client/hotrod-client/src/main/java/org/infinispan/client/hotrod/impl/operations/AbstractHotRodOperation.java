@@ -23,6 +23,11 @@ public abstract class AbstractHotRodOperation<T> extends CompletableFuture<T> im
    }
 
    @Override
+   public boolean isLongRunning() {
+      return false;
+   }
+
+   @Override
    public Object getRoutingObject() {
       return null;
    }

@@ -40,7 +40,25 @@ public interface HotRodOperation<T> {
 
    CompletableFuture<T> asCompletableFuture();
 
+   /**
+    * The timeout in milliseconds to apply to this operation, or a value less than or equal to zero to let the
+    * connection decide which configured timeout applies, see {@link #isLongRunning()}.
+    *
+    * @return the timeout in milliseconds
+    */
    long timeout();
+
+   /**
+    * Whether this operation is expected to take considerably longer than a regular single key operation, for example
+    * administration operations, bulk operations, queries, iteration or server task execution.
+    * <p>
+    * When no explicit {@link #timeout()} is provided, a long running operation uses
+    * {@link org.infinispan.client.hotrod.configuration.Configuration#longRunningOperationTimeout()} instead of
+    * {@link org.infinispan.client.hotrod.configuration.Configuration#socketTimeout()}.
+    *
+    * @return {@code true} if this is a long running operation
+    */
+   boolean isLongRunning();
 
    boolean isInstanceOf(Class<? extends HotRodOperation<?>> klass);
 
