@@ -30,6 +30,7 @@ on:
       - '**/CODEX.md'
       - '**/AI.md'
       - '**/AI-*.md'
+      - '**/REVIEW.md'
 
 jobs:
   notice:
@@ -53,7 +54,7 @@ jobs:
 
           # Filter for AI/IDE config files
           MATCHED=$(echo "$FILES" | grep -E \
-            '(^\.claude/|^\.cursor/|^\.gemini/|^\.codex/|^\.vscode/|^\.idea/|^\.github/|^\.cursorrules$|^\.cursorignore$|^\.copilotignore$|^\.windsurfrules$|(^|/)(AI(-[A-Z_]+)?|CLAUDE|GEMINI|COPILOT|AGENTS|CODEX)\.md$)' \
+            '(^\.claude/|^\.cursor/|^\.gemini/|^\.codex/|^\.vscode/|^\.idea/|^\.github/|^\.cursorrules$|^\.cursorignore$|^\.copilotignore$|^\.windsurfrules$|(^|/)(AI(-[A-Z_]+)?|CLAUDE|GEMINI|COPILOT|AGENTS|CODEX|REVIEW)\.md$)' \
             || true)
 
           if [ -z "$MATCHED" ]; then
