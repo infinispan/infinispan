@@ -21,6 +21,11 @@
 :underscores: ___
 
 //
+// Asciidoctor Diagram attributes
+:plantuml-theme: cerulean
+:syntrax-transparent: true
+
+//
 // Server
 //
 :server_home: $ISPN_HOME
