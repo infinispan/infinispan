@@ -59,22 +59,21 @@ init {
 
 exceptionally {
    if (closing) return;
+   // The request being parsed is abandoned, never resume it from the state it failed in
+   state = 0;
    if (t instanceof TooLongFrameException tlfe) {
       log.requestTooLarge(ctx.channel(), maxContentLength, requestBytes);
       if (log.isTraceEnabled()) log.trace("Request too large", tlfe);
-      closing = true;
-      ctx.close();
+      discardAndClose(ctx);
       return;
    } else if (t instanceof AllocationLimitException sle) {
       log.warn(t.toString());
       if (log.isTraceEnabled()) log.trace("Illegal request", sle);
-      closing = true;
-      ctx.close();
+      discardAndClose(ctx);
       return;
    }
    log.trace("Parsing error", t);
    cacheProcessor.writeException(getHeader(), hr2x_messageId, t);
-   state = 0;
 }
 
 deadend {
