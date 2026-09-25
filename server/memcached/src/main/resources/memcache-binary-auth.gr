@@ -37,7 +37,7 @@ exceptionally {
    if (closing) return;
    state = 0;
    if (t instanceof TooLongFrameException tlfe) {
-      log.requestTooLarge(ctx.channel(), maxContentLength, requestBytes);
+      log.requestTooLarge(ctx.channel(), maxContentLength, currentRequestBytes());
       if (log.isTraceEnabled()) log.trace("Request too large", tlfe);
       closing = true;
       ctx.close();
@@ -57,7 +57,7 @@ deadend {
 
 // this is the root
 root request
-   : { posBefore = buf.readerIndex(); }
+   : { startRequest(buf); }
      magic { requestStart = Instant.now(); }
      header { if (log.isTraceEnabled()) log.tracef("Parsed header: %s", header); }
      parameters
@@ -66,7 +66,7 @@ root request
 header returns BinaryHeader
    : { magic != MAGIC_REQ }? { throw new IllegalStateException("Error reading magic byte or message id: " + magic); }
    | { deadEnd = false } op keyLength extrasLength dataType vbucketId totalBodyLength opaque cas valueLength
-     { acquireHeader().replace(requestStart, requestBytes, principalName, key, opCode, opaque, cas) }
+     { acquireHeader().replace(requestStart, currentRequestBytes(), principalName, key, opCode, opaque, cas) }
    ;
 
 magic: byte;
@@ -86,12 +86,12 @@ valueLength returns int
    : { totalBodyLength - keyLength - extrasLength };
 
 key returns byte[]
-   :  { keyLength > 0 }? fixedArray[keyLength, bytesAvailable(buf, requestBytes)]
+   :  { keyLength > 0 }? fixedArray[keyLength, bytesAvailable(buf)]
    |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
    ;
 
 value returns byte[]
-   : { valueLength > 0 }? fixedArray[valueLength, bytesAvailable(buf, requestBytes)]
+   : { valueLength > 0 }? fixedArray[valueLength, bytesAvailable(buf)]
    |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
    ;
 

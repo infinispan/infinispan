@@ -33,21 +33,20 @@ import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.logging.Log;
 import org.infinispan.server.core.transport.CacheInitializeInboundAdapter;
 import org.infinispan.server.core.transport.NettyTransport;
+import org.infinispan.server.core.transport.RequestLimitDecoder;
 import org.infinispan.server.memcached.logging.Header;
 import org.infinispan.server.memcached.logging.MemcachedAccessLogging;
 import org.infinispan.stats.Stats;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 
 /**
  * @since 15.0
  **/
-public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
+public abstract class MemcachedBaseDecoder extends RequestLimitDecoder {
    protected static final Subject ANONYMOUS = new Subject();
    protected static final Log log = Log.getLog(MemcachedBaseDecoder.class);
    protected final MemcachedServer server;
@@ -62,20 +61,17 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
    protected final Subject subject;
    protected final String principalName;
    protected final ByRef<MemcachedResponse> current = ByRef.create(null);
-   protected final int maxContentLength;
    private BiConsumer<ChannelHandlerContext, MemcachedResponse> errorHandler;
-   // And this is the ByteBuf pos before decode is performed
-   protected int posBefore;
    // Set when the connection is being closed due to a protocol error (e.g. TooLongFrameException)
    // to suppress further error logging while the async close completes
    protected boolean closing;
 
    protected MemcachedBaseDecoder(MemcachedServer server, Subject subject) {
+      super(server.getConfiguration().maxContentLengthBytes(), Integer.MAX_VALUE);
       this.server = server;
       this.subject = subject;
       this.principalName = Security.getSubjectUserPrincipalName(subject);
       this.accessLogging = MemcachedAccessLogging.isEnabled();
-      this.maxContentLength = server.getConfiguration().maxContentLengthBytes();
       if (server.isDefaultCacheInitialized() && server.isDefaultCacheRunning())
          initializeHandler();
    }
@@ -83,13 +79,6 @@ public abstract class MemcachedBaseDecoder extends ByteToMessageDecoder {
    protected final void assertCacheIsReady() {
       if (!server.isDefaultCacheRunning())
          throw log.cacheIsNotReady(server.defaultCacheName());
-   }
-
-   protected int bytesAvailable(ByteBuf buf, int requestBytes) {
-      if (maxContentLength > 0) {
-         return Math.max(maxContentLength - requestBytes - buf.readerIndex() + posBefore, 0);
-      }
-      return Integer.MAX_VALUE;
    }
 
    public void registerExceptionHandler(BiConsumer<ChannelHandlerContext, MemcachedResponse> handler) {
