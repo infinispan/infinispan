@@ -9,8 +9,10 @@ Create a cluster that uses the {brandname} version to which you plan to upgrade 
 
 [IMPORTANT]
 ====
-Ensure the network properties for the target cluster do not overlap with those
-for the source cluster.
+Hot Rod migration from {brandname} {version_10.x} to {version_16.x} is not supported.
+Hot Rod migration from {brandname} {version_11.x} and later to {version_16.x} is supported.
+
+Ensure the network properties for the target cluster do not overlap with those for the source cluster.
 You should specify unique names for the target and source clusters in the JGroups transport configuration.
 Depending on your environment you can also use different network interfaces and port offsets to separate the target and source clusters.
 ====
