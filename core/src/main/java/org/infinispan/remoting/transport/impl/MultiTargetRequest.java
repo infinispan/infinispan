@@ -36,12 +36,23 @@ public class MultiTargetRequest<T> extends ExclusiveTargetRequest<T> {
       int i = 0;
       for (Address target : targets) {
          if (excluded == null || !excluded.equals(target)) {
-            trackers[i++] = metricsCollector.trackRequest(target);
+            trackers[i++] = metricsCollector.trackRequest(target, 0L);
          }
       }
       missingResponses = i;
+      whenComplete((ignore, t) -> abandonRemainingTrackers());
       if (missingResponses == 0)
          complete(responseCollector.finish());
+   }
+
+   private void abandonRemainingTrackers() {
+      for (int i = 0; i < trackers.length; i++) {
+         RequestTracker tracker = trackers[i];
+         if (tracker != null) {
+            trackers[i] = null;
+            tracker.resolve(RequestTracker.Outcome.ABANDONED);
+         }
+      }
    }
 
    protected int getTargetsSize() {
@@ -69,7 +80,7 @@ public class MultiTargetRequest<T> extends ExclusiveTargetRequest<T> {
          for (int i = 0; i < trackers.length; i++) {
             RequestTracker target = trackers[i];
             if (target != null && target.destination().equals(sender)) {
-               target.onComplete();
+               target.resolve(RequestTracker.Outcome.SUCCESS);
                invalidSender = false;
                trackers[i] = null;
                missingResponses--;
@@ -117,6 +128,7 @@ public class MultiTargetRequest<T> extends ExclusiveTargetRequest<T> {
          for (int i = 0; i < trackers.length; i++) {
             RequestTracker target = trackers[i];
             if (target != null && !members.contains(target.destination())) {
+               target.resolve(RequestTracker.Outcome.ABANDONED);
                trackers[i] = null;
                missingResponses--;
                targetRemoved = true;
@@ -157,7 +169,7 @@ public class MultiTargetRequest<T> extends ExclusiveTargetRequest<T> {
       missingResponses = 0;
       targetsWithoutResponses = Arrays.stream(trackers)
             .filter(Objects::nonNull)
-            .peek(RequestTracker::onTimeout)
+            .peek(t -> t.resolve(RequestTracker.Outcome.TIMEOUT))
             .map(RequestTracker::destination)
             .map(Object::toString)
             .collect(Collectors.joining(","));
