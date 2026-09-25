@@ -11,6 +11,7 @@ import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.NullValue;
 import org.infinispan.protostream.BaseMarshaller;
@@ -18,6 +19,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.common.session.MapSessionProtoAdapter;
+import org.infinispan.spring.common.marshalling.SpringJavaSerializationMarshaller;
 import org.springframework.session.MapSession;
 import org.springframework.util.Assert;
 
@@ -170,12 +172,13 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
       if (protoMarshaller != null) {
          // Apply our own serialization context initializers
          SerializationContext ctx = protoMarshaller.getSerializationContext();
-         addSessionContextInitializerAndMarshaller(ctx, serializationMarshaller);
+         SpringJavaSerializationMarshaller sessionFallback = new SpringJavaSerializationMarshaller(serializationAllowList);
+         addSessionContextInitializerAndMarshaller(ctx, sessionFallback);
       }
    }
 
    private void addSessionContextInitializerAndMarshaller(SerializationContext ctx,
-                                                          JavaSerializationMarshaller serializationMarshaller) {
+                                                          Marshaller sessionFallbackMarshaller) {
       // Skip registering the marshallers if the MapSession class is not available
       try {
          new MapSession();
@@ -189,7 +192,7 @@ public class SpringRemoteCacheManager implements org.springframework.cache.Cache
       sessionSci.register(ctx);
 
       BaseMarshaller sessionAttributeMarshaller =
-            new MapSessionProtoAdapter.SessionAttributeRawMarshaller(serializationMarshaller);
+            new MapSessionProtoAdapter.SessionAttributeRawMarshaller(sessionFallbackMarshaller);
       ctx.registerMarshaller(sessionAttributeMarshaller);
    }
 }
