@@ -1,10 +1,12 @@
 package org.infinispan.commons.util;
 
-import static org.infinispan.commons.test.CommonsTestingUtil.tmpDirectory;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.infinispan.testing.Testing.tmpDirectory;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -88,6 +90,100 @@ public class FileSystemLockTest {
       assertTrue(lock.isAcquired());
 
       lock.unsafeLock();
+   }
+
+   @Test
+   public void testLockNameWithSlashes() throws Exception {
+      String path = tmpDirectory(directoryName());
+
+      // Lock name with slashes, like a cache name "test/cache/with/slashes"
+      FileSystemLock lock = new FileSystemLock(Paths.get(path), "test/cache/with/slashes");
+
+      // Should successfully acquire lock despite slashes in the name
+      assertTrue(lock.tryLock());
+      assertTrue(lock.isAcquired());
+
+      // Should be able to check if locked
+      assertFalse(lock.tryLock());
+
+      // Verify no subdirectories were created.
+      // The lock file should be directly in the base directory
+      File lockDir = new File(path);
+      File[] files = lockDir.listFiles();
+      assertNotNull(files);
+      assertEquals(1, files.length, "Should have exactly one file in lock directory, not nested subdirectories");
+      assertTrue(files[0].isFile(), "Should be a file, not a directory");
+      assertTrue(files[0].getName().endsWith(".lck"), "Should be a .lck file");
+
+      // Should be able to unlock
+      lock.unlock();
+      assertFalse(lock.isAcquired());
+
+      // Should be able to lock again after unlock
+      assertTrue(lock.tryLock());
+      lock.unlock();
+   }
+
+   @Test
+   public void testLockNameWithOtherProblematicChars() throws Exception {
+      String path = tmpDirectory(directoryName());
+
+      // Lock name with various problematic characters
+      FileSystemLock lock = new FileSystemLock(Paths.get(path), "lock:with\\various<problem>chars");
+
+      assertTrue(lock.tryLock());
+      assertTrue(lock.isAcquired());
+
+      lock.unlock();
+      assertFalse(lock.isAcquired());
+   }
+
+   @Test
+   public void testLockNameWithPathTraversal() throws Exception {
+      String path = tmpDirectory(directoryName());
+
+      // Lock name attempting path traversal
+      FileSystemLock lock = new FileSystemLock(Paths.get(path), "../../escape/attempt");
+
+      // Should successfully acquire lock
+      assertTrue(lock.tryLock());
+      assertTrue(lock.isAcquired());
+
+      // Verify the lock file stays within the base directory (no path traversal)
+      File lockDir = new File(path);
+      File[] files = lockDir.listFiles();
+      assertNotNull(files);
+      assertEquals(1, files.length, "Lock file should stay in base directory");
+      assertTrue(files[0].isFile());
+
+      // Verify no files were created outside the base directory
+      File parentDir = lockDir.getParentFile();
+      assertFalse(new File(parentDir, "escape").exists(), "Path traversal should be prevented");
+
+      lock.unlock();
+      assertFalse(lock.isAcquired());
+   }
+
+   @Test
+   public void testLockCollisionAvoidance() throws Exception {
+      String path = tmpDirectory(directoryName());
+
+      // Two different lock names that might collide if naively escaped
+      FileSystemLock lock1 = new FileSystemLock(Paths.get(path), "cache/name");
+      FileSystemLock lock2 = new FileSystemLock(Paths.get(path), "cache:name");
+
+      // Both should be able to lock independently
+      assertTrue(lock1.tryLock());
+      assertTrue(lock2.tryLock());
+
+      assertTrue(lock1.isAcquired());
+      assertTrue(lock2.isAcquired());
+
+      lock1.unlock();
+      lock2.unlock();
+
+      assertFalse(lock1.isAcquired());
+      assertFalse(lock2.isAcquired());
    }
 
    private static String directoryName() {
