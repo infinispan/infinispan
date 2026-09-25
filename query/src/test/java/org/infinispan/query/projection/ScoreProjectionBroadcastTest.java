@@ -9,7 +9,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.model.Item;
+import org.infinispan.protostream.sampledomain.Item;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -38,13 +38,13 @@ public class ScoreProjectionBroadcastTest extends MultipleCacheManagersTest {
       Query<Object[]> query;
       List<Object[]> hits;
 
-      query = cache.query("select i, score(i) from org.infinispan.query.model.Item i where i.byteVector <-> [7,6,7]~7");
+      query = cache.query("select i, score(i) from org.infinispan.protostream.sampledomain.Item i where i.byteVector <-> [7,6,7]~7");
       query.maxResults(3);
       hits = query.list();
       assertThat(hits).extracting(objects -> objects[0]).extracting("code").containsExactly("c7", "c6", "c8");
       assertThat(hits).extracting(objects -> objects[1]).hasOnlyElementsOfType(Float.class).isNotNull().allMatch(o -> !o.equals(Float.NaN));
 
-      query = cache.query("select i, score(i) from org.infinispan.query.model.Item i where i.byteVector <-> [7,6,7]~3 order by i.ordinal");
+      query = cache.query("select i, score(i) from org.infinispan.protostream.sampledomain.Item i where i.byteVector <-> [7,6,7]~3 order by i.ordinal");
       query.maxResults(3);
       hits = query.list();
       assertThat(hits).extracting(objects -> objects[0]).extracting("code").containsExactly("c5", "c6", "c7");

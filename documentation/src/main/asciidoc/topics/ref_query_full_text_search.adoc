@@ -10,7 +10,7 @@ For instance
 
 [source,sql,tile="Fuzzy Queries in Ickle"]
 ----
-FROM sample_bank_account.Transaction WHERE description : 'cofee'~2
+FROM sample_domain.Transaction WHERE description : 'cofee'~2
 ----
 
 == Range queries
@@ -19,7 +19,7 @@ To execute a range query define the given boundaries within a pair of braces, as
 
 [source,sql,tile="Range queries with Ickle"]
 ----
-FROM sample_bank_account.Transaction WHERE amount : [20 to 50]
+FROM sample_domain.Transaction WHERE amount : [20 to 50]
 ----
 
 == Phrase queries
@@ -28,7 +28,7 @@ A group of words can be searched by surrounding them in quotation marks, as seen
 
 [source,sql,tile="Phrase queries with Ickle"]
 ----
-FROM sample_bank_account.Transaction WHERE description : 'bus fare'
+FROM sample_domain.Transaction WHERE description : 'bus fare'
 ----
 
 == Proximity queries
@@ -38,7 +38,7 @@ For instance, the following example will find the words canceling and fee provid
 
 [source,sql,tile="Proximity queries with Ickle"]
 ----
-FROM sample_bank_account.Transaction WHERE description : 'canceling fee'~3
+FROM sample_domain.Transaction WHERE description : 'canceling fee'~3
 ----
 
 == Wildcard queries
@@ -47,14 +47,14 @@ To search for "text" or "test", use the `?` single-character wildcard search:
 
 [source,sql,tile="Single-character wildcard queries with Ickle"]
 ----
-FROM sample_bank_account.Transaction where description : 'te?t'
+FROM sample_domain.Transaction where description : 'te?t'
 ----
 
 To search for "test", "tests", or "tester", use the `*` multi-character wildcard search:
 
 [source,sql,tile="Multi-character wildcard queries with Ickle"]
 ----
-FROM sample_bank_account.Transaction where description : 'test*'
+FROM sample_domain.Transaction where description : 'test*'
 ----
 
 == Regular expression queries

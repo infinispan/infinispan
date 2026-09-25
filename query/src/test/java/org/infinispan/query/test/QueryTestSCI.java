@@ -2,13 +2,13 @@ package org.infinispan.query.test;
 
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.ProtoSchema;
+import org.infinispan.protostream.sampledomain.Car;
 import org.infinispan.query.api.AnotherTestEntity;
 import org.infinispan.query.api.NotIndexedType;
 import org.infinispan.query.api.TestEntity;
 import org.infinispan.query.distributed.NonSerializableKeyType;
 import org.infinispan.query.indexedembedded.City;
 import org.infinispan.query.indexedembedded.Country;
-import org.infinispan.query.queries.faceting.Car;
 
 @ProtoSchema(
       dependsOn = org.infinispan.test.TestDataSCI.class,

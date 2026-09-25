@@ -13,14 +13,12 @@ import java.util.Collections;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.ProtobufUtil;
-import org.infinispan.query.dsl.embedded.testdomain.Address;
-import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
+import org.infinispan.protostream.sampledomain.bank.Address;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -85,13 +83,13 @@ public class ClientProtoStreamMarshallerTest extends SingleCacheManagerTest {
    }
 
    private User createUser() {
-      User user = new UserPB();
+      User user = new User();
       user.setId(1);
       user.setName("Tom");
       user.setSurname("Cat");
       user.setGender(User.Gender.MALE);
       user.setAccountIds(Collections.singleton(12));
-      Address address = new AddressPB();
+      Address address = new Address();
       address.setStreet("Dark Alley");
       address.setPostCode("1234");
       user.setAddresses(Collections.singletonList(address));

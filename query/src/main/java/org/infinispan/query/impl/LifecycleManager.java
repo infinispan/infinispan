@@ -49,7 +49,6 @@ import org.infinispan.lifecycle.ModuleLifecycle;
 import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
 import org.infinispan.metrics.impl.CacheMetricsRegistration;
 import org.infinispan.query.Indexer;
-import org.infinispan.query.Search;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.backend.KeyTransformationHandler;
 import org.infinispan.query.backend.QueryInterceptor;
@@ -57,6 +56,7 @@ import org.infinispan.query.backend.TxQueryInterceptor;
 import org.infinispan.query.core.QueryProducerImpl;
 import org.infinispan.query.core.impl.QueryCache;
 import org.infinispan.query.core.stats.IndexStatistics;
+import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.query.core.stats.impl.IndexStatisticsSnapshotImpl;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.core.stats.impl.PersistenceContextInitializerImpl;
@@ -231,7 +231,7 @@ public class LifecycleManager implements ModuleLifecycle {
 
       AdvancedCache<?, ?> cache = cr.getComponent(Cache.class).getAdvancedCache();
       Indexer massIndexer = ComponentRegistryUtils.getIndexer(cache);
-      InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(Search.getSearchStatistics(cache), SecurityActions.getCacheComponentRegistry(cache).getComponent(Authorizer.class));
+      InfinispanQueryStatisticsInfo stats = new InfinispanQueryStatisticsInfo(SearchStatistics.of(cache), SecurityActions.getCacheComponentRegistry(cache).getComponent(Authorizer.class));
       cr.registerComponent(stats, InfinispanQueryStatisticsInfo.class);
 
       registerQueryMBeans(cr, massIndexer, stats);
