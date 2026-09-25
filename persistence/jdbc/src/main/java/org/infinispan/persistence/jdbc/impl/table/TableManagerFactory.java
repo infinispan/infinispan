@@ -41,18 +41,21 @@ public class TableManagerFactory {
          case MARIA_DB:
          case MYSQL:
             return new MyTableOperations(ctx, connectionFactory, config, metaData, cacheName);
-         case ORACLE:
-            return new OracleTableManager(ctx, connectionFactory, config, metaData, cacheName);
-         case POSTGRES:
-            return new PostgresTableManager(ctx, connectionFactory, config, metaData, cacheName);
+          case ORACLE:
+          case ORACLE_XE:
+             return new OracleTableManager(ctx, connectionFactory, config, metaData, cacheName);
+          case COCKROACHDB:
+          case POSTGRES:
+             return new PostgresTableManager(ctx, connectionFactory, config, metaData, cacheName);
          case SQLITE:
             return new SQLiteTableManager(ctx, connectionFactory, config, metaData, cacheName);
          case SYBASE:
             return new SybaseTableManager(ctx, connectionFactory, config, metaData, cacheName);
-         case SQL_SERVER:
-            return new SqlServerTableManager(ctx, connectionFactory, config, metaData, cacheName);
-         default:
-            return new GenericTableManager(ctx, connectionFactory, config, metaData, cacheName);
+          case SQL_SERVER:
+             return new SqlServerTableManager(ctx, connectionFactory, config, metaData, cacheName);
+          case SQL2003:
+          default:
+             return new GenericTableManager(ctx, connectionFactory, config, metaData, cacheName);
       }
    }
 
