@@ -1,0 +1,217 @@
+[id='runbook-jgrp-001-multicast-not-working_{context}']
+= JGRP-001: Multicast discovery not working after OS upgrade
+
+== Summary
+{brandname} nodes fail to discover each other using JGroups UDP multicast after an operating system upgrade, most commonly observed when upgrading from Ubuntu 20.04 (Focal) to Ubuntu 24.04 (Noble).
+The same cluster configuration that previously worked produces split-brain views where each node sees only itself.
+
+== Symptoms
+* Each node logs `ISPN000094` showing a single-member view instead of the full cluster membership.
+* `JGRP000032` warnings indicating that messages from other nodes are being discarded because the sender is not part of the current view.
+* `ISPN000451` messages indicating that a node received a topology update with unexpected members.
+* `ISPN000476` warnings about suspected cluster members.
+* `MERGE3` merge events occur frequently but fail to produce a stable merged view.
+
+== Diagnosis
+
+.Procedure
+. Verify that the network interface is configured to accept multicast traffic.
++
+[source,bash,options="nowrap"]
+----
+ip maddr show
+----
++
+Look for the multicast group address that your JGroups stack uses (the default is `228.6.7.8`).
+If the group address does not appear, the interface has not joined the multicast group.
+
+. Verify that a route exists for multicast traffic.
++
+[source,bash,options="nowrap"]
+----
+ip route show table all | grep multicast
+----
++
+If no multicast route exists, the operating system does not know which interface to use for multicast traffic.
+Add a route:
++
+[source,bash,options="nowrap"]
+----
+ip route add 224.0.0.0/4 dev <interface>
+----
+
+. Check if the kernel `rp_filter` (reverse path filtering) setting is blocking multicast packets.
++
+[source,bash,options="nowrap"]
+----
+sysctl net.ipv4.conf.all.rp_filter
+sysctl net.ipv4.conf.<interface>.rp_filter
+----
++
+A value of `1` (strict mode) can drop multicast packets because they arrive on an interface that is not the expected reverse path.
+Ubuntu 24.04 may enable strict mode by default.
+A value of `0` (disabled) or `2` (loose mode) allows multicast packets to pass.
+
+. Check if the firewall is blocking multicast.
+Ubuntu 24.04 uses `nftables` by default instead of `iptables`.
++
+[source,bash,options="nowrap"]
+----
+nft list ruleset | grep -i drop
+----
++
+Also check if `ufw` has rules that block UDP multicast:
++
+[source,bash,options="nowrap"]
+----
+ufw status verbose
+----
+
+. Use the JGroups `McastReceiverTest` and `McastSenderTest` utilities to verify that multicast traffic flows between nodes.
+On the receiving node:
++
+[source,bash,options="nowrap"]
+----
+java -cp jgroups.jar org.jgroups.tests.McastReceiverTest -mcast_addr 228.6.7.8 -port 46655
+----
++
+On the sending node:
++
+[source,bash,options="nowrap"]
+----
+java -cp jgroups.jar org.jgroups.tests.McastSenderTest -mcast_addr 228.6.7.8 -port 46655
+----
++
+If the receiver does not see messages from the sender, the problem is at the OS or network level, not in {brandname}.
+
+. Check if IGMP snooping on the network switch is filtering multicast.
+This is a network infrastructure setting; consult your network administrator.
+IGMP snooping can cause multicast traffic to be dropped if the switch does not see IGMP join messages from all nodes.
+
+== Root cause
+Ubuntu 24.04 introduces several networking changes that can affect multicast:
+
+* *Netplan and systemd-networkd defaults*: The default network manager may not preserve multicast routes across reboots or interface restarts.
+The multicast route (`224.0.0.0/4`) that was previously added automatically may no longer be present.
+* *`rp_filter` strict mode*: The default `rp_filter` value may change to `1` (strict), which causes the kernel to drop multicast packets that arrive on an interface that is not the expected reverse path for the source address.
+* *nftables replacing iptables*: Firewall rules migrated from `iptables` to `nftables` may not include explicit multicast allow rules, or default `nftables` policies may drop multicast traffic.
+* *systemd-networkd multicast group management*: A known `systemd-networkd` issue can cause multicast group memberships to be lost after a network carrier loss/gain cycle. Restarting `systemd-networkd` can also drop multicast memberships.
+
+== Resolution
+
+=== Workaround: Persistent multicast route and rp_filter
+
+.Procedure
+. Set `rp_filter` to loose mode.
+Create or edit `/etc/sysctl.d/99-multicast.conf`:
++
+[source,options="nowrap"]
+----
+net.ipv4.conf.all.rp_filter = 2
+net.ipv4.conf.default.rp_filter = 2
+----
++
+Apply the changes:
++
+[source,bash,options="nowrap"]
+----
+sysctl --system
+----
+
+. Add a persistent multicast route.
+In your Netplan configuration file (for example `/etc/netplan/01-netcfg.yaml`), add a route for multicast traffic:
++
+[source,yaml,options="nowrap"]
+----
+network:
+  version: 2
+  ethernets:
+    eth0:
+      routes:
+        - to: 224.0.0.0/4
+          scope: link
+----
++
+Apply the configuration:
++
+[source,bash,options="nowrap"]
+----
+netplan apply
+----
+
+. If you are using `ufw`, allow UDP multicast traffic:
++
+[source,bash,options="nowrap"]
+----
+ufw allow proto udp from any to 224.0.0.0/4
+ufw allow proto udp from any to any port 46655
+ufw allow proto udp from any to any port 7800
+----
+
+=== Permanent fix: Switch to TCP-based discovery
+
+If your environment does not require multicast, or if multicast continues to be unreliable, switch to a TCP-based JGroups stack.
+
+.Procedure
+. Use one of the TCP-based discovery protocols:
+* `TCPPING` for small, static clusters where member addresses are known in advance.
+* `JDBC_PING` for clusters where nodes can share a database.
+* `DNS_PING` for container or cloud environments with DNS-based service discovery.
+
+. Replace the UDP transport and PING discovery protocol in your JGroups stack XML.
++
+For example, to switch to TCP with TCPPING:
++
+[source,xml,options="nowrap"]
+----
+<TCP bind_addr="match-interface:eth0"
+     bind_port="7800" />
+<TCPPING initial_hosts="host1[7800],host2[7800],host3[7800]"
+         port_range="0" />
+<MERGE3 min_interval="10000"
+        max_interval="30000" />
+<FD_SOCK />
+<FD_ALL timeout="30000"
+        interval="5000" />
+<VERIFY_SUSPECT timeout="1500" />
+<pbcast.NAKACK2 use_mcast_xmit="false" />
+<UNICAST3 />
+<pbcast.STABLE />
+<pbcast.GMS join_timeout="3000"
+            print_local_addr="true" />
+<MFC />
+<FRAG3 />
+----
+
+[NOTE]
+====
+When using `TCPPING`, you must set `use_mcast_xmit="false"` in `NAKACK2` because TCP does not support multicast.
+====
+
+== Verification
+
+.Procedure
+. Start the {brandname} nodes and verify that they form a single cluster view.
+Check the server logs for `ISPN000094` showing all expected members.
+
+. Use the {brandname} CLI to check the cluster health:
++
+[source,bash,options="nowrap"]
+----
+bin/cli.sh -c https://localhost:11222 --trustall
+----
++
+[source,options="nowrap"]
+----
+describe //containers/default
+----
++
+Confirm that the `Cluster members` list shows all nodes.
+
+. If you applied the multicast workaround, reboot the node and verify that multicast still works after restart by repeating the `McastReceiverTest`/`McastSenderTest` validation.
+
+== Related
+* link:#cluster-discovery-protocols_{context}[Cluster discovery protocols]
+* link:#discovery-tcpping_{context}[TCPPING discovery]
+* link:{jgroups_docs}#TCPPING_Prot[JGroups TCPPING reference]
+* link:{jgroups_docs}#_transport_protocols[JGroups transport protocols]

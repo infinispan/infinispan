@@ -1,0 +1,203 @@
+[id='runbook-hotrod-001-client-intelligence-routing_{context}']
+= HOTROD-001: Hot Rod client cannot connect due to topology-aware routing
+
+== Summary
+Hot Rod clients fail to connect or receive errors when the network path between the client and {brandname} involves NAT, proxies, load balancers, containers, or any topology where the internal addresses of {brandname} nodes are not directly reachable from the client.
+This is one of the most common issues reported with Hot Rod deployments in containerized or cloud environments.
+
+== Symptoms
+Depending on the network topology and the intermediary involved, you may observe one or more of the following:
+
+* *Invalid magic number*: The client logs `ISPN004003: Invalid magic number. Expected 0xa1 and received 0x48`.
+The byte `0x48` is the ASCII code for the letter `H`, which indicates the client is receiving an HTTP response instead of a Hot Rod binary response.
+This typically happens when a reverse proxy or load balancer intercepts the connection and responds with HTTP.
+* *Connection timeouts*: The client connects successfully to the initial node but then times out when attempting to connect to other nodes in the cluster.
+This happens because the server sends its internal IP addresses (for example `172.17.0.2` in Docker or a pod IP in Kubernetes) which are not reachable from the client network.
+* *Unresolvable addresses*: The client logs `UnknownHostException` or similar DNS resolution failures for internal hostnames that the server sends in topology updates.
+* *Too many redirects*: The client logs `java.net.ProtocolException: Too many follow-up requests: 21` when connecting through an HTTP-mode proxy.
+* *Outdated topology warnings*: The server logs messages such as `Client keeps providing outdated topology` even after connectivity is established, indicating the client is not processing topology updates correctly.
+* *Interface mismatch*: The server logs `No interface address matching` errors when it tries to match the client connection to an internal address and the node binds to `0.0.0.0`.
+
+== Diagnosis
+
+.Procedure
+. Determine the client intelligence setting.
+If no explicit setting exists, the default is `HASH_DISTRIBUTION_AWARE`, which causes the server to send internal cluster addresses to the client.
++
+Check the client configuration for one of:
++
+[source,java,options="nowrap"]
+----
+builder.clientIntelligence(ClientIntelligence.BASIC);
+----
++
+[source,options="nowrap"]
+----
+infinispan.client.hotrod.client_intelligence=BASIC
+----
++
+If neither is set, the client uses `HASH_DISTRIBUTION_AWARE`.
+
+. Identify the network topology.
+Determine whether any of the following exist between the client and {brandname}:
++
+* NAT gateway or port forwarding
+* Reverse proxy or load balancer (HAProxy, NGINX, Envoy)
+* Docker port mapping (`-p 11222:11222`)
+* Kubernetes Service or Ingress/Route
+* Cloud load balancer (AWS NLB/ALB, GCP LB)
++
+If any of these exist, the internal addresses that {brandname} sends in topology updates are likely not reachable from the client.
+
+. Check what addresses the server advertises.
+Connect to the {brandname} REST API to inspect the cluster topology:
++
+[source,bash,options="nowrap"]
+----
+curl --digest -u user:password https://localhost:11222/rest/v2/cluster?action=distribution
+----
++
+Compare the addresses in the response with what the client can actually resolve and connect to.
+
+. If you see the `0x48` magic number error, verify that the client is connecting to the Hot Rod endpoint and not to an HTTP endpoint.
+Hot Rod and REST share port `11222` by default, and the protocol is auto-detected.
+However, if a reverse proxy in HTTP mode sits in front of {brandname}, it rewrites the binary Hot Rod traffic as HTTP.
+
+== Root cause
+The Hot Rod protocol is topology-aware by design.
+When a client connects with `TOPOLOGY_AWARE` or `HASH_DISTRIBUTION_AWARE` intelligence (the default), {brandname} sends the internal cluster topology to the client.
+The client then attempts to open direct connections to every node using these addresses.
+
+This works when the client and server are on the same network.
+It breaks when they are not, because:
+
+* *Docker / Podman*: {brandname} advertises container-internal IPs (for example `172.17.0.2`) that are not routable from the host or from external networks.
+* *Kubernetes / OpenShift*: {brandname} advertises pod IPs that are only reachable from within the cluster network.
+External clients (outside the cluster) cannot reach these addresses.
+* *NAT / port forwarding*: The server knows only its private IP.
+The public IP or hostname that the client used to connect is not part of the topology.
+* *Reverse proxies*: If the proxy operates in HTTP mode (layer 7), it terminates the TCP connection and responds with HTTP, which the Hot Rod client cannot parse.
+Even in TCP mode (layer 4), the proxy address does not match the internal addresses the server sends, causing the client to bypass the proxy for subsequent connections.
+* *Binding to 0.0.0.0*: When {brandname} binds to all interfaces, topology updates may include addresses from multiple network interfaces, some of which may not be reachable from the client.
+
+== Resolution
+
+=== Option 1: Set client intelligence to BASIC
+
+The simplest solution when the client does not need topology-aware routing.
+The client uses only the addresses you explicitly configure and does not attempt to connect to server-advertised addresses.
+
+.Procedure
+. Configure the client to use `BASIC` intelligence:
++
+.ConfigurationBuilder
+[source,java,options="nowrap"]
+----
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder.addServer().host("proxy-or-lb-host").port(11222);
+builder.clientIntelligence(ClientIntelligence.BASIC);
+----
++
+.hotrod-client.properties
+[source,options="nowrap"]
+----
+infinispan.client.hotrod.client_intelligence=BASIC
+infinispan.client.hotrod.server_list=proxy-or-lb-host:11222
+----
+
+. Configure `serverFailureTimeout` to enable reconnection attempts.
+With `BASIC` intelligence, the client does not receive topology updates, so it cannot automatically recover when a server is marked as failed.
+Set the timeout to a value appropriate for your environment:
++
+[source,java,options="nowrap"]
+----
+builder.connectionPool().serverFailureTimeout(30000);
+----
+
+[NOTE]
+====
+`BASIC` intelligence disables smart routing.
+All requests go through the configured server addresses (or the proxy/load balancer), which then routes them to the appropriate node.
+This adds an extra network hop for requests that would have gone directly to the owning node with `HASH_DISTRIBUTION_AWARE` intelligence.
+====
+
+=== Option 2: Configure external addresses on the server
+
+If you want to preserve topology-aware routing, configure {brandname} to advertise externally reachable addresses instead of internal ones.
+
+.Procedure
+. Set `external-host` and `external-port` on the Hot Rod connector so that {brandname} advertises the external address in topology updates:
++
+[source,xml,options="nowrap"]
+----
+<hotrod-connector external-host="public-hostname.example.com"
+                  external-port="11222">
+  <topology-state-transfer await-initial-retrieval="true" />
+</hotrod-connector>
+----
++
+Each node must be individually reachable at its configured external address.
+This approach works well when each node has a stable public hostname or IP, for example with DNS-based load balancing or when each node has a dedicated port mapping.
+
+[NOTE]
+====
+This approach does not work when multiple nodes share a single external address (for example behind a single load balancer VIP), because the client would try to connect to the same address for all nodes.
+====
+
+=== Option 3: Run the client inside the same network
+
+If the client application can run inside the same network as {brandname} (for example as a pod in the same Kubernetes cluster or a container in the same Docker network), the internal addresses are directly reachable and the default `HASH_DISTRIBUTION_AWARE` intelligence works without any changes.
+
+.Procedure
+. Deploy the client application in the same network as {brandname}.
+. Use the internal service name or container hostname to connect.
++
+In Kubernetes:
++
+[source,options="nowrap"]
+----
+infinispan.client.hotrod.server_list=infinispan.my-namespace.svc.cluster.local:11222
+----
+
+=== Option 4: Bind the server to a specific interface
+
+If {brandname} binds to `0.0.0.0` (all interfaces), topology updates may include addresses from interfaces that are not reachable by the client.
+
+.Procedure
+. Configure {brandname} to bind to a specific interface:
++
+[source,xml,options="nowrap"]
+----
+<interfaces>
+  <interface name="public">
+    <inet-address value="${infinispan.bind.address:192.168.1.100}" />
+  </interface>
+</interfaces>
+----
++
+Or start the server with:
++
+[source,bash,options="nowrap"]
+----
+bin/server.sh -b 192.168.1.100
+----
+
+== Verification
+
+.Procedure
+. After applying the fix, start the client and verify that it connects without errors.
+. Check the client logs for successful topology updates (if not using `BASIC` intelligence) or stable connections (if using `BASIC`).
+. Perform a simple cache operation to verify end-to-end connectivity:
++
+[source,java,options="nowrap"]
+----
+RemoteCache<String, String> cache = remoteCacheManager.getCache("default");
+cache.put("test-key", "test-value");
+assert "test-value".equals(cache.get("test-key"));
+----
+
+. If using `BASIC` intelligence with a load balancer, verify that requests are distributed across nodes by checking the access logs or metrics on each {brandname} node.
+
+== Related
+* link:#hotrod-client-intelligence_{context}[Client Intelligence]
+* link:{jgroups_docs}#_transport_protocols[JGroups transport protocols]
