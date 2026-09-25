@@ -5,7 +5,7 @@ To use the API, call the cache `.query()` method and provide the query string.
 
 For instance:
 
-[source,java,tile="Using Ickle"]
+[source,java,title="Using Ickle"]
 ----
 // Remote Query using protobuf
 Query<Transaction> q = remoteCache.query("from sample_bank_account.Transaction where amount > 20");
@@ -85,7 +85,7 @@ created by supplying an object produced by the `org.infinispan.query.dsl.Express
 the operator instead of the usual constant value. Once the parameters have been defined they can be set by invoking either
 `Query.setParameter(parameterName, value)` or `Query.setParameters(parameterMap)` as shown in the examples below.
 ⁠
-[source,java,tile="Using Named Parameters"]
+[source,java,title="Using Named Parameters"]
 ----
 // Defining a query to search for various authors and publication years
 Query<Book> query = cache.query("SELECT title FROM org.infinispan.sample.Book WHERE author = :authorName AND publicationYear = :publicationYear").build();

@@ -265,6 +265,16 @@
                       <artifactId>asciidoctorj-diagram-plantuml</artifactId>
                       <version>${version.asciidoctorj.diagram.plantuml}</version>
                     </dependency>
+                   <dependency>
+                      <groupId>org.asciidoctor</groupId>
+                      <artifactId>asciidoctorj-diagram-jsyntrax</artifactId>
+                      <version>${version.asciidoctorj.jsyntrax}</version>
+                   </dependency>
+                   <dependency>
+                      <groupId>org.atp-fivt</groupId>
+                      <artifactId>jsyntrax</artifactId>
+                      <version>1.39</version>
+                   </dependency>
                 </dependencies>
                 <executions>
                     <execution>
