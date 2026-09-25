@@ -12,7 +12,7 @@
 |Microsoft Windows
 |`%APPDATA%/Sun/Java/{brandshortname}`
 
-|Mac OS
+|macOS
 |`$HOME/Library/Java/{brandshortname}`
 |===
 

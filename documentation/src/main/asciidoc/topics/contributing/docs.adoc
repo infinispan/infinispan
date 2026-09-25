@@ -67,7 +67,7 @@ Underline (`[.underline]#value#`)::
 
 * Always use `++{brandname}++` to refer to the product. Never abbreviate the product name to something like "ISPN".
 * Prefer active voice to passive voice.
-* Use the second or third person, but never the first. Prefer second person singular to address the user directly.
+* Use the second or third person, but never the first. Prefer second-person singular to address the user directly.
 * Always use the present tense. There are instances where future tense makes sense but do not mix tenses. Never use the past tense.
 * Use American English spelling conventions.
 * Avoid contractions. Use "do not" instead of "don't".
@@ -130,7 +130,7 @@ To create anchors for reusable content, use this format:
 Learn more about content reuse in the link:https://redhat-documentation.github.io/modular-docs/#reusing-modules[Modular Documentation Reference Guide].
 
 [[documentation_guidelines_xrefs]]
-== Cross References
+== Cross-References
 
 To reference a section within the same book, use `link:#`:
 

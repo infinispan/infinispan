@@ -21,7 +21,7 @@ However, with some careful planning and a good understanding of what you want to
 
 The most effective approach is to configure {brandname} to index only the fields that you need.
 Whether you store Plain Old Java Objects (POJOs) or use Protobuf schema, the more fields that you annotate, the longer it takes {brandname} to build the index.
-If you have a POJO with five fields but you only need to query two of those fields, do not configure {brandname} to index the three fields you do not need.
+If you have a POJO with five fields, but you only need to query two of those fields, do not configure {brandname} to index the three fields you do not need.
 
 {brandname} gives you several options to tune indexing operations.
 For instance {brandname} stores indexes differently to data, saving indexes to disk instead of memory.

@@ -1,11 +1,11 @@
 [id='hotrod_failover']
 = Client Failover
-Hot Rod clients can automatically failover when {brandname} cluster topologies
+Hot Rod clients can automatically fail over when {brandname} cluster topologies
 change. For instance, Hot Rod clients that are topology-aware can detect when
 one or more {brandname} servers fail.
 
 In addition to failover between clustered {brandname} servers, Hot Rod clients
-can failover between {brandname} clusters.
+can fail over between {brandname} clusters.
 
 For example, you have a {brandname} cluster running in New York (**NYC**) and
 another cluster running in London (**LON**). Clients sending requests to
@@ -19,6 +19,6 @@ Conditional operations, such as `putIfAbsent()`, `replace()`, `remove()`, have
 strict method return guarantees. Likewise, some operations can require previous
 values to be returned.
 
-Even though Hot Rod clients can failover, you should use transactional caches
+Even though Hot Rod clients can fail over, you should use transactional caches
 to ensure that operations do not partially complete and leave conflicting
 entries on different nodes.

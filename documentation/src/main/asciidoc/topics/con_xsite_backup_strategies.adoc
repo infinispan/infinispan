@@ -15,8 +15,8 @@ With the synchronous strategy, {brandname} waits for both write operations to co
 You can control how {brandname} handles writes to the local cluster's cache if backup operations fail.
 {brandname} can take the following actions:
 
-* Ignore the failed backup and silently continue the write to the local cache.
-* Log a warning or throw an exception and continue the write to the local cache.
+* Ignore the failed backup and silently continue the write operation to the local cache.
+* Log a warning or throw an exception and continue the write operation to the local cache.
 * Handle failed backup operations with custom logic.
 
 [WARNING]

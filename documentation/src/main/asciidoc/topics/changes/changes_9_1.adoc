@@ -15,12 +15,12 @@ Infinispan now contains a new implementation of both `AtomicMap` and `FineGraine
 
 There are no changes needed for `AtomicMap`, but it now supports non-transactional use case as well.
 
-`FineGrainedAtomicMap` now uses the Grouping API and therefore you need to enable groups in configuration. Also it holds entries as regular cache entries, plus one cache entry for cached key set (the map itself). Therefore the cache size or iteration/streaming results may differ. Note that fine grained atomic maps are still supported on transactional caches only.
+`FineGrainedAtomicMap` now uses the Grouping API, and therefore you need to enable groups in configuration. Also, it holds entries as regular cache entries, plus one cache entry for cached key set (the map itself). Therefore, the cache size or iteration/streaming results may differ. Note that fine-grained atomic maps are still supported on transactional caches only.
 
 === RemoteCache keySet/entrySet/values
 
 RemoteCache now implements all of the collection backed methods from `Map` interface.
-Previously `keySet` was implemented, however it was a deep copy. This has now changed
+Previously `keySet` was implemented, however it was a deep copy. This has now changed,
 and it is a backing set. That is that the set retrieves the updated values on each
 invocation or updates to the backing remote cache for writes. The `entrySet` and `values`
 methods are also now supported as backing variants as well.

@@ -211,7 +211,7 @@ Map<Object, String> map = (Map<Object, String>) cache.entrySet().stream()
 
 == Parallel Computation
 
-Distributed streams by default try to parallelize as much as possible.  It is possible for the end user to control this and
+Distributed streams by default try to parallelize as much as possible.  It is possible for the end user to control this, and
 actually they always have to control one of the options.  There are two ways these streams are parallelized.
 
 *Local to each node:*
@@ -243,7 +243,7 @@ methods on the `CacheStream`.
 == Operation timeout
 
 It is possible to set a timeout value for the operation requests. This timeout is used only for remote requests timing out, and
-it is on a per-request basis. The former means the local execution will not timeout, and the latter means if you have a failover
+it is on a per-request basis. The former means the local execution will not time out, and the latter means if you have a failover
 scenario, as described above, the subsequent requests each have a new timeout.  If no timeout is specified, it uses the
 replication timeout as a default timeout. You can set the timeout in your operation by doing the following:
 
@@ -253,9 +253,9 @@ CacheStream<Map.Entry<Object, String>> stream = cache.entrySet().stream();
 stream.timeout(1, TimeUnit.MINUTES);
 ----
 
-For more information about this, please check the java doc in
+For more information about this, please check the Javadoc in
 link:{javadocroot}/org/infinispan/CacheStream.html#timeout-long-java.util.concurrent.TimeUnit-[timeout]
-javadoc.
+Javadoc.
 
 == Injection
 
@@ -346,7 +346,7 @@ link:{javadocroot}/org/infinispan/CacheStream.html#spliterator--[spliterator]
 and link:{javadocroot}/org/infinispan/CacheStream.html#forEach-java.util.function.Consumer-[forEach]
 are unlike the other terminal operators in that the rehash awareness has to keep
 track of what keys per segment have been processed instead of only segments.  This is needed
-to guarantee an exactly once (iterator & spliterator) or at least once behavior (forEach)
+to guarantee an exactly-once (iterator & spliterator) or at least once behavior (forEach)
 even under cluster membership changes.
 
 The `iterator` and `spliterator` operators, when invoked on a remote node will return back batches
@@ -361,7 +361,7 @@ at least a batch worth of keys.  This way, the originating node can know what ke
 already to reduce chances of processing the same entry again.  Unfortunately, this means it is possible
 to have an at least once behavior when a node goes down unexpectedly.  In this case, that node could have
 been processing a batch and not yet completed one and those entries that were processed but not
-in a completed batch will be ran again when the rehash failure operation occurs.  Note that, adding a
+in a completed batch will be run again when the rehash failure operation occurs.  Note that, adding a
 node will not cause this issue as the rehash failover does not occur until all responses are received.
 
 These operations' batch sizes are both controlled by the same value which can be configured by invoking
@@ -492,7 +492,7 @@ public class WordCountExample {
 
 ----
 
-Unfortunately, the last step is only going to be ran in a single thread, which if there are a lot of
+Unfortunately, the last step is only going to be run in a single thread, which, if there are a lot of
 words, could be quite slow.  Maybe there is another way to parallelize this with Streams.
 
 As mentioned before, the processing is on the local node after collection, so you could actually use

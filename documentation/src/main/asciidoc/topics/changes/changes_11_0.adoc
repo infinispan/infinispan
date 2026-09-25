@@ -13,18 +13,18 @@ all the components are now in a single `org.infinispan` module.
 
 === Cross Site Replication
 
-* The `org.infinispan.xsite.CustomFailurePolicy` interface has been deprecated and it will be replaced by
+* The `org.infinispan.xsite.CustomFailurePolicy` interface has been deprecated, and it will be replaced by
 `org.infinispan.configuration.cache.CustomFailurePolicy`.
 
 * Cross Site Replication was disabled for local caches. They are unable to send or receive updates.
 
 === Total Order transaction protocol removed
 
-Total Order transaction protocol was deprecated in 10.0 and now it is removed.
+Total Order transaction protocol was deprecated in 10.0, and now it is removed.
 
 === JGroups configuration system property changes
 
-The default stacks now now use system property `jgroups.bind.address` to configure the bind address.
+The default stacks now use system property `jgroups.bind.address` to configure the bind address.
 System properties `jgroups.tcp.address` and `jgroups.udp.address` still work, but they are considered deprecated and will be removed.
 
 === OSGi
@@ -91,7 +91,7 @@ consistent.
 
 ==== Single File Store
 The `<file-store relative-to=""">` attribute has been removed. This attribute will be ignored in pre 11.0 schemas with
-only the `path` attribute being taking into account when configuring the stores location.
+only the `path` attribute being taking into account when configuring the stores' location.
 
 ==== ClusterLoader
 The `ClusterLoader` has been deprecated and will be removed in a future release with no direct replacement.

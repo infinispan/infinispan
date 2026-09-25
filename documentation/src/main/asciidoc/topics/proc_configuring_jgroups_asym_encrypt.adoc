@@ -26,7 +26,7 @@ When you start your {brandname} cluster, the following log message indicates tha
 ----
 
 {brandname} nodes can join the cluster only if they use `ASYM_ENCRYPT` and can obtain the secret key from the coordinator node.
-Otherwise the following message is written to {brandname} logs:
+Otherwise, the following message is written to {brandname} logs:
 
 [source,options="nowrap"]
 ----

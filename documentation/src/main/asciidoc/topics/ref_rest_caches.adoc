@@ -18,7 +18,7 @@ POST /rest/v2/caches/{cacheName}
 |Sets the https://en.wikipedia.org/wiki/Media_type[MediaType] for the
 {brandname} configuration payload; either `application/xml` or
 `application/json`.
-| `Flags` | OPTIONAL | Used to set https://https://infinispan.org.org/infinispan/10.0/apidocs/org/infinispan/commons/api/CacheContainerAdmin.AdminFlag.html[AdminFlags]
+| `Flags` | OPTIONAL | Used to set link:{javadocroot}/org/infinispan/commons/api/CacheContainerAdmin.AdminFlag.html[AdminFlags]
 |===
 
 include::ref_infinispan_caches.adoc[leveloffset=+1]
@@ -31,8 +31,8 @@ Make changes to attributes in cache configurations across {brandname} clusters w
 ====
 You can modify a cache only if the changes are compatible with the existing configuration.
 
-For example you cannot use a replicated cache configuration to modify a distributed cache.
-Likewise if you create a cache configuration with a specific attribute, you cannot modify the configuration to use a different attribute instead.
+For example, you cannot use a replicated cache configuration to modify a distributed cache.
+Likewise, if you create a cache configuration with a specific attribute, you cannot modify the configuration to use a different attribute instead.
 For example, attempting to modify cache configuration by specifying a value for the `max-count` attribute results in invalid configuration if the `max-size` is already set.
 ====
 
@@ -305,7 +305,7 @@ should use `PUT` requests. See link:#rest_v2_replace_entries[Replacing Entries].
 
 |`flags`
 |OPTIONAL
-|The flags used to add the entry. See https://infinispan.org/docs/stable/apidocs/org/infinispan/context/Flag.html[Flag] for more information.
+|The flags used to add the entry. See link:{javadocroot}/org/infinispan/context/Flag.html[Flag] for more information.
 
 |===
 
@@ -529,7 +529,7 @@ GET /rest/v2/caches/{cacheName}?action=entries
 |`content-negotiation`
 |OPTIONAL
 | If `true`, will convert keys and values to a readable format.
-For caches with text encodings (for example, text/plain, xml, json), the server returns keys and values as plain text.
+For caches with text encodings (for example, `text/plain`, `application/xml`, `application/json`), the server returns keys and values as plain text.
 For caches with binary encodings, the server will return the entries as JSON if the conversion is supported, otherwise in a text hexadecimal format, for example `0xA123CF98`.
 When content-negotiation is used, the response will contain two headers: `key-content-type` and `value-content-type` to described the negotiated format.
 |===
@@ -545,7 +545,7 @@ include::json/rest_caches_all_entries.json[]
 * `value` The value of the entry.
 * `timeToLiveSeconds` Based on the entry lifespan but in seconds, or `-1` if the entry never expires. This field is not returned unless you set metadata="true".
 * `maxIdleTimeSeconds` Maximum idle time, in seconds, or `-1` if entry never expires. This field is not returned unless you set metadata="true".
-* `created` Time the entry was created or or `-1` for immortal entries. This field is not returned unless you set metadata="true".
+* `created` Time the entry was created or `-1` for immortal entries. This field is not returned unless you set metadata="true".
 * `lastUsed` Last time an operation was performed on the entry or `-1` for immortal entries. This field is not returned unless you set metadata="true".
 * `expireTime` Time when the entry expires or `-1` for immortal entries. This field is not returned unless you set metadata="true".
 * `version` The metadata version related to the cache entry. Only if the value is present.

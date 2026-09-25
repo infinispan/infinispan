@@ -3,12 +3,12 @@
 = Cluster Executor
 
 Since you have a group of machines, it makes sense to leverage their combined
-computing power for executing code on all of them them.
+computing power for executing code on all of them.
 The Cache Manager comes with a nice utility that allows you to
 execute arbitrary code in the cluster. Note this feature requires no Cache to be used.  This
 link:{javadocroot}/org/infinispan/manager/ClusterExecutor.html[Cluster Executor]
 can be retrieved by calling +executor()+ on the `EmbeddedCacheManager`. This executor is retrievable
-in both clustered and non clustered configurations.
+in both clustered and non-clustered configurations.
 
 NOTE: The ClusterExecutor is specifically designed for executing code where the code is not reliant
 upon the data in a cache and is used instead as a way to help users execute code
@@ -17,7 +17,7 @@ in the cluster.
 This manager was built specifically around Java's streaming API, thus all methods take a functional
 interface as an argument. Also since these arguments will be sent to other nodes they need to be serializable.  A nice
 trick is used to ensure the lambdas are immediately Serializable.  That is by having the arguments implement both
-Serializable and the real argument type (ie. Runnable or Function).  The JRE will pick the most specific class when
+Serializable and the real argument type (i.e. Runnable or Function).  The JRE will pick the most specific class when
 determining which method to invoke, so in that case your lambdas will always be serializable.
 It is also possible to use link:{encoding_docs}#protostream_marshalling[ProtoStream marshalling] to reduce message size further.
 
@@ -27,7 +27,7 @@ by using the `filterTargets` methods as is explained in the section.
 
 == Filtering execution nodes
 
-It is possible to limit on which nodes the command will be ran. For example you may
+It is possible to limit on which nodes the command will be run. For example, you may
 want to only run a computation on machines in the same rack. Or you may want to perform an operation
 once in the local site and again on a different site. A cluster executor can limit what nodes it sends
 requests to at the scope of same or different machine, rack or site level.
@@ -68,7 +68,7 @@ method and supplying the desired duration.
 
 Cluster Executor can also run in single node submission mode instead of submitting the command
 to all nodes it will instead pick one of the nodes that would have normally received the command
-and instead submit it it to only one. Each submission will possibly use a different node to
+and instead submit it to only one. Each submission will possibly use a different node to
 execute the task on. This can be very useful to use the ClusterExecutor as a
 `java.util.concurrent.Executor` which you may have noticed that ClusterExecutor implements.
 

@@ -10,7 +10,7 @@ Configure Hot Rod Java clients with near caches to store recently used data loca
 [NOTE]
 ====
 {brandname} provides global near cache configuration properties.
-However, those properties are deprecated and you should not use them but configure near caching on a per-cache basis instead.
+However, those properties are deprecated, and you should not use them but configure near caching on a per-cache basis instead.
 ====
 +
 . Specify the maximum number of entries that the near cache can hold before eviction occurs with the `nearCacheMaxEntries()` method.

@@ -6,7 +6,7 @@
 
 A CIDR block is a compact representation of an IP address and its associated network mask.
 CIDR notation specifies an IP address, a slash ('/') character, and a decimal number.
-The decimal number is the count of leading 1 bits in the network mask.
+The decimal number is the count of leading "1 bits" in the network mask.
 The number can also be thought of as the width, in bits, of the network prefix.
 The IP address in CIDR notation is always represented according to the standards for IPv4 or IPv6.
 

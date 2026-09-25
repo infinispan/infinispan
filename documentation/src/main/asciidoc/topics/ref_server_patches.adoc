@@ -11,7 +11,7 @@ Server patches do not modify or replace any custom configuration or data.
 
 ifdef::downstream[]
 The {brandname} command line interface (CLI) includes a [command]`patch create` command that lets you create custom patches.
-However this command is intended for use only for Infinispan Server, or community, deployments.
+However, this command is intended for use only for {brandname} Server, or community, deployments.
 
 [IMPORTANT]
 ====

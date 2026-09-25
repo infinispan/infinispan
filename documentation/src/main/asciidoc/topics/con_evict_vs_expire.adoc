@@ -19,6 +19,6 @@ calls for expired entries return "null" values.
 
 * [*] You can configure eviction and expiration declaratively in `infinispan.xml` to apply cache-wide defaults for entries.
 
-* [*] You can explicitly define expiration settings for specific entries but you cannot define eviction on a per-entry basis.
+* [*] You can explicitly define expiration settings for specific entries, but you cannot define eviction on a per-entry basis.
 
 * [*] You can manually evict entries and manually trigger expiration.

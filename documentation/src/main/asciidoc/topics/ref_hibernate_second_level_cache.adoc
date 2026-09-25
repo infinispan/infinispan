@@ -4,7 +4,7 @@
 Applications running in environments where {brandname} is not the default cache provider for Hibernate ORM
 will need to depend on the correct cache provider version.
 
-With the divergence of Jakarta packages compared to Java EE, Hibernate ORM 6.x is the only version Infinispan supports
+With the divergence of Jakarta packages compared to Java EE, Hibernate ORM 6.x is the only version {brandname} supports
 using the `jakarta` namespace.
 Therefore, if you need to use `javax` namespace you will still need to utilize Hibernate ORM 5.3.
 
@@ -296,7 +296,7 @@ More information in the link:#configuration_properties[Configuration Properties]
 
 Assuming that query caching has been enabled for the persistence unit (see chapter introduction), the query cache is configured so that _queries are only cached locally_.
 Alternatively, you can configure query caching to use replication by selecting the `replicated-query` as query cache name.
-However, replication for query cache only makes sense if, and only if, all of this conditions are true:
+However, replication for query cache only makes sense if, and only if, all of these conditions are true:
 
 * Performing the query is quite expensive.
 * The same query is very likely to be repeatedly executed on different cluster nodes.

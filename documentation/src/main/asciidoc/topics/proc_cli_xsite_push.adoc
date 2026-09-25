@@ -19,7 +19,7 @@ site push-site-state --cache=<cache-name-here> --site=NYC
 [TIP]
 ====
 Replace `--cache=<cache-name-here>` with `--all-caches` option to push state transfer for all caches.
-Pushing the state has an high resource demand, so use this option with caution.
+Pushing the state has a high resource demand, so use this option with caution.
 ====
 
 For more information and examples, run the [command]`help site` command.

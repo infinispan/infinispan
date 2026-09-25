@@ -116,12 +116,12 @@ Previously a value &lt;= 0 would transfer the entire cache in a single batch, wh
 The default marshaller is no longer GenericJbossMarshaller. {brandname} now utilises the link:https://github.com/infinispan/protostream[ProtoStream]
 library as the default. If Java Serialization is required by clients, it is strongly recommended to utilise the
 link:link:{javadocroot}/org/infinispan/commons/marshall/JavaSerializationMarshaller[JavaSerializationMarshaller] instead.
-However if the GenericJbossMarshaller must be used, it is necessary to add the `org.infinispan:infinispan-jboss-marshalling`
+However, if the GenericJbossMarshaller must be used, it is necessary to add the `org.infinispan:infinispan-jboss-marshalling`
 artifact to your client's classpath and for the `GenericJbossMarshaller` to be configured as the marshaller.
 
 ==== The getBulk methods have been removed
 The getBulk method is an expensive method as it requires holding all keys in memory at once and requires a possibly very single result
-to populate it. The new retrieveEntries, entrySet, keySet and values methods handle this in a much more efficient way. Therefore the
+to populate it. The new retrieveEntries, entrySet, keySet and values methods handle this in a much more efficient way. Therefore, the
 getBulk methods have been removed in favor of them.
 
 === Persistence changes
@@ -164,13 +164,13 @@ Rename your own configurations to avoid the conflict.
 Because of changes in AWS's access policy regarding signatures, legacy S3_PING will not work in newer regions and will stop working in older regions too.
 For this reason, you should migrate to using aws.S3_PING instead.
 
-=== Cache and Cache Manager Listeners can now be configured to be non blocking
+=== Cache and Cache Manager Listeners can now be configured to be non-blocking
 Listeners in the past that were sync, always ran in the thread that caused the event. A Listener method can now be
 non-blocking in that it will still fire in the original thread, under the assumption that it will return immediately.
 Please read the Listener Javadoc for information and examples on this.
 
 === Distributed Streams operations no longer support null values
-Distributed Streams has parts rewritten to utilize non blocking reactive streams based operations. As such null values
+Distributed Streams has parts rewritten to utilize non-blocking reactive streams based operations. As such null values
 are not supported as values from operations as per the reactive streams spec. Please utilize other means to denote
 a null value.
 
@@ -193,7 +193,7 @@ When using multi-tenancy in the WildFly based server, it is necessary to specify
 
 === OffHeap Automatic Resizing
 Off Heap memory containers now will dynamically resize based on number of entries in the container. Due to this the
-address count configuration value  is now deprecated for APIs and has been removed from the xml parser.
+address count configuration value is now deprecated for APIs and has been removed from the XML parser.
 
 
 === Deprecated methods from DataContainer removed

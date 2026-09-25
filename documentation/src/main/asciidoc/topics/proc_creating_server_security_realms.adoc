@@ -62,7 +62,7 @@ To follow the example, create one security realm named `application-realm` and a
 +
 To follow the example, specify the `*.properties` files you created with the CLI using the `path` attribute on the `user-properties` and `group-properties` elements or fields.
 . If you add multiple different types of security realm to your configuration, include the `distributed-realm` element or field so that {brandname} Server uses the realms in combination with each other.
-. Configure {brandname} Server endpoints to use the security realm with the with the `security-realm` attribute.
+. Configure {brandname} Server endpoints to use the security realm with the `security-realm` attribute.
 . Save the changes to your configuration.
 
 [discrete]
