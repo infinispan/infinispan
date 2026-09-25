@@ -135,6 +135,11 @@
          <max-count-container name="max-count" count="4181"/>
          <max-size-container name="max-size" size="23MB"/>
       </eviction-containers>
+      <local-cache name="tracking-cache">
+         <statistics enabled="true">
+            <hot-keys enabled="true" top-k="250" />
+         </statistics>
+      </local-cache>
       <local-cache name="local" statistics="true" aliases="0 abc">
          <encoding>
             <key media-type="application/x-java-object"/>
