@@ -38,6 +38,17 @@ public class ClusterInfo {
       return new ClusterInfo(clusterName, servers, topologyAge, intelligence, sniHostName);
    }
 
+   /**
+    * Creates a new ClusterInfo with degraded intelligence level.
+    * Used when AUTO mode needs to degrade from HASH_DISTRIBUTION_AWARE to BASIC.
+    *
+    * @param degradedIntelligence the degraded intelligence level
+    * @return a new ClusterInfo with the degraded intelligence
+    */
+   public ClusterInfo withDegradedIntelligence(ClientIntelligence degradedIntelligence) {
+      return new ClusterInfo(clusterName, servers, topologyAge, degradedIntelligence, sniHostName);
+   }
+
    public String getName() {
       return clusterName;
    }
@@ -51,6 +62,15 @@ public class ClusterInfo {
    }
 
    public ClientIntelligence getIntelligence() {
+      return intelligence;
+   }
+
+   /**
+    * Returns the configured intelligence, which may be AUTO.
+    *
+    * @return the configured client intelligence
+    */
+   public ClientIntelligence getConfiguredIntelligence() {
       return intelligence;
    }
 
