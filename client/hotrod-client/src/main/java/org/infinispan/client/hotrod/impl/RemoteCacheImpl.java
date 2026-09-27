@@ -116,6 +116,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    protected ClientStatistics clientStatistics;
    protected ObjectName mbeanObjectName;
    protected Marshaller marshaller;
+   /**
+    * Timeout override in milliseconds, set through {@link #withTimeout(long, TimeUnit)}. {@code -1} means the
+    * operations fall back to the timeouts defined in the client configuration.
+    */
+   protected long timeout = -1;
 
    public RemoteCacheImpl(RemoteCacheManager rcm, String name, TimeService timeService,
                           Function<InternalRemoteCache<K,V>, CacheOperationsFactory> factoryFunction) {
@@ -173,6 +178,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       this.clientStatistics = other.clientStatistics;
       this.operationsFactory = other.operationsFactory.newFactoryFor(this);
       this.flagInt = flagInt;
+      this.timeout = other.timeout;
       this.clientListenerNotifier = other.clientListenerNotifier;
 
       // set the values for init
@@ -358,7 +364,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
 
    @Override
    public ServerStatistics serverStatistics() {
-      return dispatcher.await(serverStatisticsAsync());
+      return await(serverStatisticsAsync());
    }
 
    @Override
@@ -660,7 +666,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       // Must be registered before executing to ensure this is always ran on the event loop, thus guaranteeing
       // events cannot be received until after this has been processed
       // We must wait on the stage to ensure the listeners are indeed registered fully before returning
-      dispatcher.await(dispatcher.executeAddListener(op));
+      await(dispatcher.executeAddListener(op));
    }
 
    @Override
@@ -688,7 +694,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       dispatcher.executeOnSingleAddress(op, sa);
       // This is convoluted but to ensure the caller doesn't return until the listener is completely removed
       // we have to wait on the other stage
-      dispatcher.await(removalStage);
+      await(removalStage);
    }
 
    @Override
@@ -710,6 +716,25 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    @Override
    public InternalRemoteCache<K, V> noFlags() {
       return newInstance(0);
+   }
+
+   @Override
+   public InternalRemoteCache<K, V> withTimeout(long timeout, TimeUnit timeUnit) {
+      long timeoutMillis = Objects.requireNonNull(timeUnit, "TimeUnit must not be null").toMillis(timeout);
+      if (timeoutMillis <= 0) {
+         throw HOTROD.invalidOperationTimeout(timeoutMillis);
+      }
+      if (timeoutMillis == this.timeout) {
+         return this;
+      }
+      RemoteCacheImpl<K, V> instance = (RemoteCacheImpl<K, V>) this.<K, V>newInstance(flagInt);
+      instance.timeout = timeoutMillis;
+      return instance;
+   }
+
+   @Override
+   public long getTimeout() {
+      return timeout;
    }
 
    @Override
@@ -810,7 +835,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
          }
       }
       HotRodOperation<T> op = operationsFactory.executeOperation(taskName, marshalledParams, key);
-      return dispatcher.await(dispatcher.execute(op));
+      return await(dispatcher.execute(op));
    }
 
    @Override

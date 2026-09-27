@@ -62,4 +62,9 @@ public class IterationStartOperation extends AbstractCacheOperation<IterationSta
    public boolean supportRetry() {
       return false;
    }
+
+   @Override
+   public long timeout() {
+      return longRunningTimeout();
+   }
 }

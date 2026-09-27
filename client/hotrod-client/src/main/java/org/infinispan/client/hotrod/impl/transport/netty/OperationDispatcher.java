@@ -119,7 +119,10 @@ public class OperationDispatcher {
       this.timeService = timeService;
       this.clientListenerNotifier = clientListenerNotifier;
       this.maxRetries = configuration.maxRetries();
-      this.awaitTimeout = Math.max(TimeUnit.MINUTES.toMillis(2), configuration.socketTimeout());
+      // The blocking await must never expire before the operation itself times out, otherwise the caller would see a
+      // TimeoutException instead of the more informative SocketTimeoutException raised by the decoder.
+      this.awaitTimeout = Math.max(TimeUnit.MINUTES.toMillis(2),
+            Math.max(configuration.socketTimeout(), configuration.longRunningOperationTimeout()));
 
       this.connectionFailedServers = configuration.serverFailureTimeout() > 0 ?
             Collections.newSetFromMap(Caffeine.newBuilder()
@@ -1010,5 +1013,16 @@ public class OperationDispatcher {
 
    public <T> T await(CompletionStage<T> cs) {
       return Util.await(cs, awaitTimeout);
+   }
+
+   /**
+    * Same as {@link #await(CompletionStage)} but never waits for less than the given operation timeout, so that an
+    * operation with a timeout override still reports its own {@link java.net.SocketTimeoutException}.
+    *
+    * @param cs the stage to wait upon
+    * @param operationTimeout the timeout of the operation in milliseconds, a non positive value means no override
+    */
+   public <T> T await(CompletionStage<T> cs, long operationTimeout) {
+      return Util.await(cs, Math.max(awaitTimeout, operationTimeout));
    }
 }

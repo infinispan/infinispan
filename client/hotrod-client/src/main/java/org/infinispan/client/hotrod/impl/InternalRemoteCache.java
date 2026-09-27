@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.ObjectName;
 
@@ -59,6 +60,17 @@ public interface InternalRemoteCache<K, V> extends RemoteCache<K, V> {
 
    @Override
    InternalRemoteCache<K, V> noFlags();
+
+   @Override
+   InternalRemoteCache<K, V> withTimeout(long timeout, TimeUnit timeUnit);
+
+   /**
+    * The timeout, in milliseconds, explicitly requested through {@link #withTimeout(long, TimeUnit)}, or {@code -1}
+    * when the operations should use the timeout defaults from the client configuration.
+    *
+    * @return the timeout override in milliseconds, or {@code -1} if not set
+    */
+   long getTimeout();
 
    /**
     * Similar to {@link #flags()} except it returns the flags as an int instead of a set of enums

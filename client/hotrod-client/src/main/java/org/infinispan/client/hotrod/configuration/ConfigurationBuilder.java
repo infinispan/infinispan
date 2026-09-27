@@ -79,6 +79,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private ProtocolVersion protocolVersion = ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
    private final List<ServerConfigurationBuilder> servers = new ArrayList<>();
    private int socketTimeout = ConfigurationProperties.DEFAULT_SO_TIMEOUT;
+   private long longRunningOperationTimeout = ConfigurationProperties.DEFAULT_LONG_RUNNING_OPERATION_TIMEOUT;
    private final SecurityConfigurationBuilder security;
    private boolean tcpNoDelay = true;
    private boolean tcpKeepAlive = false;
@@ -297,6 +298,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    }
 
    @Override
+   public ConfigurationBuilder longRunningOperationTimeout(long timeout, TimeUnit timeUnit) {
+      this.longRunningOperationTimeout = timeUnit.toMillis(timeout);
+      return this;
+   }
+
+   @Override
    public ConfigurationBuilder tcpNoDelay(boolean tcpNoDelay) {
       this.tcpNoDelay = tcpNoDelay;
       return this;
@@ -438,6 +445,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (typed.containsKey(ConfigurationProperties.SO_TIMEOUT)) {
          this.socketTimeout((int) typed.getDurationProperty(ConfigurationProperties.SO_TIMEOUT, socketTimeout, true));
       }
+      if (typed.containsKey(ConfigurationProperties.LONG_RUNNING_OPERATION_TIMEOUT)) {
+         this.longRunningOperationTimeout(typed.getDurationProperty(ConfigurationProperties.LONG_RUNNING_OPERATION_TIMEOUT, longRunningOperationTimeout, true), TimeUnit.MILLISECONDS);
+      }
       if (typed.containsKey(ConfigurationProperties.TCP_NO_DELAY)) {
          this.tcpNoDelay(typed.getBooleanProperty(ConfigurationProperties.TCP_NO_DELAY, tcpNoDelay, true));
       }
@@ -538,6 +548,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (maxRetries < 0) {
          throw HOTROD.invalidMaxRetries(maxRetries);
       }
+      if (longRunningOperationTimeout <= 0) {
+         throw HOTROD.invalidLongRunningOperationTimeout(longRunningOperationTimeout);
+      }
       Set<String> clusterNameSet = new HashSet<>(clusters.size());
       for (ClusterConfigurationBuilder clusterConfigBuilder : clusters) {
          if (!clusterNameSet.add(clusterConfigBuilder.getClusterName())) {
@@ -584,7 +597,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
             forceReturnValues, buildMarshaller, buildMarshallerClass, protocolVersion, servers, socketTimeout,
             security.create(), tcpNoDelay, tcpKeepAlive, maxRetries,
             serverClusterConfigs, allowListRegExs, batchSize, transactionTimeout, statistics.create(), features,
-            contextInitializers, remoteCaches, transportFactory, tracingPropagationEnabled, metricRegistry, serverFailureTimeout);
+            contextInitializers, remoteCaches, transportFactory, tracingPropagationEnabled, metricRegistry, serverFailureTimeout,
+            longRunningOperationTimeout);
    }
 
    // Method that handles default marshaller - needed as a placeholder
@@ -629,6 +643,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.clusters.clear();
       template.clusters().forEach(cluster -> this.addCluster(cluster.getClusterName()).read(cluster, combine));
       this.socketTimeout = template.socketTimeout();
+      this.longRunningOperationTimeout = template.longRunningOperationTimeout();
       this.security.read(template.security(), combine);
       this.tcpNoDelay = template.tcpNoDelay();
       this.tcpKeepAlive = template.tcpKeepAlive();

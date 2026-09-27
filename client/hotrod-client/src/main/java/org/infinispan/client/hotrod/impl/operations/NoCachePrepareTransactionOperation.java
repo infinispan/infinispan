@@ -37,6 +37,12 @@ public class NoCachePrepareTransactionOperation extends AbstractNoCacheHotRodOpe
    }
 
    @Override
+   public long timeout() {
+      // The server may block for up to the transaction timeout while acquiring the locks, so never wait for less.
+      return timeoutMs > 0 ? timeoutMs : super.timeout();
+   }
+
+   @Override
    public Integer createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       if (status == NO_ERROR_STATUS) {
          return buf.readInt();

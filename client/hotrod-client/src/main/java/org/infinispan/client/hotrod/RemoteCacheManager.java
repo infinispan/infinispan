@@ -52,6 +52,7 @@ import org.infinispan.client.hotrod.impl.operations.ManagerOperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.ObjectRoutingCacheOperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingResponse;
 import org.infinispan.client.hotrod.impl.operations.ServerRoutingCacheOperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.TimeoutHotRodOperation;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transaction.SyncModeTransactionTable;
 import org.infinispan.client.hotrod.impl.transaction.TransactionTable;
@@ -291,8 +292,10 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
 
    @Override
    public Set<String> getCacheNames() {
-      HotRodOperation<String> executeOp = managerOpFactory.executeOperation("@@cache@names", Collections.emptyMap());
-      String names = dispatcher.await(dispatcher.execute(executeOp));
+      HotRodOperation<String> executeOp = new TimeoutHotRodOperation<>(
+            managerOpFactory.executeOperation("@@cache@names", Collections.emptyMap()),
+            configuration.longRunningOperationTimeout());
+      String names = dispatcher.await(dispatcher.execute(executeOp), configuration.longRunningOperationTimeout());
       Set<String> cacheNames = new TreeSet<>();
       // Simple pattern that matches the result which is represented as a JSON string array, e.g. ["cache1","cache2"]
       Pattern pattern = Pattern.compile(JSON_STRING_ARRAY_ELEMENT_REGEX);
@@ -559,8 +562,10 @@ public class RemoteCacheManager implements RemoteCacheContainer, Closeable, Remo
                return null;
             }
             // Create and re-ping
-            HotRodOperation<String> createCacheOp = managerOpFactory.executeOperation("@@cache@getorcreate", params);
-            dispatcher.await(dispatcher.execute(createCacheOp));
+            HotRodOperation<String> createCacheOp = new TimeoutHotRodOperation<>(
+                  managerOpFactory.executeOperation("@@cache@getorcreate", params),
+                  configuration.longRunningOperationTimeout());
+            dispatcher.await(dispatcher.execute(createCacheOp), configuration.longRunningOperationTimeout());
             // Execute create and then execute ping after
             HotRodOperation<PingResponse> pingcacheOp = managerOpFactory.newPingOperation(cacheName);
             pingResponse = dispatcher.await(dispatcher.execute(pingcacheOp));

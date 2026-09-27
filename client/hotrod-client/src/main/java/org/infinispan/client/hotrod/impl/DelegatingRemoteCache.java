@@ -108,6 +108,20 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    @Override
+   public InternalRemoteCache<K, V> withTimeout(long timeout, TimeUnit timeUnit) {
+      InternalRemoteCache<K, V> newCache = delegate.withTimeout(timeout, timeUnit);
+      if (newCache != delegate) {
+         return newDelegatingCache(newCache);
+      }
+      return this;
+   }
+
+   @Override
+   public long getTimeout() {
+      return delegate.getTimeout();
+   }
+
+   @Override
    public InternalRemoteCache<K, V> noFlags() {
       InternalRemoteCache<K, V> newCache = delegate.noFlags();
       if (newCache != delegate) {

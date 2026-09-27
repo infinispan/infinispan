@@ -35,4 +35,9 @@ public class ClearOperation extends AbstractCacheOperation<Void> {
    public short responseOpCode() {
       return CLEAR_RESPONSE;
    }
+
+   @Override
+   public long timeout() {
+      return longRunningTimeout();
+   }
 }

@@ -533,6 +533,15 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
+   public RemoteCache<K, V> withTimeout(long timeout, TimeUnit timeUnit) {
+      RemoteCache<K, V> newDelegate = delegate.withTimeout(timeout, timeUnit);
+      if (newDelegate == delegate) {
+         return this;
+      }
+      return newWrapper(newDelegate);
+   }
+
+   @Override
    public RemoteCache<K, V> noFlags() {
       RemoteCache<K, V> newDelegate = delegate.noFlags();
       if (newDelegate == delegate) {

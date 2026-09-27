@@ -10,6 +10,7 @@ import javax.transaction.xa.Xid;
 
 import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
 import org.infinispan.client.hotrod.impl.operations.ManagerOperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.TimeoutHotRodOperation;
 import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -70,8 +71,9 @@ abstract class AbstractTransactionTable implements TransactionTable {
    int completeTransaction(Xid xid, boolean commit) {
       try {
          ManagerOperationsFactory factory = assertStartedAndReturnFactory();
-         HotRodOperation<Integer> operation = factory.newCompleteTransactionOperation(xid, commit);
-         return dispatcher.await(dispatcher.execute(operation));
+         HotRodOperation<Integer> operation = new TimeoutHotRodOperation<>(
+               factory.newCompleteTransactionOperation(xid, commit), timeout);
+         return dispatcher.await(dispatcher.execute(operation), timeout);
       } catch (Exception e) {
          log.debug("Exception while commit/rollback.", e);
          return XAException.XA_HEURRB; //heuristically rolled-back
@@ -86,7 +88,7 @@ abstract class AbstractTransactionTable implements TransactionTable {
    void forgetTransaction(Xid xid) {
       try {
          ManagerOperationsFactory factory = assertStartedAndReturnFactory();
-         HotRodOperation<Void> operation = factory.newForgetTransactionOperation(xid);
+         HotRodOperation<Void> operation = new TimeoutHotRodOperation<>(factory.newForgetTransactionOperation(xid), timeout);
          //async.
          //we don't need the reply from server. If we can't forget for some reason (timeouts or other exception),
          // the server reaper will cleanup the completed transactions after a while. (default 1 min)
@@ -106,7 +108,7 @@ abstract class AbstractTransactionTable implements TransactionTable {
    CompletionStage<Collection<Xid>> fetchPreparedTransactions() {
       try {
          ManagerOperationsFactory factory = assertStartedAndReturnFactory();
-         HotRodOperation<Collection<Xid>> operation = factory.newRecoveryOperation();
+         HotRodOperation<Collection<Xid>> operation = new TimeoutHotRodOperation<>(factory.newRecoveryOperation(), timeout);
          return dispatcher.execute(operation);
       } catch (Exception e) {
          if (log.isTraceEnabled()) {

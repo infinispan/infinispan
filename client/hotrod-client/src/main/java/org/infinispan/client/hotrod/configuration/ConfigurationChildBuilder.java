@@ -156,6 +156,21 @@ public interface ConfigurationChildBuilder {
    ConfigurationBuilder socketTimeout(int socketTimeout);
 
    /**
+    * This property defines the timeout applied to operations which are expected to take longer than a regular
+    * single-key operation, such as {@link org.infinispan.client.hotrod.RemoteCache#size()}, bulk operations,
+    * queries, server tasks and administrative operations. Since these operations grow with the size of the data
+    * set, applying {@link #socketTimeout(int)} to them is rarely appropriate.
+    * Defaults to {@link org.infinispan.client.hotrod.impl.ConfigurationProperties#DEFAULT_LONG_RUNNING_OPERATION_TIMEOUT} milliseconds.
+    *
+    * @param timeout the timeout value. Must be greater than zero.
+    * @param timeUnit the {@link TimeUnit} of the timeout value.
+    * @since 16.3
+    */
+   default ConfigurationBuilder longRunningOperationTimeout(long timeout, TimeUnit timeUnit) {
+      throw new UnsupportedOperationException();
+   }
+
+   /**
     * Security Configuration
     */
    SecurityConfigurationBuilder security();

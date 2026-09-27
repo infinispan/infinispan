@@ -19,6 +19,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteSchemasAdmin;
 import org.infinispan.client.hotrod.impl.operations.ManagerOperationsFactory;
+import org.infinispan.client.hotrod.impl.operations.TimeoutHotRodOperation;
 import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -33,6 +34,11 @@ public class RemoteSchemasAdminImpl implements RemoteSchemasAdmin {
     private final ManagerOperationsFactory operationsFactory;
     private final OperationDispatcher operationDispatcher;
     private final RemoteCache<String, String> protostreamCache;
+    /**
+     * Schema operations are validated against every indexed cache on the server, so they use the long running
+     * operation timeout rather than the socket timeout.
+     */
+    private final long timeout;
     private static final byte[] CREATE = string("c");
     private static final byte[] UPDATE = string("u");
     private static final byte[] SAVE = string("s");
@@ -42,6 +48,11 @@ public class RemoteSchemasAdminImpl implements RemoteSchemasAdmin {
         this.operationsFactory = operationsFactory;
         this.operationDispatcher = operationDispatcher;
         this.protostreamCache = cacheManager.<String, String>getCache(InternalCacheNames.PROTOBUF_METADATA_CACHE_NAME).withFlags(FORCE_RETURN_VALUE);
+        this.timeout = cacheManager.getConfiguration().longRunningOperationTimeout();
+    }
+
+    private CompletionStage<String> execute(String operationName, Map<String, byte[]> params) {
+       return operationDispatcher.execute(new TimeoutHotRodOperation<>(operationsFactory.executeOperation(operationName, params), timeout));
     }
 
    @Override
@@ -116,8 +127,7 @@ public class RemoteSchemasAdminImpl implements RemoteSchemasAdmin {
       }
 
       Map<String, byte[]> params = Map.of("name", string(name));
-      return operationDispatcher
-            .execute(operationsFactory.executeOperation("@@schemas@delete", params))
+      return execute("@@schemas@delete", params)
             .thenApply(r -> new SchemaOpResult(getSchemaOpResult(name, r)));
    }
 
@@ -173,8 +183,7 @@ public class RemoteSchemasAdminImpl implements RemoteSchemasAdmin {
       if (force) {
          params.put("force", FORCE);
       }
-      return operationDispatcher
-            .execute(operationsFactory.executeOperation("@@schemas@createOrUpdate", params))
+      return execute("@@schemas@createOrUpdate", params)
             .thenApply(RemoteSchemasAdminImpl::createOrUpdateToSchemaOpResult)
             .exceptionally(ex -> {
                log.crudSchemaError(schema.getName(), ex);

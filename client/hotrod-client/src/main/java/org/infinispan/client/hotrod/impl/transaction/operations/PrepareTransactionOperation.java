@@ -90,6 +90,12 @@ public class PrepareTransactionOperation extends AbstractCacheOperation<Integer>
       writeOperationRequest(buf, codec, xid, onePhaseCommit, recoverable, timeoutMs, modifications);
    }
 
+   @Override
+   public long timeout() {
+      // The server may block for up to the transaction timeout while acquiring the locks, so never wait for less.
+      return Math.max(timeoutMs, longRunningTimeout());
+   }
+
    public static void writeOperationRequest(ByteBuf buf, Codec codec, Xid xid, boolean onePhaseCommit,
                                             boolean recoverable, long timeoutMs, List<Modification> modifications) {
       writeXid(buf, xid);

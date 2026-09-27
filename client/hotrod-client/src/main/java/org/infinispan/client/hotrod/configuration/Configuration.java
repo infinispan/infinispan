@@ -22,6 +22,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.HASH_FUN
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JAVA_SERIAL_ALLOWLIST;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_FILE_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_PASSWORD;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.LONG_RUNNING_OPERATION_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MARSHALLER;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MAX_RETRIES;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION;
@@ -58,6 +59,7 @@ import java.util.stream.Collectors;
 import org.infinispan.client.hotrod.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.TransportFactory;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.metrics.RemoteCacheManagerMetricsRegistry;
@@ -110,7 +112,14 @@ public class Configuration implements org.infinispan.api.configuration.Configura
    private final RemoteCacheManagerMetricsRegistry metricRegistry;
    private final int serverFailureTimeout;
    private final long transactionTimeout;
+   private final long longRunningOperationTimeout;
 
+   /**
+    * @deprecated since 16.3. Use
+    * {@link #Configuration(ExecutorFactoryConfiguration, Supplier, ClassLoader, ClientIntelligence, ConnectionPoolConfiguration, int, Class[], int, int, int, boolean, Marshaller, Class, ProtocolVersion, List, int, SecurityConfiguration, boolean, boolean, int, List, List, int, long, StatisticsConfiguration, Features, List, Map, TransportFactory, boolean, RemoteCacheManagerMetricsRegistry, int, long)}
+    * instead. This constructor applies {@link ConfigurationProperties#DEFAULT_LONG_RUNNING_OPERATION_TIMEOUT}.
+    */
+   @Deprecated(forRemoval = true, since = "16.3")
    public Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory, ClassLoader classLoader,
                         ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl,
                         int dnsResolverMinTTL, int dnsResolverMaxTTL, int dnsResolverNegativeTTL,
@@ -124,6 +133,26 @@ public class Configuration implements org.infinispan.api.configuration.Configura
                         Map<String, RemoteCacheConfiguration> remoteCaches,
                         TransportFactory transportFactory, boolean tracingPropagationEnabled, RemoteCacheManagerMetricsRegistry metricRegistry,
                         int serverFailureTimeout) {
+      this(asyncExecutorFactory, balancingStrategyFactory, classLoader, clientIntelligence, connectionPool, connectionTimeout, consistentHashImpl,
+            dnsResolverMinTTL, dnsResolverMaxTTL, dnsResolverNegativeTTL, forceReturnValues, marshaller, marshallerClass, protocolVersion, servers,
+            socketTimeout, security, tcpNoDelay, tcpKeepAlive, maxRetries, clusters, serialAllowList, batchSize, transactionTimeout, statistics,
+            features, contextInitializers, remoteCaches, transportFactory, tracingPropagationEnabled, metricRegistry, serverFailureTimeout,
+            ConfigurationProperties.DEFAULT_LONG_RUNNING_OPERATION_TIMEOUT);
+   }
+
+   public Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Supplier<FailoverRequestBalancingStrategy> balancingStrategyFactory, ClassLoader classLoader,
+                        ClientIntelligence clientIntelligence, ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl,
+                        int dnsResolverMinTTL, int dnsResolverMaxTTL, int dnsResolverNegativeTTL,
+                        boolean forceReturnValues,
+                        Marshaller marshaller, Class<? extends Marshaller> marshallerClass,
+                        ProtocolVersion protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
+                        int maxRetries,
+                        List<ClusterConfiguration> clusters, List<String> serialAllowList, int batchSize, long transactionTimeout,
+                        StatisticsConfiguration statistics, Features features,
+                        List<SerializationContextInitializer> contextInitializers,
+                        Map<String, RemoteCacheConfiguration> remoteCaches,
+                        TransportFactory transportFactory, boolean tracingPropagationEnabled, RemoteCacheManagerMetricsRegistry metricRegistry,
+                        int serverFailureTimeout, long longRunningOperationTimeout) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategyFactory = balancingStrategyFactory;
       this.maxRetries = maxRetries;
@@ -157,6 +186,7 @@ public class Configuration implements org.infinispan.api.configuration.Configura
       this.tracingPropagationEnabled = tracingPropagationEnabled;
       this.metricRegistry = Objects.requireNonNullElse(metricRegistry, RemoteCacheManagerMetricsRegistry.DISABLED);
       this.serverFailureTimeout = serverFailureTimeout;
+      this.longRunningOperationTimeout = longRunningOperationTimeout;
    }
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {
@@ -230,6 +260,17 @@ public class Configuration implements org.infinispan.api.configuration.Configura
 
    public int socketTimeout() {
       return socketTimeout;
+   }
+
+   /**
+    * The timeout, in milliseconds, applied to operations which are expected to take longer than a regular
+    * single-key operation, such as {@link org.infinispan.client.hotrod.RemoteCache#size()},
+    * bulk operations, queries, server tasks and administrative operations.
+    *
+    * @see ConfigurationBuilder#longRunningOperationTimeout(long, TimeUnit)
+    */
+   public long longRunningOperationTimeout() {
+      return longRunningOperationTimeout;
    }
 
    public SecurityConfiguration security() {
@@ -357,6 +398,7 @@ public class Configuration implements org.infinispan.api.configuration.Configura
             + ", statistics=" + statistics
             + ", metricRegistry=" + metricRegistry
             + ", serverFailureTimeout=" + serverFailureTimeout
+            + ", longRunningOperationTimeout=" + longRunningOperationTimeout
             + "]";
    }
 
@@ -383,6 +425,7 @@ public class Configuration implements org.infinispan.api.configuration.Configura
       properties.setProperty(MARSHALLER, marshallerClass().getName());
       properties.setProperty(PROTOCOL_VERSION, version().toString());
       properties.setProperty(SO_TIMEOUT, socketTimeout());
+      properties.setProperty(LONG_RUNNING_OPERATION_TIMEOUT, Long.toString(longRunningOperationTimeout));
       properties.setProperty(TCP_NO_DELAY, tcpNoDelay());
       properties.setProperty(TCP_KEEP_ALIVE, tcpKeepAlive());
       properties.setProperty(MAX_RETRIES, maxRetries());

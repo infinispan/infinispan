@@ -16,6 +16,7 @@ import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX_DOMA
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.JMX_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_FILE_NAME;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.KEY_STORE_PASSWORD;
+import static org.infinispan.client.hotrod.impl.ConfigurationProperties.LONG_RUNNING_OPERATION_TIMEOUT;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.MAX_RETRIES;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.PROTOCOL_VERSION;
 import static org.infinispan.client.hotrod.impl.ConfigurationProperties.REQUEST_BALANCING_STRATEGY;
@@ -92,6 +93,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       OPTIONS.put(CONNECT_TIMEOUT, Configuration::connectionTimeout);
       OPTIONS.put(PROTOCOL_VERSION, Configuration::version);
       OPTIONS.put(SO_TIMEOUT, Configuration::socketTimeout);
+      OPTIONS.put(LONG_RUNNING_OPERATION_TIMEOUT, Configuration::longRunningOperationTimeout);
       OPTIONS.put(TCP_NO_DELAY, Configuration::tcpNoDelay);
       OPTIONS.put(TCP_KEEP_ALIVE, Configuration::tcpKeepAlive);
       OPTIONS.put(MAX_RETRIES, Configuration::maxRetries);
@@ -168,6 +170,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
             .version(ProtocolVersion.PROTOCOL_VERSION_30)
             .consistentHashImpl(2, SomeCustomConsistentHashV2.class)
             .socketTimeout(100)
+            .longRunningOperationTimeout(200, TimeUnit.MILLISECONDS)
             .tcpNoDelay(false)
             .maxRetries(0)
             .tcpKeepAlive(true)
@@ -214,6 +217,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       p.setProperty(CONNECT_TIMEOUT, "100");
       p.setProperty(PROTOCOL_VERSION, "3.0");
       p.setProperty(SO_TIMEOUT, "100");
+      p.setProperty(LONG_RUNNING_OPERATION_TIMEOUT, "200");
       p.setProperty(TCP_NO_DELAY, "false");
       p.setProperty(TCP_KEEP_ALIVE, "true");
       p.setProperty(MAX_RETRIES, "0");
@@ -388,6 +392,39 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       builder.build();
    }
 
+   @Test(expectedExceptions = CacheConfigurationException.class,
+         expectedExceptionsMessageRegExp = "ISPN(\\d)*: Invalid long running operation timeout: 0. It must be greater than zero")
+   public void testZeroLongRunningOperationTimeout() {
+      ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+      builder.longRunningOperationTimeout(0, TimeUnit.SECONDS);
+      builder.build();
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class,
+         expectedExceptionsMessageRegExp = "ISPN(\\d)*: Invalid long running operation timeout: -1. It must be greater than zero")
+   public void testNegativeLongRunningOperationTimeout() {
+      ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
+      builder.longRunningOperationTimeout(-1, TimeUnit.MILLISECONDS);
+      builder.build();
+   }
+
+   public void testDefaultLongRunningOperationTimeout() {
+      Configuration configuration = HotRodClientTestingUtil.newRemoteConfigurationBuilder().build();
+      assertEquals(ConfigurationProperties.DEFAULT_LONG_RUNNING_OPERATION_TIMEOUT, configuration.longRunningOperationTimeout());
+   }
+
+   public void testLongRunningOperationTimeoutViaURI() {
+      Configuration configuration = HotRodURI.create("hotrod://host1?long_running_operation_timeout=120000")
+            .toConfigurationBuilder().build();
+      assertEquals(120_000L, configuration.longRunningOperationTimeout());
+   }
+
+   public void testLongRunningOperationTimeoutUnitConversion() {
+      Configuration configuration = HotRodClientTestingUtil.newRemoteConfigurationBuilder()
+            .longRunningOperationTimeout(2, TimeUnit.MINUTES).build();
+      assertEquals(120_000L, configuration.longRunningOperationTimeout());
+   }
+
    @Test(expectedExceptions = CacheConfigurationException.class)
    public void testMissingClusterNameDefinition() {
       ConfigurationBuilder builder = HotRodClientTestingUtil.newRemoteConfigurationBuilder();
@@ -511,6 +548,7 @@ public class ConfigurationTest extends AbstractInfinispanTest {
       assertEquals(SomeCustomConsistentHashV2.class, configuration.consistentHashImpl(2));
       assertEqualsConfig(100, CONNECT_TIMEOUT, configuration);
       assertEqualsConfig(100, SO_TIMEOUT, configuration);
+      assertEqualsConfig(200L, LONG_RUNNING_OPERATION_TIMEOUT, configuration);
       assertEqualsConfig(false, TCP_NO_DELAY, configuration);
       assertEqualsConfig(true, TCP_KEEP_ALIVE, configuration);
       assertEqualsConfig(0, MAX_RETRIES, configuration);

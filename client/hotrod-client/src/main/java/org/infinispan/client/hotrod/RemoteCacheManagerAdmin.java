@@ -104,6 +104,20 @@ public interface RemoteCacheManagerAdmin extends CacheContainerAdmin<RemoteCache
    void removeCache(String name) throws HotRodClientException;
 
    /**
+    * Overrides the timeout applied to the administrative operations performed through the returned instance. By
+    * default, administrative operations use
+    * {@link org.infinispan.client.hotrod.configuration.ConfigurationChildBuilder#longRunningOperationTimeout(long, TimeUnit)}.
+    *
+    * @param timeout the timeout to apply. Must be greater than zero.
+    * @param timeUnit the {@link TimeUnit} of the timeout.
+    * @return a {@link RemoteCacheManagerAdmin} instance which applies the given timeout to its operations
+    * @since 16.3
+    */
+   default RemoteCacheManagerAdmin withTimeout(long timeout, TimeUnit timeUnit) {
+      throw new UnsupportedOperationException();
+   }
+
+   /**
     * Performs a mass reindexing of the specified cache. The command will return immediately and the reindexing will
     * be performed asynchronously
     * @param name the name of the cache to reindex

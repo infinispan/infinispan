@@ -6,6 +6,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -34,6 +35,19 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
       this.defaultMaxIdleTime = defaultMaxIdleTime;
    }
 
+   /**
+    * @return the timeout override in milliseconds applied to this cache, or {@code -1} if none is set.
+    * @see RemoteCache#withTimeout(long, TimeUnit)
+    */
+   public abstract long getTimeout();
+
+   /**
+    * Blocks until the given stage completes, honouring a timeout override set on this cache.
+    */
+   protected final <T> T await(CompletionStage<T> cs) {
+      return dispatcher.await(cs, getTimeout());
+   }
+
    @Override
    public final void putAll(Map<? extends K, ? extends V> map) {
       putAll(map, defaultLifespan, MILLISECONDS, defaultMaxIdleTime, MILLISECONDS);
@@ -46,7 +60,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      dispatcher.await(putAllAsync(map, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
+      await(putAllAsync(map, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
    }
 
    @Override
@@ -75,7 +89,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return dispatcher.await(putIfAbsentAsync(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
+      return await(putIfAbsentAsync(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
    }
 
    @Override
@@ -104,7 +118,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return dispatcher.await(replaceAsync(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
+      return await(replaceAsync(key, oldValue, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
    }
 
    @Override
@@ -133,7 +147,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return dispatcher.await(replaceAsync(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
+      return await(replaceAsync(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
    }
 
    @Override
@@ -152,7 +166,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final V get(Object key) {
-      return dispatcher.await(getAsync((K) key));
+      return await(getAsync((K) key));
    }
 
    @Override
@@ -160,7 +174,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final Map<K, V> getAll(Set<? extends K> keys) {
-      return dispatcher.await(getAllAsync(keys));
+      return await(getAllAsync(keys));
    }
 
    @Override
@@ -168,7 +182,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final MetadataValue<V> getWithMetadata(K key) {
-      return dispatcher.await(getWithMetadataAsync(key));
+      return await(getWithMetadataAsync(key));
    }
 
    @Override
@@ -176,7 +190,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final boolean containsKey(Object key) {
-      return dispatcher.await(containsKeyAsync((K) key));
+      return await(containsKeyAsync((K) key));
    }
 
    @Override
@@ -194,7 +208,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return dispatcher.await(putAsync(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
+      return await(putAsync(key, value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
    }
 
    @Override
@@ -228,7 +242,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final boolean replaceWithVersion(K key, V newValue, long version, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      return dispatcher.await(replaceWithVersionAsync(key, newValue, version, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit));
+      return await(replaceWithVersionAsync(key, newValue, version, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit));
    }
 
    @Override
@@ -249,7 +263,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final V remove(Object key) {
-      return dispatcher.await(removeAsync(key));
+      return await(removeAsync(key));
    }
 
    @Override
@@ -257,7 +271,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final boolean remove(Object key, Object value) {
-      return dispatcher.await(removeAsync(key, value));
+      return await(removeAsync(key, value));
    }
 
    @Override
@@ -265,7 +279,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final boolean removeWithVersion(K key, long version) {
-      return dispatcher.await(removeWithVersionAsync(key, version));
+      return await(removeWithVersionAsync(key, version));
    }
 
    @Override
@@ -285,7 +299,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
    @Override
    public final V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, long lifespan,
                   TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return dispatcher.await(mergeAsync(key, value, remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
+      return await(mergeAsync(key, value, remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
    }
 
    @Override
@@ -303,7 +317,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final void clear() {
-      dispatcher.await(clearAsync());
+      await(clearAsync());
    }
 
    @Override
@@ -318,7 +332,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return dispatcher.await(computeAsync(key, remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
+      return await(computeAsync(key, remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
    }
 
    @Override
@@ -346,7 +360,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return dispatcher.await(computeIfAbsentAsync(key, mappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
+      return await(computeIfAbsentAsync(key, mappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
    }
 
    @Override
@@ -374,7 +388,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return dispatcher.await(computeIfPresentAsync(key, remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
+      return await(computeIfPresentAsync(key, remappingFunction, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
    }
 
    @Override
@@ -395,7 +409,7 @@ public abstract class RemoteCacheSupport<K, V> implements RemoteCache<K, V> {
 
    @Override
    public final int size() {
-      long size = dispatcher.await(sizeAsync());
+      long size = await(sizeAsync());
       return size > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) size;
    }
 

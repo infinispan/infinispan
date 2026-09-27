@@ -465,4 +465,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Server error received after operation %s already timed out on %s: this is the actual cause of the timeout", id = 4127)
    void delayedServerError(Object operation, SocketAddress address, @Cause Throwable cause);
 
+   @Message(value = "Invalid long running operation timeout: %d. It must be greater than zero", id = 4128)
+   CacheConfigurationException invalidLongRunningOperationTimeout(long timeout);
+
+   @Message(value = "Invalid operation timeout: %d. It must be greater than zero", id = 4129)
+   IllegalArgumentException invalidOperationTimeout(long timeout);
+
 }

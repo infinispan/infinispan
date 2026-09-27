@@ -171,7 +171,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
       ScheduledFuture<?> future = channel.eventLoop().schedule(() -> {
          timeouts.remove(messageIdLong);
          dispatcher.handleResponse(op, messageIdLong, channel, null,
-               new SocketTimeoutException(this + " timed out after " + configuration.socketTimeout() + " ms"));
+               new SocketTimeoutException(op + " timed out after " + timeout + " ms"));
       }, timeout, TimeUnit.MILLISECONDS);
       timeouts.put(messageIdLong, future);
    }

@@ -55,4 +55,9 @@ public class RemoveAllOperation extends AbstractCacheOperation<Void> {
    public short responseOpCode() {
       return REMOVE_ALL_RESPONSE;
    }
+
+   @Override
+   public long timeout() {
+      return longRunningTimeout();
+   }
 }

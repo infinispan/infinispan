@@ -490,6 +490,25 @@ public interface RemoteCache<K, V> extends BasicCache<K, V>, TransactionalCache 
    RemoteCache<K, V> noFlags();
 
    /**
+    * Overrides the timeout applied to the operations performed on the returned cache instance. This takes precedence
+    * over both
+    * {@link org.infinispan.client.hotrod.configuration.ConfigurationChildBuilder#socketTimeout(int)} and
+    * {@link org.infinispan.client.hotrod.configuration.ConfigurationChildBuilder#longRunningOperationTimeout(long, TimeUnit)}.
+    * Sample usage:
+    * <pre>
+    *    int size = remoteCache.withTimeout(5, TimeUnit.MINUTES).size();
+    * </pre>
+    *
+    * @param timeout the timeout to apply. Must be greater than zero.
+    * @param timeUnit the {@link TimeUnit} of the timeout.
+    * @return a RemoteCache instance which applies the given timeout to all of its operations
+    * @since 16.3
+    */
+   default RemoteCache<K, V> withTimeout(long timeout, TimeUnit timeUnit) {
+      throw new UnsupportedOperationException();
+   }
+
+   /**
     * Returns the flags set for this RemoteCache instance.
     * @return set containing all Flag enum instances that are set for operations on this cache instance
     */

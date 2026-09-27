@@ -152,6 +152,11 @@ public abstract class AbstractConfigurationChildBuilder implements Configuration
    }
 
    @Override
+   public ConfigurationBuilder longRunningOperationTimeout(long timeout, TimeUnit timeUnit) {
+      return builder.longRunningOperationTimeout(timeout, timeUnit);
+   }
+
+   @Override
    public SecurityConfigurationBuilder security() {
       return builder.security();
    }

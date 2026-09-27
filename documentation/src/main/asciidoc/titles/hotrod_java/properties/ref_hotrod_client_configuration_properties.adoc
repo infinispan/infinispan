@@ -30,6 +30,11 @@ All properties are prefixed with `infinispan.client.hotrod.` (abbreviated as `IC
 |int
 |`2000` (2 seconds)
 
+|`long_running_operation_timeout`
+|Timeout in milliseconds for operations that can span the entire data set, such as `size()`, `clear()`, bulk operations, queries, server tasks and administrative operations. Use `RemoteCache.withTimeout()` or `RemoteCacheManagerAdmin.withTimeout()` to override it for individual invocations.
+|long
+|`60000` (60 seconds)
+
 |`tcp_no_delay`
 |Enable/disable TCP_NODELAY (Nagle's algorithm). When true, packets are sent immediately without buffering.
 |boolean

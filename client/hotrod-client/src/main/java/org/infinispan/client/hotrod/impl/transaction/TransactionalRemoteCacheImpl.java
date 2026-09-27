@@ -114,7 +114,7 @@ public class TransactionalRemoteCacheImpl<K, V> extends RemoteCacheImpl<K, V> {
    }
 
    private MetadataValue<V> getWithMetadataNotTracked(K key) {
-      return dispatcher.await(super.getWithMetadataAsync(key));
+      return await(super.getWithMetadataAsync(key));
    }
 
    @Override
