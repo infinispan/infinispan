@@ -1,0 +1,20 @@
+ifdef::context[:parent-context: {context}]
+[id='runbooks']
+:context: runbooks
+= Runbooks
+
+//Runbook template
+include::{topics}/ref_runbook_template.adoc[leveloffset=+1]
+
+//JGroups
+include::{topics}/ref_runbook_jgrp_001_multicast_not_working.adoc[leveloffset=+1]
+
+//Cache operations
+include::{topics}/ref_runbook_cache_001_unable_to_acquire_lock.adoc[leveloffset=+1]
+
+//Hot Rod
+include::{topics}/ref_runbook_hotrod_001_client_intelligence_routing.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

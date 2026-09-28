@@ -1,0 +1,191 @@
+[id='runbook-cache-001-unable-to-acquire-lock_{context}']
+= CACHE-001: Unable to acquire lock (ISPN000299)
+
+== Summary
+Operations on a cache fail with `org.infinispan.commons.TimeoutException: ISPN000299: Unable to acquire lock after <timeout> for key <key> and requestor <requestor>. Lock is held by <owner>`.
+This error occurs when a thread cannot acquire a write lock on a cache entry within the configured `acquire-timeout` period (default: 10 seconds).
+
+== Symptoms
+* Operations that write to the cache throw `TimeoutException` with message code `ISPN000299`.
+* The error message includes the key that could not be locked, the requestor (the transaction or thread attempting the lock), and the current lock owner.
+* In clustered deployments, the lock owner may be on a remote node (indicated by `remote=true` in the owner field).
+* Under sustained contention, these errors may appear at regular intervals matching the `acquire-timeout` value.
+* Client applications may experience increased latency or HTTP 500 errors when cache operations back up behind a locked key.
+
+== Diagnosis
+
+.Procedure
+. Examine the error message carefully.
+The message format is:
++
+[source,options="nowrap"]
+----
+ISPN000299: Unable to acquire lock after <timeout> for key <key> and requestor <requestor>. Lock is held by <owner>
+----
++
+Note whether:
++
+* The *requestor and owner are the same node* — this suggests a single thread is re-entering or a long-running operation is blocking itself.
+* The *owner is on a remote node* (`remote=true`) — this points to cluster communication delays or a stuck transaction on the remote node.
+* The *timeout is 0 milliseconds* — this can occur during internal operations such as expiration processing, where {brandname} uses a zero-timeout lock attempt by design. These are typically harmless.
+
+. Check for long-running operations that hold locks.
+If a transaction or operation takes longer than the `acquire-timeout` to complete, other threads waiting for the same key will time out.
+Common causes include:
++
+* Slow cache store operations (database latency, disk I/O)
+* Cache listeners performing expensive work synchronously
+* Large entries causing slow serialization or network transfer
+* Long-running transactions that span multiple cache operations
+
+. Check for lock contention on hot keys.
+If many concurrent threads write to the same key, lock contention is expected.
+Examine your access patterns to determine if specific keys receive a disproportionate number of writes.
+
+. In clustered deployments, check the cluster health.
+Lock acquisition on a key involves communication with the primary owner node.
+Network issues, slow nodes, or ongoing state transfers can delay lock responses.
++
+[source,bash,options="nowrap"]
+----
+bin/cli.sh -c https://localhost:11222 --trustall
+----
++
+[source,options="nowrap"]
+----
+describe //containers/default
+----
++
+Look for nodes that are suspected or have left the cluster view.
+
+. Check if a rebalance or state transfer is in progress.
+During topology changes (nodes joining or leaving), {brandname} may temporarily block lock acquisition while it transfers ownership of keys.
+Look for `ISPN000093` (topology change) or `ISPN000210` (state transfer) log messages around the time of the lock timeout.
+
+. Check the transaction configuration.
+If the cache uses transactions, a stuck or abandoned transaction can hold locks indefinitely until the transaction times out.
+Check the transaction manager logs for uncommitted transactions.
+
+== Root cause
+{brandname} uses pessimistic per-key write locks to ensure consistency.
+When a thread wants to modify a cache entry, it must first acquire the write lock for that key on the primary owner node.
+If another thread already holds the lock, the requesting thread waits up to the configured `acquire-timeout`.
+
+Common reasons the lock cannot be acquired:
+
+* *High contention on a single key*: Multiple threads or nodes attempt to write to the same key concurrently.
+Only one writer can hold the lock at a time; the rest queue up and may time out.
+* *Slow operations holding locks*: A cache store write, a synchronous cache listener, or an expensive serialization operation delays lock release.
+The lock is held for the entire duration of the write operation, including replication to backup owners.
+* *Stuck or long-running transactions*: In transactional caches, locks are held until the transaction commits or rolls back.
+A transaction that stalls (for example due to application logic, external service calls, or deadlocks) holds its locks until the transaction timeout expires.
+* *Cluster communication delays*: In clustered caches, lock acquisition requires a round-trip to the primary owner.
+Network latency, GC pauses on the primary owner, or ongoing state transfers can delay the lock response beyond the timeout.
+* *Lock striping collisions*: If lock striping is enabled, unrelated keys may share the same lock.
+A lock held on one key can block writes to other keys that hash to the same stripe.
+Lock striping is disabled by default.
+
+== Resolution
+
+=== Reduce contention on hot keys
+
+.Procedure
+. Review your data model to determine if writes can be distributed across more keys.
+For example, instead of updating a single counter entry, consider using {brandname} clustered counters which are designed for concurrent updates.
+
+. If multiple threads update the same key, consider serializing those updates at the application level rather than relying on lock contention to order them.
+
+=== Increase the lock timeout
+
+If lock contention is expected and acceptable, increase the `acquire-timeout` to give threads more time to wait.
+
+.Procedure
+. Update the cache configuration:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+<locking acquire-timeout="30s" />
+----
++
+Or programmatically:
++
+[source,java,options="nowrap"]
+----
+new ConfigurationBuilder().locking().lockAcquisitionTimeout(30, TimeUnit.SECONDS);
+----
+
+[NOTE]
+====
+Increasing the timeout does not reduce contention.
+It only changes how long threads wait before giving up.
+If the underlying cause is a slow operation or stuck transaction, increasing the timeout delays the error rather than fixing it.
+====
+
+=== Fix slow cache store operations
+
+If the lock is held during a slow persistence operation, the write to the underlying store is the bottleneck.
+
+.Procedure
+. Check cache store performance by reviewing database query times or disk I/O metrics.
+. Consider using `async` write-behind for the cache store, which decouples the lock duration from the store write latency.
+. Ensure connection pools for JDBC cache stores are appropriately sized and not exhausted.
+
+=== Fix stuck transactions
+
+If the lock owner is a transaction that never completes, the lock is held until the transaction manager times out the transaction.
+
+.Procedure
+. Review the transaction timeout configuration in your transaction manager.
+Ensure it is not set too high relative to the lock `acquire-timeout`.
+. Check for application code paths that start a transaction, perform cache operations, and then call external services or perform long-running work before committing.
+Move expensive non-cache work outside the transaction scope.
+. If using JTA, check for abandoned transactions in the transaction manager logs.
+
+=== Disable lock striping
+
+If lock striping is enabled, and you suspect unrelated keys are colliding, disable it.
+
+.Procedure
+. Update the cache configuration:
++
+[source,xml,options="nowrap",subs=attributes+]
+----
+<locking striping="false" />
+----
++
+Or programmatically:
++
+[source,java,options="nowrap"]
+----
+new ConfigurationBuilder().locking().useLockStriping(false);
+----
+
+[NOTE]
+====
+Lock striping is disabled by default.
+Disabling it increases memory usage slightly because each key gets its own lock object.
+====
+
+=== Address cluster communication issues
+
+If the lock owner is on a remote node, the lock may be delayed or stuck due to cluster communication problems.
+
+.Procedure
+. Check for GC pauses on the remote node that may delay lock processing.
+Review GC logs for long stop-the-world pauses.
+. Check for network latency between nodes.
+. Check for ongoing state transfers that may temporarily block operations.
+Refer to runbook link:#runbook-jgrp-001-multicast-not-working_{context}[JGRP-001] if there are cluster formation issues.
+
+== Verification
+
+.Procedure
+. After applying the fix, monitor the {brandname} logs for `ISPN000299` messages.
+The errors should stop or decrease significantly.
+
+. If you increased the timeout, verify that operations now complete within the new timeout by checking that no new `ISPN000299` errors appear.
+
+. Monitor cache operation latencies through {brandname} metrics to ensure that p99 write latency is acceptable for your application.
+
+== Related
+* link:#locking-concurrency_{context}[Locking and concurrency]
