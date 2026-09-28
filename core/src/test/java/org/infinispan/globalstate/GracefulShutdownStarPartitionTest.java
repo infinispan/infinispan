@@ -4,12 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.BaseStatefulPartitionHandlingTest;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
@@ -89,6 +88,8 @@ public class GracefulShutdownStarPartitionTest extends BaseStatefulPartitionHand
                return topology != null && topology.getMembers().size() == numMembersInCluster;
             })
       );
+      eventually(() -> caches(CACHE_NAME).stream()
+            .allMatch(c -> partitionHandlingManager(c).getAvailabilityMode() == AvailabilityMode.AVAILABLE));
 
       // No data should be lost during the restart.
       int survivingData = cache(0, CACHE_NAME).size();
@@ -150,13 +151,10 @@ public class GracefulShutdownStarPartitionTest extends BaseStatefulPartitionHand
          partition.observeMembers(p0);
       }
 
-      // Collect all unique channels from all partitions
-      Set<JChannel> allChannelsSet = new HashSet<>();
+      // Collect subviews for this partition for the merge
       List<View> subviews = new ArrayList<>();
 
       for (Partition p : partitions) {
-         allChannelsSet.addAll(p.channels());
-         // Create subview for this partition for the merge
          List<org.jgroups.Address> partitionAddresses = p.channels().stream()
                .map(JChannel::getAddress)
                .toList();
@@ -165,7 +163,9 @@ public class GracefulShutdownStarPartitionTest extends BaseStatefulPartitionHand
          subviews.add(subview);
       }
 
-      ArrayList<JChannel> allChannels = new ArrayList<>(allChannelsSet);
+      List<JChannel> allChannels = cacheManagers.stream()
+            .map(this::channel)
+            .toList();
 
       for (JChannel channel : allChannels) {
          channel.getProtocolStack().removeProtocol(DISCARD.class);
