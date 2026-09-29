@@ -8,6 +8,8 @@ Process operations in groups, either interactively or using batch files.
 
 include::{topics}/proc_cli_batching_files.adoc[leveloffset=+1]
 include::{topics}/proc_cli_batching_interactive.adoc[leveloffset=+1]
+include::{topics}/ref_cli_pipe_redirect.adoc[leveloffset=+1]
+include::{topics}/proc_cli_shell_escape.adoc[leveloffset=+1]
 
 // Restore the parent context.
 ifdef::parent-context[:context: {parent-context}]

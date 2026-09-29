@@ -1,0 +1,32 @@
+[id='cli-shell-escape_{context}']
+= Running Native OS Commands
+Execute native operating system commands directly from the {brandname} CLI using the `!` prefix.
+
+The shell escape feature lets you run OS commands without leaving the CLI session, which is useful for inspecting log files, checking disk space, or performing other system administration tasks alongside {brandname} operations.
+
+.Procedure
+
+. Prefix any command with `!` to run it as a native OS command.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> !ls -la /opt/infinispan/server/log
+----
++
+. You can run any command that is available in the system shell.
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> !cat /opt/infinispan/server/log/server.log
+----
++
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> !df -h
+----
+
+[NOTE]
+====
+On Linux and macOS, native commands run through `sh -c`.
+On Windows, native commands run through `cmd /c`.
+====

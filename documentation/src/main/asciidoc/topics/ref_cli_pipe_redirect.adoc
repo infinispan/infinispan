@@ -1,0 +1,62 @@
+[id='cli-pipe-redirect_{context}']
+= Piping and Redirecting Command Output
+The {brandname} CLI supports standard shell operators for piping command output between commands, redirecting output to files, and chaining commands.
+
+== Piping
+
+Use the pipe operator to send the output of one command as input to the next.
+
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> ls | grep my-cache
+----
+
+Use `|&` to pipe both standard output and standard error.
+
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> describe my-cache |& !grep -i error
+----
+
+== Output Redirection
+
+Redirect command output to a file with `>`, or append with `>>`.
+
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> describe my-cache > /tmp/cache-config.txt
+----
+
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> ls >> /tmp/resource-list.txt
+----
+
+Redirect standard error with `2>` or `2>>`.
+
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> describe my-cache 2> /tmp/errors.txt
+----
+
+== Input Redirection
+
+Read input from a file with `<`.
+
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> put --cache=my-cache key1 < /tmp/value.txt
+----
+
+== Chaining Commands
+
+Chain multiple commands on a single line using `;`, `&&`, or `||`.
+
+[source,options="nowrap",subs=attributes+]
+----
+[//containers/default]> create cache --template=org.infinispan.DIST_SYNC my-cache && put --cache=my-cache hello world
+----
+
+* `;` runs commands sequentially regardless of success or failure.
+* `&&` runs the next command only if the previous command succeeded.
+* `||` runs the next command only if the previous command failed.

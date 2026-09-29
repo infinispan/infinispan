@@ -362,6 +362,7 @@ public class CLI extends CliCommand {
       SettingsBuilder<CommandInvocation> settings = SettingsBuilder.builder();
       settings
             .enableAlias(true)
+            .enableShellEscape(true)
             .aliasManager(aliasManager)
             .historyFile(context.configPath().resolve("history").toFile())
             .outputStream(System.out)
