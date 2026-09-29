@@ -14,14 +14,14 @@ Alternatively, you can use the default mode, which is to manually perform state 
 
 * Retrieve the current state transfer mode.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 site state-transfer-mode get --cache=<cache-name-here> --site=NYC
 ----
 
 * Configure automatic state transfer operations for a cache and backup location.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 site state-transfer-mode set --cache=<cache-name-here> --site=NYC --mode=AUTO
 ----

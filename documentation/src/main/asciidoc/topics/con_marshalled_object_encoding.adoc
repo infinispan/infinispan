@@ -3,7 +3,7 @@
 {brandname} stores marshalled Java objects in caches as byte arrays.
 For example, the following is a simple representation of a `Person` object stored as a value in memory:
 
-[source,text,options="nowrap",subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 value=[61 6c 61 6e 0a 70 61 72 74 72 69 64 67 65]
 ----

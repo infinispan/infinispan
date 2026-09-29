@@ -14,7 +14,7 @@ The {brandname} node name uniquely identifies a Raft member.
 
 . List the current Raft members with [command]`raft list` command:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 raft list
 ----
@@ -23,14 +23,14 @@ raft list
 +
 * Add a new member `NODE` with [command]`raft add` command:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 raft add NODE
 ----
 +
 * Remove the member `NODE` with [command]`raft remove` command:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 raft remove NODE
 ----

@@ -18,19 +18,19 @@ Before you roll back patches, you should ensure that your configuration is compa
 . Stop the server if it is running.
 . Start the CLI.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 bin/cli.sh
 ----
 +
 . List the installed patches.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 patch ls
 ----
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 {fullbrandname} patch target=$target_version source=$source_version
 created=$timestamp installed=$timestamp
@@ -41,26 +41,26 @@ created=$timestamp installed=$timestamp
 +
 . Roll back the last installed patch.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 patch rollback
 ----
 +
 . Quit the CLI.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 quit
 ----
 +
 . Start the server to verify the patch is rolled back to the previous version.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 bin/server.sh
 ----
 +
-[source,options="nowrap",subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 ISPN080001: {brandname} Server $version
 ----
@@ -72,7 +72,7 @@ If the patch is rolled back successfully `$version` matches `$source_version`.
 Use the `--server` option to rollback patches in a different `{server_home}`
 directory, for example:
 
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 patch rollback --server=path/to/server/home
 ----

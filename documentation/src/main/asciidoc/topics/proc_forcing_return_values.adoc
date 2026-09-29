@@ -20,21 +20,21 @@ You can, however, change the default behavior so your invocations return previou
 ====
 FORCE_RETURN_VALUE flag::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/HotRodForceReturn.java[]
 ----
 
 Per-cache::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/HotRodForceReturnPerCache.java[]
 ----
 
 hotrod-client.properties::
 +
-[source,options="nowrap",subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 # Use the "*" wildcard in the cache name to return previous values
 # for all caches that start with the "somecaches" string.

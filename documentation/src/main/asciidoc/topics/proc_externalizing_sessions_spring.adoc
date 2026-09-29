@@ -11,7 +11,7 @@ Use the Spring Session API to externalize session data to {brandname}.
 +
 The following example is for remote caches in Spring 6:
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/spring6_session_dependencies.xml[]
 ----
@@ -33,7 +33,7 @@ These annotations have optional parameters:
 
 The following example shows a complete, annotation-based configuration:
 
-[source,java,options=nowrap]
+[source,java,options="nowrap"]
 ----
 include::code_examples/SpringExternalizeSessions.java[]
 ----

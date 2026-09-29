@@ -11,20 +11,26 @@ When authenticating with this realm, the user will have all permissions.
 [discrete]
 == Local realm configuration
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_local_realm.xml[]
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/server_local_realm.json[]
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/server_local_realm.yaml[]
 ----
+====

@@ -9,7 +9,7 @@ Indexing provides a significant performance boost to your queries, allowing you 
 
 . Enable indexing in your cache configuration.
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/indexing_enable.xml[]
 ----
@@ -23,7 +23,7 @@ For remote caches adding this element also implicitly configures encoding as Pro
 +
 . Specify the entities to index with the `indexed-entity` element.
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/indexing_entities.xml[]
 ----
@@ -34,7 +34,7 @@ include::xml/indexing_entities.xml[]
 
 * Specify the message declared in the schema as the value of the `indexed-entity` element, for example:
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/indexing_entities_pojo.xml[]
 ----
@@ -55,14 +55,14 @@ include::protobuf/library.proto[]
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/indexing_entities_proto.xml[]
 ----
 
 ConfigurationBuilder::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/IndexBasicConfiguration.java[]
 ----

@@ -7,7 +7,7 @@ You can insert complete JGroups stack definitions into `infinispan.xml` files.
 
 * Embed a custom JGroups stack declaration in your `infinispan.xml` file.
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/jgroups_inline_stack.xml[]
 ----

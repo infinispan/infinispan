@@ -7,7 +7,7 @@ As a cache encoding, Protobuf gives you excellent performance as well as interop
 
 The following example shows a Protobuf message that describes a `Person` object:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::protobuf/personalshopper.proto[]
 ----

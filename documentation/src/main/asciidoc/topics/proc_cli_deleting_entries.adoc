@@ -9,14 +9,14 @@ Remove data from caches with the {brandname} CLI.
 +
 * Delete all entries with the [command]`clearcache` command.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 clearcache mycache
 ----
 +
 * Remove specific entries with the [command]`remove` command.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 remove --cache=mycache hello
 ----

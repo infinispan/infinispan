@@ -20,14 +20,14 @@ Have one instance of {brandname} Server running.
 . Open a terminal in `{server_home}`.
 . Copy the root directory to `server2`.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 cp -r server server2
 ----
 
 . Specify a port offset and the `server2` directory.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/start_server2.adoc[]
 ----
@@ -38,7 +38,7 @@ You can view cluster membership in the console at link:http://127.0.0.1:11222/co
 
 {brandname} also logs the following messages when nodes join clusters:
 
-[source,options="nowrap",subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 INFO  [org.infinispan.CLUSTER] (jgroups-11,<server_hostname>)
 ISPN000094: Received new cluster view for channel cluster:

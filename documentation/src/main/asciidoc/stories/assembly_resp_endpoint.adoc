@@ -21,7 +21,7 @@ The RESP endpoint works with:
 
 When you start {brandname} Server check for the following log message:
 
-[source,options="nowrap"]
+[source,text,options="nowrap"]
 ----
 [org.infinispan.SERVER] ISPN080018: Started connector Resp (internal)
 ----
@@ -29,12 +29,12 @@ When you start {brandname} Server check for the following log message:
 You can now connect to the RESP endpoint with a Redis client.
 For example, with the Redis CLI you can do the following to add an entry to the cache:
 
-[source,options="nowrap"]
+[source,shell,options="nowrap"]
 ----
 redis-cli -p 11222 --user username --pass password
 ----
 
-[source,options="nowrap"]
+[source,shell,options="nowrap"]
 ----
 127.0.0.1:11222> SET k v
 OK

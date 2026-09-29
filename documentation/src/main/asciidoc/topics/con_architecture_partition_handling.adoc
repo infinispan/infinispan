@@ -26,7 +26,7 @@ A cache can be in one of three availability modes:
 
 The `whenSplit` configuration determines how a cache behaves when a network partition is detected:
 
-[plantuml, target=architecture-partition-strategies, format=svg]
+[plantuml, target=architecture-partition-strategies, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -71,7 +71,7 @@ The cache stays in `AVAILABLE` mode, maximizing uptime at the cost of potential 
 
 {brandname} relies on JGroups view changes and merge views to detect partitions.
 
-[plantuml, target=architecture-partition-detection, format=svg]
+[plantuml, target=architecture-partition-detection, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -127,7 +127,7 @@ Maximizes uptime but is more likely to produce conflicts.
 
 The `PartitionHandlingInterceptor` sits in the interceptor chain and guards every cache operation based on the current availability mode.
 
-[plantuml, target=architecture-partition-interceptor, format=svg]
+[plantuml, target=architecture-partition-interceptor, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -175,7 +175,7 @@ Bulk operations (`clear()`, `keySet()`, `entrySet()`) are always denied in degra
 
 When network connectivity is restored, JGroups delivers a _merge view_ that triggers conflict resolution.
 
-[plantuml, target=architecture-partition-merge, format=svg]
+[plantuml, target=architecture-partition-merge, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -297,7 +297,7 @@ The segment hash is the XOR of its bucket hashes, so both levels of comparison a
 
 Detection proceeds in three levels, falling back to a full fetch if any step fails:
 
-[plantuml, target=architecture-partition-hash-detection, format=svg]
+[plantuml, target=architecture-partition-hash-detection, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif

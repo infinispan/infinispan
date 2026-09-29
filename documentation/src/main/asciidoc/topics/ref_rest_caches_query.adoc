@@ -2,13 +2,13 @@
 = Indexing and Querying with the REST API
 Query remote caches with `GET` requests and the `?action=search&query` parameter from any HTTP client.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{cacheName}?action=search&query={ickle query}
 ----
 
 .{brandname} response
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_query_results.json[]
 ----
@@ -52,13 +52,13 @@ Hits can contain all fields or a subset of fields if you use a `Select` clause.
 To use the body of the request instead of specifying query parameters, invoke
 `POST` requests as follows:
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}?action=search
 ----
 
 .Query in request body
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_query_request_body.json[]
 ----
@@ -67,7 +67,7 @@ include::json/rest_query_request_body.json[]
 == Delete by query
 Delete multiple entries using delete by query in remote caches with `DELETE` requests and the `?action=deleteByQuery&query` parameter from any HTTP client.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 DELETE /rest/v2/caches/{cacheName}?action=deleteByQuery&query={ickle query}
 ----
@@ -89,13 +89,13 @@ DELETE /rest/v2/caches/{cacheName}?action=deleteByQuery&query={ickle query}
 To use the body of the request instead of specifying query parameters, invoke
 `POST` requests as follows:
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}?action=deleteByQuery
 ----
 
 .Delete statement in request body
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_query_delete_request_body.json[]
 ----
@@ -104,7 +104,7 @@ include::json/rest_query_delete_request_body.json[]
 == Update by query
 Update multiple entries using update by query in remote caches with `PUT` requests and the `?action=updateByQuery&query` parameter from any HTTP client.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 PUT /rest/v2/caches/{cacheName}?action=updateByQuery&query={ickle query}
 ----
@@ -126,13 +126,13 @@ PUT /rest/v2/caches/{cacheName}?action=updateByQuery&query={ickle query}
 To use the body of the request instead of specifying query parameters, invoke
 `POST` requests as follows:
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}?action=updateByQuery
 ----
 
 .Update statement in request body
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_query_update_request_body.json[]
 ----
@@ -149,7 +149,7 @@ Remote clients might have different versions of the ProtoStream entity and this 
 
 Reindex all data in caches with `POST` requests and the `?action=reindex` parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}/search/indexes?action=reindex
 ----
@@ -181,7 +181,7 @@ Instead of removing previously indexed data and recreating the index schema, {br
 
 Update the index schema of values in your cache using `POST` requests and the `?action=updateSchema` parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}/search/indexes?action=updateSchema
 ----
@@ -191,7 +191,7 @@ POST /rest/v2/caches/{cacheName}/search/indexes?action=updateSchema
 Delete all indexes from caches with `POST` requests and the `?action=clear`
 parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}/search/indexes?action=clear
 ----
@@ -202,13 +202,13 @@ If the operation successfully completes, the service returns `204 (No Content)`.
 == Get Indexes Metamodel
 Present the full index schema metamodel of all indexes defined on this cache.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{cacheName}/search/indexes/metamodel
 ----
 
 .{brandname} response
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_indexes_metamodel.json[]
 ----
@@ -223,7 +223,7 @@ Obtain information about queries and indexes in caches with `GET` requests.
 You must enable statistics in the cache configuration or results are empty.
 ====
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{cacheName}/search/stats
 ----
@@ -239,7 +239,7 @@ GET /rest/v2/caches/{cacheName}/search/stats
 |===
 
 .{brandname} response
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_search_stats.json[]
 ----
@@ -269,7 +269,7 @@ In the ```index``` section:
 
 Reset runtime statistics with `POST` requests and the `?action=clear` parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}/search/stats?action=clear
 ----
@@ -281,13 +281,13 @@ This operation does not clear index statistics.
 == Retrieving Index Statistics (Deprecated)
 Obtain information about indexes in caches with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{cacheName}/search/indexes/stats
 ----
 
 .{brandname} response
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_index_stats.json[]
 ----
@@ -303,13 +303,13 @@ include::json/rest_index_stats.json[]
 Get information about the queries that have been run in caches with `GET`
 requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{cacheName}/search/query/stats
 ----
 
 .{brandname} response
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_query_stats.json[]
 ----
@@ -328,7 +328,7 @@ include::json/rest_query_stats.json[]
 == Clearing Query Statistics (Deprecated)
 Reset runtime statistics with `POST` requests and the `?action=clear` parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}/search/query/stats?action=clear
 ----

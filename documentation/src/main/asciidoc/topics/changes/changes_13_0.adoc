@@ -50,7 +50,7 @@ If you are upgrading to Infinispan 13 from a previous version, and your caches i
 ====
 Infinispan 12.1 and earlier::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <persistence>
   <soft-index-file-store xmlns="urn:infinispan:config:soft-index:12.1">
@@ -62,7 +62,7 @@ Infinispan 12.1 and earlier::
 
 Infinispan 13 and later::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <persistence>
   <file-store>
@@ -79,7 +79,7 @@ Infinispan 13 and later::
 ====
 Infinispan 12.1 and earlier::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 ConfigurationBuilder b = new ConfigurationBuilder()
    .persistence()
@@ -90,7 +90,7 @@ ConfigurationBuilder b = new ConfigurationBuilder()
 
 Infinispan 13 and later::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 ConfigurationBuilder b = new ConfigurationBuilder()
    .persistence()
@@ -108,7 +108,7 @@ To use `SingleFileStore` as a file-based cache store with Infinispan 13 or later
 ====
 Declarative::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <persistence passivation="false">
   <single-file-store shared="false"
@@ -119,7 +119,7 @@ Declarative::
 
 Programmatic::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 ConfigurationBuilder b = new ConfigurationBuilder()
    .persistence()
@@ -140,7 +140,7 @@ The `currentNumberOfEntries` statistics now return `-1` by default as the calcul
 ====
 Declarative::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <cache-container>
   <metrics accurate-size="true"/>
@@ -149,7 +149,7 @@ Declarative::
 
 Programmatic::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 GlobalConfigurationBuilder b = new GlobalConfigurationBuilder()
    .metrics()

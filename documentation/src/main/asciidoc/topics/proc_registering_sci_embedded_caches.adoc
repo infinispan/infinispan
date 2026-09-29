@@ -29,14 +29,14 @@ You must then manually register all other implementations.
 ====
 Declarative::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/protostream_marshaller.xml[]
 ----
 
 Programmatic::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/ProtoStreamMarshaller.java[]
 ----

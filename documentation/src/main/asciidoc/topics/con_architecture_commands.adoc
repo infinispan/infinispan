@@ -8,7 +8,7 @@ Commands encapsulate the operation's parameters, can be serialized for remote ex
 
 When a user calls a cache method such as `cache.put(key, value)`, the following sequence occurs:
 
-[plantuml, target=architecture-command-flow, format=svg]
+[plantuml, target=architecture-command-flow, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -56,7 +56,7 @@ public Object acceptVisitor(InvocationContext ctx, Visitor visitor) {
 }
 ----
 
-[plantuml, target=architecture-visitor-pattern, format=svg]
+[plantuml, target=architecture-visitor-pattern, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -107,7 +107,7 @@ RemoveCommand ..> Visitor : calls visitRemoveCommand()
 
 == Command categories
 
-[plantuml, target=architecture-command-hierarchy, format=svg]
+[plantuml, target=architecture-command-hierarchy, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif

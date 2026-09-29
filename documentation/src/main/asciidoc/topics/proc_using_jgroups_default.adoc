@@ -11,7 +11,7 @@ Do one of the following to use one of the default JGroups stacks:
 
 * Use the `stack` attribute in your `infinispan.xml` file.
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/jgroups_cluster_transport.xml[]
 ----
@@ -28,7 +28,7 @@ endif::embedded_caches[]
 ifdef::remote_caches[]
 * Use the `cluster-stack` argument to set the JGroups stack file when {brandname} Server starts:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 bin/server.sh --cluster-stack=udp
 ----
@@ -38,7 +38,7 @@ endif::remote_caches[]
 
 {brandname} logs the following message to indicate which stack it uses:
 
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [org.infinispan.CLUSTER] ISPN000078: Starting JGroups channel cluster with stack udp
 ----

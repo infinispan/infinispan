@@ -12,7 +12,7 @@ ifdef::remote_caches[]
 +
 Alternatively, you can append this option directly to the command used to start the {brandname} server:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 bin/server.sh -Dorg.infinispan.threads.virtual=false
 ----
@@ -21,7 +21,7 @@ endif::remote_caches[]
 . Verify by checking the server logs.
 The following log entry should *not* be present:
 +
-[source,options="nowrap",subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 Virtual threads support enabled
 ----

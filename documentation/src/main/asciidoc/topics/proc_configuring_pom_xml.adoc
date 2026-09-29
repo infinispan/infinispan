@@ -17,7 +17,7 @@ artifact you add as a dependency to your project.
 
 The following example shows the {brandname} version and BOM:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/ispn_bom.xml[]
 ----

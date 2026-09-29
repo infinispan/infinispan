@@ -2,7 +2,7 @@
 = Retrieving Server Tasks Information
 View information about available server tasks with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 include::rest_examples/get_v2_tasks_list.adoc[]
 ----
@@ -23,7 +23,7 @@ names of tasks, the engines that handle tasks, the named parameters for tasks,
 the execution modes of tasks, either `ONE_NODE` or `ALL_NODES`, and the allowed
 security role in `JSON` format, as in the following example:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_tasks_response.json[]
 ----
@@ -33,7 +33,7 @@ include::json/rest_tasks_response.json[]
 Execute tasks with `POST` requests that include the task name, an optional
 cache name and required parameters prefixed with `param`.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 include::rest_examples/get_v2_tasks_exec.adoc[]
 ----
@@ -47,7 +47,7 @@ Upload script tasks with `PUT` or `POST` requests.
 Supply the script as the content payload of the request. After {brandname}
 uploads the script, you can execute it with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 include::rest_examples/post_v2_tasks_upload.adoc[]
 ----
@@ -56,7 +56,7 @@ include::rest_examples/post_v2_tasks_upload.adoc[]
 = Downloading Script Tasks
 Download script tasks with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 include::rest_examples/get_v2_tasks_download.adoc[]
 ----

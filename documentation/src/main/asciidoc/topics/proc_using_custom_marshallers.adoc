@@ -18,14 +18,14 @@ link:{javadocroot}/org/infinispan/commons/marshall/Marshaller.html#initialize(or
 ====
 Declarative::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/custom_marshaller.xml[]
 ----
 
 Programmatic::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/CustomMarshaller.java[]
 ----

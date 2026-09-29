@@ -22,7 +22,7 @@ For caches that backup to other clusters via cross-site replication, you should 
 
 From the Infinispan CLI use the `site push-site-state` command as follows:
 
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [//containers/default]> site push-site-state --cache=cacheName --site=NYC
 ----

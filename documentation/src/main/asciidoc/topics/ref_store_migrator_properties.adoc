@@ -138,6 +138,7 @@ To migrate from Binary cache stores in older {brandname} versions, change
 * `source.table.binary.<id\|data\|timestamp>.type`
 ====
 
+[source,properties]
 ----
 # Example configuration for migrating to a JDBC String-Based cache store
 target.type=STRING
@@ -177,6 +178,7 @@ target.key_to_string_mapper=org.infinispan.persistence.keymappers. DefaultTwoWay
 |Optional
 |===
 
+[source,properties]
 ----
 # Example configuration for migrating from a RocksDB cache store.
 source.type=ROCKSDB
@@ -196,6 +198,7 @@ source.compression=SNAPPY
 |Required
 |===
 
+[source,properties]
 ----
 # Example configuration for migrating to a Single File cache store.
 target.type=SINGLE_FILE_STORE
@@ -217,6 +220,7 @@ target.location=/path/to/sfs.dat
 |Required for target cache stores.
 |===
 
+[source,properties]
 ----
 # Example configuration for migrating to a Soft-Index File cache store.
 target.type=SOFT_INDEX_FILE_STORE

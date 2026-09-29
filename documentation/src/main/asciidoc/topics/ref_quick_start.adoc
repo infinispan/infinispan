@@ -14,8 +14,8 @@ To run {brandname}, you need:
 == JDK
 Choose your Java runtime and follow their installation instructions. For example, you could choose:
 
-*  link:http://openjdk.java.net/install/[OpenJDK]
-*  link:http://www.java.com/en/download/manual.jsp[Oracle Java SE]
+* link:https://adoptium.net/[Adoptium]
+* link:https://www.oracle.com/java/technologies/downloads/[Oracle Java SE]
 
 == Maven
 
@@ -37,6 +37,7 @@ You can:
 See different capabilities in action with a few steps.
 Clone the repository:
 
+[source,shell,options="nowrap"]
 ----
 git clone git@github.com:infinispan/infinispan-simple-tutorials.git
 ----

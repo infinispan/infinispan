@@ -4,7 +4,7 @@
 
 Connect a target cluster to the source cluster with:
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}/rolling-upgrade/source-connection
 ----
@@ -12,7 +12,7 @@ POST /rest/v2/caches/{cacheName}/rolling-upgrade/source-connection
 You must provide a `remote-store` definition in JSON format as the body:
 
 .JSON
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/remote_store.json[]
 ----
@@ -28,7 +28,7 @@ If the operation successfully completes, the service returns 204 (No Content). I
 
 To obtain the `remote-store` definition of a cache, use a `GET` request:
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{cacheName}/rolling-upgrade/source-connection
 ----
@@ -46,7 +46,7 @@ This is not a cluster wide operation, and it only returns the remote-store of th
 
 To check if a cache have been connected to a remote cluster, use a `HEAD` request:
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 HEAD /rest/v2/caches/{cacheName}/rolling-upgrade/source-connection
 ----
@@ -57,7 +57,7 @@ Returns status 200 (OK) if for all nodes of the cluster, `cacheName` has a singl
 Synchronize data from a source cluster to a target cluster with `POST` requests
 and the `?action=sync-data` parameter:
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}?action=sync-data
 ----
@@ -70,7 +70,7 @@ entries copied to the target cluster.
 After you synchronize data to target clusters, disconnect from the source
 cluster with `DELETE` requests:
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 DELETE /rest/v2/caches/{cacheName}/rolling-upgrade/source-connection
 ----

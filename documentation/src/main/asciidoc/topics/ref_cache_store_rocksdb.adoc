@@ -14,7 +14,7 @@ You must install both the {brandname} RocksDB cache store module and the RocksDB
 
 Use the {brandname} CLI to install the required artifacts to the `server/lib` directory:
 
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [disconnected]> install org.infinispan:infinispan-cachestore-rocksdb:{ispn_version}
 [disconnected]> install org.rocksdb:rocksdbjni:{rocksdbversion}
@@ -95,35 +95,35 @@ significantly increases cache store start time.
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/persistence_rocksdb_store.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/persistence_rocksdb_store.json[]
 ----
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/persistence_rocksdb_store.yaml[]
 ----
 
 ConfigurationBuilder::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/ConfigRocksDb.java[]
 ----
 
 ConfigurationBuilder with properties::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/ConfigRocksDbProperties.java[]
 ----

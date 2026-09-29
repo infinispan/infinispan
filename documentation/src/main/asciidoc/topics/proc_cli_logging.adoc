@@ -18,28 +18,28 @@ operation, which means that changes:
 
 * List all appenders defined on the server:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 logging list-appenders
 ----
 +
 The command provides a JSON response such as the following:
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/server_logging_appenders.json[]
 ----
 
 * List all logger configurations defined on the server:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 logging list-loggers
 ----
 +
 The command provides a JSON response such as the following:
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/server_logging_list.json[]
 ----
@@ -49,7 +49,7 @@ include::json/server_logging_list.json[]
 For example, the following command sets the logging level for the
 `org.infinispan` package to `DEBUG`:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 logging set --level=DEBUG org.infinispan
 ----
@@ -59,7 +59,7 @@ logging set --level=DEBUG org.infinispan
 For example, the following command removes the `org.infinispan` logger
 configuration, which means the root configuration is used instead:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 logging remove org.infinispan
 ----
@@ -74,7 +74,7 @@ The workflow for this analysis involves a few steps:
 
 . Enable access logging with the CLI for the endpoint you are analyzing.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 logging set --level=TRACE org.infinispan.RESP_ACCESS_LOG
 ----
@@ -84,7 +84,7 @@ In this example, enabling the access log for the RESP endpoint.
 . Run the tests to reproduce the issue or workload to measure.
 . Disable access logging with the CLI.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 logging set --level=INFO org.infinispan.RESP_ACCESS_LOG
 ----

@@ -7,7 +7,7 @@ Each node responds to the PING request with a packet that contains the address o
 If no nodes respond to the PING request, the joining node becomes the coordinator node in a new cluster.
 
 .PING configuration example
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/ping.xml[]
 ----

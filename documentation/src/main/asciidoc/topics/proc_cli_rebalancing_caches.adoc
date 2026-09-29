@@ -8,7 +8,7 @@ You can configure automatic cache rebalancing by disabling or enabling it at the
 . Create a CLI connection to {brandname}.
 . Disable automatic rebalancing for all caches with the [command]`rebalance disable` command.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 rebalance disable
 ----
@@ -17,14 +17,14 @@ rebalance disable
 +
 The following example enables rebalancing for the cache named "mycache" only.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 rebalance enable caches/mycache
 ----
 +
 . Re-enable automatic rebalancing for all caches.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 rebalance enable
 ----

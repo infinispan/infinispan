@@ -11,7 +11,7 @@ Add {brandname} to your project to create embedded caches in your applications.
 * Add the `infinispan-core` artifact as a dependency in your `pom.xml` as
 follows:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/ispn_embedded.xml[]
 ----

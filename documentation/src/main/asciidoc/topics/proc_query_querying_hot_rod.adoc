@@ -43,7 +43,7 @@ The code examples in this procedure generate a `proto/book.proto` schema and an 
 Create a remote cache that configures {brandname} to index your entities.
 For example, the following remote cache indexes the `Book` entity in the `book.proto` schema that you generated in the previous step:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/indexing_repl_cache_books.xml[]
 ----

@@ -4,7 +4,7 @@
 Protobuf schema can include keys within values, as in the following example:
 
 .Protobuf schema with an embedded key
-[source,protobuf,options="nowrap",subs=attributes+]
+[source,protobuf,options="nowrap",subs="attributes+"]
 ----
 include::protobuf/books_embedded_keys.proto[]
 ----

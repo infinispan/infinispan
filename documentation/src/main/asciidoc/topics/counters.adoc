@@ -13,7 +13,7 @@ Details are provided below in this document to help you choose which one fits be
 In order to start using the counters, you needs to add the dependency in your Maven `pom.xml` file:
 
 .pom.xml
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/clustered_counters.xml[]
 ----
@@ -24,7 +24,7 @@ A counters configured in {brandname} configuration file is created at boot time 
 These counters are started eagerly, and they are available in all the cluster's nodes.
 
 .configuration.xml
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/clustered_counters_config.xml[]
 ----

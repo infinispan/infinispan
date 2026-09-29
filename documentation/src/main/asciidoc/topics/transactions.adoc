@@ -47,7 +47,7 @@ TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
 Transactions are configured at cache level.
 Below is the configuration that affects a transaction behaviour and a small description of each configuration attribute.
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/transaction_config.xml[]
 ----

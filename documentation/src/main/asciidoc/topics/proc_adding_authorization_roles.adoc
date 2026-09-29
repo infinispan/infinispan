@@ -13,7 +13,7 @@ Dynamically map roles to permissions when using security authorization with {bra
 . Obtain the `RolePermissionMapper` instance.
 . Define new roles with the `addRole()` method.
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/MutableRolePermissionMapper.java[]
 ----

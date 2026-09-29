@@ -6,7 +6,7 @@ To use {brandname} libraries provided by {wildflybrandname} in your applications
 .Procedure
 . Import the {brandname} dependency management to control the versions of runtime Maven dependencies.  
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/eap_bom_dependencies.xml[]
 ----
@@ -16,7 +16,7 @@ You must define the value for `${version.infinispan.bom}` in the `<properties>` 
 . Declare the required {brandname} dependencies as _provided_.
 +
 .pom.xml
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/eap_dependencies.xml[]
 ----

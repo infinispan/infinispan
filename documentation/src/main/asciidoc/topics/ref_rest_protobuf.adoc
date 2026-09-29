@@ -3,7 +3,7 @@
 Create Protobuf schemas across {brandname} clusters with `POST` requests that
 include the content of a protobuf file in the payload.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/schemas/{schemaName}
 ----
@@ -14,7 +14,7 @@ If the schema is not valid, either because of syntax errors, or because some of 
 
 {brandname} responds with the schema name and any errors.
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_protobuf_create_update_schema_response.json[]
 ----
@@ -28,7 +28,7 @@ If the operation successfully completes, the service returns `201 (Created)`.
 = Reading Protobuf Schemas
 Retrieve Protobuf schema from {brandname} with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/schemas/{schemaName}
 ----
@@ -37,14 +37,14 @@ By default, {brandname} returns the Protobuf schema content as plain text.
 
 To retrieve detailed information about the schema, use the `action=detailed` query parameter:
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/schemas/{schemaName}?action=detailed
 ----
 
 When `action=detailed` is specified, {brandname} returns a JSON document that includes the schema content, validation errors, and the list of caches that index types declared in the schema.
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_protobuf_schema_metadata_response.json[]
 ----
@@ -65,7 +65,7 @@ If the changes involve modifying the existing fields, then you must rebuild the 
 When you add new fields without touching existing schema, you can update the index schema instead of rebuilding it.
 ====
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 PUT /rest/v2/schemas/{schemaName}
 ----
@@ -73,7 +73,7 @@ PUT /rest/v2/schemas/{schemaName}
 If the schema is not valid, either because of syntax errors, or because some of its dependencies are missing,
 {brandname} updates the schema and returns the error in the response body.
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_protobuf_create_update_schema_response.json[]
 ----
@@ -85,7 +85,7 @@ include::json/rest_protobuf_create_update_schema_response.json[]
 = Deleting Protobuf Schemas
 Remove Protobuf schemas from {brandname} clusters with `DELETE` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 DELETE /rest/v2/schemas/{schemaName}
 ----
@@ -95,14 +95,14 @@ If the operation successfully completes, the service returns `204 (No Content)`.
 = Listing Protobuf Schemas
 List all available Protobuf schemas with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/schemas/
 ----
 
 {brandname} responds with a list of all schemas available on the cluster.
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_protobuf_schemas_response.json[]
 ----
@@ -114,14 +114,14 @@ include::json/rest_protobuf_schemas_response.json[]
 = Listing Protobuf Types
 List all available Protobuf types with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/schemas?action=types
 ----
 
 {brandname} responds with a list of all types available on the cluster.
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_protobuf_types_response.json[]
 ----

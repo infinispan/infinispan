@@ -5,7 +5,7 @@
 The following `CREATE` statement adds a table named "books" that has two columns, `isbn` and `title`:
 
 .Database table with two columns
-[source,sql,options="nowrap",subs=attributes+]
+[source,sql,options="nowrap",subs="attributes+"]
 ----
 include::sql/books_simple.sql[]
 ----

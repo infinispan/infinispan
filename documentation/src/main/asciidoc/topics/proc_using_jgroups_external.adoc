@@ -15,7 +15,7 @@ Alternatively you can specify an absolute path when you declare the external sta
 +
 . Reference the external stack file with the `stack-file` element.
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/jgroups_external_stack.xml[]
 ----
@@ -31,7 +31,7 @@ include::code_examples/ConfigureTransportCustom.java[]
 In this example, `my-jgroups-udp.xml` references a UDP stack with custom properties such as the following:
 
 .Custom UDP stack example
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/jgroups_custom_udp.xml[]
 ----

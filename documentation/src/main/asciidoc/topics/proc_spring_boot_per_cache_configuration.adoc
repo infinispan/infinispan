@@ -8,7 +8,7 @@ Configure {brandname} to create caches on first access from the client.
 . Open `hotrod-client.properties` or `application.properties` or  `application.yaml` for editing.
 . Do one of the following:
 +
-[source,properties,options=nowrap,subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 infinispan.client.hotrod.cache.mycache.template_name=mytemplate1
 infinispan.client.hotrod.cache.mycache.force_return_values=true
@@ -20,7 +20,7 @@ infinispan.client.hotrod.cache.[com.myproject.*].template_name=mytemplate2
 infinispan.client.hotrod.cache.[com.myproject.*].transaction.transaction_mode=NON_XA
 ----
 +
-[source,properties,options=nowrap,subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 infinispan.remote.cache.example.configuration=<distributed-cache/>
 infinispan.remote.cache.example.force-return-values=true
@@ -33,7 +33,7 @@ infinispan.remote.cache.[com.myproject.*].template-name=myCustomTemplate
 infinispan.remote.cache.[com.myproject.*].transaction.transaction-mode=NON_XA
 ----
 +
-[source,yaml,options=nowrap,subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 # Infinispan Configuration
 infinispan:

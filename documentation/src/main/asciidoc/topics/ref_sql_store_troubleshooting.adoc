@@ -3,7 +3,7 @@
 
 Find out about common issues and errors with SQL cache stores and how to troubleshoot them.
 
-[source,options="nowrap"]
+[source,text,options="nowrap"]
 ----
 ISPN008064: No primary keys found for table <table_name>, check case sensitivity
 ----

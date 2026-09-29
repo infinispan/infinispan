@@ -12,7 +12,7 @@ Use the {brandname} Command Line Interface (CLI) to add remote caches on {brandn
 
 . Start the CLI.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/cli_nix.adoc[]
 ----
@@ -22,21 +22,21 @@ include::cmd_examples/cli_nix.adoc[]
 +
 For example, create a distributed cache named "distcache" as follows:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 create cache distcache "<distributed-cache />"
 ----
 
 You can use any configuration format supported by {brandname}. Create a cache using a JSON configuration as follows:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 create cache json '{"distributed-cache":{"mode":"SYNC"}}'
 ----
 
 It is possible to use a configuration stored in an external file. For example, create a cache named "mycache" from a file named `mycache.xml` as follows:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 create cache --file=mycache.xml mycache
 ----
@@ -45,7 +45,7 @@ create cache --file=mycache.xml mycache
 
 . List all remote caches with the [command]`ls` command.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 ls caches
 mycache
@@ -53,7 +53,7 @@ mycache
 +
 . View cache configuration with the [command]`describe` command.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 describe caches/mycache
 ----

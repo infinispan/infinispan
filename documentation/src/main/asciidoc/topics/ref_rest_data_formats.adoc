@@ -7,7 +7,7 @@ See the link:{encoding_docs}[Cache Encoding and Marshalling] for more informatio
 
 The following example configures the storage format for entries:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/encoding_keys_values.xml[]
 ----
@@ -50,7 +50,7 @@ header and negotiates the correct MediaType based on the conversions supported.
 
 For example, send the following header when reading data:
 
-[source,options=nowrap]
+[source,http,options="nowrap"]
 ----
 Accept: text/plain;q=0.7, application/json;q=0.8, */*;q=0.6
 ----
@@ -80,21 +80,30 @@ specific header `Key-Content-Type` for keys in different formats.
 
 API call:
 
-   `PUT /my-cache/AQIDBDM=`
+[source,http,options="nowrap"]
+----
+PUT /my-cache/AQIDBDM=
+----
 
 Headers:
 
-`Key-Content-Type: application/octet-stream`
+[source,http,options="nowrap"]
+----
+Key-Content-Type: application/octet-stream
+----
 
 * Specifying a byte[] Key as a hexadecimal string:
 
 API call:
 
-`GET /my-cache/0x01CA03042F`
+[source,http,options="nowrap"]
+----
+GET /my-cache/0x01CA03042F
+----
 
 Headers:
 
-[source,options=nowrap]
+[source,http,options="nowrap"]
 ----
 Key-Content-Type: application/octet-stream; encoding=hex
 ----
@@ -103,11 +112,14 @@ Key-Content-Type: application/octet-stream; encoding=hex
 
 API call:
 
-`POST /my-cache/3.141456`
+[source,http,options="nowrap"]
+----
+POST /my-cache/3.141456
+----
 
 Headers:
 
-[source,options=nowrap]
+[source,http,options="nowrap"]
 ----
 Key-Content-Type: application/x-java-object;type=java.lang.Double
 ----
@@ -126,7 +138,7 @@ You must register a Protobuf schema for the conversion to work.
 
 To register protobuf schemas via REST, invoke a `POST` or `PUT` in the `____protobuf_metadata_` cache as in the following example:
 
-[source]
+[source,shell,options="nowrap"]
 ----
 curl -u user:password -X POST --data-binary @./schema.proto http://127.0.0.1:11222/rest/v2/caches/___protobuf_metadata/schema.proto
 ----
@@ -137,7 +149,7 @@ When writing JSON documents, a special field *__type_* must be present in the do
 ====
 Person.proto::
 +
-[source,protobuf,options="nowrap",subs=attributes+]
+[source,protobuf,options="nowrap",subs="attributes+"]
 ----
 message Person  {
   required string name = 1;
@@ -147,7 +159,7 @@ message Person  {
 
 Person.json::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 {
    "_type": "Person",

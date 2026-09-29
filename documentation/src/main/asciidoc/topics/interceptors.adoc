@@ -12,7 +12,7 @@ Custom interceptors are a way of extending {brandname} by being able to influenc
 == Adding custom interceptors declaratively
 Custom interceptors can be added on a per named cache basis. This is because each named cache have its own interceptor stack. Following XML snippet depicts the ways in which a custom interceptor can be added.
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/custom_interceptors.xml[]
 ----

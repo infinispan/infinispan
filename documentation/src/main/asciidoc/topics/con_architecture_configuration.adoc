@@ -9,7 +9,7 @@ Once built, configuration objects are protected (made immutable) while still all
 
 {brandname} has two levels of configuration:
 
-[plantuml, target=architecture-config-hierarchy, format=svg]
+[plantuml, target=architecture-config-hierarchy, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -58,7 +58,7 @@ Both extend `ConfigurationElement`, forming a tree of nested configuration eleme
 An `Attribute` is the fundamental unit of configuration.
 It holds a typed value, tracks whether the value has been modified from its default, and supports change listeners.
 
-[plantuml, target=architecture-config-attribute, format=svg]
+[plantuml, target=architecture-config-attribute, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -149,7 +149,7 @@ When `set()` is called on a mutable attribute — even on a protected configurat
 
 Attributes are grouped into an `AttributeSet`, which is the backing store for a `ConfigurationElement`.
 
-[plantuml, target=architecture-config-elements, format=svg]
+[plantuml, target=architecture-config-elements, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -213,7 +213,7 @@ Methods like `matches()`, `update()`, and `validateUpdate()` operate recursively
 
 Configurations are constructed using a builder API that mirrors the configuration hierarchy.
 
-[plantuml, target=architecture-config-builder, format=svg]
+[plantuml, target=architecture-config-builder, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -302,7 +302,7 @@ Named cache configurations can extend a parent configuration defined in the same
 
 {brandname} supports XML, JSON, and YAML configuration formats, all parsed through the `ParserRegistry`.
 
-[plantuml, target=architecture-config-parsing, format=svg]
+[plantuml, target=architecture-config-parsing, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -363,7 +363,7 @@ This holder collects the global configuration builder and a map of named cache c
 Configurations can be serialized back to XML, JSON, or YAML for persistence or export.
 Serialization is driven by the attribute metadata.
 
-[plantuml, target=architecture-config-serialization, format=svg]
+[plantuml, target=architecture-config-serialization, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -432,7 +432,7 @@ The `ConfigurationWriter` abstraction handles format-specific output (XML elemen
 After a cache is started, mutable attributes can still be modified.
 Immutable attributes are frozen by `protect()` and reject changes with an exception.
 
-[plantuml, target=architecture-config-runtime, format=svg]
+[plantuml, target=architecture-config-runtime, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -479,7 +479,7 @@ This is controlled by the `ConfigurationStorage` mode in the global configuratio
 
 === Volatile vs persistent state
 
-[plantuml, target=architecture-config-storage-modes, format=svg]
+[plantuml, target=architecture-config-storage-modes, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -573,7 +573,7 @@ The `ConfigurationStorage` setting controls how the node handles runtime configu
 
 When a cache is created or removed at runtime, the change is replicated across the cluster using the internal CONFIG cache.
 
-[plantuml, target=architecture-config-runtime-cache, format=svg]
+[plantuml, target=architecture-config-runtime-cache, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -661,7 +661,7 @@ The same pattern applies to template creation and removal.
 
 Mutable configuration attributes can be updated at runtime across the entire cluster using the admin API with the `UPDATE` flag.
 
-[plantuml, target=architecture-config-cluster-update, format=svg]
+[plantuml, target=architecture-config-cluster-update, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif

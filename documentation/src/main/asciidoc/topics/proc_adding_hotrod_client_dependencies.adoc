@@ -8,7 +8,7 @@
 
 Add the Hot Rod Java client Maven artifact as a dependency to your project in the `pom.xml` file.
 
-[source,xml,subs=attributes+]
+[source,xml,subs="attributes+"]
 ----
 include::dependencies_maven/hotrod_java_client.xml[]
 ----

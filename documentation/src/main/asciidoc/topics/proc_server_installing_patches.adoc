@@ -27,14 +27,14 @@ patching.
 +
 . Start the CLI.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 bin/cli.sh
 ----
 
 . Install the patch.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [disconnected]> patch install path/to/patch.zip
 
@@ -47,7 +47,7 @@ created=$timestamp installed=$timestamp
 
 . Start the server to verify the patch is installed.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 bin/server.sh
 ...
@@ -61,7 +61,7 @@ If the patch is installed successfully `$version` matches `$target_version`.
 Use the `--server` option to install patches in a different `{server_home}`
 directory, for example:
 
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 patch install path/to/patch.zip --server=path/to/server/home
 ----

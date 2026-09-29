@@ -55,14 +55,14 @@ For example, to change only the memory settings without affecting the base or ne
 ====
 Linux::
 +
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 export JAVA_OPTS_MEMORY="-XX:MetaspaceSize=128M -Xms512m -Xmx2g"
 ----
 
 Windows::
 +
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 set "JAVA_OPTS_MEMORY=-XX:MetaspaceSize=128M -Xms512m -Xmx2g"
 ----
@@ -84,14 +84,14 @@ This provides backward compatibility but requires you to include all necessary J
 ====
 Linux::
 +
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 export JAVA_OPTS="-Djava.awt.headless=true -XX:+ExitOnOutOfMemoryError -Xmx1024M"
 ----
 
 Windows::
 +
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 set "JAVA_OPTS=-Djava.awt.headless=true -XX:+ExitOnOutOfMemoryError -Xmx1024M"
 ----
@@ -158,14 +158,14 @@ G1 is a generational collector that works well for heaps up to tens of gigabytes
 ====
 Linux::
 +
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 export JAVA_OPTS_MEMORY="-XX:+UseG1GC -XX:MaxGCPauseMillis=150 -XX:MetaspaceSize=64M -Xms512m -Xmx4g"
 ----
 
 Windows::
 +
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 set "JAVA_OPTS_MEMORY=-XX:+UseG1GC -XX:MaxGCPauseMillis=150 -XX:MetaspaceSize=64M -Xms512m -Xmx4g"
 ----
@@ -184,14 +184,14 @@ Choose ZGC when your workload requires consistently low latency, such as latency
 ====
 Linux::
 +
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 export JAVA_OPTS_MEMORY="-XX:+UseZGC -XX:MetaspaceSize=64M -Xms1g -Xmx8g"
 ----
 
 Windows::
 +
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 set "JAVA_OPTS_MEMORY=-XX:+UseZGC -XX:MetaspaceSize=64M -Xms1g -Xmx8g"
 ----
@@ -214,14 +214,14 @@ Shenandoah is available in OpenJDK builds but is not included in Oracle JDK dist
 ====
 Linux::
 +
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 export JAVA_OPTS_MEMORY="-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational -XX:MetaspaceSize=64M -Xms1g -Xmx8g"
 ----
 
 Windows::
 +
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 set "JAVA_OPTS_MEMORY=-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational -XX:MetaspaceSize=64M -Xms1g -Xmx8g"
 ----
@@ -236,14 +236,14 @@ Disable the logs by setting the `GC_LOG` environment variable to `false` before 
 ====
 Linux::
 +
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 export GC_LOG="false"
 ----
 
 Windows::
 +
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 set "GC_LOG=false"
 ----
@@ -260,14 +260,14 @@ Disable heap dumps by setting the `HEAP_DUMP` environment variable to `false` be
 ====
 Linux::
 +
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 export HEAP_DUMP="false"
 ----
 
 Windows::
 +
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 set "HEAP_DUMP=false"
 ----

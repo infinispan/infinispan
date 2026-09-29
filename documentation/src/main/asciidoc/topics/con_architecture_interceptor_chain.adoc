@@ -18,7 +18,7 @@ Each interceptor can:
 
 All interceptors support asynchronous execution through `CompletionStage`, avoiding thread blocking during remote calls and I/O operations.
 
-[plantuml, target=architecture-interceptor-flow, format=svg]
+[plantuml, target=architecture-interceptor-flow, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -78,7 +78,7 @@ deactivate InvCtx
 All interceptors extend `BaseAsyncInterceptor`.
 Most concrete interceptors extend `DDAsyncInterceptor`, which implements the Visitor pattern for type-safe command dispatch.
 
-[plantuml, target=architecture-interceptor-hierarchy, format=svg]
+[plantuml, target=architecture-interceptor-hierarchy, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif

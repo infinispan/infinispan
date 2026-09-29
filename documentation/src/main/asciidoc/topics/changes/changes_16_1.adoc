@@ -31,7 +31,7 @@ attribute to `true`.
 Infinispan 16.1 introduces the ability to configure *eviction containers* at the cache-container level.
 This simplifies eviction configuration for individual nodes by allowing multiple caches to share a single, node-wide eviction policy.
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <cache-container>
    <eviction-containers>

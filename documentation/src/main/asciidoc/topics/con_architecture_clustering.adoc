@@ -6,7 +6,7 @@ Data is distributed across the cluster using consistent hashing, which maps keys
 
 == Cluster formation
 
-[plantuml, target=architecture-cluster-formation, format=svg]
+[plantuml, target=architecture-cluster-formation, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -52,7 +52,7 @@ JGroups handles:
 {brandname} divides the key space into a fixed number of **segments** (256 by default).
 Each segment is assigned to a list of **owners** — the first owner is the **primary** and the rest are **backups**.
 
-[plantuml, target=architecture-consistent-hash, format=svg]
+[plantuml, target=architecture-consistent-hash, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -107,7 +107,7 @@ During rebalancing, the read and write hashes may differ.
 
 == Cache modes
 
-[plantuml, target=architecture-cache-modes, format=svg]
+[plantuml, target=architecture-cache-modes, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -212,7 +212,7 @@ The choice depends on the cache configuration.
 
 In the lock forwarding pattern, the primary owner acts as a coordinator: it acquires the lock, forwards the command to backup owners, waits for their responses, and only then replies to the originator.
 
-[plantuml, target=architecture-lock-forwarding, format=svg]
+[plantuml, target=architecture-lock-forwarding, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -257,7 +257,7 @@ The triangle pattern takes its name from the three-legged message flow between o
 Unlike lock forwarding, the primary does not wait for backup acknowledgments — it replies to the originator immediately.
 Backups acknowledge directly to the originator instead of going back through the primary.
 
-[plantuml, target=architecture-triangle-overview, format=svg]
+[plantuml, target=architecture-triangle-overview, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -282,7 +282,7 @@ end note
 
 ==== Detailed flow
 
-[plantuml, target=architecture-triangle-sequence, format=svg]
+[plantuml, target=architecture-triangle-sequence, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -353,7 +353,7 @@ Lock forwarding remains necessary for transactional caches because lock ownershi
 
 When nodes join or leave the cluster, {brandname} rebalances data to maintain the configured number of owners per segment.
 
-[plantuml, target=architecture-state-transfer, format=svg]
+[plantuml, target=architecture-state-transfer, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -402,7 +402,7 @@ The transfer is segment-based: only the segments whose ownership changed are tra
 
 The `RpcManager` is the high-level API for sending commands to remote nodes.
 
-[plantuml, target=architecture-rpc-flow, format=svg]
+[plantuml, target=architecture-rpc-flow, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif

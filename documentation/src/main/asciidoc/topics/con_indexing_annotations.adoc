@@ -74,7 +74,7 @@ You then upload your Protobuf schema to {brandname} Server.
 +
 For example, the following schema uses the `@Text` annotation:
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::protobuf/indexed_text.proto[]
 ----

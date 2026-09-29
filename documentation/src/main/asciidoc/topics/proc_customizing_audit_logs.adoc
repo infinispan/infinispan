@@ -14,7 +14,7 @@ You can create custom implementations of the `org.infinispan.security.AuditLogge
 +
 For example, the following configuration defines `my.package.CustomAuditLogger` as the class for logging audit messages:
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_audit_custom.xml[]
 ----

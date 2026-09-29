@@ -16,14 +16,14 @@ Make caches available in one of the following ways:
 
 * Change the availability of remote caches with the REST API.
 +
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/<cacheName>?action=set-availability&availability=AVAILABLE
 ----
 
 * Programmatically change the availability of embedded caches with the `AdvancedCache` API.
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/AdvancedCacheAvailibilityMode.java[]
 ----

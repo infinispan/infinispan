@@ -8,14 +8,14 @@ Create aliases for {brandname} CLI commands to define custom shortcuts.
 +
 For example, set `q` as an alias for the [command]`quit` command:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 alias q=quit
 ----
 +
 . Run the [command]`alias` command to check the defined aliases.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 alias
 alias q='quit'
@@ -23,7 +23,7 @@ alias q='quit'
 +
 . Delete aliases with the [command]`unalias` command, for example:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 unalias q
 ----

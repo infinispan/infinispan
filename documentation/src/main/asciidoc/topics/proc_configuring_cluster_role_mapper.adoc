@@ -39,21 +39,21 @@ Names can be normalized to a common form using one of the following transformers
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/cluster_role_mapper_rewrite_case.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/cluster_role_mapper_rewrite_case.json[]
 ----
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/cluster_role_mapper_rewrite_case.yaml[]
 ----
@@ -65,21 +65,21 @@ include::yaml/cluster_role_mapper_rewrite_case.yaml[]
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/cluster_role_mapper_rewrite_regex.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/cluster_role_mapper_rewrite_regex.json[]
 ----
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/cluster_role_mapper_rewrite_regex.yaml[]
 ----

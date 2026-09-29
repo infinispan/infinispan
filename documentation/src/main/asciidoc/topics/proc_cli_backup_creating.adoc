@@ -16,41 +16,41 @@ create backup archives.
 +
 * Back up all resources with an automatically generated name.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 backup create
 ----
 +
 * Back up all resources in a backup archive named `example-backup`.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 backup create -n example-backup
 ----
 +
 * Back up all resources to the `/some/server/dir` path on the server.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 backup create -d /some/server/dir
 ----
 +
 * Back up only caches and cache templates.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 backup create --caches=* --templates=*
 ----
 * Back up named Protobuf schemas only.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 backup create --proto-schemas=schema1,schema2
 ----
 +
 . List available backup archives on the server.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 backup ls
 ----
@@ -60,14 +60,14 @@ backup ls
 If the backup operation is still in progress, the command waits for it to
 complete.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 backup get example-backup
 ----
 +
 . Optionally delete the `example-backup` archive from the server.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 backup delete example-backup
 ----

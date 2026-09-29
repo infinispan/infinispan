@@ -10,7 +10,7 @@ Stop individually running servers or bring down clusters gracefully.
 +
 * Stop all nodes in a cluster with the [command]`shutdown cluster` command, for example:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 shutdown cluster
 ----
@@ -20,7 +20,7 @@ If you use a cache store, the [command]`shutdown cluster` command also persists 
 +
 * Stop individual server instances with the [command]`shutdown server` command and the server hostname, for example:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 shutdown server <my_server01>
 ----
@@ -39,7 +39,7 @@ Run [command]`help shutdown` for more details about using the command.
 
 {brandname} logs the following messages when you shut down servers:
 
-[source,options="nowrap",subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 ISPN080002: {brandname} Server stopping
 ISPN000080: Disconnecting JGroups channel cluster

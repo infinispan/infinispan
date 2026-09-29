@@ -7,7 +7,7 @@ Include the {RedHat} GA repository in your Maven build environment to get {brand
 
 * Add the {RedHat} GA repository to your Maven settings file, typically `~/.m2/settings.xml`, or directly in the `pom.xml` file of your project.
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <repositories>
   <repository>

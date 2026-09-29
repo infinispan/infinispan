@@ -27,14 +27,14 @@ As an alternative to providing trust stores, you can use shared system certifica
 ====
 ConfigurationBuilder::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/HotRodClientTLS.java[]
 ----
 
 hotrod-client.properties::
 +
-[source,options="nowrap",subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 include::properties/hotrod-client-tls.properties[]
 ----

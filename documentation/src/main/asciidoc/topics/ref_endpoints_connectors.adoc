@@ -11,21 +11,21 @@ The default endpoint configuration, using the default property security realm, i
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_endpoints_default.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/server_endpoints_default.json[]
 ----
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/server_endpoints_default.yaml[]
 ----
@@ -63,21 +63,21 @@ security realm:
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_endpoints_rest_hotrod.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/server_endpoints_rest_hotrod.json[]
 ----
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/server_endpoints_rest_hotrod.yaml[]
 ----
@@ -90,21 +90,21 @@ Expose a REST connector on the `default` socket binding with the `default` secur
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_endpoints_rest_resp.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/server_endpoints_rest_resp.json[]
 ----
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/server_endpoints_rest_resp.yaml[]
 ----
@@ -119,7 +119,7 @@ value with a size suffix (for example, 128KB, 10MB, 1.5GB). Note that this is th
 
 .Hot Rod, RESP & Memcached endpoints
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_endpoints_limits_hotrod_resp_memcached.xml[]
 ----
@@ -131,7 +131,7 @@ server with the `-Dinfinispan.server.hotrod.max-collection-size=<size>` property
 
 .REST endpoint
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_endpoints_limits_rest.xml[]
 ----

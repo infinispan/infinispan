@@ -3,7 +3,7 @@
 Text-based encoding is human-readable content such as plain text.
 The classic "Hello World" example entry could be stored in a cache as follows:
 
-[source,text,options="nowrap",subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 key=hello
 value=world
@@ -17,7 +17,7 @@ If you encode caches with the `text/plain` media type, {brandname} can convert t
 
 The following example configuration encodes keys and values with the `text/plain; charset=UTF-8` media type:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/encoding_text_plain.xml[]
 ----

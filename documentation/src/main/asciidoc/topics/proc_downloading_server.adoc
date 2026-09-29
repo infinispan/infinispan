@@ -9,7 +9,7 @@ ifdef::community[]
 . Download {brandname} {infinispanversion} Server from link:{download_url}[{brandname} downloads].
 . Run the `sha1sum` command with the server download archive as the argument, for example:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/sha_ispn_server.adoc[]
 ----
@@ -22,7 +22,7 @@ ifdef::downstream[]
 . Download {FullProductName} {ProductVersion} Server from the link:{download_url}[software downloads section].
 . Run the `md5sum` or `sha256sum` command with the server download archive as the argument, for example:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/sha_rhdg_server.adoc[]
 ----

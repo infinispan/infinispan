@@ -25,7 +25,7 @@ The `GeneratedSchema` interface includes a method to access the Protobuf schema 
 
 The following example shows a `GeneratedSchema` interface annotated with `@ProtoSchema`:
 
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/LibraryInitializer.java[]
 ----

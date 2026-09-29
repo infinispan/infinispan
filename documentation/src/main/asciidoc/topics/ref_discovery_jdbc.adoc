@@ -31,7 +31,7 @@ Add a managed datasource to a {brandname} Server and use it to provide database 
 . Deploy a JDBC driver JAR to your {brandname} Server `server/lib` directory
 . Create a datasource for your database.
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_datasources.xml[]
 ----
@@ -39,7 +39,7 @@ include::xml/server_datasources.xml[]
 . Create a JGroups stack which uses the `JDBC_PING2` protocol for discovery.
 . Configure cluster transport to use the datasource by specifying the name of the datasource with the `server:data-source` attribute.
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server-transport-datasource.xml[]
 ----

@@ -8,7 +8,7 @@ Configure {brandname} caches with JDBC string-based cache stores that can connec
 * Remote caches: Copy database drivers to the `server/lib` directory in your {brandname} Server installation.
 * Embedded caches: Add the `infinispan-cachestore-jdbc` dependency to your `pom` file.
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/persistence_jdbc_store.xml[]
 ----
@@ -19,14 +19,14 @@ include::dependencies_maven/persistence_jdbc_store.xml[]
 +
 * Declaratively, add the `persistence` element or field then add `string-keyed-jdbc-store` with the following schema namespace:
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 xmlns="urn:infinispan:config:store:jdbc:{schemaversion}"
 ----
 +
 * Programmatically, add the following methods to your `ConfigurationBuilder`:
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 persistence().addStore(JdbcStringBasedStoreConfigurationBuilder.class)
 ----
@@ -55,28 +55,28 @@ endif::downstream[]
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/persistence_jdbc_string_based.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/persistence_jdbc_string_based.json[]
 ----
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/persistence_jdbc_string_based.yaml[]
 ----
 
 ConfigurationBuilder::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/PersistenceJdbcStringBased.java[]
 ----

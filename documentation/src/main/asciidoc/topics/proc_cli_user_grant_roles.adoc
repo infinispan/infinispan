@@ -18,7 +18,7 @@ Grant roles to groups instead of users if you want to assign the same role to mu
 . Create a CLI connection to {brandname}.
 . Assign roles to users with the [command]`user roles grant` command, for example:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 user roles grant --roles=deployer katie
 ----
@@ -27,7 +27,7 @@ user roles grant --roles=deployer katie
 
 List roles that you grant to users with the [command]`user roles ls` command.
 
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 user roles ls katie
 ["deployer"]

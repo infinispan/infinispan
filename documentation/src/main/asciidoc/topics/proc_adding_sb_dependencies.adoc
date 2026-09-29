@@ -7,25 +7,25 @@
 * Add one of the following to your `pom.xml` file:
 
 .Embedded caches Spring Boot 3.x
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/sb3_embedded.xml[]
 ----
 
 .Embedded caches Spring Boot 4.x
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/sb4_embedded.xml[]
 ----
 
 .Remote caches Spring Boot 3.x
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/sb3_remote.xml[]
 ----
 
 .Remote caches Spring Boot 4.x
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/sb4_remote.xml[]
 ----

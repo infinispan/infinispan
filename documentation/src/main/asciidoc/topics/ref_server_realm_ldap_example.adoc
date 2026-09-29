@@ -4,7 +4,7 @@ This example illustrates the process of loading and internally mapping LDAP user
 The following is an LDIF (LDAP Data Interchange Format) file, which describes multiple LDAP entries:
 
 .LDIF
-[source,ldif,options="nowrap",subs=attributes+]
+[source,ldif,options="nowrap",subs="attributes+"]
 ----
 include::ldif/example.ldif[]
 ----

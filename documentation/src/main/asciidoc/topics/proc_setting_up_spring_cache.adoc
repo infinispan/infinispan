@@ -26,7 +26,7 @@ Spring Boot users can add the following artifacts instead of the `infinispan-spr
 ====
 . Configure your Hot Rod client to connect to your {brandname} Server deployment in the `hotrod-client.properties` file.
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 include::properties/hotrod-client-remote.properties[]
 ----
@@ -38,28 +38,28 @@ include::properties/hotrod-client-remote.properties[]
 ====
 Remote caches Spring 6::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/spring6_cache_remote.xml[]
 ----
 
 Remote caches Spring 7::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/spring7_cache_remote.xml[]
 ----
 
 Embedded caches Spring 6::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/spring6_cache_embedded.xml[]
 ----
 
 Embedded caches Spring 7::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/spring7_cache_embedded.xml[]
 ----

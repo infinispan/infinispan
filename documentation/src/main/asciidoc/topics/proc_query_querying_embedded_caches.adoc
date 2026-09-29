@@ -21,7 +21,7 @@ include::code_examples/AuthorEmbedded.java[]
 
 . Configure {brandname} to index the "books" cache and specify `org.infinispan.sample.Book` as the entity to index.
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/indexing_dist_cache_books.xml[]
 ----

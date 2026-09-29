@@ -4,13 +4,13 @@
 == Simplest Client
 
 Create a config file `infinispan-simplest.xml` with the following content:
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/infinispan-simplest.xml[]
 ----
 
 Then in the same folder run:
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 docker run -v .:/user-config -p 11222:11222 infinispan/server:{schemaversion} \
 -c /user-config/infinispan-simplest.xml
@@ -20,13 +20,13 @@ docker run -v .:/user-config -p 11222:11222 infinispan/server:{schemaversion} \
 == Authenticated Client
 
 Create a config file `infinispan-auth.xml` with the following content:
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/infinispan-auth.xml[]
 ----
 
 Then in the same folder run:
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 docker run -v .:/user-config -p 11222:11222 infinispan/server:{schemaversion} \
 -c /user-config/infinispan-simplest.xml
@@ -36,25 +36,25 @@ docker run -v .:/user-config -p 11222:11222 infinispan/server:{schemaversion} \
 == Multiple clusters
 
 Create a config file `infinispan-auth-dist.xml` with the following content:
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/infinispan-auth-dist.xml[]
 ----
 
 Now you need a `docker-compose.yml` file to start two clusters with two nodes each.
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yml/docker-compose-multi-cluster.yml[]
 ----
 
 Now in the same folder run:
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 docker compose up -d
 ----
 
 You can see the server logs and stop everything with:
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 docker compose logs
 docker compose down -v
@@ -66,7 +66,7 @@ docker compose down -v
 
 To set up a tls cluster a set of certificates is needed so that client and server can verify each other identity.
 To create all the certs and organized them in trust and key store, run the following
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 keytool -genkeypair -alias infinispan \
   -keyalg RSA -keysize 2048 -keystore server.keystore \
@@ -95,12 +95,12 @@ rm infinispan.crt
 ----
 
 Create a `infinispan-tls.xml` configuration file:
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/infinispan-tls.xml[]
 ----
 
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 docker run -v .:/user-config -p 11222:11222 infinispan/server:{schemaversion} \
 -c /user-config/infinispan-tls.xml

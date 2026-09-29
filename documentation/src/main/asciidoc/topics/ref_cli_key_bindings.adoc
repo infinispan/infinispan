@@ -3,14 +3,14 @@
 The {brandname} CLI provides Emacs and Vi key bindings for line editing in interactive mode.
 You can view all available key bindings from your CLI session with the [command]`bind` command.
 
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 bind
 ----
 
 To view Vi key bindings instead of the default Emacs bindings:
 
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 bind --mode vi
 ----
@@ -266,14 +266,14 @@ The file uses the GNU Readline `inputrc` format.
 
 For example, to bind `Ctrl-X Ctrl-R` to reverse search:
 
-[source,options="nowrap"]
+[source,text,options="nowrap"]
 ----
 "\C-x\C-r": reverse-search-history
 ----
 
 To set Vi as the default editing mode:
 
-[source,options="nowrap"]
+[source,shell,options="nowrap"]
 ----
 set editing-mode vi
 ----

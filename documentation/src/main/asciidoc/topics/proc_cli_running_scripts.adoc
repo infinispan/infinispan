@@ -15,7 +15,7 @@ Alternatively you can execute scripts and tasks from Hot Rod clients.
 
 * Execute a script named `multiplier.js` and specify two parameters:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 task exec multiplier.js -Pmultiplicand=10 -Pmultiplier=20
 200.0
@@ -23,7 +23,7 @@ task exec multiplier.js -Pmultiplicand=10 -Pmultiplier=20
 
 * Execute a task named `@@cache@names` to retrieve a list of all available caches:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 task exec @@cache@names
 ["___protobuf_metadata","mycache","___script_cache"]

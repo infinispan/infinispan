@@ -27,7 +27,7 @@ A query retrieves entities from {brandname} caches with the following syntax:
 
 The following railroad diagram illustrates the syntax of a query:
 
-[syntrax, select-statement-syntax, format=svg]
+[syntrax, select-statement-syntax, format=svg, align=center]
 ....
 stack(
   line(opt(line('SELECT', '/projection-list')), 'FROM', '/<entityName>'),
@@ -138,7 +138,7 @@ SELECT title, publicationYear FROM org.infinispan.sample.Book WHERE title like '
 
 The following railroad diagram illustrates the forms that may appear as projection items in a `SELECT` clause:
 
-[syntrax, projection-item-syntax, format=svg]
+[syntrax, projection-item-syntax, format=svg, align=center]
 ....
 loop(
   line(choice(
@@ -332,7 +332,7 @@ DELETE FROM <entityName> [WHERE condition]
 
 The following railroad diagram illustrates the syntax of a DELETE statement:
 
-[syntrax, delete-statement-syntax, format=svg]
+[syntrax, delete-statement-syntax, format=svg, align=center]
 ....
 line(
   'DELETE', 'FROM', '/<entityName>',
@@ -365,7 +365,7 @@ UPDATE FROM <entityName> {SET | ADD | REMOVE} <field> = <value> [, ...]* [WHERE 
 
 The following railroad diagram illustrates the syntax of an UPDATE statement:
 
-[syntrax, update-statement-syntax, format=svg]
+[syntrax, update-statement-syntax, format=svg, align=center]
 ....
 stack(
   line('UPDATE', 'FROM', '/<entityName>'),

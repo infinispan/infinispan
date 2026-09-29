@@ -8,7 +8,7 @@ It manages the lifecycle of individual caches, holds global configuration, and c
 
 The following diagram shows the key interfaces and classes that make up the cache manager and cache hierarchy.
 
-[plantuml, target=architecture-cache-hierarchy, format=svg]
+[plantuml, target=architecture-cache-hierarchy, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -87,7 +87,7 @@ Holds components shared across all caches on a node: transport, marshaller, thre
 Cache scope (`ComponentRegistry`)::
 Holds per-cache components: the interceptor chain, data container, distribution manager, lock manager, and persistence manager.
 
-[plantuml, target=architecture-component-registry, format=svg]
+[plantuml, target=architecture-component-registry, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -137,7 +137,7 @@ If a component is not found in the cache scope, the lookup falls through to the 
 
 Every component in the registry progresses through a state machine that governs instantiation, dependency injection, and lifecycle callbacks.
 
-[plantuml, target=architecture-component-lifecycle, format=svg]
+[plantuml, target=architecture-component-lifecycle, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -239,7 +239,7 @@ Marks a factory class, listing the component classes or names it can create.
 {brandname} avoids runtime reflection for component wiring.
 Instead, a compile-time annotation processor (`ComponentAnnotationProcessor`) scans annotated classes and generates code that performs dependency injection and lifecycle callbacks directly.
 
-[plantuml, target=architecture-annotation-processor, format=svg]
+[plantuml, target=architecture-annotation-processor, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -311,7 +311,7 @@ At runtime, the `ModuleRepository` loads all builders via `ServiceLoader` and pr
 
 When the registry needs a component that is not yet registered, it looks up a factory via the `ModuleRepository`.
 
-[plantuml, target=architecture-component-factory, format=svg]
+[plantuml, target=architecture-component-factory, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif

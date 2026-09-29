@@ -6,7 +6,7 @@ a server certificate signed by the CA.
 
 . Complete the following sequence of shell commands:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/keytool.adoc[]
 ----

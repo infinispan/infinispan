@@ -51,7 +51,7 @@ public class CustomTransformer implements Transformer {
 
 Use the `key-transformers` xml element in both embedded and server config:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/indexing_key_transformer.xml[]
 ----

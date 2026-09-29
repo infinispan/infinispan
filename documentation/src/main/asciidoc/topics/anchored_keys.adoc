@@ -70,7 +70,7 @@ The module is still very young and does not yet support many {brandname} feature
 Eventually, if it proves useful, it may become another cache mode.
 For now, configuring a cache with anchored keys requires a replicated cache with a custom element `anchored-keys`:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
