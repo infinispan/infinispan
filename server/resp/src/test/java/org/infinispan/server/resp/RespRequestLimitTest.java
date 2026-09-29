@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.infinispan.server.resp.configuration.RespServerConfigurationBuilder;
+import org.infinispan.server.resp.test.RespAuthenticationConfigurer;
 import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Test;
 
@@ -33,6 +34,16 @@ public class RespRequestLimitTest extends SingleNodeRespBaseTest {
    public RespRequestLimitTest() {
       // This way each test takes only 100 ms instead of 15s
       timeout = 100;
+   }
+
+   @Override
+   public Object[] factory() {
+      return new Object[] {
+            new RespRequestLimitTest(),
+            // The AUTH the client sends on connect is accounted for like any other request, the limit must leave
+            // room for it and must not charge the requests that follow it for its bytes
+            new RespRequestLimitTest().withAuthorization(),
+      };
    }
 
    @Override
@@ -69,7 +80,9 @@ public class RespRequestLimitTest extends SingleNodeRespBaseTest {
     */
    public void testManyPipelinedRequestsNearLimit() throws Exception {
       // The class wide timeout is too tight for a batch this size
-      RedisClient pipeliningClient = createClient(15_000, server.getPort());
+      RedisClient pipeliningClient = isAuthorizationEnabled()
+            ? RespAuthenticationConfigurer.createAuthenticationClient(server.getPort())
+            : createClient(15_000, server.getPort());
       try (StatefulRedisConnection<String, String> connection = pipeliningClient.connect()) {
          RedisAsyncCommands<String, String> redis = connection.async();
          redis.setAutoFlushCommands(false);
