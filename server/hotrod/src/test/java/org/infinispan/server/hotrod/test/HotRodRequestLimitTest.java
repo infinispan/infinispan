@@ -1,5 +1,6 @@
 package org.infinispan.server.hotrod.test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.server.hotrod.OperationStatus.Success;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertSuccess;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
@@ -18,12 +19,19 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.security.sasl.Sasl;
+import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslException;
+
+import org.infinispan.commons.util.SaslUtils;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.core.security.simple.SimpleAuthenticator;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.HotRodSingleNodeTest;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.testing.Exceptions;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
 /**
@@ -35,6 +43,33 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "server.hotrod.HotRodRequestLimitTest")
 public class HotRodRequestLimitTest extends HotRodSingleNodeTest {
    private static final int MAX_CONTENT_LENGTH = 128;
+   // A SCRAM exchange does not fit in the limit below, its final message alone is larger than that
+   private static final String MECH = "CRAM-MD5";
+   private static final String USER = "user";
+   private static final String REALM = "realm";
+   private static final String PASSWORD = "password";
+
+   private boolean authentication;
+
+   public HotRodRequestLimitTest authentication(boolean authentication) {
+      this.authentication = authentication;
+      return this;
+   }
+
+   @Factory
+   public Object[] factory() {
+      return new Object[] {
+            new HotRodRequestLimitTest().authentication(false),
+            // The authentication exchange goes through the same decoder as everything else, so it has to fit in the
+            // limit and must not leave any of its bytes charged against the operations that follow it
+            new HotRodRequestLimitTest().authentication(true),
+      };
+   }
+
+   @Override
+   protected String parameters() {
+      return "[auth=" + authentication + "]";
+   }
 
    @AfterMethod
    public void restartClient() {
@@ -45,11 +80,39 @@ public class HotRodRequestLimitTest extends HotRodSingleNodeTest {
    protected HotRodServer createStartHotRodServer(EmbeddedCacheManager cacheManager) {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder()
             .maxContentLength(Integer.toString(MAX_CONTENT_LENGTH));
+      if (authentication) {
+         SimpleAuthenticator authenticator = new SimpleAuthenticator();
+         authenticator.addUser(USER, REALM, PASSWORD.toCharArray());
+         builder.authentication().enable()
+               .sasl()
+               .authenticator(authenticator)
+               .addAllowedMech(MECH)
+               .serverName("localhost")
+               .addMechProperty(Sasl.POLICY_NOANONYMOUS, "true");
+      }
       // The test handlers install a 1 byte frame decoder, which means a request is never handed to the decoder in
       // the same read as another one. The pipelining tests below rely on real reads to spot bytes leaking from one
       // request into the next
       return HotRodTestingUtil.startHotRodServer(cacheManager, HotRodTestingUtil.host(), HotRodTestingUtil.serverPort(),
             builder, false);
+   }
+
+   @Override
+   protected HotRodClient connectClient(byte protocolVersion) {
+      HotRodClient client = super.connectClient(protocolVersion);
+      if (authentication) {
+         // Every connection has to authenticate before it may run an operation, including the ones the tests below
+         // open again after the server dropped the previous one
+         try {
+            SaslClient sc = SaslUtils.getSaslClientFactory(getClass().getClassLoader(), MECH)
+                  .createSaslClient(new String[]{MECH}, null, "hotrod", "localhost", new HashMap<>(),
+                        new TestCallbackHandler(USER, REALM, PASSWORD));
+            assertThat(client.auth(sc)).isInstanceOf(TestAuthResponse.class);
+         } catch (SaslException e) {
+            throw new AssertionError("Could not authenticate the client", e);
+         }
+      }
+      return client;
    }
 
    public void testKeyTooLong() {
