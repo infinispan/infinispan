@@ -7,7 +7,7 @@ Near caches:
 * Are populated with read operations, calls to `get()` or `getVersioned()` methods. +
 In the following example the `put()` call does not populate the near cache and only has the effect of invalidating the entry if it already exists:
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 cache.put("k1", "v1");
 cache.get("k1");

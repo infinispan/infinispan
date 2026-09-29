@@ -8,7 +8,7 @@ If the node does not respond, the clients then fall back to request balancing.
 
 The default balancing strategy is round-robin, so Hot Rod clients perform request balancing as in the following example where `s1`, `s2`, `s3` are nodes in a {brandname} cluster:
 
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/RequestBalancing.java[]
 ----
@@ -21,14 +21,14 @@ You can use custom `FailoverRequestBalancingStrategy` implementations if you add
 ====
 ConfigurationBuilder::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/HotRodCustomRequestBalancing.java[]
 ----
 
 hotrod-client.properties::
 +
-[source,options="nowrap",subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 include::properties/hotrod-custom-balancing.properties[]
 ----

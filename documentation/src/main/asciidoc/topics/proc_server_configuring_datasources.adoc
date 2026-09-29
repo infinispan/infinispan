@@ -12,7 +12,7 @@ You can then specify the JDNI name of the managed datasources in your caches, wh
 ====
 Use the [command]`install` command with the {brandname} Command Line Interface (CLI) to download the required drivers to the `server/lib` directory, for example:
 
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 install org.postgresql:postgresql:{postgresqlversion}
 ----
@@ -45,21 +45,21 @@ Use the {brandname} Command Line Interface (CLI) to test the datasource connecti
 
 . Start a CLI session.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 bin/cli.sh
 ----
 +
 . List all datasources and confirm the one you created is available.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 server datasource ls
 ----
 +
 . Test a datasource connection.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 server datasource test my-datasource
 ----
@@ -71,21 +71,21 @@ server datasource test my-datasource
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_datasources.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/server_datasources.json[]
 ----
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/server_datasources.yaml[]
 ----

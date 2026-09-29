@@ -11,7 +11,7 @@ Take backup locations offline manually and bring them back online.
 
 . Check if backup locations are online or offline with the [command]`site status` command:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 site status --cache=<cache-name-here> --site=NYC
 ----
@@ -31,14 +31,14 @@ Replace `--cache=<cache-name-here>` with `--all-caches` option to get the backup
 +
 * Bring backup locations online with the [command]`bring-online` command:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 site bring-online --cache=<cache-name-here> --site=NYC
 ----
 +
 * Take backup locations offline with the [command]`take-offline` command:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 site take-offline --cache=<cache-name-here> --site=NYC
 ----

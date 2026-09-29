@@ -8,7 +8,7 @@ Create files that contain a set of operations and then pass them to the {brandna
 +
 For example, create a file named `batch` that creates a cache named `mybatch`, adds two entries to the cache, and disconnects from the CLI.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 connect --username=<username> --password=<password> <hostname>:11222
 create cache --template=org.infinispan.DIST_SYNC mybatch
@@ -25,7 +25,7 @@ Configure the CLI with the `autoconnect-url` property instead of using the `conn
 +
 . Run the CLI and specify the file as input.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 bin/cli.sh -f batch
 ----

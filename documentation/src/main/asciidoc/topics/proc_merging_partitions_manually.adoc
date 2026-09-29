@@ -7,7 +7,7 @@ Detect and resolve conflicting entries to manually merge embedded caches after n
 
 * Retrieve the `ConflictManager` from the `EmbeddedCacheManager` to detect and resolve conflicting entries in a cache, as in the following example:
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/EmbeddedConflictManager.java[]
 ----

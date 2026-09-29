@@ -9,7 +9,7 @@ List and describe users and groups stored in the property security realms.
 
 * List the users with the [command]`user ls` command:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 user ls
 [ "admin", "reader", "writer" ]
@@ -17,7 +17,7 @@ user ls
 
 * Describe a user with the [command]`user describe` command:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 user describe admin
 { username: "admin", realm: "default", groups = ["administrators", "supervisors"] }
@@ -25,7 +25,7 @@ user describe admin
 
 * List the groups with the [command]`user ls` command:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 user ls --groups
 [ "administrators", "readers", "writers" ]

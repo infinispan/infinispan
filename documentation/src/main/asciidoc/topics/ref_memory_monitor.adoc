@@ -22,7 +22,7 @@ The alert auto-clears when GC pressure drops below the threshold.
 
 Add the `memory-monitor` element to the `cache-container` in your {brandname} configuration:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <cache-container>
   <memory-monitor enabled="true"

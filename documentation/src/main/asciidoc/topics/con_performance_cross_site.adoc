@@ -18,10 +18,7 @@ However, the performance impact from state transfer operations depends entirely 
 
 The following example illustrates how concurrent writes result in a conflicting entry for {brandname} clusters running in the **LON** and **NYC** data centers:
 
-[source,options="nowrap"]
-----
 include::asciidoc_examples/xsite_async_conflicts.adoc[]
-----
 
 In an Active/Active site configuration, you should never use the synchronous backup strategy because concurrent writes result in deadlocks, and you lose data.
 With the asynchronous backup strategy (`strategy=async`), {brandname} gives you a choice cross-site merge policies for handling concurrent writes.

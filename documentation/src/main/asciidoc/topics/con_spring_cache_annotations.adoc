@@ -10,7 +10,7 @@ The `@Cacheable` and `@CacheEvict` annotations add cache capabilities to methods
 
 Taking `Book` objects as an example, if you want to cache each instance after loading it from a database with a method such as `BookDao#findBook(Integer bookId)`, you could add the `@Cacheable` annotation as follows:
 
-[source,java,options=nowrap]
+[source,java,options="nowrap"]
 ----
 include::code_examples/SpringCachableExample.java[]
 ----
@@ -25,7 +25,7 @@ With the `@CacheEvict` annotation, you can specify if you want to evict the enti
 .Entire cache eviction
 Annotate the `deleteAllBookEntries()` method with `@CacheEvict` and add the `allEntries` parameter as follows:
 
-[source,java,options=nowrap]
+[source,java,options="nowrap"]
 ----
 include::code_examples/SpringCacheEvictAllEntriesExample.java[]
 ----
@@ -33,7 +33,7 @@ include::code_examples/SpringCacheEvictAllEntriesExample.java[]
 .Entry based eviction
 Annotate the `deleteBook(Integer bookId)` method with `@CacheEvict` and specify the key associated to the entry as follows:
 
-[source,java,options=nowrap]
+[source,java,options="nowrap"]
 ----
 include::code_examples/SpringCacheEvictEntryExample.java[]
 ----

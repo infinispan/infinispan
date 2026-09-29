@@ -3,7 +3,7 @@
 
 {brandname} Server uses the following folders on the host filesystem under `{server_home}`:
 
-[source,options="nowrap",subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 ├── bin
 ├── boot
@@ -32,7 +32,7 @@ Apart from resources in the `bin` and `docs` folders, the only folder under `{se
 You can create multiple nodes under the same `{server_home}` directory or in different directories, but each {brandname} Server instance must have its own server root directory.
 For example, a cluster of 5 nodes could have the following server root directories on the filesystem:
 
-[source,options="nowrap",subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 ├── server
 ├── server1
@@ -43,13 +43,13 @@ For example, a cluster of 5 nodes could have the following server root directori
 
 Each server root directory should contain the following folders:
 
-[source,options="nowrap",subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 ├── server
-│   ├── conf
-│   ├── data
-│   ├── lib
-│   └── log
+│   ├── conf
+│   ├── data
+│   ├── lib
+│   └── log
 ----
 
 [discrete]

@@ -2,7 +2,7 @@
 = Getting Basic Container Information
 Retrieving information about the cache manager with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/container
 ----
@@ -11,7 +11,7 @@ GET /rest/v2/container
 
 NOTE: Information about caches with security authorization is available only to users with the specific roles and permissions assigned to them.
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_container_response.json[]
 ----
@@ -45,7 +45,7 @@ If cross-site replication is not configured, {brandname} returns an empty list.
 = Getting Cluster Health
 Retrieve health information for {brandname} clusters with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/container/health
 ----
@@ -53,7 +53,7 @@ GET /rest/v2/container/health
 {brandname} responds with cluster health information in JSON format, as in the
 following example:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_container_health_response.json[]
 ----
@@ -78,7 +78,7 @@ Empty for standalone servers.
 = Getting Container Health Status
 Retrieve the health status of the {brandname} container with `GET` requests that do not require authentication.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/container/health/status
 ----
@@ -95,7 +95,7 @@ GET /rest/v2/container/health/status
 = Checking REST Endpoint Availability
 Verify {brandname} server REST endpoint availability with `HEAD` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 HEAD /rest/v2/container/health
 ----
@@ -108,7 +108,7 @@ running and serving requests.
 = Obtaining Global Configuration
 Retrieve global configuration for the data container with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/container/config
 ----
@@ -143,7 +143,7 @@ link:{javadocroot}/org/infinispan/configuration/global/GlobalConfiguration.html[
 = Obtaining Configuration for All Caches
 Retrieve the configuration for all caches with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/container/cache-configs
 ----
@@ -151,7 +151,7 @@ GET /rest/v2/container/cache-configs
 {brandname} responds with `JSON` arrays that contain each cache and cache
 configuration, as in the following example:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_cache_config_response.json[]
 ----
@@ -171,7 +171,7 @@ include::json/rest_cache_config_response.json[]
 = Listing Available Cache Templates
 Retrieve all available {brandname} cache templates with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/cache-configs/templates
 ----
@@ -197,14 +197,14 @@ See link:#rest_v2_create_cache_template[Creating Caches with Templates].
 = Getting Container Statistics
 Retrieve the statistics of the container with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/container/stats
 ----
 
 {brandname} responds with Cache Manager statistics in JSON format, as in the following example:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_cache_stats_response.json[]
 ----
@@ -235,7 +235,7 @@ include::json/rest_cache_stats_response.json[]
 = Resetting Container Statistics
 Reset the statistics with `POST` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/container/stats?action=reset
 ----
@@ -244,7 +244,7 @@ POST /rest/v2/container/stats?action=reset
 = Shutdown all container caches
 Shut down the {brandname} container on the server with `POST` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/container?action=shutdown
 ----
@@ -263,7 +263,7 @@ restart the container state.
 = Enabling rebalancing for all caches
 Turn on automatic rebalancing for all caches.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/container?action=enable-rebalancing
 ----
@@ -272,7 +272,7 @@ POST /rest/v2/container?action=enable-rebalancing
 = Disabling rebalancing for all caches
 Turn off automatic rebalancing for all caches.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/container?action=disable-rebalancing
 ----
@@ -283,7 +283,7 @@ Create backup archives, `application/zip`, that contain resources (caches, cache
 templates, counters, Protobuf schemas, server tasks, and so on) currently
 stored in the {brandname}
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/container/backups/{backupName}
 ----
@@ -314,7 +314,7 @@ include::backup_resources.adoc[]
 The following example creates a backup archive with all counters and caches
 named `[cache1,cache2]` in a specified directory:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_backup_create_request_body.json[]
 ----
@@ -324,14 +324,14 @@ include::json/rest_backup_create_request_body.json[]
 Retrieve the names of all backup operations that are in progress, completed, or
 failed.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/container/backups
 ----
 
 {brandname} responds with an Array of all backup names as in the following example:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 ["backup1", "backup2"]
 ----
@@ -340,7 +340,7 @@ GET /rest/v2/container/backups
 = Checking Backup Availability
 Verify that a backup operation is complete.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 HEAD /rest/v2/container/backups/{backupName}
 ----
@@ -352,7 +352,7 @@ A `202` response indicates the backup operation is in progress.
 = Downloading Backup Archives
 Download backup archives from the server.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/container/backups/{backupName}
 ----
@@ -364,7 +364,7 @@ A `202` response indicates the backup operation is in progress.
 = Deleting Backup Archives
 Remove backup archives from the server.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 DELETE /rest/v2/container/backups/{backupName}
 ----
@@ -380,7 +380,7 @@ Restore {brandname} resources from backup archives. The provided
 `{restoreName}` is for tracking restore progress, and is independent of the name of
 backup file being restored.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/container/restores/{restoreName}
 ----
@@ -411,7 +411,7 @@ include::backup_resources.adoc[]
 
 The following example restores all counters from a backup archive on the server:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_backup_restore_request_body.json[]
 ----
@@ -460,14 +460,14 @@ Content-Length: 7353
 Retrieve the names of all restore requests that are in progress, completed, or
 failed.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/container/restores
 ----
 
 {brandname} responds with an Array of all restore names as in the following example:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 ["restore1", "restore2"]
 ----
@@ -476,7 +476,7 @@ GET /rest/v2/container/restores
 = Checking Restore Progress
 Verify that a restore operation is complete.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 HEAD /rest/v2/container/restores/{restoreName}
 ----
@@ -490,7 +490,7 @@ Remove metadata for restore requests from the server. This action removes all me
 associated with restore requests but does not delete any restored content. If you delete
 the request metadata, you can use the request name to perform subsequent restore operations.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 DELETE /rest/v2/container/restores/{restoreName}
 ----
@@ -514,7 +514,7 @@ The `event` value will be one of:
 The `data` value will contain information about the event:
 
 * `create-cache`, `update-cache`, `create-template`, `update-template`: the declarative configuration of the entity that has been created in the format negotiated by the `Accept` header. The following example uses `application/yaml`:
-[source,options="nowrap",subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 event: create-cache
 data: infinispan:
@@ -524,7 +524,7 @@ data:       replicatedCache:
 data:         mode: "SYNC"
 ----
 * `create-schema`, `update-schema`: a response structured in the negotiated media type. The following example uses `application/json`:
-[source,options="nowrap",subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 event: create-schema
 data: {"schema":{"name":"address.proto","errors":"","proto":"message Address {
@@ -533,19 +533,19 @@ data: }
 data: "}}
 ----
 * `create-counter`: the counter configuration in the negotiated media type. The following example uses `application/json`:
-[source,options="nowrap",subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 event: create-counter
 data: {"strong-counter":{"name":"my-counter","initial-value":0,"storage":"VOLATILE","upper-bound":100}}
 ----
 * `remove-cache`, `remove-template`, `remove-schema`, `remove-counter`: the name of the removed entity.
-[source,options="nowrap",subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 event: remove-cache
 data: myCache
 ----
 * `lifecycle-event`: the event payload
-[source,options="nowrap",subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 event: lifecycle-event
 data: log:
@@ -562,7 +562,7 @@ data:     who: ~
 ----
 
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/container?action=listen
 ----
@@ -598,7 +598,7 @@ GET /rest/v2/container?action=listen
 Receive events about configuration changes using https://html.spec.whatwg.org/multipage/server-sent-events.html[Server-Sent Events].
 This endpoint returns only the `cache`, `template`, `schema` and `counter` events which are also returned by <<rest_v2_container_listen>>.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/container/config?action=listen
 ----

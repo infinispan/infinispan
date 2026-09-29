@@ -26,28 +26,28 @@ If you want to use the same persistent across a cluster, configure shared storag
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/persistence_file_store.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/persistence_file_store.json[]
 ----
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/persistence_file_store.yaml[]
 ----
 
 ConfigurationBuilder::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/PersistenceFileStore.java[]
 ----

@@ -37,21 +37,21 @@ endif::embedded_caches[]
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/metrics_cache_container.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/metrics_cache_container.json[]
 ----
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/metrics_cache_container.yaml[]
 ----
@@ -59,7 +59,7 @@ include::yaml/metrics_cache_container.yaml[]
 ifdef::embedded_caches[]
 GlobalConfigurationBuilder::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/MetricsGlobalConfigurationBuilder.java[]
 ----
@@ -76,21 +76,21 @@ For backwards compatibility, metrics are currently exported in a legacy format b
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/metrics_cache_container_legacy.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/metrics_cache_container_legacy.json[]
 ----
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/metrics_cache_container_legacy.yaml[]
 ----
@@ -106,7 +106,7 @@ To verify that statistics are exported to the `metrics` endpoint, you can do the
 ====
 Prometheus format::
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 curl -v http://localhost:11222/metrics \
 --digest -u username:password
@@ -114,7 +114,7 @@ curl -v http://localhost:11222/metrics \
 
 OpenMetrics format::
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 curl -v http://localhost:11222/metrics \
 --digest -u username:password \

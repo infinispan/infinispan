@@ -12,21 +12,21 @@ The `aliases` attribute of a cache configuration is updatable at runtime. Reassi
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/cache_aliases.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/cache_aliases.json[]
 ----
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/cache_aliases.yaml[]
 ----

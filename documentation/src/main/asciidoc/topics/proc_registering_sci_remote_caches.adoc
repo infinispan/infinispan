@@ -24,21 +24,21 @@ Add Protobuf schema to {brandname} Server in one of the following ways:
 
 * Use the [command]`schema` command with the `--upload=` argument from the {brandname} command line interface (CLI).
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 schema --upload=person.proto person
 ----
 
 * Include the Protobuf schema in the payload of a `POST` request with the REST API.
 +
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
-POST/rest/v2/schemas/<schema_name>
+POST /rest/v2/schemas/<schema_name>
 ----
 
 * Use the generated `SerializationContextInitializer` implementation with a Hot Rod client to register the Protobuf schema, as in the following example:
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/LibraryInitializerClientSchema.java[]
 ----
@@ -56,7 +56,7 @@ You must do this if you require {brandname} Server to perform any `application/x
 
 Register the `SerializationContextInitializer` with your Hot Rod clients, as in the following example:
 
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/LibraryInitializerClient.java[]
 ----

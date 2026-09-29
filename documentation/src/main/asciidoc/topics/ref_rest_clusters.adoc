@@ -2,7 +2,7 @@
 = Stopping {brandname} Clusters
 Shut down entire {brandname} clusters with `POST` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/cluster?action=stop
 ----
@@ -16,7 +16,7 @@ the entire cluster.
 Shut down one or more specific servers in {brandname} clusters with `GET`
 requests and the `?action=stop&server` parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/cluster?action=stop&server={server1_host}&server={server2_host}
 ----
@@ -28,7 +28,7 @@ POST /rest/v2/cluster?action=stop&server={server1_host}&server={server2_host}
 Create backup archives, `application/zip`, that contain resources (caches, templates, counters, Protobuf schemas, server tasks,
 and so on) currently stored in the cache container for the cluster.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/cluster/backups/{backupName}
 ----
@@ -56,14 +56,14 @@ If the `directory` parameter is not valid, the service returns `400 (Bad Request
 Retrieve the names of all backup operations that are in progress, completed, or
 failed.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/cluster/backups
 ----
 
 {brandname} responds with an Array of all backup names as in the following example:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 ["backup1", "backup2"]
 ----
@@ -74,7 +74,7 @@ Verify that a backup operation is complete. A `200` response indicates the
 backup archive is available. A `202` response indicates the backup operation is
 in progress.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 HEAD /rest/v2/cluster/backups/{backupName}
 ----
@@ -85,7 +85,7 @@ Download backup archives from the server. A `200` response indicates the
 backup archive is available. A `202` response indicates the backup operation is
 in progress.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/cluster/backups/{backupName}
 ----
@@ -96,7 +96,7 @@ Remove backup archives from the server. A `204` response indicates that the
 backup archive is deleted. A `202` response indicates that the backup operation
 is in progress but will be deleted when the operation completes.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 DELETE /rest/v2/cluster/backups/{backupName}
 ----
@@ -113,7 +113,7 @@ You can restore resources only if the container name in the backup archive
 matches the container name for the cluster.
 ====
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/cluster/restores/{restoreName}
 ----
@@ -143,7 +143,7 @@ include::backup_resources.adoc[]
 
 The following example restores all counters from a backup archive on the server:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_backup_restore_request_body.json[]
 ----
@@ -181,14 +181,14 @@ Content-Length: 7353
 Retrieve the names of all restore requests that are in progress, completed, or
 failed.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/cluster/restores
 ----
 
 {brandname} responds with an Array of all restore names as in the following example:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 ["restore1", "restore2"]
 ----
@@ -197,7 +197,7 @@ GET /rest/v2/cluster/restores
 = Checking Restore Progress
 Verify that a restore operation is complete.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 HEAD /rest/v2/cluster/restores/{restoreName}
 ----
@@ -211,7 +211,7 @@ Remove metadata for restore requests from the server. This action removes all me
 associated with restore requests but does not delete any restored content. If you delete
 the request metadata, you can use the request name to perform subsequent restore operations.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 DELETE /rest/v2/cluster/restores/{restoreName}
 ----
@@ -224,14 +224,14 @@ completes.
 = Checking Cluster Distribution
 Retrieve the distribution details about all servers in the {brandname} cluster.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/cluster?action=distribution
 ----
 
 Returns a JSON array of each {brandname} server statistics in the cluster with the format:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_cluster_distribution.json[]
 ----
@@ -249,14 +249,14 @@ disabled, information about memory usage values is -1. The properties are:
 = Getting Cluster Members Information
 Retrieving information about each cache manager member in the cluster with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/cluster/members
 ----
 
 {brandname} responds with information in JSON format, as in the following example:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_cluster_members_response.json[]
 ----

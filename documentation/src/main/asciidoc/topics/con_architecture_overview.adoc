@@ -6,7 +6,7 @@ Its architecture is built around several core subsystems that work together to p
 
 The following diagram shows a high-level view of the major subsystems and how they relate to each other.
 
-[plantuml, target=architecture-overview, format=svg]
+[plantuml, target=architecture-overview, format=svg, align=center]
 ....
 @startuml
 skinparam componentStyle rectangle

@@ -11,7 +11,7 @@ Therefore, if you need to use `javax` namespace you will still need to utilize H
 The {brandname} cache provider version suitable for your application depends on the Hibernate ORM version in use:
 
 .Hibernate ORM 6.6, 7.1 or newer
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/hibernate_v6.6.xml[]
 ----
@@ -22,7 +22,7 @@ Hibernate ORM 6.5 is supported with {brandname} 15.2.x and older.
 ====
 
 .Hibernate ORM 6.2-6.5
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/hibernate_v6.2.xml[]
 ----
@@ -33,7 +33,7 @@ Hibernate ORM 6.0 is supported with {brandname} 14.0.x and older.
 ====
 
 .Hibernate ORM 6.0
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/hibernate_v6.0.xml[]
 ----
@@ -44,7 +44,7 @@ Hibernate ORM 5.3 is supported with {brandname} 13.0.x and older.
 ====
 
 .Hibernate ORM 5.3
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/hibernate_v5.3.xml[]
 ----
@@ -55,13 +55,13 @@ Hibernate ORM 5.2 is supported with {brandname} 9.2.x only.
 ====
 
 .Hibernate ORM 5.2
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/hibernate_v5.2.xml[]
 ----
 
 .Hibernate ORM 5.1
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/hibernate_v5.1.xml[]
 ----
@@ -133,7 +133,7 @@ Enabling {brandname} second level cache provider inside a JPA/Hibernate ORM appl
 First, make sure the Hibernate ORM {brandname} cache provider is available in the classpath.
 Then, modify the persistence.xml to include these properties:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/ispn_second_level_cache.xml[]
 ----
@@ -194,7 +194,7 @@ link:https://github.com/infinispan/infinispan-simple-tutorials/tree/main/hiberna
 When running a JPA/Hibernate ORM in a multi-node environment and enabling {brandname} second-level cache, it is necessary to cluster the second-level cache so that cache consistency can be guaranteed.
 Clustering the {brandname} second-level cache provider is as simple as adding the following property to the `persistence.xml` file:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/ispn_second_level_cache_multinode.xml[]
 ----
@@ -344,7 +344,7 @@ See examples below on how entity/collection specific configurations can be appli
 
 [[caching_provider_infinispan_config_example]]
 .Use custom {brandname} configuration
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/ispn_caching_provider.xml[]
 ----
@@ -374,7 +374,7 @@ For specifying cache template for specific region, use region name instead of th
 
 [[caching_provider_infinispan_config_cache_example]]
 .Use custom cache template
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/ispn_caching_provider_custom.xml[]
 ----
@@ -382,7 +382,7 @@ include::xml/ispn_caching_provider_custom.xml[]
 .Use custom cache template in WildFly
 When applying entity/collection level changes inside JPA applications deployed in WildFly, it is necessary to specify deployment name and persistence unit name (separated by `#` character):
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/ispn_caching_provider_wfly.xml[]
 ----
@@ -410,7 +410,7 @@ Globally enables/disable {brandname} statistics collection, and their exposure v
 
 Example:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/hibernate_cache_properties.xml[]
 ----
@@ -429,7 +429,7 @@ You can also override eviction/expiration settings on a per entity/collection ty
 This allows overrides that only affect a particular entity (such as `com.acme.Person`) or collection type (such as `com.acme.Person.addresses`).
 Example:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/hibernate_cache_eviction.xml[]
 ----
@@ -439,7 +439,7 @@ Inside of WildFly, same as with the entity/collection configuration override, ev
 link:https://github.com/infinispan/infinispan-simple-tutorials/tree/main/hibernate-cache/wildfly-local[here]
 ):
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/hibernate_cache_deployment.xml[]
 ----

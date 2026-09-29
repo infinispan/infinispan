@@ -10,14 +10,14 @@ Download patches that you can apply to {brandname} Server installations.
 . Open a terminal window and navigate to `{server_home}`.
 . Start the CLI.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 bin/cli.sh
 ----
 +
 . Describe the patch file you downloaded.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [disconnected]> patch describe /path/to/redhat-datagrid-$version-server-patch.zip
 {fullbrandname} patch target=$target_version source=$source_version created=$timestamp
@@ -32,7 +32,7 @@ Use the checksum to verify the integrity of your download.
 . Run the `md5sum` or `sha256sum` command with the downloaded patch as the
 argument, for example:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 sha256sum redhat-datagrid-$version-server-patch.zip
 ----

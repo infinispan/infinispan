@@ -22,7 +22,7 @@ There is no separate element or method for configuring write-through mode.
 
 For example, the following configuration adds a file-based store to the cache that implicitly uses write-through mode:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/persistence_write_through.xml[]
 ----

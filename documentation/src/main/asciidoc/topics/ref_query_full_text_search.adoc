@@ -14,7 +14,7 @@ Full-text predicates have one of the following forms, and any form may be follow
 
 The following railroad diagram illustrates the syntax of a full-text predicate:
 
-[syntrax, fulltext-predicate-syntax, format=svg]
+[syntrax, fulltext-predicate-syntax, format=svg, align=center]
 ....
 line(
   '/analyzed field', ':',

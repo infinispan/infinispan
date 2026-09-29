@@ -21,7 +21,7 @@ For more information and examples, run the [command]`help alter` command.
 ====
 . Verify your changes with the [command]`describe` command, for example:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 describe caches/mycache
 ----

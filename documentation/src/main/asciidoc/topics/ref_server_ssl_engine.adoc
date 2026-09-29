@@ -9,7 +9,7 @@ You must ensure that you set the correct ciphers for the protocol features you
 want to use; for example HTTP/2 ALPN.
 ====
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_ssl_identity_engine.xml[]
 ----

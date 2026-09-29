@@ -3,7 +3,7 @@
 Create named caches across {brandname} clusters with `POST` requests that
 include XML or JSON configuration in the payload.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}
 ----
@@ -36,7 +36,7 @@ Likewise, if you create a cache configuration with a specific attribute, you can
 For example, attempting to modify cache configuration by specifying a value for the `max-count` attribute results in invalid configuration if the `max-size` is already set.
 ====
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 PUT /rest/v2/caches/{cacheName}
 ----
@@ -58,14 +58,14 @@ PUT /rest/v2/caches/{cacheName}
 = Verifying Caches
 Check if a cache exists in {brandname} clusters with `HEAD` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 HEAD /rest/v2/caches/{cacheName}
 ----
 
 Retrieve a caches health with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{cacheName}?action=health
 ----
@@ -75,7 +75,7 @@ GET /rest/v2/caches/{cacheName}?action=health
 Create caches from {brandname} templates with `POST` requests and the
 `?template=` parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}?template={templateName}
 ----
@@ -89,7 +89,7 @@ See link:#rest_v2_cache_manager_cache_templates[Listing Available Cache Template
 = Retrieving Cache Configuration
 Retrieve {brandname} cache configurations with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{name}?action=config
 ----
@@ -110,7 +110,7 @@ Invoke a `POST` request with valid configuration and the `?action=convert`
 parameter. {brandname} responds with the equivalent representation of the
 configuration in the type specified by the `Accept` header.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches?action=convert
 ----
@@ -118,7 +118,7 @@ POST /rest/v2/caches?action=convert
 To convert cache configuration you must specify the input format for the configuration with the `Content-Type` header and the desired output format with the `Accept` header.
 For example, the following command converts the replicated cache configuration from XML to YAML:
 
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 curl localhost:11222/rest/v2/caches?action=convert \
 --digest -u username:password \
@@ -131,7 +131,7 @@ curl localhost:11222/rest/v2/caches?action=convert \
 Invoke a `POST` request with a `multipart/form-data` body containing two cache configurations and the `?action=compare`
 parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches?action=compare
 ----
@@ -144,14 +144,14 @@ TIP: Add the `ignoreMutable=true` parameter to ignore mutable attributes in the 
 = Retrieving All Cache Details
 Invoke a `GET` request to retrieve all details for {brandname} caches.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{name}?action=stats
 ----
 
 {brandname} provides a JSON response such as the following:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_full_cache_detail.json[]
 ----
@@ -180,7 +180,7 @@ For server caches with no encoding, {brandname} assumes `application/x-protostre
 = Resetting All Cache Statistics
 Invoke a `POST` request to reset all statistics for {brandname} caches.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{name}?action=stats-reset
 ----
@@ -190,14 +190,14 @@ POST /rest/v2/caches/{name}?action=stats-reset
 
 Invoke a `GET` request to retrieve all details for data distribution of {brandname} caches.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{name}?action=distribution
 ----
 
 {brandname} provides a JSON response such as the following:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_full_cache_data_distribution.json[]
 ----
@@ -214,28 +214,28 @@ Each element in the list represents a node. The properties are:
 = Retrieving all mutable cache configuration attributes
 Invoke a `GET` request to retrieve all mutable cache configuration attributes for {brandname} caches.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{name}?action=get-mutable-attributes
 ----
 
 {brandname} provides a JSON response such as the following:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_cache_mutable_attributes.json[]
 ----
 
 Add the `full` parameter to obtain values and type information:
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/mycache?action=get-mutable-attributes&full=true
 ----
 
 {brandname} provides a JSON response such as the following:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_cache_mutable_attributes_full.json[]
 ----
@@ -246,7 +246,7 @@ For attributes of type `enum`, an additional `universe` property will contain th
 = Updating cache configuration attributes
 Invoke a `POST` request to change a mutable cache configuration attribute.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{name}?action=set-mutable-attributes&attribute-name={attributeName}&attribute-value={attributeValue}
 ----
@@ -256,7 +256,7 @@ POST /rest/v2/caches/{name}?action=set-mutable-attributes&attribute-name={attrib
 Invoke a `POST` request to assign an alias to a cache. If the alias is already assigned to a different cache, it will
 be reassigned to the specified one.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{name}?action=assign-alias&alias={aliasName}
 ----
@@ -266,7 +266,7 @@ POST /rest/v2/caches/{name}?action=assign-alias&alias={aliasName}
 = Adding Entries
 Add entries to caches with `POST` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}/{cacheKey}
 ----
@@ -332,7 +332,7 @@ If _only_ `timeToLiveSeconds` has a value of `0`, {brandname} uses:
 = Replacing Entries
 Replace entries in caches with `PUT` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 PUT /rest/v2/caches/{cacheName}/{cacheKey}
 ----
@@ -346,7 +346,7 @@ link:#rest_v2_add_entries[Adding Values].
 = Retrieving Data By Keys
 Retrieve data for specific keys with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{cacheName}/{cacheKey}
 ----
@@ -385,7 +385,7 @@ that has changed, which conserves bandwidth.
 ====
 Append the `extended` parameter to the query string to get additional information:
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{cacheName}/{cacheKey}?extended
 ----
@@ -402,7 +402,7 @@ The preceding request returns custom headers:
 = Checking if Entries Exist
 Verify that specific entries exists with `HEAD` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 HEAD /rest/v2/caches/{cacheName}/{cacheKey}
 ----
@@ -431,7 +431,7 @@ Java objects, {brandname} does not de-serialize the content in the request.
 = Deleting Entries
 Remove entries from caches with `DELETE` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 DELETE /rest/v2/caches/{cacheName}/{cacheKey}
 ----
@@ -450,14 +450,14 @@ DELETE /rest/v2/caches/{cacheName}/{cacheKey}
 = Checking distribution of cache entries
 Invoke this endpoint to retrieve details for data distribution of {brandname} cache entry.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{cacheName}/{cacheKey}?action=distribution
 ----
 
 {brandname} provides a JSON response such as the following:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_full_key_data_distribution.json[]
 ----
@@ -475,7 +475,7 @@ List of owners includes the following properties:
 = Deleting Caches
 Remove caches from {brandname} clusters with `DELETE` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 DELETE /rest/v2/caches/{cacheName}
 ----
@@ -485,7 +485,7 @@ DELETE /rest/v2/caches/{cacheName}
 = Retrieving All Keys from Caches
 Invoke `GET` requests to retrieve all the keys in a cache in JSON format.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{cacheName}?action=keys
 ----
@@ -507,7 +507,7 @@ GET /rest/v2/caches/{cacheName}?action=keys
 = Retrieving All Entries from Caches
 Invoke `GET` requests to retrieve all the entries in a cache in JSON format.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{cacheName}?action=entries
 ----
@@ -536,7 +536,7 @@ When content-negotiation is used, the response will contain two headers: `key-co
 
 {brandname} provides a JSON response such as the following:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_caches_all_entries.json[]
 ----
@@ -557,7 +557,7 @@ include::json/rest_caches_all_entries.json[]
 To delete all data from a cache, invoke a `POST` request with the
 `?action=clear` parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}?action=clear
 ----
@@ -569,7 +569,7 @@ If the operation successfully completes, the service returns `204 (No Content)`.
 Retrieve the size of caches across the entire cluster with `GET` requests and
 the `?action=size` parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{cacheName}?action=size
 ----
@@ -579,7 +579,7 @@ GET /rest/v2/caches/{cacheName}?action=size
 = Getting Cache Statistics
 Obtain runtime statistics for caches with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{cacheName}?action=stats
 ----
@@ -588,7 +588,7 @@ GET /rest/v2/caches/{cacheName}?action=stats
 = Listing Caches
 List all available caches in {brandname} clusters with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/
 ----
@@ -598,7 +598,7 @@ GET /rest/v2/caches/
 = Obtaining Caches Status and Information
 Retrieve a list of all available caches for the cache manager, along with cache statuses and details, with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches?action=detailed
 ----
@@ -606,7 +606,7 @@ GET /rest/v2/caches?action=detailed
 {brandname} responds with JSON arrays that lists and describes each available
 cache, as in the following example:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_caches_info_response.json[]
 ----
@@ -628,14 +628,14 @@ include::json/rest_caches_info_response.json[]
 When security is enabled, retrieve a list of all the accessible caches for a role.
 This operation requires ADMIN permission.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches?action=role-accessible&role=observer
 ----
 
 {brandname} responds with JSON as in the following example:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_caches_accessible_role_response.json[]
 ----
@@ -657,7 +657,7 @@ Receive cache events using https://html.spec.whatwg.org/multipage/server-sent-ev
 The `event` value will be one of `cache-entry-created`, `cache-entry-removed`, `cache-entry-updated`, `cache-entry-expired`.
 The `data` value will contain the key of the entry that has fired the event in the format set by the `Accept` header.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{name}?action=listen
 ----
@@ -676,7 +676,7 @@ GET /rest/v2/caches/{name}?action=listen
 = Enabling rebalancing
 Turn on automatic rebalancing for a specific cache.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}?action=enable-rebalancing
 ----
@@ -685,7 +685,7 @@ POST /rest/v2/caches/{cacheName}?action=enable-rebalancing
 = Disabling rebalancing
 Turn off automatic rebalancing for a specific cache.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}?action=disable-rebalancing
 ----
@@ -694,7 +694,7 @@ POST /rest/v2/caches/{cacheName}?action=disable-rebalancing
 = Getting Cache Availability
 Retrieve the availability of a cache.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{cacheName}?action=get-availability
 ----
@@ -706,7 +706,7 @@ You can get the availability of internal caches but this is subject to change in
 = Setting Cache Availability
 Change the availability of clustered caches when using either the DENY_READ_WRITES or ALLOW_READS partition handling strategy.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}?action=set-availability&availability={AVAILABILITY}
 ----
@@ -732,7 +732,7 @@ You can set the availability of internal caches but this is subject to change in
 By default, after a cluster shutdown, {brandname} waits for all nodes to join the cluster and restore the topology.
 However, you can define the current cluster topology as stable for a specific cache using a REST operation.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/{cacheName}?action=initialize&force={FORCE}
 ----

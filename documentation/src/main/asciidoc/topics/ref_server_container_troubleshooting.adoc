@@ -5,14 +5,14 @@ The image scripts that are used to configure and launch the executables can be d
 ====
 Docker::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_docker_debug.adoc[]
 ----
 
 Podman::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_podman_debug.adoc[]
 ----
@@ -26,14 +26,14 @@ It is also possible to debug the {brandname} Server in the image by setting the 
 ====
 Docker::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_docker_debug_port.adoc[]
 ----
 
 Podman::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_podman_debug_port.adoc[]
 ----

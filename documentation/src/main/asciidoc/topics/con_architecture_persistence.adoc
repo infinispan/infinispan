@@ -8,7 +8,7 @@
 The persistence subsystem is managed by `PersistenceManager`, which coordinates one or more cache stores per cache.
 Stores implement the `NonBlockingStore` interface, which provides a fully reactive API based on Reactive Streams.
 
-[plantuml, target=architecture-persistence-overview, format=svg]
+[plantuml, target=architecture-persistence-overview, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -80,7 +80,7 @@ end note
 
 Persistence is wired into the cache operation flow through two interceptors:
 
-[plantuml, target=architecture-persistence-interceptors, format=svg]
+[plantuml, target=architecture-persistence-interceptors, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -129,7 +129,7 @@ After a mutation is applied to the data container, it propagates the change to t
 
 == Write-through vs write-behind
 
-[plantuml, target=architecture-write-modes, format=svg]
+[plantuml, target=architecture-write-modes, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -173,7 +173,7 @@ This reduces latency but introduces a window where the store may lag behind the 
 When passivation is enabled, entries evicted from memory are written to the persistent store rather than discarded.
 When the entry is accessed again, it is activated (loaded back into memory and removed from the store).
 
-[plantuml, target=architecture-passivation, format=svg]
+[plantuml, target=architecture-passivation, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif

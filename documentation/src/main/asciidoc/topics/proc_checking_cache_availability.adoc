@@ -16,7 +16,7 @@ Verify availability of clustered caches in network partitions in one of the foll
 ** Open the {brandname} Console in any browser, select the **Data Container** tab, and then locate the availability status in the **Health** column.
 ** Retrieve cache health from the REST API.
 +
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/container/health
 ----

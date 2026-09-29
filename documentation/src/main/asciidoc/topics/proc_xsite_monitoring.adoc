@@ -25,7 +25,7 @@ You can implement a custom script to poll the REST endpoint or use the following
 +
 The following example demonstrates how you can use a Python script to poll the site status every five seconds.
 
-[source,python,options="nowrap",subs=attributes+]
+[source,python,options="nowrap",subs="attributes+"]
 ----
 include::python/monitor_site_status.py[]
 ----
@@ -65,7 +65,7 @@ TIP: Monitoring cross-site latency metrics can help you to discover potential is
 +
 In the following example, Prometheus alerts you when the *NYC* site gets `offline` for cache named `work` or `sessions`.
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/prometheus_xsite_rules.yml[]
 ----

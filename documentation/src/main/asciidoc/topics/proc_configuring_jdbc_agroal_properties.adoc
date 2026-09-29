@@ -7,7 +7,7 @@ You can use a properties file to configure pooled connection factories for JDBC 
 
 . Specify JDBC connection pool configuration with `org.infinispan.agroal.*` properties, as in the following example:
 +
-[source,properties,options="nowrap",subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 include::properties/example_agroal.properties[]
 ----
@@ -18,13 +18,13 @@ include::properties/example_agroal.properties[]
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <connection-pool properties-file="path/to/agroal.properties"/>
 ----
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 "persistence": {
   "connection-pool": {
@@ -35,7 +35,7 @@ JSON::
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 persistence:
   connectionPool:
@@ -44,7 +44,7 @@ persistence:
 
 ConfigurationBuilder::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 .connectionPool().propertyFile("path/to/agroal.properties")
 ----

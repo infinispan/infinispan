@@ -4,14 +4,14 @@
 Retrieve the status of all backup locations with `GET`
 requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/container/x-site/backups/
 ----
 
 {brandname} responds with status in JSON format, as in the following example:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/xsite_backup_status.json[]
 ----
@@ -31,7 +31,7 @@ include::json/xsite_backup_status.json[]
 The response indicates status for each cache.
 |===
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/container/x-site/backups/{site}
 ----
@@ -43,7 +43,7 @@ Returns the status for a single backup location.
 
 Take backup locations offline with the `?action=take-offline` parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/container/x-site/backups/{siteName}?action=take-offline
 ----
@@ -53,7 +53,7 @@ POST /rest/v2/container/x-site/backups/{siteName}?action=take-offline
 
 Bring backup locations online with the `?action=bring-online` parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/container/x-site/backups/{siteName}?action=bring-online
 ----
@@ -63,7 +63,7 @@ POST /rest/v2/container/x-site/backups/{siteName}?action=bring-online
 
 Push state of all caches to remote sites with the `?action=start-push-state` parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/container/x-site/backups/{siteName}?action=start-push-state
 ----
@@ -73,7 +73,7 @@ POST /rest/v2/container/x-site/backups/{siteName}?action=start-push-state
 
 Cancel ongoing state transfer operations with the `?action=cancel-push-state` parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/container/x-site/backups/{siteName}?action=cancel-push-state
 ----

@@ -17,7 +17,7 @@ You can then upload your Protobuf schema for remote caches through the {brandnam
 
 The following database table holds a composite value of the `title` and `author` columns:
 
-[source,sql,options="nowrap",subs=attributes+]
+[source,sql,options="nowrap",subs="attributes+"]
 ----
 include::sql/books_composite_values.sql[]
 ----
@@ -25,7 +25,7 @@ include::sql/books_composite_values.sql[]
 {brandname} adds an entry to the cache using the `isbn` column as the key.
 For the value, {brandname} requires a Protobuf schema that maps the `title` column and the `author` columns:
 
-[source,protobuf,options="nowrap",subs=attributes+]
+[source,protobuf,options="nowrap",subs="attributes+"]
 ----
 include::protobuf/books_composite_values.proto[]
 ----
@@ -35,14 +35,14 @@ include::protobuf/books_composite_values.proto[]
 
 The following database table holds a composite primary key and a composite value, with two columns each:
 
-[source,sql,options="nowrap",subs=attributes+]
+[source,sql,options="nowrap",subs="attributes+"]
 ----
 include::sql/books_composite_keys_values.sql[]
 ----
 
 For both the key and the value, {brandname} requires a Protobuf schema that maps the columns to keys and values:
 
-[source,protobuf,options="nowrap",subs=attributes+]
+[source,protobuf,options="nowrap",subs="attributes+"]
 ----
 include::protobuf/books_composite_keys_values.proto[]
 ----

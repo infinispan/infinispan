@@ -15,14 +15,14 @@ You can inherit properties from the default stacks while combining, removing, an
 +
 For example, you might evaluate using a Gossip router and symmetric encryption with the default TCP stack as follows:
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/jgroups_stack_extends.xml[]
 ----
 +
 . Check {brandname} logs to ensure it uses the stack.
 +
-[source,options="nowrap",subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 [org.infinispan.CLUSTER] ISPN000078: Starting JGroups channel cluster with stack my-stack
 ----

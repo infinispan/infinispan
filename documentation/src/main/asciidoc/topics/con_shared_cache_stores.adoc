@@ -21,7 +21,7 @@ Purging deletes data, which is not typically the desired behavior for persistent
 ====
 Local cache store::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <persistence>
   <store shared="false"
@@ -31,7 +31,7 @@ Local cache store::
 
 Shared cache store::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <persistence>
   <store shared="true"

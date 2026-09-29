@@ -9,7 +9,7 @@ You inject the address (`IP:PORT`) of the Gossip router into {brandname} nodes a
 . Reference that system property in the JGroups configuration file.
 
 .Gossip router configuration example
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/tcpgossip.xml[]
 ----

@@ -37,21 +37,21 @@ The following configuration specifies SASL mechanisms for the Hot Rod endpoint t
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_authentication_mechanisms.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/server_authentication_mechanisms.json[]
 ----
 
 YAML::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::yaml/server_authentication_mechanisms.yaml[]
 ----

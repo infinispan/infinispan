@@ -9,7 +9,7 @@ To record Hot Rod, REST and Memcached endpoint access messages, you need to enab
 . Change the level for the `org.infinispan.HOTROD_ACCESS_LOG`, `org.infinispan.REST_ACCESS_LOG` and `org.infinispan.MEMCACHED_ACCESS_LOG` logging categories to `TRACE`.
 . Save and close `log4j2.xml`.
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_endpoint_access_logs.xml[]
 ----

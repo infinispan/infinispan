@@ -6,7 +6,7 @@ MutimapCache is a type of {brandname} Cache that maps keys to values in which ea
 == Installation and configuration
 
 .pom.xml
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/multimap.xml[]
 ----

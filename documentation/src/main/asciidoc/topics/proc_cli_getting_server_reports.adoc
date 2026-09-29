@@ -11,7 +11,7 @@ routing, threads, in addition to configuration and log files.
 . Create a CLI connection to {brandname} Server.
 . Use the [command]`server report` command to download a `tar.gz` archive:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 server report
 Downloaded report 'infinispan-<hostname>-<timestamp>-report.tar.gz'
@@ -19,7 +19,7 @@ Downloaded report 'infinispan-<hostname>-<timestamp>-report.tar.gz'
 +
 The command responds with the name of the report, as in the following example:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 Downloaded report 'infinispan-<hostname>-<timestamp>-report.tar.gz'
 ----

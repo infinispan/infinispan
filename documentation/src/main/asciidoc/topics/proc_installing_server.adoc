@@ -10,7 +10,7 @@ Install the {brandname} Server distribution on a host system.
 
 * Use any appropriate tool to extract the {brandname} Server archive to the host filesystem.
 
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/extract_server_distribution.adoc[]
 ----

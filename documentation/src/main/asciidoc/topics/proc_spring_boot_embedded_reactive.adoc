@@ -6,7 +6,7 @@ If you use `spring-boot-starter-webflux`, your application may block.
 
 To enable the {brandname} reactive driver, specify the following property in `application.properties`:
 
-[source,text,options=nowrap,subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 infinispan.embedded.reactive=true
 ----

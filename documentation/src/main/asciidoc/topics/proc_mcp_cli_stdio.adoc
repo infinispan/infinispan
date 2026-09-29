@@ -22,25 +22,25 @@ The `mcp` command starts the stdio transport bridge.
 You can specify the server connection as a URL, a bookmark name, or the special value `local` which connects to `http://localhost:11222` without authentication.
 
 .Syntax
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 infinispan-cli mcp <server-url|bookmark|local>
 ----
 
 .Connecting to a local server without authentication
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 bin/infinispan-cli mcp local
 ----
 
 .Connecting to a server with a URL
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 bin/infinispan-cli mcp http://myuser:mypassword@myserver:11222
 ----
 
 .Connecting using a saved bookmark
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 bin/infinispan-cli mcp mybookmark
 ----
@@ -54,7 +54,7 @@ The client launches the CLI process and communicates with it through standard in
 
 Create a `.mcp.json` file in your project directory:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 {
   "mcpServers": {
@@ -70,7 +70,7 @@ Create a `.mcp.json` file in your project directory:
 
 Add the following to your Claude Desktop configuration file (`claude_desktop_config.json`):
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 {
   "mcpServers": {
@@ -86,7 +86,7 @@ Add the following to your Claude Desktop configuration file (`claude_desktop_con
 
 Add the following to your Cursor MCP configuration (`.cursor/mcp.json`):
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 {
   "mcpServers": {
@@ -107,14 +107,14 @@ Configure the client to launch the CLI with the `mcp` command and the appropriat
 
 When connecting to a server that requires authentication, provide credentials in the connection URL:
 
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 bin/infinispan-cli mcp http://admin:password@myserver:11222
 ----
 
 Alternatively, create a bookmark with the `bookmark set` CLI command and reference it by name:
 
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 bin/infinispan-cli bookmark set myserver --url http://myserver:11222 --username admin --password password
 bin/infinispan-cli mcp myserver

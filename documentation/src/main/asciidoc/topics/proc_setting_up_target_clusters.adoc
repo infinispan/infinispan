@@ -21,7 +21,7 @@ Depending on your environment you can also use different network interfaces and 
 +
 Remote cache stores on the target cluster use the Hot Rod protocol to retrieve data from the source cluster.
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/remote_store_minimal.json[]
 ----
@@ -30,14 +30,14 @@ include::json/remote_store_minimal.json[]
 +
 * CLI: Use the [command]`migrate cluster connect` command on the target cluster.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [//containers/default]> migrate cluster connect -c myCache --file=remote-store.json
 ----
 +
 * REST API: Invoke a POST request that includes the remote store configuration in the payload with the `rolling-upgrade/source-connection` method.
 +
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/caches/myCache/rolling-upgrade/source-connection
 ----

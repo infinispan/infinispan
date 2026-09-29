@@ -6,7 +6,7 @@
 
 . Add the following to your `pom.xml` file:
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/sb_actuator.xml[]
 ----
@@ -20,7 +20,7 @@ include::code_examples/EnableJmxStatisticsSpringBoot.java[]
 ----
 +
 .Declaratively
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/jmx_statistics.xml[]
 ----

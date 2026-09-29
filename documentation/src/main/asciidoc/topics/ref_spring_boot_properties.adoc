@@ -10,7 +10,7 @@ Properties can be in both properties files but the starter applies the configura
 
 Properties in this file take the format of `infinispan.client.hotrod.*`, for example:
 
-[source,text,options=nowrap,subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 # List {brandname} servers by IP address or hostname at port localhost:11222.
 infinispan.client.hotrod.server_list=127.0.0.1:11222
@@ -23,7 +23,7 @@ infinispan.client.hotrod.server_list=127.0.0.1:11222
 
 Properties in this file take the format of `infinispan.remote.*`, for example:
 
-[source,text,options=nowrap,subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 # List {brandname} servers by IP address or hostname at port localhost:11222.
 infinispan.remote.server-list=127.0.0.1:11222

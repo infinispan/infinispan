@@ -12,14 +12,14 @@ Create at least one {brandname} user.
 +
 * Using the `cli.dir` system property:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 bin/cli.sh -Dcli.dir=/path/to/cli/storage ...
 ----
 +
 * Using the `ISPN_CLI_DIR` environment variable:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 export ISPN_CLI_DIR=/path/to/cli/storage
 bin/cli.sh ...
@@ -37,7 +37,7 @@ For remote connections, specify the URL and provide credentials:
 * `http[s]://<token>@<hostname>:<port>` for OAuth authentication.
 ====
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 bin/cli.sh config set autoconnect-url http://<username>:<password>@<hostname>:11222
 ----

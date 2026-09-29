@@ -27,14 +27,14 @@ If the certificate in the keystore is not signed by a public certificate authori
 You should create dedicated keystores and security realms so that {brandname} Server endpoints do not use the same security realm as cluster transport.
 ====
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server-transport-security.xml[]
 ----
 +
 . Configure cluster transport to use the security realm by specifying the name of the security realm with the `server:security-realm` attribute.
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server-transport-cache-container.xml[]
 ----
@@ -43,7 +43,7 @@ include::xml/server-transport-cache-container.xml[]
 
 When you start {brandname} Server, the following log message indicates that the cluster is using the security realm for cluster transport:
 
-[source,options="nowrap"]
+[source,text,options="nowrap"]
 ----
 [org.infinispan.SERVER] ISPN080060: SSL Transport using realm <security_realm_name>
 ----

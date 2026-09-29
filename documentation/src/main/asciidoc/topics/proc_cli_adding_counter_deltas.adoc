@@ -5,28 +5,28 @@ Increment or decrement counters with arbitrary values.
 
 . Select a counter.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 counter my-weak-counter
 ----
 +
 . List the current count.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [//containers/default/counters/my-weak-counter]> ls
 5
 ----
 . Increment the counter value by `2`.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [//containers/default/counters/my-weak-counter]> add --delta=2
 ----
 +
 . Decrement the counter value by `-4`.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [//containers/default/counters/my-weak-counter]> add --delta=-4
 ----

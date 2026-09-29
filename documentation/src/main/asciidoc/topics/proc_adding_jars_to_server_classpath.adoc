@@ -18,7 +18,7 @@ The `{server_home}/lib` directory is reserved for {brandname} JAR files.
 . Stop {brandname} Server if it is running.
 . Add JAR files to the `server/lib` directory, for example:
 +
-[source,options="nowrap",subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 ├── server
 │   └── lib

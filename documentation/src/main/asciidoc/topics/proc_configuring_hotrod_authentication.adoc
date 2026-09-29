@@ -10,42 +10,42 @@
 ====
 SCRAM::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/HotRodScram.java[]
 ----
 
 DIGEST::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/HotRodDigest.java[]
 ----
 
 PLAIN::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/HotRodPlain.java[]
 ----
 
 OAUTHBEARER::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/HotRodOAuthBearer.java[]
 ----
 
 EXTERNAL::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/HotRodExternal.java[]
 ----
 
 GSSAPI::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/HotRodGSSAPI.java[]
 ----
@@ -64,7 +64,7 @@ The `BasicCallbackHandler`, as shown in the GSSAPI example, invokes the followin
 
 Use a `TokenCallbackHandler` to refresh OAuth2 tokens before they expire, as in the following example:
 
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/HotRodOAuthBearerTokenCBH.java[]
 ----
@@ -75,7 +75,7 @@ include::code_examples/HotRodOAuthBearerTokenCBH.java[]
 Hot Rod clients set up a default `CallbackHandler` to pass credentials to SASL
 mechanisms. In some cases you might need to provide a custom `CallbackHandler`, as in the following example:
 
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/HotRodCustomCBH.java[]
 ----

@@ -8,7 +8,7 @@ However, you can enforce a specific version of {brandname} with the `infinispan-
 
 * Add `infinispan-bom` to your `pom.xml` file before the starter dependencies.
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::dependencies_maven/sb_bom.xml[]
 ----

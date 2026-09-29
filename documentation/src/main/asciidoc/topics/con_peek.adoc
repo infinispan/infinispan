@@ -41,7 +41,7 @@ include::code_examples/PeekRemoteCacheEntry.java[]
 
 Add the `flags` header with the value `PEEK` to a `GET` request:
 
-[source,options="nowrap"]
+[source,http,options="nowrap"]
 ----
 GET /rest/v2/caches/{cacheName}/{cacheKey}
 flags: PEEK

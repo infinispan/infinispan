@@ -16,13 +16,13 @@ Add the `@EnableCaching` annotation to one of your configuration classes and the
 ====
 Declarative::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/spring_annotation_driven.xml[]
 ----
 Programmatic::
 +
-[source,java,options=nowrap,subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/SpringEnableCaching.java[]
 ----

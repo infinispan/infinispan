@@ -2,14 +2,14 @@
 = Listing the logging appenders
 View a list of all configured appenders with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/logging/appenders
 ----
 
 {brandname} responds with a list of appenders in JSON format as in the following example:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_logging_appenders_response.json[]
 ----
@@ -19,14 +19,14 @@ include::json/rest_logging_appenders_response.json[]
 = Listing the loggers
 View a list of all configured loggers with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/logging/loggers
 ----
 
 {brandname} responds with a list of loggers in JSON format as in the following example:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_logging_loggers_response.json[]
 ----
@@ -35,7 +35,7 @@ include::json/rest_logging_loggers_response.json[]
 = Creating/modifying a logger
 Create a new logger or modify an existing one with `PUT` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 PUT /rest/v2/logging/loggers/{loggerName}?level={level}&appender={appender}&appender={appender}...
 ----
@@ -50,7 +50,7 @@ If the operation successfully completes, the service returns `204 (No Content)`.
 = Removing a logger
 Remove an existing logger with `DELETE` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 DELETE /rest/v2/logging/loggers/{loggerName}
 ----

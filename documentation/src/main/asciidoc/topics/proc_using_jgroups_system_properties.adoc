@@ -10,7 +10,7 @@ Pass system properties to {brandname} at startup to tune cluster transport.
 For example, set a custom bind port and IP address as follows:
 
 ifdef::embedded_caches[]
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 java -cp ... -Djgroups.bind.port=1234 -Djgroups.bind.address=192.0.2.0
 ----
@@ -24,7 +24,7 @@ In this case both {brandname} and your {wildflybrandname} application use the JG
 ====
 endif::embedded_caches[]
 ifdef::remote_caches[]
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 bin/server.sh -Djgroups.bind.port=1234 -Djgroups.bind.address=192.0.2.0
 ----

@@ -10,7 +10,7 @@ Every cache has a configured _storage media type_ that determines how keys and v
 When a client reads or writes data, it specifies a _request media type_ that may differ from the storage format.
 {brandname} automatically converts between the two using transcoders.
 
-[plantuml, target=architecture-encoding-flow, format=svg]
+[plantuml, target=architecture-encoding-flow, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -67,7 +67,7 @@ Used when the application manages its own serialization.
 A `Transcoder` converts data between two or more media types.
 Transcoders are registered in the `EncoderRegistry` and looked up by (source, target) media type pair.
 
-[plantuml, target=architecture-transcoder-registry, format=svg]
+[plantuml, target=architecture-transcoder-registry, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -123,7 +123,7 @@ For example, converting from `application/json` to `application/octet-stream` wo
 `DataConversion` is the per-cache component that ties together the request format, storage format, and transcoder lookup.
 Each cache holds two `DataConversion` instances: one for keys and one for values.
 
-[plantuml, target=architecture-data-conversion, format=svg]
+[plantuml, target=architecture-data-conversion, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -175,7 +175,7 @@ On reads, `fromStorage()` unwraps and transcodes back to the client's requested 
 When a client connects via Hot Rod or REST, it can specify the desired data format.
 The server creates an `EncoderCache` wrapper with `DataConversion` instances configured for the client's requested media types.
 
-[plantuml, target=architecture-format-negotiation, format=svg]
+[plantuml, target=architecture-format-negotiation, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif

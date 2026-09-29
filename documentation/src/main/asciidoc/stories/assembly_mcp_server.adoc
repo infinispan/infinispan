@@ -9,13 +9,13 @@ THE MCP ENDPOINT IS AN *EXPERIMENTAL FEATURE* AND MUST BE EXPLICITLY ENABLED.
 To enable the MCP endpoint, start {brandname} Server with the `org.infinispan.feature.mcp` system property set to `true`:
 
 .Linux
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 bin/server.sh -Dorg.infinispan.feature.mcp=true
 ----
 
 .Windows
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 bin\server.bat -Dorg.infinispan.feature.mcp=true
 ----

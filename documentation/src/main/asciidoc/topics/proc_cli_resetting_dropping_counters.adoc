@@ -9,7 +9,7 @@ Use the [command]`reset` and [command]`drop` commands for counters.
 +
 * Reset counters with the [command]`reset` command:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [//containers/default/counters/my-strong-counter]> reset
 [//containers/default/counters]> reset my-weak-counter
@@ -17,7 +17,7 @@ Use the [command]`reset` and [command]`drop` commands for counters.
 +
 * Delete counters with the [command]`drop` command:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [//containers/default/counters]> drop counter my-strong-counter
 ----

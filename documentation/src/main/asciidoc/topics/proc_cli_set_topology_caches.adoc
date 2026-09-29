@@ -16,14 +16,14 @@ The command does not operate on internal caches. There will be a loss of functio
 +
 * Set the current topology as stable for the given cache.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 topology set-stable cacheName
 ----
 +
 * If the number of nodes missing from the current topology is more than or equal to the number of owners, the force flag is necessary to confirm the operation.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 topology set-stable cacheName -f
 ----

@@ -13,7 +13,7 @@ If you also want to test the EAP integration modules you should also add the app
 The following is an example `settings.xml` to get you started:
 
 .settings.xml
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::../xml/settings.xml[]
 ----
@@ -41,7 +41,7 @@ TIP: Maven places it's output in `target/`
 To be able to publish releases to Maven, you need to have the following in your `settings.xml` file:
 
 .settings.xml
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::../xml/settings_credentials.xml[]
 ----

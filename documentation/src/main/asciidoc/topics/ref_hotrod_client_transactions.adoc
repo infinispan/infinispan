@@ -23,7 +23,7 @@ Hot Rod transactions should not use `FULL_XA` because it degrades performance.
 
 For example:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <replicated-cache name="hotrodReplTx">
   <locking isolation="REPEATABLE_READ"/>

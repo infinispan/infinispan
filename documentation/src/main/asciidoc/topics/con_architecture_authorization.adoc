@@ -8,7 +8,7 @@ Authorization is enforced through a decorator pattern: when enabled, every cache
 
 {brandname} uses a two-level mapping to connect authenticated users to permissions:
 
-[plantuml, target=architecture-authorization-model, format=svg]
+[plantuml, target=architecture-authorization-model, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -107,7 +107,7 @@ Caches can optionally restrict which roles are allowed by listing specific role 
 When authorization is enabled, the `DefaultCacheManager` wraps each cache in a `SecureCacheImpl`.
 This wrapper interposes on every cache method to check the required permission before delegating.
 
-[plantuml, target=architecture-secure-cache, format=svg]
+[plantuml, target=architecture-secure-cache, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -191,7 +191,7 @@ The permission required depends on the operation:
 {brandname} uses standard JAAS `Subject` objects to represent authenticated users.
 The current subject is stored in a thread-local stack managed by the `Security` class.
 
-[plantuml, target=architecture-subject-flow, format=svg]
+[plantuml, target=architecture-subject-flow, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif

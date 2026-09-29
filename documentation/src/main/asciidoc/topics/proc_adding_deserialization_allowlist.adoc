@@ -16,14 +16,14 @@ The deserialization allow list applies to the Cache Manager so your Java classes
 ====
 Declarative::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::xml/deserialization_allowlist.xml[]
 ----
 
 System properties::
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 // Specify a comma-separated list of fully qualified class names
 -Dinfinispan.deserialization.allowlist.classes=java.time.Instant,com.myclass.Entity

@@ -8,7 +8,7 @@ Marshalling is the process of serializing Java objects into a binary format for 
 
 {brandname} has two marshalling contexts:
 
-[plantuml, target=architecture-marshalling-layers, format=svg]
+[plantuml, target=architecture-marshalling-layers, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -61,7 +61,7 @@ Users register their schemas via `SerializationContextInitializer` implementatio
 
 ProtoStream maps Java objects to Protocol Buffer messages using annotations:
 
-[plantuml, target=architecture-protostream, format=svg]
+[plantuml, target=architecture-protostream, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif

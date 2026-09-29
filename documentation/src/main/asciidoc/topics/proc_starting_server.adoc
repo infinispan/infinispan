@@ -21,21 +21,21 @@ endif::downstream[]
 
 Linux::
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_nix.adoc[]
 ----
 
 Microsoft Windows::
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_win.adoc[]
 ----
 
 {brandname} Server is running successfully when it logs the following messages:
 
-[source,options="nowrap",subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 ISPN080004: Protocol SINGLE_PORT listening on 127.0.0.1:11222
 ISPN080034: Server '...' listening on http://127.0.0.1:11222

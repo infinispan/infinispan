@@ -7,7 +7,7 @@ In clustered environments, queries are automatically distributed across the clus
 
 == Architecture overview
 
-[plantuml, target=architecture-query-overview, format=svg]
+[plantuml, target=architecture-query-overview, format=svg, align=center]
 ....
 @startuml
 skinparam componentStyle rectangle
@@ -84,7 +84,7 @@ The indexing subsystem is built on top of Hibernate Search and its Lucene backen
 The `QueryInterceptor` sits in the interceptor chain and intercepts all write operations.
 When a write modifies an indexed entity, the interceptor triggers an index update.
 
-[plantuml, target=architecture-indexing-flow, format=svg]
+[plantuml, target=architecture-indexing-flow, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -130,7 +130,7 @@ Index operations use the consistent hash segment as a routing key, which enables
 In a distributed cache, query results are spread across multiple nodes.
 {brandname} automatically distributes indexed queries across the cluster and merges the results.
 
-[plantuml, target=architecture-clustered-query, format=svg]
+[plantuml, target=architecture-clustered-query, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -181,7 +181,7 @@ This segment-based partitioning ensures that each entry is searched exactly once
 
 Continuous queries provide a push-based mechanism where listeners are notified in real time as cache entries start or stop matching a query predicate.
 
-[plantuml, target=architecture-continuous-query, format=svg]
+[plantuml, target=architecture-continuous-query, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif

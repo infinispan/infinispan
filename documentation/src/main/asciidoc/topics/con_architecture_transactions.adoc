@@ -8,7 +8,7 @@ When a cache is configured as transactional, operations are enlisted in the curr
 
 {brandname} supports two locking strategies for transactional caches:
 
-[plantuml, target=architecture-tx-locking-modes, format=svg]
+[plantuml, target=architecture-tx-locking-modes, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -77,7 +77,7 @@ This mode is better when conflicts are frequent and the cost of rollbacks is hig
 
 Transactional writes are committed across the cluster using a two-phase commit (2PC) protocol.
 
-[plantuml, target=architecture-tx-2pc, format=svg]
+[plantuml, target=architecture-tx-2pc, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -146,7 +146,7 @@ This halves the number of network round trips for simple operations.
 
 {brandname} registers with the JTA transaction manager as either a `Synchronization` or an `XAResource`:
 
-[plantuml, target=architecture-tx-jta, format=svg]
+[plantuml, target=architecture-tx-jta, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -202,7 +202,7 @@ After a crash, the transaction manager can call `recover()` to list in-doubt tra
 
 The `TransactionTable` is the central registry of all active transactions on a node.
 
-[plantuml, target=architecture-tx-table, format=svg]
+[plantuml, target=architecture-tx-table, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -258,7 +258,7 @@ When a node leaves the cluster, `cleanupLeaverTransactions()` rolls back any unp
 
 In optimistic transactional caches with REPEATABLE_READ isolation, {brandname} detects conflicting concurrent modifications using entry versioning.
 
-[plantuml, target=architecture-write-skew, format=svg]
+[plantuml, target=architecture-write-skew, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif

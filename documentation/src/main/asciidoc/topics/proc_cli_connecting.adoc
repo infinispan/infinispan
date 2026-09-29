@@ -13,14 +13,14 @@ Add user credentials and have at least one running {brandname} server instance.
 +
 * *Linux:*
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/cli_nix.adoc[]
 ----
 +
 * *Microsoft Windows:*
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/cli_win.adoc[]
 ----
@@ -29,14 +29,14 @@ include::cmd_examples/cli_win.adoc[]
 +
 * {brandname} Server on the default port of `11222`:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [disconnected]> connect
 ----
 +
 * {brandname} Server with a port offset of `100`:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [disconnected]> connect 127.0.0.1:11322
 ----

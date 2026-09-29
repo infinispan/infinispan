@@ -323,6 +323,7 @@
                                 <postgresqlversion>${postgresql.database.version}</postgresqlversion>
                                 <rocksdbversion>${version.rocksdb}</rocksdbversion>
                                 <source-highlighter>highlight.js</source-highlighter>
+                                <highlightjs-languages>protobuf</highlightjs-languages>
                                 <highlightjs-theme>github</highlightjs-theme>
                             </attributes>
                         </configuration>

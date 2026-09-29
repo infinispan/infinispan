@@ -15,7 +15,7 @@ Do one of the following:
 ====
 Embedded caches::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 // Statistics for the local cluster member
 SearchStatistics statistics = Search.getSearchStatistics(cache);
@@ -25,7 +25,7 @@ CompletionStage<SearchStatisticsSnapshot> statistics = Search.getClusteredSearch
 ----
 Remote caches::
 +
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/caches/{cacheName}/search/stats
 ----

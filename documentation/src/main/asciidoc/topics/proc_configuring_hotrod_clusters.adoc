@@ -12,14 +12,14 @@ If you want to define a cluster as default, so that clients always attempt to co
 ====
 Multiple cluster connections::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/HotRodAddCluster.java[]
 ----
 
 Default server list with a failover cluster::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/HotRodDefaultCluster.java[]
 ----

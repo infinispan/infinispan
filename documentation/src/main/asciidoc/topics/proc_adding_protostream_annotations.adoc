@@ -21,14 +21,14 @@ The following `Author.java` and `Book.java` examples show Java classes annotated
 ====
 Author.java::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/Author.java[]
 ----
 
 Book.java::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/Book.java[]
 ----
@@ -40,14 +40,14 @@ The following `Language.java` example shows a Java enum annotated with `@ProtoEn
 ====
 Language.java::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/Language.java[]
 ----
 
 Language.proto::
 +
-[source,proto,options="nowrap",subs=attributes+]
+[source,proto,options="nowrap",subs="attributes+"]
 ----
 include::protobuf/language.proto[]
 ----

@@ -9,7 +9,7 @@ Use the `migrator.properties` file to configure properties for source and target
 .. Add the `source.` prefix to all configuration properties for the source cache store.
 +
 .Example source cache store
-[source,options="nowrap",subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 source.type=SOFT_INDEX_FILE_STORE
 source.cache_name=myCache
@@ -27,7 +27,7 @@ If the number of segments for a cache store does not match the number of segment
 .. Add the `target.` prefix to all configuration properties for the target cache store.
 +
 .Example target cache store
-[source,options="nowrap",subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 target.type=SINGLE_FILE_STORE
 target.cache_name=myCache

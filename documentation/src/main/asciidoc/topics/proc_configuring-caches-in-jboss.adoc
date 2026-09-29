@@ -14,14 +14,14 @@ Create {brandname} caches in {wildflybrandname}.
 .Procedure
 . Connect to the {wildflybrandname} management CLI.
 +
-[source,options="nowrap"]
+[source,shell,options="nowrap"]
 ----
 $ jboss-cli.sh --connect
 ----
 
 . Create a cache container.
 +
-[source,options="nowrap"]
+[source,shell,options="nowrap"]
 ----
 /subsystem=infinispan/cache-container=exampleCacheContainer:add(statistics-enabled=true)
 ----
@@ -30,7 +30,7 @@ This creates a cache container called `exampleCacheContainer` with statistics en
 
 . Add a cache to the cache container.
 +
-[source,options="nowrap"]
+[source,shell,options="nowrap"]
 ----
 /subsystem=infinispan/cache-container=exampleCacheContainer/local-cache=exampleCache:add(statistics-enabled=true)
 ----

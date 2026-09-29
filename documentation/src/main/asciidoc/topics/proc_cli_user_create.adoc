@@ -19,7 +19,7 @@ Create an `admin` user the first time you add credentials to gain full `ADMIN` p
 . Open a terminal in `{server_home}`.
 . Create an `admin` user, belonging to the `admin` group with the [command]`user create` command.
 +
-[source,sh,options="nowrap",subs=attributes+]
+[source,sh,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/user_tool_nix.adoc[]
 ----
@@ -33,7 +33,7 @@ Run [command]`help user` from a CLI session to get complete command details.
 
 Open `user.properties` and confirm the user exists.
 
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 cat server/conf/users.properties
 
@@ -51,7 +51,7 @@ Changes to users, groups, and roles are not automatically distributed across the
 Changes to a properties realm do not take effect until the server reloads the updated configuration. 
 After reloading the server, flush security realm caches across the cluster:
 
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 server aclcache flush
 ----

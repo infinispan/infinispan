@@ -13,7 +13,7 @@ can configure the internal cache either declaratively or programmatically.
 
 * Programmatic configuration
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 import org.infinispan.lock.configuration.ClusteredLockManagerConfiguration;
 import org.infinispan.lock.configuration.ClusteredLockManagerConfigurationBuilder;
@@ -33,7 +33,7 @@ clm1.defineLock("lock");
 
 * Declarative configuration
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/clustered_lock_manager.xml[]
 ----

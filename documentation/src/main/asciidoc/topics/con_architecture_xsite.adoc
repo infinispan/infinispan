@@ -6,7 +6,7 @@ Each site runs an independent {brandname} cluster, and designated _bridge nodes_
 
 == Topology
 
-[plantuml, target=architecture-xsite-topology, format=svg]
+[plantuml, target=architecture-xsite-topology, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -53,7 +53,7 @@ Only bridge nodes participate in cross-site communication, minimizing network ov
 
 {brandname} supports two cross-site replication strategies:
 
-[plantuml, target=architecture-xsite-strategies, format=svg]
+[plantuml, target=architecture-xsite-strategies, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -99,7 +99,7 @@ This is the more common choice for geo-distributed deployments.
 
 == Active-active vs active-passive
 
-[plantuml, target=architecture-xsite-modes, format=svg]
+[plantuml, target=architecture-xsite-modes, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -142,7 +142,7 @@ Concurrent writes to the same key on different sites create conflicts that must 
 
 In active-active deployments, {brandname} uses the **Irac** (Inter-site Asynchronous Conflict resolution) subsystem to detect and resolve concurrent updates.
 
-[plantuml, target=architecture-xsite-conflict, format=svg]
+[plantuml, target=architecture-xsite-conflict, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif

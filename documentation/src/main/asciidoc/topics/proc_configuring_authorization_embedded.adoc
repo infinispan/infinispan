@@ -9,7 +9,7 @@ When using embedded caches, you can configure authorization with the `GlobalSecu
 . Specify a role mapper with the `principalRoleMapper()` method.
 . If required, define custom role and permission mappings with the `role()` and `permission()` methods.
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/GlobalAuthorizationConfiguration.java[]
 ----
@@ -17,7 +17,7 @@ include::code_examples/GlobalAuthorizationConfiguration.java[]
 +
 * Add all roles from the global configuration.
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 ConfigurationBuilder config = new ConfigurationBuilder();
 config.security().authorization().enable();

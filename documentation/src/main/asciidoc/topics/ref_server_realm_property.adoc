@@ -17,20 +17,20 @@ Changes to users, groups, and roles are not automatically distributed across the
 Changes to a properties realm do not take effect until the server reloads the updated configuration. 
 After reloading the server, flush security realm caches across the cluster:
 
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 server aclcache flush
 ----
 ====
 
 .users.properties
-[source,options="nowrap",subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 include::properties/server_users.properties[]
 ----
 
 .groups.properties
-[source,options="nowrap",subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 include::properties/server_groups.properties[]
 ----
@@ -42,21 +42,21 @@ include::properties/server_groups.properties[]
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_properties_realm.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/server_properties_realm.json[]
 ----
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/server_properties_realm.yaml[]
 ----
@@ -67,7 +67,7 @@ include::yaml/server_properties_realm.yaml[]
 User properties files are structured as follows:
 
 .users.properties structure
-[source,options="nowrap",subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 include::properties/server_users_structure.properties[]
 ----

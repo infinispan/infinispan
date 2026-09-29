@@ -7,7 +7,7 @@ Create new roles and set the permissions.
 
 * Create roles with the [command]`user roles create` command, for example:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 user roles create --permissions=ALL_READ,ALL_WRITE simple
 ----
@@ -16,7 +16,7 @@ user roles create --permissions=ALL_READ,ALL_WRITE simple
 
 List roles that you grant to users with the [command]`user roles ls` command.
 
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 user roles ls
 ["observer","application","admin","monitor","simple","deployer"]
@@ -24,7 +24,7 @@ user roles ls
 
 Describe roles with the [command]`user roles describe` command.
 
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 user roles describe simple
 {

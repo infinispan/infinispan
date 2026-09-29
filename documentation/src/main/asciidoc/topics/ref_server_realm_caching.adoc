@@ -11,21 +11,21 @@ By default
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_realm_caching.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/server_realm_caching.json[]
 ----
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/server_realm_caching.yaml[]
 ----
@@ -35,7 +35,7 @@ include::yaml/server_realm_caching.yaml[]
 
 Use the CLI to flush security realm caches across the whole cluster.
 
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [node-1@mycluster//containers/default]> server aclcache flush
 ----

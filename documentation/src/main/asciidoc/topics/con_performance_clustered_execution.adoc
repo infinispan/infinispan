@@ -28,14 +28,14 @@ If you want to run an operation that guarantees a correct result for your entire
 ====
 Cluster execution::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/ClusterExecutor.java[]
 ----
 
 CacheStream::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/Stream.java[]
 ----

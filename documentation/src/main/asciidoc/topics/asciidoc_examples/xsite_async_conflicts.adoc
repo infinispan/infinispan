@@ -1,12 +1,31 @@
-            LON       NYC
+[plantuml, target=xsite-async-conflicts, format=svg, align=center]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
 
-k1=(n/a)    0,0       0,0
+participant "**LON**" as LON
+participant "**NYC**" as NYC
 
-k1=2        1,0  -->  1,0   k1=2
+note over LON, NYC: k1 = (n/a), vector clock: (0, 0)
 
-k1=3        1,1  <--  1,1   k1=3
+LON -> LON: put(k1 = 2)\nvector clock: (1, 0)
+LON -> NYC: replicate k1 = 2, (1, 0)
+note over NYC: k1 = 2, vector clock: (1, 0)
 
-k1=5        2,1       1,2   k1=8
+NYC -> NYC: put(k1 = 3)\nvector clock: (1, 1)
+NYC -> LON: replicate k1 = 3, (1, 1)
+note over LON: k1 = 3, vector clock: (1, 1)
 
-                 -->  2,1 (conflict)
-(conflict)  1,2  <--
+LON -> LON: put(k1 = 5)\nvector clock: (2, 1)
+& NYC -> NYC: put(k1 = 8)\nvector clock: (1, 2)
+
+LON -[#red]> NYC: replicate k1 = 5, (2, 1)
+note right #ffcccc: **Conflict detected**\n(2, 1) vs (1, 2)
+
+NYC -[#red]> LON: replicate k1 = 8, (1, 2)
+note left #ffcccc: **Conflict detected**\n(1, 2) vs (2, 1)
+
+@enduml
+....

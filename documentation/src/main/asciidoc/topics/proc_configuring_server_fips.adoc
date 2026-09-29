@@ -36,19 +36,19 @@ You can configure the PKCS11 cryptographic provider by specifying the PKCS11 key
 === Keystore configuration
 
 .XML
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_ssl_identity_fips_pkcs11.xml[]
 ----
 
 .JSON
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/server_ssl_identity_fips_pkcs11.json[]
 ----
 
 .YAML
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/server_ssl_identity_fips_pkcs11.yaml[]
 ----
@@ -67,7 +67,7 @@ You can configure the Bouncy Castle FIPS (Federal Information Processing Standar
 . Download the Bouncy Castle FIPS JAR file, and add the file to the `server/lib` directory of your {brandname} Server installation.
 . To install Bouncy Castle, issue the `install` command:
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [disconnected]> install org.bouncycastle:bc-fips:1.0.2.3
 ----
@@ -81,19 +81,19 @@ You can configure the Bouncy Castle FIPS (Federal Information Processing Standar
 === Keystore configuration
 
 .XML
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_ssl_identity_fips_bcfips.xml[]
 ----
 
 .JSON
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/server_ssl_identity_fips_bcfips.json[]
 ----
 
 .YAML
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/server_ssl_identity_fips_bcfips.yaml[]
 ----

@@ -16,7 +16,7 @@ You should use ProtoStream-based marshalling instead.
 
 Use the {brandname} CLI to install the JSON POJO transcoder:
 
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [disconnected]> install org.infinispan:infinispan-json-pojo-transcoder:{ispn_version}
 ----
@@ -27,7 +27,7 @@ You must restart the server after installing the artifact.
 
 Add the following dependency to your project:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <dependency>
    <groupId>org.infinispan</groupId>
@@ -42,7 +42,7 @@ The XML transcoder converts data between XML and other formats, including Java o
 
 Use the {brandname} CLI to install the XML transcoder:
 
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [disconnected]> install org.infinispan:infinispan-xml-transcoder:{ispn_version}
 ----
@@ -53,7 +53,7 @@ You must restart the server after installing the artifact.
 
 Add the following dependency to your project:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <dependency>
    <groupId>org.infinispan</groupId>
@@ -68,7 +68,7 @@ The JBoss Marshalling transcoder converts data between Java objects and JBoss Ma
 
 Use the {brandname} CLI to install the JBoss Marshalling transcoder:
 
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [disconnected]> install org.infinispan:infinispan-jboss-marshalling:{ispn_version}
 ----
@@ -79,7 +79,7 @@ You must restart the server after installing the artifact.
 
 Add the following dependency to your project:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <dependency>
    <groupId>org.infinispan</groupId>

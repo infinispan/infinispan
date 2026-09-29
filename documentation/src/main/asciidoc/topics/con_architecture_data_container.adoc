@@ -6,7 +6,7 @@ It holds cache entries as `InternalCacheEntry` objects and provides thread-safe 
 
 == Storage model
 
-[plantuml, target=architecture-data-container, format=svg]
+[plantuml, target=architecture-data-container, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -86,7 +86,7 @@ Off-heap storage uses striped locking for concurrent access.
 The data container is segmented to align with the consistent hash segments used for data distribution.
 Each segment can be independently iterated, transferred during rebalancing, or assigned to a persistent store partition.
 
-[plantuml, target=architecture-data-container-segments, format=svg]
+[plantuml, target=architecture-data-container-segments, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif

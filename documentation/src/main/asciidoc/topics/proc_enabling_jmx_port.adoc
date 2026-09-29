@@ -26,7 +26,7 @@ Start {brandname} Server with a remote JMX port enabled using one of the followi
 
 * Enable remote JMX through port `9999`.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 bin/server.sh --jmx 9999
 ----
@@ -38,7 +38,7 @@ Using remote JMX with SSL disabled is not intended for production environments.
 
 * Pass the following system properties to {brandname} Server at startup.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 bin/server.sh -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
 ----

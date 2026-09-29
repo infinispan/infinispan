@@ -326,8 +326,11 @@ Custom store:: Use a custom cache store that you implement with the {brandname} 
 == Configuration formats
 You can create {brandname} configuration in  XML, JSON, or YAML format.
 
-.XML
-[source,xml,options="nowrap",subs=attributes+,role="primary"]
+[tabs]
+====
+XML::
++
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <distributed-cache owners="2"
                    mode="SYNC"
@@ -354,8 +357,9 @@ You can create {brandname} configuration in  XML, JSON, or YAML format.
 
 ----
 
-.JSON
-[source,json,options="nowrap",subs=attributes+,role="secondary"]
+JSON::
++
+[source,json,options="nowrap",subs="attributes+"]
 ----
 {
   "distributed-cache": {
@@ -397,8 +401,9 @@ You can create {brandname} configuration in  XML, JSON, or YAML format.
 }
 ----
 
-.YAML
-[source,yaml,options="nowrap",subs=attributes+,role="secondary"]
+YAML::
++
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 distributed-cache:
   owners: 2
@@ -427,3 +432,5 @@ distributed-cache:
   persistence:
     passivation: false
 ----
+
+====

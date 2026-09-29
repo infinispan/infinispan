@@ -50,7 +50,7 @@ The size of the shared lock collection used by lock striping can be tuned using 
 
 *Configuration example:*
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/locking_striping.xml[]
 ----
@@ -68,7 +68,7 @@ Please refer to the JDK `ConcurrentHashMap` Javadocs for a detailed discussion o
 
 *Configuration example:*
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/locking_concurrency.xml[]
 ----
@@ -86,7 +86,7 @@ The lock timeout specifies the amount of time, in milliseconds, to wait for a co
 
 *Configuration example:*
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/locking_acquire_timeout.xml[]
 ----

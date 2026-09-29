@@ -2,7 +2,7 @@
 = Retrieving Basic Server Information
 View basic information about {brandname} Servers with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/server
 ----
@@ -10,7 +10,7 @@ GET /rest/v2/server
 {brandname} responds with the server name, codename, and version in JSON format
 as in the following example:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_server_response.json[]
 ----
@@ -20,7 +20,7 @@ include::json/rest_server_response.json[]
 = Getting Cache Managers
 Retrieve lists of Cache Managers for {brandname} Servers with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/server/cache-managers
 ----
@@ -40,7 +40,7 @@ Configure {brandname} to temporarily exclude specific caches from client
 requests. Send empty `POST` requests that include the names of the Cache Manager
 name and the cache.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/server/ignored-caches/{cache}
 ----
@@ -58,7 +58,7 @@ compatibility you must provide the Cache Manager name in the requests.
 = Removing Caches from Ignore Lists
 Remove caches from the ignore list with `DELETE` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 DELETE /rest/v2/server/ignored-caches/{cache}
 ----
@@ -69,7 +69,7 @@ DELETE /rest/v2/server/ignored-caches/{cache}
 = Confirming Ignored Caches
 Confirm that caches are ignored with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/server/ignored-caches/
 ----
@@ -79,14 +79,14 @@ GET /rest/v2/server/ignored-caches/
 = Obtaining Server Configuration
 Retrieve {brandname} Server configurations with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/server/config
 ----
 
 {brandname} responds with the configuration in JSON format, as follows:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_server_config_response.json[]
 ----
@@ -96,7 +96,7 @@ include::json/rest_server_config_response.json[]
 = Getting Environment Variables
 Retrieve all environment variables for {brandname} Servers with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/server/env
 ----
@@ -107,7 +107,7 @@ GET /rest/v2/server/env
 Retrieve JVM memory usage information for {brandname} Servers with `GET`
 requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/server/memory
 ----
@@ -122,7 +122,7 @@ format.
 Generate JVM heap dumps for {brandname} Servers with `POST`
 requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/server/memory?action=heap-dump[&live=true|false]
 ----
@@ -135,7 +135,7 @@ with the full path of the file in JSON format.
 = Getting JVM Thread Dumps
 Retrieve the current thread dump for the JVM with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/server/threads
 ----
@@ -147,14 +147,14 @@ GET /rest/v2/server/threads
 Retrieve aggregated reports for {brandname} Servers with `GET` requests.
 To retrieve the report for the requested server:
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/server/report
 ----
 
 To retrieve the report of another server in the cluster, reference the node by name:
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/server/report/{nodeName}
 ----
@@ -168,7 +168,7 @@ routing, threads, in addition to configuration and log files.
 = Stopping {brandname} Servers
 Stop {brandname} Servers with `POST` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/server?action=stop
 ----
@@ -179,14 +179,14 @@ POST /rest/v2/server?action=stop
 = Retrieving Client Connection Information
 List information about clients connected to {brandname} Servers with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/server/connections
 ----
 
 {brandname} responds with details about all active client connections in JSON format as in the following example:
 
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/rest_server_connections_response.json[]
 ----
@@ -205,7 +205,7 @@ include::json/rest_server_connections_response.json[]
 = Retrieving Default values for Cache Configuration
 Retrieve default values for cache configuration with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/server/caches/defaults
 ----

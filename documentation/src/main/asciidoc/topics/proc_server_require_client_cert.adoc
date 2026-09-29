@@ -9,7 +9,7 @@ or "mTLS".
 
 * Add the `require-ssl-client-auth="true"` attribute to the `endpoints` element.
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_endpoint_require_client_cert.xml[]
 ----

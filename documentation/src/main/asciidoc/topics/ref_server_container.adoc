@@ -25,14 +25,14 @@ Start an instance of {brandname} Server by executing the following command:
 ====
 Docker::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_docker.adoc[]
 ----
 
 Podman::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_podman.adoc[]
 ----
@@ -50,14 +50,14 @@ It is also possible to provide an administrator username/password combination vi
 ====
 Docker::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_docker_user.adoc[]
 ----
 
 Podman::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_podman_user.adoc[]
 ----
@@ -68,7 +68,7 @@ include::cmd_examples/server_podman_user.adoc[]
 == Hot Rod Clients
 When connecting a Hot Rod client to the image, the following SASL properties must be configured on your client (with the username and password properties changed as required):
 
-[source,properties,options="nowrap",subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 infinispan.client.hotrod.auth_username=admin
 infinispan.client.hotrod.auth_password=changme
@@ -89,7 +89,7 @@ to know more about implicit roles and authorization
 
 Below is an example Identities batch CLI file `identities.batch`, that defines four users and their role:
 
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_container_identities_batch.adoc[]
 ----
@@ -100,14 +100,14 @@ To run the image using a local `identities.batch`, execute:
 ====
 Docker::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_docker_identities_batch.adoc[]
 ----
 
 Podman::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_podman_identities_batch.adoc[]
 ----
@@ -123,14 +123,14 @@ Below shows how a https://docs.docker.com/storage/volumes/[docker volume] can be
 ====
 Docker::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_docker_configuration.adoc[]
 ----
 
 Podman::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_podman_configuration.adoc[]
 ----
@@ -146,14 +146,14 @@ To utilise the tcp stack with DNS_PING, execute the following config:
 ====
 Docker::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_docker_kube_clustering.adoc[]
 ----
 
 Podman::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_podman_kube_clustering.adoc[]
 ----
@@ -168,14 +168,14 @@ For example, to quickly configure CORS without providing a server.yaml file, do 
 ====
 Docker::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_docker_jvm_properties.adoc[]
 ----
 
 Podman::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_podman_jvm_properties.adoc[]
 ----
@@ -193,14 +193,14 @@ For example, to add the PostgreSQL JDBC driver to the server:
 ====
 Docker::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_docker_artifacts.adoc[]
 ----
 
 Podman::
 +
-[source,bash,options="nowrap",subs=attributes+]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
 include::cmd_examples/server_podman_artifacts.adoc[]
 ----
@@ -215,7 +215,7 @@ The `SERVER_LIBS` variable supports multiple, space-separated artifacts represen
 === Liveness and Readiness Probes
 It is recommended to utilise Infinispan's REST endpoint in order to determine if the server is ready/live. To do this, you can utilise the Kubernetes https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/[httpGet probes] as follows:
 
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/server_container_liveness_probes.yaml[]
 ----

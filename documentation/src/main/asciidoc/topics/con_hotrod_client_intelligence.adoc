@@ -38,14 +38,14 @@ By default, the Hot Rod client uses the intelligence that you configure globally
 ====
 ConfigurationBuilder::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/HotRodClientIntelligence.java[]
 ----
 
 hotrod-client.properties::
 +
-[source,options="nowrap",subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 include::properties/hotrod-client-intelligence.properties[]
 ----
@@ -57,14 +57,14 @@ When you configure the Hot Rod client to use multiple {brandname} clusters, you 
 ====
 ConfigurationBuilder::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/HotRodClientIntelligenceCluster.java[]
 ----
 
 hotrod-client.properties::
 +
-[source,options="nowrap",subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 include::properties/hotrod-client-intelligence-cluster.properties[]
 ----
@@ -86,14 +86,14 @@ You can disable reconnection attempts by setting the `serverFailureTimeout` valu
 ====
 ConfigurationBuilder::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/HotRodClientFailedServerTimeout.java[]
 ----
 
 hotrod-client.properties::
 +
-[source,options="nowrap",subs=attributes+]
+[source,properties,options="nowrap",subs="attributes+"]
 ----
 include::properties/hotrod-client-failed-server-timeout.properties[]
 ----

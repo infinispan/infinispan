@@ -6,7 +6,7 @@ By default, {brandname} Server includes a socket binding configuration that list
 If you enable the Memcached endpoint, the default socket bindings configure {brandname} Server to bind to port `11221`.
 
 .Default socket bindings
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_network_socket_bindings.xml[]
 ----
@@ -37,21 +37,21 @@ The following example configuration adds an `interface` declaration named "priva
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/server_socket_binding_private.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/server_socket_binding_private.json[]
 ----
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/server_socket_binding_private.yaml[]
 ----

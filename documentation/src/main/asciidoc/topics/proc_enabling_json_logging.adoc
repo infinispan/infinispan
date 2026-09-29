@@ -13,7 +13,7 @@ You cannot dynamically enable log handlers.
 . Open `{server_home}/server/conf/log4j2.xml` with any text editor.
 . Uncomment the `JSON-FILE` appender and comment out the `FILE` appender:
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <!--<AppenderRef ref="FILE"/>-->
 <AppenderRef ref="JSON-FILE"/>

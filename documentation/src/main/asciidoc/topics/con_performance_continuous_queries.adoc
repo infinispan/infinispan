@@ -9,7 +9,7 @@ For this reason, you should carefully design your continuous queries to avoid an
 To achieve this, you can use projections and predicates.
 For example, the following statement provides results about only a subset of fields that match the criteria rather than the entire entry:
 
-[source,sql,options="nowrap",subs=attributes+]
+[source,sql,options="nowrap",subs="attributes+"]
 ----
 SELECT field1, field2 FROM Entity WHERE x AND y
 ----

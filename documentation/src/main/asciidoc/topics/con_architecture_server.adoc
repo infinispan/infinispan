@@ -6,7 +6,7 @@ It is built on Netty for high-performance, non-blocking I/O.
 
 == Server components
 
-[plantuml, target=architecture-server-overview, format=svg]
+[plantuml, target=architecture-server-overview, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif
@@ -86,7 +86,7 @@ Enables drop-in replacement for Memcached deployments.
 
 == Request processing
 
-[plantuml, target=architecture-server-request, format=svg]
+[plantuml, target=architecture-server-request, format=svg, align=center]
 ....
 @startuml
 skinparam defaultFontName sans-serif

@@ -3,19 +3,19 @@
 
 Create counters with `POST` requests that include configuration in the payload.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/counters/{counterName}
 ----
 
 .Example Weak Counter
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/weak_counter.json[]
 ----
 
 .Example Strong Counter
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/strong_counter.json[]
 ----
@@ -25,7 +25,7 @@ include::json/strong_counter.json[]
 
 Remove specific counters with `DELETE` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 DELETE /rest/v2/counters/{counterName}
 ----
@@ -35,7 +35,7 @@ DELETE /rest/v2/counters/{counterName}
 
 Retrieve configuration for specific counters with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/counters/{counterName}/config
 ----
@@ -47,7 +47,7 @@ GET /rest/v2/counters/{counterName}/config
 
 Retrieve counter values with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/counters/{counterName}
 ----
@@ -67,7 +67,7 @@ GET /rest/v2/counters/{counterName}
 Restore the initial value of counters without `POST` requests and the
 `?action=reset` parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/counters/{counterName}?action=reset
 ----
@@ -80,7 +80,7 @@ If the operation successfully completes, the service returns `204 (No Content)`.
 Increment counter values with `POST` request` and the `?action=increment`
 parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/counters/{counterName}?action=increment
 ----
@@ -98,7 +98,7 @@ POST /rest/v2/counters/{counterName}?action=increment
 Add arbitrary values to counters with `POST` requests that include the
 `?action=add` and `delta` parameters.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/counters/{counterName}?action=add&delta={delta}
 ----
@@ -116,7 +116,7 @@ POST /rest/v2/counters/{counterName}?action=add&delta={delta}
 Decrement counter values with `POST` requests and the `?action=decrement`
 parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/counters/{counterName}?action=decrement
 ----
@@ -133,7 +133,7 @@ POST /rest/v2/counters/{counterName}?action=decrement
 
 Atomically set values for strong counters with `POST` requests and the `getAndSet` parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/counters/{counterName}?action=getAndSet&value={value}
 ----
@@ -146,7 +146,7 @@ If the operation is successful, {brandname} returns the previous value in the pa
 Atomically set values for strong counters with `GET` requests and the
 `compareAndSet` parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/counters/{counterName}?action=compareAndSet&expect={expect}&update={update}
 ----
@@ -161,7 +161,7 @@ If the operation is successful, {brandname} returns `_true_`.
 Atomically set values for strong counters with `GET` requests and the
 `compareAndSwap` parameter.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 POST /rest/v2/counters/{counterName}?action=compareAndSwap&expect={expect}&update={update}
 ----
@@ -175,7 +175,7 @@ If the operation is successful, {brandname} returns the previous value in the pa
 
 Retrieve a list of counters in {brandname} clusters with `GET` requests.
 
-[source,options="nowrap",subs=attributes+]
+[source,http,options="nowrap",subs="attributes+"]
 ----
 GET /rest/v2/counters/
 ----

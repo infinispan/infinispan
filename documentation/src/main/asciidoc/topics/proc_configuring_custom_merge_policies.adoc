@@ -7,7 +7,7 @@ Configure {brandname} to use custom implementations of the `EntryMergePolicy` AP
 
 * Implement the `EntryMergePolicy` API.
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/CustomMergePolicyEntryMerge.java[]
 ----
@@ -43,28 +43,28 @@ If you require the object itself when merging conflicts then you should configur
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/custom_merge_policy.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/custom_merge_policy.json[]
 ----
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/custom_merge_policy.yaml[]
 ----
 
 ConfigurationBuilder::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/CustomMergePolicy.java[]
 ----

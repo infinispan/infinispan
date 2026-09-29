@@ -16,7 +16,7 @@ The scattered cache mode is deprecated in 14.0 and will be removed in 16.0.
 By default, the asynchronous backup strategy logs exceptions that occur on remote sites.
 To disable exceptions for async backup operations, set `failure-policy="IGNORE"` in your configuration as follows:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <backup site="NYC" strategy="ASYNC" failure-policy="IGNORE" />
 ----
@@ -27,7 +27,7 @@ Store provided properties are no longer allowed to override store explicit confi
 
 For example the below configuration would set the read only configuration of the store to true.
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <persistence>
   <file-store>
@@ -41,7 +41,7 @@ For example the below configuration would set the read only configuration of the
 Now the readOnly property is only provided to the store itself and does not affect the store explicit configuration.
 The same configuration should be changed to the following instead.
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <persistence>
   <file-store read-only="true">
@@ -65,7 +65,7 @@ NOTE: This change has no effect for shared stores
 The RocksDB cache store is no longer included by default with the server.
 You must install both the {brandname} RocksDB module and the RocksDB native library using the CLI:
 
-[source,shell,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 [disconnected]> install org.infinispan:infinispan-cachestore-rocksdb:{ispn_version}
 [disconnected]> install org.rocksdb:rocksdbjni:{rocksdbversion}
@@ -100,7 +100,7 @@ Some modules that have Jakarta based jars are the following (note there are quit
 
 If your application requires using the jakarta instead of javax namespace all you need to do is to append your dependencies with `-jakarta`.
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <dependency>
    <groupId>org.infinispan</groupId>

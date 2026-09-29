@@ -18,14 +18,14 @@ it to upgrade version 10.1.5 or downgrade version 11.0.0.
 the target version for the patch you want to create.
 . Start the CLI.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 bin/cli.sh
 ----
 +
 . Use the `patch create` command to generate a patch archive and include the `-q` option with a meaningful qualifier to describe the patch.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 patch create -q "this is my test patch" path/to/mypatch.zip \
 path/to/target/server/home path/to/source/server/home
@@ -38,7 +38,7 @@ Paths are relative to `{server_home}` for the target server.
 ====
 Create single patches for multiple different {brandname} versions, for example:
 
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 patch create -q "this is my test patch" path/to/mypatch.zip \
 path/to/target/server/home \
@@ -51,12 +51,12 @@ install "mypatch.zip".
 +
 . Describe the generated patch archive.
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 patch describe path/to/mypatch.zip
 ----
 +
-[source,options="nowrap",subs=attributes+]
+[source,shell,options="nowrap",subs="attributes+"]
 ----
 {fullbrandname} patch target=$target_version(my test patch)  source=$source_version created=$timestamp
 ----

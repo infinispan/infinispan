@@ -32,7 +32,7 @@ However, if you want to use adapter classes as marshallable fields in ProtoStrea
 
 * Specify the `CommonTypesSchema` and `CommonContainerTypesSchema` classes with the `dependsOn` element of the `ProtoSchema` annotation.
 
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 @ProtoSchema(dependsOn = {org.infinispan.protostream.types.java.CommonTypes.class, org.infinispan.protostream.types.java.CommonContainerTypes.class}, schemaFileName = "library.proto", schemaFilePath = "proto", schemaPackageName = "example")
 public interface LibraryInitalizer extends SerializationContextInitializer {
@@ -41,7 +41,7 @@ public interface LibraryInitalizer extends SerializationContextInitializer {
 
 * Specify the required adapter classes with the `includeClasses` element of the `ProtoSchema` annotation
 
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 @ProtoSchema(includeClasses = { Author.class, Book.class, UUIDAdapter.class, org.infinispan.protostream.types.java.math.BigIntegerAdapter.class }, schemaFileName = "library.proto", schemaFilePath = "proto", schemaPackageName = "library")
 public interface LibraryInitalizer extends SerializationContextInitializer {

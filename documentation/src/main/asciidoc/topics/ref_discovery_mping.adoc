@@ -6,7 +6,7 @@ You can use MPING to replace TCPPING discovery with TCP stacks and use multicasi
 However, you can also use MPING with UDP stacks.
 
 .MPING configuration example
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/mping.xml[]
 ----

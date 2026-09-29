@@ -12,7 +12,7 @@ You must also add the `xmlns:xi="http://www.w3.org/2001/XInclude"` namespace to 
 ====
 
 .Xinclude cache template
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/xinclude_cache_templates.xml[]
 ----
@@ -20,7 +20,7 @@ include::xml/xinclude_cache_templates.xml[]
 {brandname} also provides an `infinispan-config-fragment-{schemaversion}.xsd` schema that you can use with configuration fragments.
 
 .Configuration fragment schema
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/xincluded_configuration_schema.xml[]
 ----

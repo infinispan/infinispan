@@ -16,14 +16,14 @@ Configure {brandname} to export statistics for the Cache Manager and embedded ca
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/statistics_embedded.xml[]
 ----
 
 GlobalConfigurationBuilder::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/StatisticsGlobalConfigurationBuilder.java[]
 ----

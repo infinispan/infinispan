@@ -10,10 +10,7 @@ After replication occurs, there is no guarantee which value for "k1" exists at w
 
 To ensure data consistency, {brandname} uses a vector clock algorithm to detect conflicting entries during backup operations, as in the following illustration:
 
-[source,options="nowrap"]
-----
 include::asciidoc_examples/xsite_async_conflicts.adoc[]
-----
 
 Vector clocks are timestamp metadata that increment with each write to an entry.
 In the preceding example, `0,0` represents the initial value for the vector clock on "k1".

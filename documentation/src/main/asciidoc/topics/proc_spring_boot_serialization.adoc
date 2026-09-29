@@ -12,7 +12,7 @@ This means you only need to define your `@Proto` model and `@ProtoSchema` interf
 
 To disable auto-registration, set the following property:
 
-[source,text,options=nowrap,subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 infinispan.remote.use-schema-registration=false
 ----
@@ -27,12 +27,12 @@ infinispan.remote.use-schema-registration=false
 +
 * Use ProtoStream as the marshaller.
 +
-[source,text,options=nowrap,subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 infinispan.client.hotrod.marshaller=org.infinispan.commons.marshall.ProtoStreamMarshaller
 ----
 +
-[source,text,options=nowrap,subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 infinispan.remote.marshaller=org.infinispan.commons.marshall.ProtoStreamMarshaller
 ----
@@ -40,12 +40,12 @@ infinispan.remote.marshaller=org.infinispan.commons.marshall.ProtoStreamMarshall
 * Add your classes to the serialization allow list if you use Java Serialization.
 You can specify a comma-separated list of fully qualified class names or a regular expression to match classes.
 +
-[source,text,options=nowrap,subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 infinispan.client.hotrod.java_serial_allowlist=your_marshalled_beans_package.*
 ----
 +
-[source,text,options=nowrap,subs=attributes+]
+[source,text,options="nowrap",subs="attributes+"]
 ----
 infinispan.remote.java-serial-allowlist=your_marshalled_beans_package.*
 ----

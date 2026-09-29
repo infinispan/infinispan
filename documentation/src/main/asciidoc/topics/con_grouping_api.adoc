@@ -17,7 +17,7 @@ To use the `Grouping` API, you must enable groups.
 include::code_examples/EnableGroups.java[]
 ----
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/enable_groups.xml[]
 ----
@@ -60,7 +60,7 @@ include::code_examples/GrouperRegistration.java[]
 
 Or, if you are using XML:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/grouper_registration.xml[]
 ----

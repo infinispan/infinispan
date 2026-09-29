@@ -10,14 +10,14 @@ Configure {brandname} to use the ProtoStream library to store cache entries as P
 ====
 Declarative::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/encoding_protostream.xml[]
 ----
 
 Programmatic::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/ConfigurationBuilderCacheEncoding.java[]
 ----
@@ -29,14 +29,14 @@ Alternatively you can use the same encoding for keys and values:
 ====
 Declarative::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 <encoding media-type="application/x-protostream"/>
 ----
 
 Programmatic::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 .encoding().mediaType("application/x-protostream");
 ----

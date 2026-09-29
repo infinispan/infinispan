@@ -13,14 +13,14 @@ The data types described in the example are only valid for PostgreSQL database.
 ====
 SQL statement for the "person" table::
 +
-[source,proto,options="nowrap",subs=attributes+]
+[source,proto,options="nowrap",subs="attributes+"]
 ----
 include::sql/person.sql[]
 ----
 
 SQL statement for the "address" table::
 +
-[source,proto,options="nowrap",subs=attributes+]
+[source,proto,options="nowrap",subs="attributes+"]
 ----
 include::sql/address.sql[]
 ----
@@ -32,7 +32,7 @@ include::sql/address.sql[]
 Protobuf schema for the "person" and "address" tables are as follows:
 
 .Protobuf schema for the "address" table
-[source,proto,options="nowrap",subs=attributes+]
+[source,proto,options="nowrap",subs="attributes+"]
 ----
 include::protobuf/address-db-table.proto[]
 ----
@@ -41,7 +41,7 @@ include::protobuf/address-db-table.proto[]
 ====
 Protobuf schema for the "person" table::
 +
-[source,proto,options="nowrap",subs=attributes+]
+[source,proto,options="nowrap",subs="attributes+"]
 ----
 include::protobuf/person-db-table.proto[]
 ----
@@ -57,28 +57,28 @@ The following example loads a distributed cache from the "person" and "address" 
 ====
 XML::
 +
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/persistence_sql_query.xml[]
 ----
 
 JSON::
 +
-[source,json,options="nowrap",subs=attributes+]
+[source,json,options="nowrap",subs="attributes+"]
 ----
 include::json/persistence_sql_query.json[]
 ----
 
 YAML::
 +
-[source,yaml,options="nowrap",subs=attributes+]
+[source,yaml,options="nowrap",subs="attributes+"]
 ----
 include::yaml/persistence_sql_query.yaml[]
 ----
 
 ConfigurationBuilder::
 +
-[source,java,options="nowrap",subs=attributes+]
+[source,java,options="nowrap",subs="attributes+"]
 ----
 include::code_examples/PersistenceSqlQuery.java[]
 ----

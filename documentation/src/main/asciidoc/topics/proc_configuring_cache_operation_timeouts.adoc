@@ -27,7 +27,7 @@ For remote caches, you can also add these properties to the `hotrod-client.prope
 
 The following example shows the timeout properties in the context XML for `SpringRemoteCacheManagerFactoryBean`:
 
-[source,xml,options="nowrap",subs=attributes+]
+[source,xml,options="nowrap",subs="attributes+"]
 ----
 include::xml/spring_remote_cache_manager_factory_bean.xml[]
 ----
