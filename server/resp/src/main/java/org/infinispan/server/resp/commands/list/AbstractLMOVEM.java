@@ -156,19 +156,8 @@ public abstract class AbstractLMOVEM extends RespCommand {
          EmbeddedMultimapListCache<byte[], byte[]> listMultimap, LmovemConfig config) {
 
       CompletionStage<Collection<byte[]>> pollStage;
-      if (config.exactly()) {
-         // EXACTLY mode: check size first, return null if insufficient
-         pollStage = listMultimap.size(config.source()).thenCompose(size -> {
-            if (size < config.count()) return CompletableFutures.completedNull();
-            return config.sourceLeft()
-                  ? listMultimap.pollFirst(config.source(), config.count())
-                  : listMultimap.pollLast(config.source(), config.count());
-         });
-      } else {
-         pollStage = config.sourceLeft()
-               ? listMultimap.pollFirst(config.source(), config.count())
-               : listMultimap.pollLast(config.source(), config.count());
-      }
+      long minSize = config.exactly() ? config.count() : 0;
+      pollStage = listMultimap.poll(config.source(), config.count(), config.sourceLeft(), minSize);
 
       return pollStage.thenCompose(polled -> {
          if (polled == null || polled.isEmpty()) return CompletableFutures.completedNull();
