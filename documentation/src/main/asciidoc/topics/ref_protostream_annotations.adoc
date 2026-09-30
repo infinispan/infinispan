@@ -16,7 +16,7 @@ You should refer to the documentation in the link:{protostreamdocroot}/org/infin
 
 [WARNING]
 ====
-Use automatic Protobuf field numbering only for quick prototyping. For production environments you should follow the link:{encoding_docs}#protostream-protocol-buffers-best-practices[Protocol Buffers best practices] in order to guarantee future/backwards compatibility with your schema.
+Use automatic Protobuf field numbering only for quick prototyping. For production environments you should follow the link:{encoding_docs}#protostream-protocol-buffers-best-practices_marshalling[Protocol Buffers best practices] in order to guarantee future/backwards compatibility with your schema.
 ====
 
 [discrete]

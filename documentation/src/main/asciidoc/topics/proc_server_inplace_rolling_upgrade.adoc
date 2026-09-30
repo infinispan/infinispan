@@ -1,0 +1,126 @@
+[id='server-inplace-rolling-upgrade_{context}']
+= Performing an in-place rolling upgrade for {brandname} Server
+
+Upgrade a {brandname} Server cluster one node at a time while the cluster continues to serve client requests.
+The recommended approach keeps your cluster at full capacity by adding one temporary node before you start; see xref:inplace-rolling-upgrade-spare-node_{context}[Upgrading with an additional temporary node] for details on provisioning and removing it.
+This procedure describes the stop-and-restart process that every upgraded node goes through, whether or not you use a temporary node.
+
+.Prerequisites
+
+* Your deployment meets all xref:inplace-rolling-upgrades_{context}[in-place rolling upgrade prerequisites].
+* You have the {brandname} Server distribution for the target version.
+* The `{server_home}/server/data` directory on each node contains the persisted global state from the current deployment.
+
+[WARNING]
+====
+Do not delete or modify the `server/data` directory.
+{brandname} uses this directory to restore cluster topology and node identity on restart.
+====
+
+.Procedure
+
+In this procedure, replace `<server-url|bookmark>` with either your server's REST URL (for example, `http://node1.example.com:11222`) or the name of a saved {brandname} CLI bookmark that stores the connection details for that node.
+Replace `<rest-base-url>` in any curl command with the same base URL including scheme and port (for example, `https://node1.example.com:9443`).
+
+. Verify that the cluster is healthy and all nodes are members of the cluster view.
++
+Run this command against any node in the cluster:
++
+[source,shell,options="nowrap",subs=attributes+]
+----
+bin/cli.sh -c <server-url|bookmark> ls cluster
+----
++
+Confirm that all expected nodes appear in the listing.
++
+Also confirm that the container health status on any node reports `HEALTHY`:
++
+[source,shell,options="nowrap",subs=attributes+]
+----
+bin/cli.sh -c <server-url|bookmark> health
+----
+
+. For each node in the cluster, one at a time, perform the following steps:
++
+.. Shut down the node gracefully.
++
+Use the CLI to shut down a specific node:
++
+[source,shell,options="nowrap",subs=attributes+]
+----
+shutdown server <node-name>
+----
++
+.. Wait until the departing node has left the cluster view and all caches on the remaining nodes report stable topologies.
++
+When a node leaves, {brandname} automatically rebalances data across the remaining nodes.
+While a rebalance is in progress, the container health status of every running node reports `HEALTHY_REBALANCING` instead of `HEALTHY`.
+Poll any running node until it reports three consecutive healthy readings:
++
+[source,shell,options="nowrap",subs=attributes+]
+----
+stable=0
+while [ $stable -lt 3 ]; do
+   if [ "$(bin/cli.sh -c <server-url|bookmark> health)" = "HEALTHY" ]; then stable=$((stable+1)); else stable=0; fi
+   sleep 5
+done
+echo All caches have stable topologies
+----
+
+.. Replace the {brandname} Server installation with the target version.
++
+Preserve the `server` directory from the previous installation, which contains the `data`, `conf`, and `lib` directories.
+You can do this by copying the `server` directory to the new installation, or by pointing the new installation to the existing server root with the `-s` flag:
++
+[source,shell,options="nowrap",subs=attributes+]
+----
+bin/server.sh -s /path/to/existing/server
+----
++
+.. Start the upgraded node.
++
+[source,shell,options="nowrap",subs=attributes+]
+----
+bin/server.sh -s /path/to/existing/server
+----
++
+Wait until the restarted node is accepting requests:
++
+[source,shell,options="nowrap",subs=attributes+]
+----
+until curl -sf <rest-base-url>/rest/health/live; do sleep 5; done
+echo Node is accepting requests
+----
+
+.. Wait until the upgraded node rejoins the cluster view and all caches report stable topologies again.
++
+The rejoin triggers a second rebalance that restores the configured number of owners on every segment.
+Run the same health status loop against this specific restarted node, updating `<server-url|bookmark>` so that it points directly at that host.
+It reports `HEALTHY_REBALANCING` for as long as it receives segments during this second rebalance and returns to `HEALTHY` only when every segment has been restored.
+
+.. Repeat for the next node.
++
+[IMPORTANT]
+====
+Do not stop the next node until the previously upgraded node has fully rejoined the cluster and all caches report stable topologies.
+Stopping multiple nodes simultaneously with only two owners risks data loss.
+====
+
+. Verify that the cluster is healthy and that all caches have the expected number of entries.
++
+Run the following command against any node in the cluster:
++
+[source,shell,options="nowrap",subs=attributes+]
+----
+bin/cli.sh -c <server-url|bookmark> health
+----
++
+Confirm that the response reports `HEALTHY`.
+To check an individual cache, pass its name as an argument to the command.
+Use your monitoring setup or the REST API to confirm that each cache holds its expected number of entries.
+
+.Downgrade procedure
+
+You can use the same procedure to downgrade a cluster to a previous version, which also serves as the rollback path if an upgrade does not go well (see xref:inplace-rolling-upgrade-downgrade_{context}[Rolling back an upgrade by downgrading]).
+Replace the target version with the previous version and follow the same steps.
+Check the xref:compatibility_chart[compatibility chart] for any caveats that apply to the downgrade path.

@@ -8,7 +8,7 @@
       },
       "exceptions": [
         {
-          "description": "RESP CLUSTER SLOTS/SHARDS commands don't work with INADDR_ANY socket bindings",
+          "description": "Redis clients in cluster mode may receive incorrect member addresses from pre-16.1 nodes via `CLUSTER SLOTS` and `CLUSTER SHARDS` when the server is bound to 0.0.0.0 or ::; run such clients in standalone mode until all nodes have been upgraded",
           "issue": "https://github.com/infinispan/infinispan/issues/16391",
           "test-failures": [
             {
@@ -20,7 +20,7 @@
           ]
         },
         {
-          "description": "Boolean indexed queries may be rewritten by Lucene and use more clauses internally",
+          "description": "Servers running 16.1 or later use Lucene 10, which rewrites boolean/IN-clause queries using more internal clauses; large indexed queries close to the `infinispan.query.lucene.max-boolean-clauses` bound may fail on those nodes - defer such queries until all nodes have been upgraded and raise that setting if they continue to fail",
           "issue": "https://github.com/infinispan/infinispan/issues/16477",
           "test-failures": [
             {
@@ -32,12 +32,12 @@
           ]
         },
         {
-          "description": "Legacy metrics are disabled by default",
-          "issue": "https://github.com/infinispan/infinispan/issues/16392",
+          "description": "Export of legacy-format metrics is disabled by default on newer server versions, so metric series in the legacy format disappear from a node as soon as it is upgraded; migrate dashboards and alerts to the new format or re-enable `legacy=true` before upgrading nodes that feed them",
+          "issue": "https://github.com/infinispan/infinispan/issues/16261",
           "test-failures": []
         },
         {
-          "description": "Aggregation on indexed field do not work with non-indexed cache",
+          "description": "Aggregation queries (for example projections over fields marked `aggregate=true`) against a cache with indexing disabled fail on affected releases - fixed in 16.2 and backported to 16.0.10; avoid such queries while any node runs an unfixed release, or apply the patch fix first",
           "issue": "https://github.com/infinispan/infinispan/issues/16761",
           "test-failures": [
             {
@@ -49,29 +49,13 @@
           ]
         },
         {
-          "description": "Hot Rod transaction does not work with decorated RemoteCache",
+          "description": "Hot Rod client-side transactions fail with `UnsupportedOperationException` when the server has authentication enabled on affected releases - fixed in 16.0.10 and 16.1.4; avoid transactional operations while any node runs an unfixed release, or upgrade to a fixed patch first",
           "issue": "https://github.com/infinispan/infinispan/issues/14926",
           "test-failures": [
             {
               "test-class": "org.infinispan.server.functional.hotrod.HotRodTransactionalCacheOperations",
               "test-methods": [
                 "testTransactionalCache"
-              ]
-            }
-          ]
-        },
-        {
-          "description": "Global configuration attribute REST endpoints are new in 16.2",
-          "issue": "https://github.com/infinispan/infinispan/issues/16323",
-          "test-failures": [
-            {
-              "test-class": "org.infinispan.server.functional.rest.RestGlobalConfigurationTest",
-              "test-methods": [
-                "testGetMutableAttributes",
-                "testGetMutableAttributesFull",
-                "testUpdateAccurateSize",
-                "testUpdateImmutableAttributeFails",
-                "testUpdatePropagatesAcrossCluster"
               ]
             }
           ]
@@ -83,7 +67,7 @@
       "version-to": "[16.3,)",
       "exceptions": [
         {
-          "description": "Peek flag does not exist in older server versions",
+          "description": "`peek=true` on get operations (Hot Rod and REST), which avoids resetting the `max-idle` expiration, is only supported from 16.3; requests using it fail while any node in the cluster runs an older version",
           "issue": "https://github.com/infinispan/infinispan/issues/17532",
           "test-failures": [
             {
@@ -103,7 +87,7 @@
           ]
         },
         {
-          "description": "Brute force protection",
+          "description": "Brute-force lockout for username/password security realms, added in 16.3 and configured through system properties, only works consistently across the whole cluster once all nodes run it; during the upgrade window failed-login throttling can be bypassed by reaching an older node",
           "issue": "https://github.com/infinispan/infinispan/issues/18001",
           "test-failures": [
             {
@@ -115,7 +99,7 @@
           ]
         },
         {
-          "description": "RemoveAll is a new Hot Rod operation added in 16.3",
+          "description": "`Cache.removeAll` is a new Hot Rod operation added in 16.3 and fails while any node in the cluster runs an older version; use individual key removals instead during the upgrade window",
           "issue": "https://github.com/infinispan/infinispan/issues/16245",
           "test-failures": [
             {
@@ -127,21 +111,31 @@
               ]
             }
           ]
-        }
-      ]
-    },
-    {
-      "version-from": "[16.0,16.3)",
-      "version-to": "[16.3,)",
-      "exceptions": [
+        },
         {
-          "description": "Update by query statement does not exist in older server versions",
+          "description": "Ickle `UPDATE` statements for bulk-updating indexed entries were added in 16.3 and fail while any node runs an older version; defer scheduled or application-driven update statements until the upgrade completes",
           "issue": "https://github.com/infinispan/infinispan/issues/14542",
           "test-failures": [
             {
               "test-class": "org.infinispan.server.functional.hotrod.HotRodCacheQueries",
               "test-methods": [
                 "testUpdateStatement"
+              ]
+            }
+          ]
+        },
+        {
+          "description": "REST endpoints that read or update mutable global-configuration attributes were added in 16.3; during mixed-version operation such requests fail on older nodes, and updates only propagate across the cluster once every node has been upgraded",
+          "issue": "https://github.com/infinispan/infinispan/issues/16323",
+          "test-failures": [
+            {
+              "test-class": "org.infinispan.server.functional.rest.RestGlobalConfigurationTest",
+              "test-methods": [
+                "testGetMutableAttributes",
+                "testGetMutableAttributesFull",
+                "testUpdateAccurateSize",
+                "testUpdateImmutableAttributeFails",
+                "testUpdatePropagatesAcrossCluster"
               ]
             }
           ]
