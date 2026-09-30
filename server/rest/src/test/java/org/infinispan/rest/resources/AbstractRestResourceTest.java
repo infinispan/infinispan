@@ -255,7 +255,7 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
       removeFromCache(cacheName, key, TEXT_PLAIN_TYPE);
    }
 
-   protected RestClientConfigurationBuilder getClientConfig(String username, String password) {
+   private RestClientConfigurationBuilder defaultClientConfig(String username, String password) {
       RestClientConfigurationBuilder clientConfigurationBuilder = new RestClientConfigurationBuilder();
       if (protocol != null) {
          clientConfigurationBuilder.protocol(protocol);
@@ -272,7 +272,19 @@ public class AbstractRestResourceTest extends MultipleCacheManagersTest {
       if (browser) {
          clientConfigurationBuilder.header("User-Agent", "Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/112.0");
       }
+      return clientConfigurationBuilder;
+   }
+
+   protected RestClientConfigurationBuilder getClientConfig(String username, String password) {
+      RestClientConfigurationBuilder clientConfigurationBuilder = defaultClientConfig(username, password);
       restServers.forEach(s -> clientConfigurationBuilder.addServer().host(s.getHost()).port(s.getPort()));
+      return clientConfigurationBuilder;
+   }
+
+   protected final RestClientConfigurationBuilder getClientConfigForServer(String username, String password, int serverIndex) {
+      RestClientConfigurationBuilder clientConfigurationBuilder = defaultClientConfig(username, password);
+      RestServerHelper rsh = restServers.get(serverIndex);
+      clientConfigurationBuilder.addServer().host(rsh.getHost()).port(rsh.getPort());
       return clientConfigurationBuilder;
    }
 
