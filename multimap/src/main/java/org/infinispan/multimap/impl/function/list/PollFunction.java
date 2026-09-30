@@ -30,10 +30,18 @@ public final class PollFunction<K, V> implements ListBucketBaseFunction<K, V, Co
    @ProtoField(2)
    final long count;
 
+   @ProtoField(value = 3, defaultValue = "0")
+   final long minSize;
+
    @ProtoFactory
-   public PollFunction(boolean first, long count) {
+   public PollFunction(boolean first, long count, long minSize) {
       this.first = first;
       this.count = count;
+      this.minSize = minSize;
+   }
+
+   public PollFunction(boolean first, long count) {
+      this(first, count, 0);
    }
 
    @Override
@@ -45,7 +53,12 @@ public final class PollFunction<K, V> implements ListBucketBaseFunction<K, V, Co
             return List.of();
          }
 
-         ListBucket.ListBucketResult<Collection<V>, V> result = existing.get().poll(first, count);
+         ListBucket<V> bucket = existing.get();
+         if (minSize > 0 && bucket.size() < minSize) {
+            return null;
+         }
+
+         ListBucket.ListBucketResult<Collection<V>, V> result = bucket.poll(first, count);
          if (result.bucket().isEmpty()) {
             entryView.remove();
          } else {

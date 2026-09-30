@@ -225,6 +225,12 @@ public class EmbeddedMultimapListCache<K, V> {
       return readWriteMap.eval(key, new PollFunction<>(first, count));
    }
 
+   public CompletableFuture<Collection<V>> poll(K key, long count, boolean first, long minSize) {
+      requireNonNull(key, "key can't be null");
+      requirePositive(count, "count can't be negative");
+      return readWriteMap.eval(key, new PollFunction<>(first, count, minSize));
+   }
+
    /**
     * Sets a value in the given index.
     * 0 means fist element. Negative index counts index from the tail. For example
