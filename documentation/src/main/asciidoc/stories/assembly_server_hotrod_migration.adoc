@@ -1,0 +1,81 @@
+[id='hotrod-migration']
+:context: hotrod-migration
+= Migrating data with Hot Rod
+Migrate data between {brandname} clusters running different versions
+without downtime or data loss using the Hot Rod protocol.
+
+The Hot Rod migration process involves setting up a target cluster running the new version, connecting it to the source cluster via a remote cache store, switching clients to the target cluster, synchronizing data, and finally decommissioning the source cluster.
+
+The following diagram illustrates the interaction between the source cluster, target cluster, and client applications during the migration process.
+
+[.text-center]
+.Hot Rod migration process
+[plantuml, target=hotrod-migration-process, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam padding 4
+skinparam sequenceMessageAlign center
+skinparam sequenceArrowThickness 2
+skinparam ParticipantFontSize 13
+skinparam SequenceDividerFontSize 12
+
+participant "Client\nApplication" as Client
+box "Source Cluster\n(version A)" #E8F4FD
+  participant "Source\nNodes" as Source
+end box
+box "Target Cluster\n(version B)" #E8F8E8
+  participant "Target\nNodes" as Target
+end box
+
+== Phase 1: Setup ==
+
+Client -> Source : Requests
+activate Source
+Source --> Client : Responses
+
+Target -> Source : Connect via\nremote cache store\n(Hot Rod)
+activate Target
+
+== Phase 2: Switch clients ==
+
+Client ->x Source
+deactivate Source
+Client -> Target : Redirect requests\nto target cluster
+Target --> Client : Responses
+
+note over Target, Source
+  Target loads data on demand
+  from source via remote cache store
+end note
+
+== Phase 3: Synchronize data ==
+
+Target -> Source : Synchronize all\ncache entries
+activate Source
+Source --> Target : Bulk data transfer
+deactivate Source
+
+== Phase 4: Disconnect and decommission ==
+
+Target ->x Source : Disconnect\nremote cache store
+
+Client -> Target : All requests served\nby target cluster
+Target --> Client : Responses
+deactivate Target
+
+note over Source
+  Source cluster
+  decommissioned
+end note
+
+@enduml
+....
+
+include::{topics}/proc_setting_up_target_clusters.adoc[leveloffset=+1]
+include::{topics}/proc_synchronizing_data_target_clusters.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

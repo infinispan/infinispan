@@ -1,5 +1,5 @@
 [id='configuring-jdbc-agroal-properties_{context}']
-= Configuring JDBC connection pools with Agroal properties
+== Configuring JDBC connection pools with Agroal properties
 
 You can use a properties file to configure pooled connection factories for JDBC string-based cache stores.
 

@@ -1,5 +1,5 @@
 [id='server-connection-pool-properties_{context}']
-= Connection pool tuning properties
+== Connection pool tuning properties
 
 You can tune JDBC connection pools for managed datasources in your {brandname} Server configuration.
 
