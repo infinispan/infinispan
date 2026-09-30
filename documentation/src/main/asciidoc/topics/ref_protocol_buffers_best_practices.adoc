@@ -1,4 +1,4 @@
-[id='protostream-protocol-buffers-best-practices{context}']
+[id='protostream-protocol-buffers-best-practices_{context}']
 = Protocol Buffers best practices
 
 The Protocol Buffers documentation provides a list of link:https://protobuf.dev/programming-guides/dos-donts/[best practices]

@@ -20,11 +20,13 @@ include::../{topics}/attributes/community-attributes.adoc[]
 = Upgrading {brandname} deployments
 
 Learn how to upgrade and migrate your {brandname} deployments to the latest version or between later versions.
-Find out how to perform rolling upgrades of {brandname} Server deployments and how to migrate persistent data between cache stores.
+Compare the available upgrade strategies, then follow step-by-step procedures for in-place rolling upgrades, full cluster shutdowns, and Hot Rod migrations between clusters.
 
+ifdef::community[]
 == {brandname} Version Details
 
 Learn about link:{changes_docs}[changes] in {brandname} versions before you upgrade.
+endif::community[]
 
 //User stories
 include::stories.adoc[]
