@@ -1,0 +1,27 @@
+HEALTH(1)
+=========
+:doctype: manpage
+
+
+NAME
+----
+health - displays the health status of a container or of a single cache
+
+
+SYNOPSIS
+--------
+*health* ['cache name']
+
+
+EXAMPLES
+--------
+`health` +
+Displays the health status of the container.
+
+`health mycache` +
+Displays the health status of the `mycache` cache.
+
+
+SEE ALSO
+--------
+stats(1)
