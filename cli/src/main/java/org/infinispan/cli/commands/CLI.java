@@ -59,6 +59,7 @@ import org.infinispan.cli.commands.rest.ClearCache;
 import org.infinispan.cli.commands.rest.Create;
 import org.infinispan.cli.commands.rest.Drop;
 import org.infinispan.cli.commands.rest.Get;
+import org.infinispan.cli.commands.rest.Health;
 import org.infinispan.cli.commands.rest.Index;
 import org.infinispan.cli.commands.rest.Logging;
 import org.infinispan.cli.commands.rest.Migrate;
@@ -135,6 +136,7 @@ import org.wildfly.security.keystore.KeyStoreUtil;
             Echo.class,
             Encoding.class,
             Get.class,
+            Health.class,
             Index.class,
             Install.class,
             Bind.class,

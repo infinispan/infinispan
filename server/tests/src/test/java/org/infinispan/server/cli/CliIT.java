@@ -307,6 +307,24 @@ public class CliIT {
       connection.clear();
    }
 
+   @Test
+   public void testCliHealth() {
+      try (CliConnection connection = SERVERS.cli().connect()) {
+         connection.send("create cache --file=" + getCliResource("qcache.xml").getPath() + " healthcache");
+         connection.clear();
+
+         // Cluster health
+         connection.send("health");
+         connection.assertContains("HEALTHY");
+         connection.clear();
+
+         // Single cache health
+         connection.send("health healthcache");
+         connection.assertContains("HEALTHY");
+         connection.clear();
+      }
+   }
+
    private File getCliResource(String resource) {
       Path dest = SERVERS.getServerDriver().getRootDir().toPath().resolve(resource);
       File destFile = dest.toFile();

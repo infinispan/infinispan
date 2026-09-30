@@ -1,7 +1,6 @@
 package org.infinispan.server.test.core;
 
 import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -189,7 +188,7 @@ public class CliConnection implements Connection, AutoCloseable {
                e.printStackTrace();
             }
          }
-      } else throw new RuntimeException("Got input when not reading: " + Arrays.toString(input));
+      } else throw new RuntimeException("Got input when not reading: " + Parser.fromCodePoints(input));
    }
 
    @Override
