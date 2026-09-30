@@ -87,6 +87,9 @@ $(document).ready(function() {
     $('ul.sectlevel1').wrap('<div id="toctree"></div>');
     let plugins = [ "search", "wholerow" ];
 
+    // Make the compatibility chart collapsible (native <details>)
+    $('#compat-table').wrap('<details class="collapsible"><summary>Compatibility exceptions</summary></details>');
+
     // We only enable the state plugin if the user allows functionality cookies
     let cookiePrefs = CookieConsent.getUserPreferences();
     if (cookiePrefs.acceptedCategories.includes("functionality")) {

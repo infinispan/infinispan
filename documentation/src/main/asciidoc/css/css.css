@@ -33,4 +33,10 @@
 .jstree-default-small .jstree-anchor {
     height: auto;
 }
+details.collapsible > summary {
+    cursor: pointer;
+}
+#compat-table td div.content table colgroup col:first-child {
+    width: 12% !important;
+}
 
