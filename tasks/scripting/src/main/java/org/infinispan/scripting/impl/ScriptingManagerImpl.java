@@ -70,7 +70,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
    private ScriptEngineManager scriptEngineManager;
    private final ConcurrentMap<String, ScriptEngine> scriptEnginesByExtension = new ConcurrentHashMap<>(2);
    private final ConcurrentMap<String, ScriptEngine> scriptEnginesByLanguage = new ConcurrentHashMap<>(2);
-   private Cache<String, String> scriptCache;
+   private volatile Cache<String, String> scriptCache;
    private ScriptConversions scriptConversions;
    ConcurrentMap<String, CompiledScript> compiledScripts = new ConcurrentHashMap<>();
 
@@ -168,8 +168,13 @@ public class ScriptingManagerImpl implements ScriptingManager {
       return getUnwrappedScriptCache().containsKey(name);
    }
 
-   CompletionStage<Boolean> containsScriptAsync(String name) {
-      return getUnwrappedScriptCache().getAsync(name)
+   public CompletionStage<Boolean> containsScriptAsync(String name) {
+      if (scriptCache != null) {
+         return getUnwrappedScriptCache().getAsync(name)
+               .thenApply(Objects::nonNull);
+      }
+      return blockingManager.supplyBlocking(this::getUnwrappedScriptCache, "ScriptingManagerImpl - containsScriptAsync")
+            .thenCompose(cache -> cache.getAsync(name))
             .thenApply(Objects::nonNull);
    }
 
