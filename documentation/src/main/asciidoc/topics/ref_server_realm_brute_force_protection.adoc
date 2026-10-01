@@ -1,0 +1,38 @@
+[id='brute-force-protection-security-realms_{context}']
+= Security realm brute-force protection
+
+Security realms which use username and password credentials (`properties` and `ldap`) may be subject to brute-force
+attacks. {brandname} Server automatically enables brute-force protection on these realms which lock out users
+after a number of incorrect authentication attempts. These users are unlocked after a certain interval.
+
+It is possible to tune the brute-force protection using the following system properties:
+
+|===
+|Property name |Type |Default |Description
+
+|`infinispan.server.realm.<name>.brute-force.enabled`
+|boolean
+|`true`
+|Column 4, row 1
+
+|`infinispan.server.realm.<name>.brute-force.max-failed-attempts`
+|integer
+|`10`
+|Maximum number of consecutive failed login attempts for a specific user before the lockout kicks in for the configured interval.
+
+|`infinispan.server.realm.<name>.brute-force.lockout-interval`
+|integer
+|`15`
+|Maximum number of failed authentication attempts the interval in minutes the account will be locked for. Subsequent failed attempts during the lockout period will renew the lockout indefinitely, even if those attempts use the correct credential.
+
+|`infinispan.server.realm.<name>.brute-force.session-timeout`
+|integer
+|`30`
+|After a failed authentication attempt how long in minutes to keep the tracking session alive. Subsequent failed attempts will renew the timeout.
+
+|`infinispan.server.realm.<name>.brute-force.max-cached-sessions`
+|integer
+|`25000`
+|Maximum number of sessions that will be cached before the least recently used session is evicted from the cache.
+|===
+
