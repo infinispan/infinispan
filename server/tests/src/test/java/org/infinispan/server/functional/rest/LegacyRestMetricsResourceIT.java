@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -38,6 +39,7 @@ import org.infinispan.metrics.Constants;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.jupiter.InfinispanServerExtension;
 import org.infinispan.server.test.jupiter.InfinispanServerExtensionBuilder;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.junit.jupiter.api.Test;
@@ -59,6 +61,9 @@ public class LegacyRestMetricsResourceIT {
    private static final Pattern PROMETHEUS_PATTERN = Pattern.compile("^(?<metric>[a-zA-Z_:][a-zA-Z0-9_:]*]*)(?<tags>\\{.*})?[\\t ]*(?<value>-?[0-9E.\\-]*)[\\t ]*(?<timestamp>[0-9]+)?$");
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
    private static final int NUM_SERVERS = 3;
+
+   // Max number of attempts to observe a window with no rehashing in flight when asserting on per-ownership counters.
+   private static final int MAX_STABLE_ATTEMPTS = 50;
    private static final String[] OWNERSHIP = new String[]{
          "primary_owner",
          "backup_owner",
@@ -206,70 +211,94 @@ public class LegacyRestMetricsResourceIT {
    @Test
    public void testDetailedKeyMetrics() {
       var client = SERVERS.rest().create();
-      // put some entries then check that the stats were updated
-      var cache = client.cache(SERVERS.getMethodName());
+      RestCacheClient cache = client.cache(SERVERS.getMethodName());
+      String cacheName = cache.name();
 
-      // store + read hit
-      assertStatus(NO_CONTENT, cache.post("hit", "value"));
-      assertStatus(OK, cache.get("hit"));
+      // Store + read hit. Per-ownership counters are only meaningful while the topology is stable,
+      // so we retry with fresh keys until a quiescent window appears where both operations land on
+      // the same owner position.
+      for (int attempt = 0; ; ++attempt) {
+         var beforeMetrics = getMetrics(client.metrics());
 
-      var metrics = getMetrics(client.metrics());
+         String key = "hit-" + attempt;
+         assertStatus(NO_CONTENT, cache.post(key, "value"));
+         assertStatus(OK, cache.get(key));
 
-      var reads = new int[OWNERSHIP.length];
-      var writes = new int[OWNERSHIP.length];
+         List<Metric> metricsAfterOps = getMetrics(client.metrics());
+         int[] reads = ownershipDelta(beforeMetrics, metricsAfterOps, "vendor_statistics_hit_%s_total", cacheName);
+         int[] writes = ownershipDelta(beforeMetrics, metricsAfterOps, "vendor_statistics_store_%s_total", cacheName);
 
-      log.debugf("Test hit:%n%s", metrics.stream().map(Metric::toString).collect(Collectors.joining("\n")));
+         if (Arrays.equals(reads, writes) && Arrays.stream(writes).sum() == 1) {
+            // only 1 operation was performed and both are attributed to the same owner position
+            assertEquals(1, Arrays.stream(reads).sum());
+            assertArrayEquals(reads, writes);
+            return;
+         }
 
-      // unable to test remove hit since the return value is always ignored.
-      for (var i = 0; i < OWNERSHIP.length; ++i) {
-         reads[i] = (int) findCacheMetric(metrics, String.format("vendor_statistics_hit_%s_total", OWNERSHIP[i]), cache.name()).value;
-         writes[i] = (int) findCacheMetric(metrics, String.format("vendor_statistics_store_%s_total", OWNERSHIP[i]), cache.name()).value;
+         if (attempt >= MAX_STABLE_ATTEMPTS - 1) {
+            fail("Per-ownership metrics did not stabilize: reads=" + Arrays.toString(reads) + ", writes=" + Arrays.toString(writes));
+         }
+         TestingUtil.sleepThread(50);
       }
-
-      // only 1 operation was performed
-      assertEquals(1, Arrays.stream(reads).sum());
-
-      // all arrays must have the same position set
-      assertArrayEquals(reads, writes);
    }
 
    @Test
    public void testDetailedKeyMetrics2() {
       var client = SERVERS.rest().create();
-      // put some entries then check that the stats were updated
-      var cache = client.cache(SERVERS.getMethodName());
+      RestCacheClient cache = client.cache(SERVERS.getMethodName());
+      String cacheName = cache.name();
 
-      assertStatus(NO_CONTENT, cache.post("hit", "value"));
-      assertStatus(NOT_FOUND, cache.get("miss"));
-      assertStatus(NO_CONTENT, cache.remove("hit"));
+      // Per-ownership counters are only meaningful while the topology is stable. Right after a fresh cache is created,
+      // initial rebalancing/state-transfer may still be in flight and can shift ownership of a key's segment between
+      // operations (e.g. turning an expected remove-hit into a remove-miss). Retry with fresh keys until we observe a
+      // quiescent window where the store and its matching remove-hit land on the same owner position.
+      for (int attempt = 0; ; ++attempt) {
+         var beforeMetrics = getMetrics(client.metrics());
 
-      var metrics = getMetrics(client.metrics());
+         String hitKey = "hit-" + attempt;
+         String missKey = "miss-" + attempt;
+         assertStatus(NO_CONTENT, cache.post(hitKey, "value"));
+         assertStatus(NOT_FOUND, cache.get(missKey));
+         assertStatus(NO_CONTENT, cache.remove(hitKey));
 
-      var reads = new int[OWNERSHIP.length];
-      var writes = new int[OWNERSHIP.length];
-      var rm_misses = new int[OWNERSHIP.length];
-      var rm_hits = new int[OWNERSHIP.length];
+         List<Metric> metricsAfterOps = getMetrics(client.metrics());
+         int[] reads = ownershipDelta(beforeMetrics, metricsAfterOps, "vendor_statistics_miss_%s_total", cacheName);
+         int[] writes = ownershipDelta(beforeMetrics, metricsAfterOps, "vendor_statistics_store_%s_total", cacheName);
+         int[] rmMisses = ownershipDelta(beforeMetrics, metricsAfterOps, "vendor_statistics_remove_miss_%s_total", cacheName);
+         int[] rmHits = ownershipDelta(beforeMetrics, metricsAfterOps, "vendor_statistics_remove_hit_%s_total", cacheName);
 
-      log.debugf("Test miss:%n%s", metrics.stream().map(Metric::toString).collect(Collectors.joining("\n")));
+         if (Arrays.equals(writes, rmHits) && Arrays.stream(writes).sum() == 1) {
+            // The arrays must have the same position set. Remove of an existing entry
+            // always returns the old value to the originator, even in non-primary:
+            // we'll always have a hit and no misses.
+            assertArrayEquals(writes, rmHits);
 
-      for (var i = 0; i < OWNERSHIP.length; ++i) {
-         reads[i] = (int) findCacheMetric(metrics, String.format("vendor_statistics_miss_%s_total", OWNERSHIP[i]), cache.name()).value;
-         writes[i] = (int) findCacheMetric(metrics, String.format("vendor_statistics_store_%s_total", OWNERSHIP[i]), cache.name()).value;
-         rm_misses[i] = (int) findCacheMetric(metrics, String.format("vendor_statistics_remove_miss_%s_total", OWNERSHIP[i]), cache.name()).value;
-         rm_hits[i] = (int) findCacheMetric(metrics, String.format("vendor_statistics_remove_hit_%s_total", OWNERSHIP[i]), cache.name()).value;
+            // One read miss from the explicit get plus one implicit pre-read performed by the put => 2 read misses total.
+            assertEquals(2, Arrays.stream(reads).sum());
+
+            // exactly one write
+            assertEquals(1, Arrays.stream(writes).sum());
+
+            // removing an existing entry never produces a remove-miss
+            assertEquals(0, Arrays.stream(rmMisses).sum());
+            return;
+         }
+
+         if (attempt >= MAX_STABLE_ATTEMPTS - 1) {
+            fail("Per-ownership metrics did not stabilize: writes=" + Arrays.toString(writes) + ", rmHits=" + Arrays.toString(rmHits));
+         }
+         TestingUtil.sleepThread(50);
       }
+   }
 
-      // 1 miss + 1 hit (remove performs a read before removing)
-      assertEquals(2, Arrays.stream(reads).sum());
-
-      // 1 write
-      assertEquals(1, Arrays.stream(writes).sum());
-
-      // The arrays must have the same position set.
-      // Remove of an existing entry always returns the old value to the originator,
-      // even in non-primary. We'll always have a hit and no misses.
-      assertArrayEquals(writes, rm_hits);
-      assertEquals(0, Arrays.stream(rm_misses).sum());
+   private static int[] ownershipDelta(List<Metric> before, List<Metric> after, String nameFormat, String cacheName) {
+      var delta = new int[OWNERSHIP.length];
+      for (var i = 0; i < OWNERSHIP.length; ++i) {
+         double beforeValue = findCacheMetric(before, String.format(nameFormat, OWNERSHIP[i]), cacheName).value;
+         double afterValue = findCacheMetric(after, String.format(nameFormat, OWNERSHIP[i]), cacheName).value;
+         delta[i] = (int) Math.round(afterValue - beforeValue);
+      }
+      return delta;
    }
 
    private static void assertDetailedMetrics(List<Metric> allMetrics, String name, Consumer<AbstractDoubleAssert<?>> consumer) {
