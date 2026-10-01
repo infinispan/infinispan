@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -399,6 +400,16 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    @Override
    public CompletionStage<Void> updateBloomFilter() {
       return delegate.updateBloomFilter();
+   }
+
+   @Override
+   public CompletionStage<Void> removeBloomFilterKeys(List<byte[]> keys) {
+      return delegate.removeBloomFilterKeys(keys);
+   }
+
+   @Override
+   public boolean supportsBloomFilterKeyRemoval() {
+      return delegate.supportsBloomFilterKeyRemoval();
    }
 
    @Override

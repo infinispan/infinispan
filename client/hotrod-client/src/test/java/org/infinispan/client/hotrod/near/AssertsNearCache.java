@@ -12,6 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
@@ -26,6 +29,7 @@ import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 
 public class AssertsNearCache<K, V> {
    final InternalRemoteCache<K, V> remote;
@@ -50,12 +54,22 @@ public class AssertsNearCache<K, V> {
    }
 
    static <K, V> AssertsNearCache<K, V> create(Cache<byte[], ?> server, String cacheName, ConfigurationBuilder builder) {
+      return create(server, cacheName, builder, false);
+   }
+
+   /**
+    * @param legacyBloomUpdates when {@code true} the client behaves as if the server was too old to remove single
+    *                           keys from the bloom filter and keeps recomputing the whole of it instead
+    */
+   static <K, V> AssertsNearCache<K, V> create(Cache<byte[], ?> server, String cacheName, ConfigurationBuilder builder,
+                                               boolean legacyBloomUpdates) {
       final BlockingQueue<MockEvent> events = new ArrayBlockingQueue<>(128);
       AtomicReference<NearCacheService<K, V>> nearCacheServiceRef = new AtomicReference<>();
       RemoteCacheManager manager = new RemoteCacheManager(builder.build()) {
          @Override
          protected <KK, VV> NearCacheService<KK, VV> createNearCacheService(String cacheName, NearCacheConfiguration cfg) {
-            MockNearCacheService nearCacheService = new MockNearCacheService<>(cfg, events, listenerNotifier);
+            MockNearCacheService nearCacheService = new MockNearCacheService<>(cfg, events, listenerNotifier,
+                  legacyBloomUpdates);
             nearCacheServiceRef.set(nearCacheService);
             return nearCacheService;
          }
@@ -275,5 +289,33 @@ public class AssertsNearCache<K, V> {
 
    public int nearCacheSize() {
       return this.nearCacheService.get().size();
+   }
+
+   /**
+    * @return the keys the near cache currently holds, in no particular order
+    */
+   List<K> nearCacheKeys() {
+      List<K> keys = new ArrayList<>();
+      for (Map.Entry<K, MetadataValue<V>> entry : this.nearCacheService.get()) {
+         keys.add(entry.getKey());
+      }
+      return keys;
+   }
+
+   /**
+    * Pushes every buffered bloom filter removal to the server and waits for it, so that the filter the server holds
+    * for this client matches its near cache contents exactly.
+    */
+   AssertsNearCache<K, V> flushBloomFilterRemovals() {
+      CompletionStages.join(this.nearCacheService.get().flushBloomFilterRemovals());
+      return this;
+   }
+
+   /**
+    * Empties the near cache and resets the server side bloom filter, without asserting on the events it produces.
+    */
+   AssertsNearCache<K, V> clearNearCache() {
+      CompletionStages.join(((InvalidatedNearRemoteCache<K, V>) remote).clearNearCache());
+      return this;
    }
 }

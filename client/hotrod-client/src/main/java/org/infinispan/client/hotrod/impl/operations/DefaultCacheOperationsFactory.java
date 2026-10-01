@@ -183,6 +183,11 @@ public final class DefaultCacheOperationsFactory implements CacheOperationsFacto
    }
 
    @Override
+   public HotRodOperation<Void> newRemoveBloomFilterKeysOperation(List<byte[]> keys) {
+      return new RemoveBloomFilterKeysOperation(remoteCache, keys);
+   }
+
+   @Override
    public ClientListenerOperation newAddNearCacheListenerOperation(Object listener, int bloomBits) {
       return new AddBloomNearCacheClientListenerOperation(remoteCache, listener, bloomBits);
    }

@@ -36,5 +36,15 @@ Bloom filters:
 
 * Reside on {brandname} Server and keep track of the entries that the client has requested.
 * Cannot be used with unbounded near caches.
+* Are counting filters, which lets the client tell the server about individual entries that left its near cache
+instead of having to recompute and resend the whole filter. Clients batch those notifications, so the number of
+messages does not grow with the size of the near cache.
+* Are reset whenever the client clears its near cache, for example when it fails over to a different server.
+
+[NOTE]
+====
+Servers older than {brandname} 16.3 cannot remove single entries from a bloom filter.
+Clients detect this and fall back to periodically sending a freshly computed filter instead.
+====
 
 //-

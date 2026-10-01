@@ -111,4 +111,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Listener event watermarks are invalid: low-water-mark (%d) must be less than high-water-mark (%d), and high-water-mark must be less than max-size (%d)", id = 6029)
    CacheConfigurationException invalidListenerEventWatermarks(int lowWaterMark, int highWaterMark, int maxSize);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Replacing the near cache bloom filter of listener %s on cache '%s', it was not removed properly", id = 6030)
+   void replacedBloomFilter(String listenerId, String cacheName);
 }

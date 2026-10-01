@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
@@ -102,6 +103,22 @@ public interface InternalRemoteCache<K, V> extends RemoteCache<K, V> {
     * @return stage that when complete the filter was sent to the listener node
     */
    CompletionStage<Void> updateBloomFilter();
+
+   /**
+    * Tells the listener node that the given keys are no longer in the near cache so it can remove them from the
+    * bloom filter it maintains. A key has to be present as many times as it was read, duplicates are meaningful.
+    * If this cache does not have near caching this will return an already completed stage.
+    *
+    * @param keys the marshalled keys to remove from the filter
+    * @return stage that completes when the listener node processed the removals
+    */
+   CompletionStage<Void> removeBloomFilterKeys(List<byte[]> keys);
+
+   /**
+    * @return whether the node the near cache listener is installed on supports
+    * {@link #removeBloomFilterKeys(List)}, which older servers do not
+    */
+   boolean supportsBloomFilterKeyRemoval();
 
    CacheOperationsFactory getOperationsFactory();
 

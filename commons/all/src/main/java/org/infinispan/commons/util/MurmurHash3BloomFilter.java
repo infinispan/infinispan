@@ -18,7 +18,7 @@ public class MurmurHash3BloomFilter extends BloomFilter<byte[]> {
       super(bitsToUse, intSet, (Iterable) functions(hashFunctions));
    }
 
-   private static int defaultHashFunctionCount() {
+   static int defaultHashFunctionCount() {
       return Integer.parseInt(System.getProperty("infinispan.bloom-filter.hash-functions", "3"));
    }
 
@@ -38,7 +38,7 @@ public class MurmurHash3BloomFilter extends BloomFilter<byte[]> {
       return new MurmurHash3BloomFilter(bitsToUse, IntSets.concurrentSet(bitsToUse), hashFunctions);
    }
 
-   private static Iterable<ToIntFunction<byte[]>> functions(int hashFunctions) {
+   static Iterable<ToIntFunction<byte[]>> functions(int hashFunctions) {
       if (hashFunctions <= 0) {
          throw new IllegalArgumentException("Number of hash functions must be positive, received " + hashFunctions);
       }

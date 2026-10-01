@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod;
 
 import java.io.StreamCorruptedException;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
@@ -15,9 +16,9 @@ import java.util.concurrent.Executor;
 import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.util.BloomFilter;
+import org.infinispan.commons.util.CountingBloomFilter;
 import org.infinispan.commons.util.IntSets;
-import org.infinispan.commons.util.MurmurHash3BloomFilter;
+import org.infinispan.commons.util.MurmurHash3CountingBloomFilter;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.entries.CacheEntry;
@@ -48,7 +49,12 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    private final ClientListenerRegistry listenerRegistry;
    private final InfinispanTelemetry telemetryService;
 
-   private final ConcurrentMap<String, BloomFilter<byte[]>> bloomFilters = new ConcurrentHashMap<>();
+   /**
+    * The near cache bloom filters of this connection, keyed by cache name. There can only ever be a single near cache
+    * listener per cache and connection, so the filter is only ever mutated from this channel's event loop, while the
+    * listener may read from it concurrently.
+    */
+   private final ConcurrentMap<String, BloomFilterRegistration> bloomFilters = new ConcurrentHashMap<>();
 
    CacheRequestProcessor(Channel channel, Executor executor, HotRodServer server, InfinispanTelemetry telemetryService) {
       super(channel, executor, server);
@@ -104,9 +110,14 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       }
    }
 
+   /**
+    * Replaces the entire contents of the bloom filter with the bits the client calculated from its near cache. This
+    * is used by clients that do not support {@link HotRodConstants#REMOVE_BLOOM_FILTER_KEYS_REQUEST} and, with an
+    * empty array, by newer clients to tell the server their near cache was cleared.
+    */
    void updateBloomFilter(HotRodHeader header, Subject subject, byte[] bloomArray) {
       try {
-         BloomFilter<byte[]> filter = bloomFilters.get(header.cacheName);
+         CountingBloomFilter<byte[]> filter = getBloomFilter(header.cacheName);
          if (filter != null) {
             if (log.isTraceEnabled()) {
                log.tracef("Updating bloom filter %s found for cache %s", filter, header.cacheName);
@@ -127,6 +138,45 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       }
    }
 
+   /**
+    * Removes the provided keys from the bloom filter, one decrement per occurrence. The client sends the keys that
+    * are no longer in its near cache, which keeps the filter in sync without having to recompute it in its entirety.
+    */
+   void removeBloomFilterKeys(HotRodHeader header, Subject subject, List<byte[]> keys) {
+      try {
+         CountingBloomFilter<byte[]> filter = getBloomFilter(header.cacheName);
+         if (filter != null) {
+            for (byte[] key : keys) {
+               if (log.isTraceEnabled()) {
+                  log.tracef("Removing key %s from bloom filter for cache %s", Util.toStr(key), header.cacheName);
+               }
+               filter.removeFromFilter(key);
+            }
+            writeSuccess(header);
+         } else {
+            if (log.isTraceEnabled()) {
+               log.tracef("There was no bloom filter for cache %s from client", header.cacheName);
+            }
+            writeNotExecuted(header);
+         }
+      } catch (Throwable t) {
+         writeException(header, t);
+      }
+   }
+
+   private CountingBloomFilter<byte[]> getBloomFilter(String cacheName) {
+      BloomFilterRegistration registration = bloomFilters.get(cacheName);
+      return registration != null ? registration.filter() : null;
+   }
+
+   private void removeBloomFilter(String cacheName, byte[] listenerId) {
+      bloomFilters.computeIfPresent(cacheName, (name, registration) ->
+            Arrays.equals(registration.listenerId(), listenerId) ? null : registration);
+   }
+
+   private record BloomFilterRegistration(byte[] listenerId, CountingBloomFilter<byte[]> filter) {
+   }
+
    private void getInternal(HotRodHeader header, AdvancedCache<byte[], byte[]> cache, byte[] key,
                             InfinispanSpan<CacheEntry<?, ?>> span) {
       CompletableFuture<CacheEntry<byte[], byte[]>> get = cache.getCacheEntryAsync(key);
@@ -138,7 +188,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void addToFilter(String cacheName, byte[] key) {
-      BloomFilter<byte[]> bloomFilter = bloomFilters.get(cacheName);
+      CountingBloomFilter<byte[]> bloomFilter = getBloomFilter(cacheName);
       // TODO: Need to think harder about this because we could have a concurrent write as we are doing our get
       // and we could have just have had an invalidation come through that didn't pass the bloom filter
       // I believe this has to go at the beginning of the get command before we get a value or exception
@@ -642,14 +692,19 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       var span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
-         BloomFilter<byte[]> bloomFilter = null;
+         CountingBloomFilter<byte[]> bloomFilter = null;
          if (bloomBits > 0) {
-            bloomFilter = MurmurHash3BloomFilter.createConcurrentFilter(bloomBits);
+            bloomFilter = MurmurHash3CountingBloomFilter.createFilter(bloomBits);
             if (log.isTraceEnabled()) {
                log.tracef("Installing bloom filter for listener %s on cache %s", Util.toStr(listenerId), header.cacheName);
             }
-            BloomFilter<byte[]> priorFilter = bloomFilters.putIfAbsent(header.cacheName, bloomFilter);
-            assert priorFilter == null;
+            // A connection can only have a single near cache listener per cache, but a client that failed over and
+            // then re-registered may not have removed the previous one, so the new filter simply replaces it
+            BloomFilterRegistration prior = bloomFilters.put(header.cacheName,
+                  new BloomFilterRegistration(listenerId, bloomFilter));
+            if (prior != null) {
+               log.replacedBloomFilter(Util.toStr(prior.listenerId()), header.cacheName);
+            }
          }
          CompletionStage<Void> stage = listenerRegistry.addClientListener(channel, header, listenerId, cache,
                includeCurrentState, filterFactory, filterParams, converterFactory, converterParams, useRawData,
@@ -658,6 +713,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
             try {
                if (cause != null) {
                   log.trace("Failed to add listener", cause);
+                  removeBloomFilter(header.cacheName, listenerId);
                   if (cause instanceof CompletionException) {
                      writeException(header, cause.getCause());
                   } else {
@@ -693,6 +749,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
                      span.recordException(throwable);
                   } else {
                      if (success == Boolean.TRUE) {
+                        removeBloomFilter(header.cacheName, listenerId);
                         writeSuccess(header);
                      } else {
                         writeNotExecuted(header);

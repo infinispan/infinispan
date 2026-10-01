@@ -23,7 +23,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.WrappedByteArray;
-import org.infinispan.commons.util.BloomFilter;
+import org.infinispan.commons.util.CountingBloomFilter;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.versioning.NumericVersion;
@@ -145,7 +145,7 @@ class ClientListenerRegistry {
                           AdvancedCache<byte[], byte[]> cache, boolean includeState,
                           String filterFactory, List<byte[]> binaryFilterParams,
                           String converterFactory, List<byte[]> binaryConverterParams,
-                          boolean useRawData, int listenerInterests, BloomFilter<byte[]> bloomFilter) {
+                          boolean useRawData, int listenerInterests, CountingBloomFilter<byte[]> bloomFilter) {
 
       CacheEventFilter<byte[], byte[]> filter;
       CacheEventConverter<byte[], byte[], byte[]> converter;
@@ -319,10 +319,10 @@ class ClientListenerRegistry {
 
    @Listener(clustered = true)
    private class BloomAwareStatelessClientEventSender extends StatelessClientEventSender {
-      private final BloomFilter<byte[]> bloomFilter;
+      private final CountingBloomFilter<byte[]> bloomFilter;
 
       BloomAwareStatelessClientEventSender(Cache cache, Channel ch, VersionedEncoder encoder, byte[] listenerId,
-                                           byte version, ClientEventType targetEventType, BloomFilter<byte[]> bloomFilter) {
+                                           byte version, ClientEventType targetEventType, CountingBloomFilter<byte[]> bloomFilter) {
          super(cache, ch, encoder, listenerId, version, targetEventType);
          this.bloomFilter = bloomFilter;
       }
@@ -551,7 +551,7 @@ class ClientListenerRegistry {
    private BaseClientEventSender getClientEventSender(boolean includeState, Channel ch, VersionedEncoder encoder,
                                                       byte version, Cache cache, byte[] listenerId,
                                                       ClientEventType eventType, long messageId,
-                                                      BloomFilter<byte[]> bloomFilter) {
+                                                      CountingBloomFilter<byte[]> bloomFilter) {
       BaseClientEventSender bces;
       if (includeState) {
          bces = new StatefulClientEventSender(cache, ch, encoder, listenerId, version, eventType, messageId);

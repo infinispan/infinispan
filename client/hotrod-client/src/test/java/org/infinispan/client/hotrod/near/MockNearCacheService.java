@@ -11,10 +11,23 @@ import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 
 public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
    final BlockingQueue<MockEvent> events;
+   private final boolean legacyBloomUpdates;
 
    MockNearCacheService(NearCacheConfiguration cfg, BlockingQueue<MockEvent> events, ClientListenerNotifier listenerNotifier) {
+      this(cfg, events, listenerNotifier, false);
+   }
+
+   MockNearCacheService(NearCacheConfiguration cfg, BlockingQueue<MockEvent> events,
+                        ClientListenerNotifier listenerNotifier, boolean legacyBloomUpdates) {
       super(cfg, listenerNotifier);
       this.events = events;
+      this.legacyBloomUpdates = legacyBloomUpdates;
+   }
+
+   @Override
+   boolean removeKeysFromBloomFilterSupported() {
+      // Pretending the server cannot remove single keys exercises the path used against servers older than 16.3
+      return !legacyBloomUpdates && super.removeKeysFromBloomFilterSupported();
    }
 
    @Override
