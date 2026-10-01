@@ -269,6 +269,9 @@ jobs:
   images:
     needs: [published, release]
     if: startsWith(needs.release.outputs.version, '16.')
+    permissions:
+      contents: read
+      id-token: write
     uses: ./.github/workflows/release_image.yml
     secrets: inherit
     with:

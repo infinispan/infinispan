@@ -22,7 +22,8 @@ You can build a server image using a locally built server. Use the following com
 
 The image is built with the latest OpenJDK LTS distribution from https://adoptium.net/
 You can use a specific release of Infinispan Server by adding the `-Dserver.dist=<url>` property to the above Maven
-invocation. You can also use a specific JDK release via the `-Djdk.dist=<url>` property.
+invocation. You can also use a specific JDK release via the `-Djdk.dist=<url>` property. Add the `-Dimage.sbom=true`
+property to attach an SPDX SBOM as OCI attestation to each platform of the image, see [server/image/README.md](server/image/README.md).
 
 Building natives
 ================
