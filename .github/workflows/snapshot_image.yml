@@ -76,7 +76,36 @@ jobs:
           registry: quay.io
 
       - name: Push to Quay.io
-        run: podman manifest push ${{ inputs.name }}:${{ inputs.tag }} quay.io/infinispan-test/server:${{ inputs.tag }} --all --tls-verify=true
+        id: push-to-quay
+        run: |
+          podman manifest push ${{ inputs.name }}:${{ inputs.tag }} quay.io/infinispan-test/server:${{ inputs.tag }} --all --tls-verify=true --digestfile /tmp/digest
+          echo "digest=$(cat /tmp/digest)" >> "$GITHUB_OUTPUT"
 
       - name: Print Quay.io image url
         run: echo "Image pushed to quay.io/infinispan-test/server:${{ inputs.tag }}"
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: 'v3.1.3'
+
+      - name: Prepare registry credentials for SBOM attestation
+        run: |
+          mkdir -p "$RUNNER_TEMP/docker-config"
+          cp "$REGISTRY_AUTH_FILE" "$RUNNER_TEMP/docker-config/config.json"
+          echo "DOCKER_CONFIG=$RUNNER_TEMP/docker-config" >> "$GITHUB_ENV"
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        with:
+          image: quay.io/infinispan-test/server@${{ steps.push-to-quay.outputs.digest }}
+          format: spdx-json
+          output-file: ./sbom.spdx.json
+          syft-version: 'v1.52.0'
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Create SBOM attestation
+        run: |
+          set -euo pipefail
+          cosign attest --yes --predicate ./sbom.spdx.json --type spdxjson "quay.io/infinispan-test/server@${{ steps.push-to-quay.outputs.digest }}"
