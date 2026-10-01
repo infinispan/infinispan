@@ -21,12 +21,16 @@ import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.IteratorMapper;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.remote.RemoteStore;
+import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.upgrade.RollingUpgradeManager;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -42,15 +46,84 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
    protected static final ProtocolVersion OLD_PROTOCOL_VERSION = ProtocolVersion.PROTOCOL_VERSION_31;
    protected static final ProtocolVersion NEW_PROTOCOL_VERSION = ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
 
-   @BeforeMethod
-   public void setup() throws Exception {
-      sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
-            .cache().name(OLD_CACHE)
-            .cache().name(TEST_CACHE)
-            .build();
+    @BeforeMethod(alwaysRun = true)
+    public void setup() throws Exception {
+       if (!reuseClustersAcrossMethods()) {
+          // Original behaviour: build fresh clusters for every test method.
+          sourceCluster = createSourceCluster();
+          targetCluster = configureTargetCluster();
+          return;
+       }
 
-      targetCluster = configureTargetCluster();
-   }
+       // Reuse the same clusters across all test methods of this class instead of rebuilding them on each @BeforeMethod cycle.
+       // The OS may not release a JGroups multicast socket immediately after a channel disconnect, so repeatedly binding/unbinding
+       // the same address (one per method) intermittently fails with "BindException: Address already in use". Building once and only
+       // resetting state avoids that churn entirely. Tests that add their migration remote store dynamically re-establish it via
+       // connectTargetCluster(), which each test invokes before synchronizing.
+        if (sourceCluster == null) {
+           sourceCluster = createSourceCluster();
+           targetCluster = configureTargetCluster();
+        } else {
+           // A previous test's disconnectSource cleared the migration remote store(s); re-establish them so this method can sync.
+           sourceCluster.cleanAllCaches();
+           targetCluster.cleanAllCaches();
+           reconnectMigration(targetCluster);
+        }
+    }
+
+    /**
+     * Whether the source and target clusters should be created once per class (in {@link #setup()}) and reused across all test methods,
+     * or rebuilt for every method. Reuse is enabled by default: it avoids repeatedly binding/unbinding the same JGroups multicast socket
+     * on each @BeforeMethod cycle. Subclasses that override this to return false keep rebuilding per method instead.
+     */
+    protected boolean reuseClustersAcrossMethods() {
+       return true;
+    }
+
+    /**
+     * Re-establishes the migration path on a reused target cluster before running a test method, after a previous test's disconnectSource
+     * cleared it. The default re-adds plain (non-SSL) remote stores for both caches pointing at the source HotRod port. Subclasses that use
+     * SSL or named remote containers override this with their own store configuration; subclasses that add stores dynamically in
+     * {@link #connectTargetCluster()} override it to do nothing, since each test re-adds them itself.
+     */
+    protected void reconnectMigration(TestCluster target) {
+       target.connectSource(OLD_CACHE, buildRemoteStoreConfig(OLD_CACHE, OLD_PROTOCOL_VERSION));
+       target.connectSource(TEST_CACHE, buildRemoteStoreConfig(TEST_CACHE, NEW_PROTOCOL_VERSION));
+    }
+
+    private StoreConfiguration buildRemoteStoreConfig(String cacheName, ProtocolVersion version) {
+       ConfigurationBuilder builder = new ConfigurationBuilder();
+       RemoteStoreConfigurationBuilder store = builder.persistence().addStore(RemoteStoreConfigurationBuilder.class);
+       store.remoteCacheName(cacheName).protocolVersion(version).shared(true).segmented(false)
+             .addServer().host("localhost").port(sourceCluster.getHotRodPort());
+       return store.build().persistence().stores().get(0);
+    }
+
+    protected TestCluster createSourceCluster() throws Exception {
+       return new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
+             .cache().name(OLD_CACHE)
+             .cache().name(TEST_CACHE)
+             .build();
+    }
+
+    @AfterMethod(alwaysRun = true)
+    public void tearDown() throws Exception {
+       if (!reuseClustersAcrossMethods()) {
+          destroyClusters();
+       }
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void destroyClusters() {
+       if (targetCluster != null) {
+          targetCluster.destroy();
+          targetCluster = null;
+       }
+       if (sourceCluster != null) {
+          sourceCluster.destroy();
+          sourceCluster = null;
+       }
+    }
 
    private void fillCluster(TestCluster cluster, String cacheName) {
       for (char ch = 'A'; ch <= 'Z'; ch++) {
@@ -238,12 +311,6 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
          }).when(spy).retrieveEntriesWithMetadata(anySet(), anyInt());
          TestingUtil.replaceField(spy, "remoteCache", remoteStore, RemoteStore.class);
       });
-   }
-
-   @AfterMethod
-   public void tearDown() {
-      sourceCluster.destroy();
-      targetCluster.destroy();
    }
 
 }

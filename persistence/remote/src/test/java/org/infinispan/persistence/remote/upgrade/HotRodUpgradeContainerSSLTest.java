@@ -2,8 +2,12 @@ package org.infinispan.persistence.remote.upgrade;
 
 import java.util.Properties;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.persistence.remote.RemoteStore;
+import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.global.RemoteContainersConfigurationBuilder;
 import org.infinispan.testing.security.TestCertificates;
 import org.testng.annotations.Test;
@@ -11,12 +15,27 @@ import org.testng.annotations.Test;
 @Test(testName = "upgrade.hotrod.HotRodUpgradeContainerSSLTest", groups = "functional")
 public class HotRodUpgradeContainerSSLTest extends HotRodUpgradeWithSSLTest {
 
-   private static final String CONTAINER_NAME_OLD = "old-ssl-container-name";
-   private static final String CONTAINER_NAME_TEST = "test-ssl-container-name";
+    private static final String CONTAINER_NAME_OLD = "old-ssl-container-name";
+    private static final String CONTAINER_NAME_TEST = "test-ssl-container-name";
 
-   @Override
-   protected TestCluster configureTargetCluster() {
-      Properties properties = new Properties();
+    @Override
+    protected void reconnectMigration(TestCluster target) {
+      // Re-establish the migration remote stores referencing the named remote containers (already defined in the cluster's global config).
+       target.connectSource(TEST_CACHE, buildContainerRemoteStoreConfig(TEST_CACHE, CONTAINER_NAME_TEST, NEW_PROTOCOL_VERSION));
+       target.connectSource(OLD_CACHE, buildContainerRemoteStoreConfig(OLD_CACHE, CONTAINER_NAME_OLD, OLD_PROTOCOL_VERSION));
+    }
+
+    private StoreConfiguration buildContainerRemoteStoreConfig(String cacheName, String containerName, ProtocolVersion version) {
+       ConfigurationBuilder builder = new ConfigurationBuilder();
+       RemoteStoreConfigurationBuilder store = builder.persistence().addStore(RemoteStoreConfigurationBuilder.class);
+       store.remoteCacheName(cacheName).protocolVersion(version).shared(true).segmented(false)
+             .remoteCacheContainer(containerName);
+       return store.build().persistence().stores().get(0);
+    }
+
+    @Override
+    protected TestCluster configureTargetCluster() {
+       Properties properties = new Properties();
       properties.setProperty("infinispan.client.hotrod.async_executor_factory", "org.infinispan.executors.DefaultExecutorFactory");
       properties.setProperty("infinispan.client.hotrod.use_ssl", "true");
       properties.setProperty("infinispan.client.hotrod.key_store_file_name", TestCertificates.certificate("client"));
