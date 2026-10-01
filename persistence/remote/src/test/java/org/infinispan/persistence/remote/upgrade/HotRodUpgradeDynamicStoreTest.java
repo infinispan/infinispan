@@ -15,6 +15,17 @@ import org.testng.annotations.Test;
 public class HotRodUpgradeDynamicStoreTest extends HotRodUpgradeSynchronizerTest {
 
    @Override
+   protected boolean reuseClustersAcrossMethods() {
+      // The migration remote store is added dynamically via connectTargetCluster(), so it can be re-established on a reused cluster.
+      return true;
+   }
+
+   @Override
+   protected void reconnectMigration(TestCluster target) {
+      // No-op: each test method calls connectTargetCluster(), which (re-)adds the dynamic remote store itself.
+   }
+
+   @Override
    protected TestCluster configureTargetCluster() {
       return new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
             .cache().name(OLD_CACHE)

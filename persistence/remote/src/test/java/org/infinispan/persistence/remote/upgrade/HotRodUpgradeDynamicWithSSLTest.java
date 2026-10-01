@@ -13,6 +13,17 @@ import org.testng.annotations.Test;
 public class HotRodUpgradeDynamicWithSSLTest extends HotRodUpgradeWithSSLTest {
 
    @Override
+   protected boolean reuseClustersAcrossMethods() {
+      // The migration remote store is added dynamically via connectTargetCluster(), so it can be re-established on a reused cluster.
+      return true;
+   }
+
+   @Override
+   protected void reconnectMigration(TestCluster target) {
+      // No-op: each test method calls connectTargetCluster(), which (re-)adds the SSL dynamic remote store itself.
+   }
+
+   @Override
    protected TestCluster configureTargetCluster() {
       return new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
             .withSSLKeyStore(TestCertificates.certificate("client"), TestCertificates.KEY_PASSWORD)
