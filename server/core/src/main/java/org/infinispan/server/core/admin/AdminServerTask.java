@@ -44,7 +44,7 @@ public abstract class AdminServerTask<T> implements Task {
                } else if (value instanceof String[]) {
                   return Arrays.asList((String[]) value);
                } else if (value instanceof List) {
-                  return (List)value;
+                  return (List) value;
                } else if (value instanceof byte[]) {
                   return Collections.singletonList(new String((byte[]) value, StandardCharsets.UTF_8));
                } else {
