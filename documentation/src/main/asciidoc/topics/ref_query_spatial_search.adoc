@@ -88,7 +88,7 @@ Here is an example of remote query mapping using `@GeoField` annotations on `Lat
 ----
 include::code_examples/ProtoHiking.java[]
 ----
-<1> For remote queries, use `org.infinispan.commons.api.query.geo.LatLng` as type for any spatial field.
+<1> For remote queries, use `org.infinispan.api.annotations.indexing.model.LatLng` as type for any spatial field.
 <2> Annotate the spatial fields with `@GeoField`.
 <3> The schema must be generated with the explicit dependency on `LatLng.LatLngSchema.class`.
 ====

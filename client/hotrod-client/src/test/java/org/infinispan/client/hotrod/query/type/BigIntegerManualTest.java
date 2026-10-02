@@ -5,10 +5,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigInteger;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.CalculusManual;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.sampledomain.CalculusManual;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "org.infinispan.client.hotrod.query.type.BigIntegerManualTest")

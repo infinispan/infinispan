@@ -7,7 +7,7 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.model.Book;
+import org.infinispan.protostream.sampledomain.Book;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
@@ -28,14 +28,12 @@ public class SpecialCharTextTest extends SingleCacheManagerTest {
 
    @BeforeMethod(alwaysRun = true)
    public void beforeMethod() {
-      Book book = new Book();
-      book.setTitle("is*and");
-      book.setDescription("A pl*ce surrounded by the sea.");
+      Book book = new Book("is*and", "A pl*ce surrounded by the sea.");
       cache.put(1, book);
    }
 
    public void fulltext() {
-      Query<Book> query = cache.query("from org.infinispan.query.model.Book where naming : 'pl*ce'");
+      Query<Book> query = cache.query(String.format("from %s where naming : 'pl*ce'", Book.class.getName()));
       QueryResult<Book> result = query.execute();
 
       assertThat(result.count().value()).isEqualTo(1);
@@ -43,7 +41,7 @@ public class SpecialCharTextTest extends SingleCacheManagerTest {
    }
 
    public void generic() {
-      Query<Book> query = cache.query("from org.infinispan.query.model.Book where title = 'is*and'");
+      Query<Book> query = cache.query(String.format("from %s where title = 'is*and'", Book.class.getName()));
       QueryResult<Book> result = query.execute();
 
       assertThat(result.count().value()).isEqualTo(1);

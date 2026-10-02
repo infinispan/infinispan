@@ -19,6 +19,15 @@
          <optional>true</optional>
       </dependency>
 
+      <!-- Needed for the ProtoStream annotations on org.infinispan.api.types.LatLng.
+           Optional so that users not dealing with ProtoStream don't pull it in transitively:
+           anyone marshalling LatLng already has ProtoStream on the classpath. -->
+      <dependency>
+         <groupId>org.infinispan.protostream</groupId>
+         <artifactId>protostream</artifactId>
+         <optional>true</optional>
+      </dependency>
+
       <!-- Theoretically we shouldn't have any Hibernate Search 6 dependencies from our own Infinispan annotations.
            At the moment the only way to get the annotations processed by Hibernate Search is to annotate them with @PropertyMapping or @TypeMapping or ...
            When Hibernate Search is ready, we could remove the following dependency: -->

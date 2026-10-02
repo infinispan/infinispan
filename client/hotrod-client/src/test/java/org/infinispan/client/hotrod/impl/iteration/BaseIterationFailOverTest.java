@@ -18,8 +18,8 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.dsl.embedded.DslSCI;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
+import org.infinispan.protostream.sampledomain.bank.Account;
 import org.testng.annotations.Test;
 
 /**
@@ -37,7 +37,7 @@ public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest {
 
    @Override
    protected SerializationContextInitializer contextInitializer() {
-      return DslSCI.INSTANCE;
+      return TestDomainSCI.INSTANCE;
    }
 
    public abstract ConfigurationBuilder getCacheConfiguration();
@@ -52,7 +52,7 @@ public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest {
    public void testFailOver() throws InterruptedException {
       int cacheSize = 1_000;
       int batch = 17;
-      RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
+      RemoteCache<Integer, Account> cache = clients.get(0).getCache();
       populateCache(cacheSize, Util::newAccount, cache);
 
       List<Map.Entry<Object, Object>> entries = new ArrayList<>();
@@ -79,10 +79,10 @@ public abstract class BaseIterationFailOverTest extends MultiHotRodServersTest {
       testFailOver();
       int cacheSize = 1_000;
 
-      RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
+      RemoteCache<Integer, Account> cache = clients.get(0).getCache();
       Collection<Map.Entry<Object, Object>> entries = new ArrayList<>();
-      CloseableIteratorSet<Map.Entry<Integer, AccountHS>> iterator = cache.entrySet();
-      for (Map.Entry<Integer, AccountHS> entry : iterator) {
+      CloseableIteratorSet<Map.Entry<Integer, Account>> iterator = cache.entrySet();
+      for (Map.Entry<Integer, Account> entry : iterator) {
          entries.add((Map.Entry) entry);
       }
 

@@ -4,7 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
+import org.infinispan.query.Indexer;
 import org.infinispan.query.test.Transaction;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -61,7 +61,7 @@ public class MassIndexerAsyncBackendTest extends MultipleCacheManagersTest {
       }
 
       for (Cache c : caches()) {
-         CompletionStages.join(Search.getIndexer(c).run());
+         CompletionStages.join(Indexer.of(c).run());
          assertAllIndexed(c);
       }
 

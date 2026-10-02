@@ -21,7 +21,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
-import org.infinispan.protostream.sampledomain.User;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestClientDriver;
 import org.infinispan.server.test.core.Common;
@@ -64,7 +64,7 @@ public class HotRodFlagCacheOperations {
    }
 
    private <K, V> RemoteCache<K, V> remoteQueryableCache(boolean indexed, EnumSet<Flag> flags) {
-      return Common.<K, V>createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, HotRodCacheQueries.ENTITY_USER)
+      return Common.<K, V>createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME)
             .withFlags(flags.toArray(new Flag[0]));
    }
 
@@ -240,7 +240,7 @@ public class HotRodFlagCacheOperations {
       User u = cache.get(1);
       HotRodCacheQueries.assertUser1(u);
 
-      Query<User> query = cache.query("FROM sample_bank_account.User WHERE name = 'Tom'");
+      Query<User> query = cache.query("FROM sample_domain.User WHERE name = 'Tom'");
       List<User> users = query.execute().list();
 
       // An indexed cache that skips indexing won't have the entity returned from the query.

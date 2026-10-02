@@ -11,11 +11,10 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.protostream.sampledomain.TestDomainSCIImpl;
-import org.infinispan.protostream.sampledomain.User;
-import org.infinispan.server.functional.hotrod.HotRodCacheQueries;
+import org.infinispan.protostream.sampledomain.bank.Address;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.jupiter.InfinispanServerExtension;
 import org.infinispan.server.test.jupiter.InfinispanServerExtensionBuilder;
@@ -26,8 +25,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 public class RemoteQueryAccessIT {
-
-   public static final String ENTITY_USER = HotRodCacheQueries.ENTITY_USER;
 
    @RegisterExtension
    public static final InfinispanServerExtension SERVERS =
@@ -41,6 +38,7 @@ public class RemoteQueryAccessIT {
       JavaArchive statistics = ShrinkWrap.create(JavaArchive.class, "remote-query-access-with-stats.jar")
             .addClass(RemoteQueryAccessWithStatsTask.class)
             .addPackage("org.infinispan.protostream.sampledomain")
+            .addPackage("org.infinispan.protostream.sampledomain.bank")
             .addAsServiceProvider(ServerTask.class, RemoteQueryAccessWithStatsTask.class)
             .addAsServiceProvider(SerializationContextInitializer.class, TestDomainSCIImpl.class)
             .addAsResource("org/infinispan/test/test.protostream.sampledomain.proto");
@@ -50,12 +48,12 @@ public class RemoteQueryAccessIT {
 
    @Test
    public void testRegularRemoteQuery() {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, true, TestDomainSCI.INSTANCE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, true, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
       for (int i = 0; i < 50; i++) {
          remoteCache.put(i, createUser(i, i % 7));
       }
 
-      Query<User> query = remoteCache.query("FROM sample_bank_account.User WHERE name = 'Yolka-00003' order by id");
+      Query<User> query = remoteCache.query("FROM sample_domain.User WHERE name = 'Yolka-00003' order by id");
       List<User> list = query.execute().list();
       assertThat(list).extracting("id").containsExactly(3, 10, 17, 24, 31, 38, 45);
 
@@ -77,7 +75,7 @@ public class RemoteQueryAccessIT {
       assertThat(queryStatistics.at("non_indexed").at("count").asInteger()).isZero();
       assertThat(queryStatistics.at("entity_load").at("count").asInteger()).isEqualTo(2);
 
-      query = remoteCache.query("FROM sample_bank_account.User WHERE name = 'Yolka-00003' order by id");
+      query = remoteCache.query("FROM sample_domain.User WHERE name = 'Yolka-00003' order by id");
       list = query.execute().list();
       assertThat(list).extracting("id").containsExactly(3, 3, 10, 10, 17, 17, 24, 24, 31, 31, 38, 38, 45, 45);
    }

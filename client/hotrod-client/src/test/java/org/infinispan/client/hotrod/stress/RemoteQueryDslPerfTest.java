@@ -16,12 +16,11 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.dsl.embedded.testdomain.User;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.AfterClass;
@@ -58,7 +57,7 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
       builder.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
       builder.indexing().enable()
             .storage(LOCAL_HEAP)
-            .addIndexedEntity(UserHS.class);
+            .addIndexedEntity(User.class);
       createClusteredCaches(1, TestDomainSCI.INSTANCE, builder);
 
       cache = manager(0).getCache();
@@ -83,7 +82,7 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
    protected void populateCache() {
       for (int i = 0; i < WRITE_LOOPS; i++) {
          // create the test objects
-         User user1 = new UserHS();
+         User user1 = new User();
          int id1 = i * 10 + 1;
          user1.setId(id1);
          user1.setName("John" + id1);
@@ -92,14 +91,14 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
          user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
          user1.setNotes("Lorem ipsum dolor sit amet");
 
-         User user2 = new UserHS();
+         User user2 = new User();
          int id2 = i * 10 + 2;
          user2.setId(id2);
          user2.setName("Spider" + id2);
          user2.setSurname("Man" + id2);
          user2.setAccountIds(Collections.singleton(3));
 
-         User user3 = new UserHS();
+         User user3 = new User();
          int id3 = i * 10 + 3;
          user3.setId(id3);
          user3.setName("Spider" + id3);
@@ -112,7 +111,7 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
    }
 
    public void testRemoteQueryDslExecution() {
-      String queryString = "FROM sample_bank_account.User WHERE name = 'John1'";
+      String queryString = "FROM sample_domain.User WHERE name = 'John1'";
 
       final long startTs = System.nanoTime();
       for (int i = 0; i < QUERY_LOOPS; i++) {
@@ -128,7 +127,7 @@ public class RemoteQueryDslPerfTest extends MultipleCacheManagersTest {
    }
 
    public void testEmbeddedQueryDslExecution() {
-      String queryString = String.format("FROM %s WHERE name = 'John1'", UserHS.class.getName());
+      String queryString = String.format("FROM %s WHERE name = 'John1'", User.class.getName());
 
       final long startTs = System.nanoTime();
       for (int i = 0; i < QUERY_LOOPS; i++) {

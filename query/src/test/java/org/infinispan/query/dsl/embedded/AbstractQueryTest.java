@@ -16,13 +16,15 @@ import java.util.TimeZone;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.ModelFactoryHS;
+import org.infinispan.configuration.cache.TransactionMode;
+import org.infinispan.protostream.sampledomain.bank.Account;
+import org.infinispan.protostream.sampledomain.bank.Address;
+import org.infinispan.protostream.sampledomain.bank.Transaction;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.query.objectfilter.impl.util.DateHelper;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.TransactionMode;
 
 /**
  * Base for query tests.
@@ -100,23 +102,48 @@ public abstract class AbstractQueryTest extends MultipleCacheManagersTest {
       return getCacheForQuery().query(query.formatted(args));
    }
 
-   /**
-    * To be overridden by subclasses if they need to use a different model implementation.
-    */
-   protected ModelFactory getModelFactory() {
-      return ModelFactoryHS.INSTANCE;
+   protected String getUserTypeName() {
+      return User.class.getName();
+   }
+
+   protected String getAccountTypeName() {
+      return Account.class.getName();
+   }
+
+   protected String getAddressTypeName() {
+      return Address.class.getName();
+   }
+
+   protected String getTransactionTypeName() {
+      return Transaction.class.getName();
+   }
+
+   protected User makeUser() {
+      return new User();
+   }
+
+   protected Account makeAccount() {
+      return new Account();
+   }
+
+   protected Address makeAddress() {
+      return new Address();
+   }
+
+   protected Transaction makeTransaction() {
+      return new Transaction();
    }
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg.transaction()
-            .transactionMode(TransactionMode.TRANSACTIONAL)
+            .mode(TransactionMode.NON_XA)
             .indexing().enable()
             .storage(LOCAL_HEAP)
-            .addIndexedEntity(getModelFactory().getUserImplClass())
-            .addIndexedEntity(getModelFactory().getAccountImplClass())
-            .addIndexedEntity(getModelFactory().getTransactionImplClass());
+            .addIndexedEntity(User.class)
+            .addIndexedEntity(Account.class)
+            .addIndexedEntity(Transaction.class);
       createClusteredCaches(1, cfg);
    }
 

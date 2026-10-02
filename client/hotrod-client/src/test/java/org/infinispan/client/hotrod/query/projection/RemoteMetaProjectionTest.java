@@ -11,7 +11,7 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.model.Developer;
+import org.infinispan.protostream.sampledomain.Developer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.testing.annotation.TestForIssue;
 import org.testng.annotations.Test;

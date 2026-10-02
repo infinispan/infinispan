@@ -4,6 +4,7 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.sampledomain.Game;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.testing.annotation.TestForIssue;
@@ -18,7 +19,7 @@ public class LocalHitCountAccuracyTest extends SingleCacheManagerTest {
       ConfigurationBuilder indexed = new ConfigurationBuilder();
       indexed.indexing().enable()
             .storage(LOCAL_HEAP)
-            .addIndexedEntity("org.infinispan.query.model.Game");
+            .addIndexedEntity(Game.class.getName());
       indexed.query().hitCountAccuracy(10); // lower the default accuracy
 
       EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager();

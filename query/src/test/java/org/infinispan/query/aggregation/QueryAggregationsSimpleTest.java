@@ -9,7 +9,7 @@ import java.util.Map;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.model.IndexedPlayer;
+import org.infinispan.protostream.sampledomain.IndexedPlayer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -40,7 +40,7 @@ public class QueryAggregationsSimpleTest extends SingleCacheManagerTest {
       cache.putAll(players());
       Query<Object[]> query;
 
-      query = cache.query("select color, sum(number) from org.infinispan.query.model.IndexedPlayer group by color");
+      query = cache.query("select color, sum(number) from org.infinispan.protostream.sampledomain.IndexedPlayer group by color");
       assertThat(query.list()).containsExactly(AGG_RESULT_SUM);
    }
 
@@ -49,31 +49,31 @@ public class QueryAggregationsSimpleTest extends SingleCacheManagerTest {
         cache.putAll(players());
         cache.put("3", new IndexedPlayer("player 3", Colors.PINK.name(), null));
 
-        Query<Object[]> query = cache.query("select color, count(*) from org.infinispan.query.model.IndexedPlayer group by color");
+        Query<Object[]> query = cache.query("select color, count(*) from org.infinispan.protostream.sampledomain.IndexedPlayer group by color");
         assertThat(query.list()).containsExactly(AGG_RESULT_COUNT);
 
-        query = cache.query("select color, count(number) from org.infinispan.query.model.IndexedPlayer group by color");
+        query = cache.query("select color, count(number) from org.infinispan.protostream.sampledomain.IndexedPlayer group by color");
         assertThat(query.list()).containsExactly(AGG_RESULT_COUNT_NUMBER);
     }
 
     @Test
     public void testAvg() {
         cache.putAll(players());
-        Query<Object[]> query = cache.query("select color, avg(number) from org.infinispan.query.model.IndexedPlayer group by color");
+        Query<Object[]> query = cache.query("select color, avg(number) from org.infinispan.protostream.sampledomain.IndexedPlayer group by color");
         assertThat(query.list()).containsExactly(AGG_RESULT_AVG);
     }
 
     @Test
     public void testMax() {
         cache.putAll(players());
-        Query<Object[]> query = cache.query("select color, max(number) from org.infinispan.query.model.IndexedPlayer group by color");
+        Query<Object[]> query = cache.query("select color, max(number) from org.infinispan.protostream.sampledomain.IndexedPlayer group by color");
         assertThat(query.list()).containsExactly(AGG_RESULT_MAX);
     }
 
     @Test
     public void testMin() {
         cache.putAll(players());
-        Query<Object[]> query = cache.query("select color, min(number) from org.infinispan.query.model.IndexedPlayer group by color");
+        Query<Object[]> query = cache.query("select color, min(number) from org.infinispan.protostream.sampledomain.IndexedPlayer group by color");
         assertThat(query.list()).containsExactly(AGG_RESULT_MIN);
     }
 

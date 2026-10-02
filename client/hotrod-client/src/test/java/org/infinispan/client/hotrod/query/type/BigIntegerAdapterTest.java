@@ -3,17 +3,14 @@ package org.infinispan.client.hotrod.query.type;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
-import java.math.BigInteger;
-import java.time.Instant;
-
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.Product;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.sampledomain.Product;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -40,19 +37,7 @@ public class BigIntegerAdapterTest extends SingleHotRodServerTest {
    public void test() {
       RemoteCache<String, Product> remoteCache = remoteCacheManager.getCache();
 
-      Product p1 = new Product("Pilsner Urquell", 2178129121111L, 23.78,
-            "Pilsner Urquell is a lager beer brewed by the Pilsner Urquell Brewery in Plzeň, Czech Republic. Pilsner Urquell was the world's first pale lager, and its popularity meant it was much copied, and named pils, pilsner or pilsener. It is hopped with Saaz hops, a noble hop variety which is a key element in its flavour profile, as is the use of soft water.",
-            BigInteger.valueOf(OVER_INTEGER_VALUE), Instant.ofEpochSecond(1675769531, 123000000));
-      Product p2 = new Product("Lavazza Coffee", 178128739123L, 10.99,
-            "Lavazza imports coffee from around the world, including Brazil, Colombia, Guatemala, Costa Rica, Honduras, Uganda, Indonesia, the United States and Mexico.\n Branded as \"Italy's Favourite Coffee,\" the company claims that 16 million out of the 20 million coffee purchasing families in Italy choose Lavazza.",
-            BigInteger.valueOf(OVER_INTEGER_VALUE), Instant.ofEpochSecond(1675769531, 123000000));
-      Product p3 = new Product("Puma Backpack", 21233131131L, 40.99,
-            "Lightweight and practical gym bag made of durable material, which can be carried as a backpack. This classic gym sack slings easily over the shoulder and for carrying smaller loads.",
-            BigInteger.valueOf(OVER_INTEGER_VALUE), Instant.ofEpochSecond(1675769531, 123000000));
-
-      remoteCache.put("1", p1);
-      remoteCache.put("2", p2);
-      remoteCache.put("3", p3);
+      remoteCache.putAll(Product.data());
 
       Product product = remoteCache.get("1");
       assertThat(product.getPurchases()).isEqualTo(OVER_INTEGER_VALUE);

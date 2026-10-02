@@ -15,11 +15,12 @@ import java.util.List;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.dsl.embedded.testdomain.Address;
-import org.infinispan.query.dsl.embedded.testdomain.FlightRoute;
-import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
-import org.infinispan.query.dsl.embedded.testdomain.Transaction;
-import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.protostream.sampledomain.FlightRoute;
+import org.infinispan.protostream.sampledomain.NotIndexed;
+import org.infinispan.protostream.sampledomain.bank.Account;
+import org.infinispan.protostream.sampledomain.bank.Address;
+import org.infinispan.protostream.sampledomain.bank.Transaction;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.query.objectfilter.ParsingException;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
@@ -42,16 +43,16 @@ public class QueryStringTest extends AbstractQueryTest {
          .transactionMode(TransactionMode.TRANSACTIONAL)
          .indexing().enable()
          .storage(LOCAL_HEAP)
-         .addIndexedEntity(getModelFactory().getUserImplClass())
-         .addIndexedEntity(getModelFactory().getAccountImplClass())
-         .addIndexedEntity(getModelFactory().getTransactionImplClass())
+         .addIndexedEntity(User.class)
+         .addIndexedEntity(Account.class)
+         .addIndexedEntity(Transaction.class)
          .addIndexedEntity(FlightRoute.class);
       createClusteredCaches(1, cfg);
    }
 
    @BeforeClass(alwaysRun = true)
    protected void populateCache() throws Exception {
-      User user1 = getModelFactory().makeUser();
+      User user1 = makeUser();
       user1.setId(1);
       user1.setName("John");
       user1.setSurname("Doe");
@@ -62,13 +63,13 @@ public class QueryStringTest extends AbstractQueryTest {
       user1.setCreationDate(Instant.parse("2011-12-03T10:15:30Z"));
       user1.setPasswordExpirationDate(Instant.parse("2011-12-03T10:15:30Z"));
 
-      Address address1 = getModelFactory().makeAddress();
+      Address address1 = makeAddress();
       address1.setStreet("Main Street");
       address1.setPostCode("X1234");
       address1.setNumber(156);
       user1.setAddresses(Collections.singletonList(address1));
 
-      User user2 = getModelFactory().makeUser();
+      User user2 = makeUser();
       user2.setId(2);
       user2.setName("Spider");
       user2.setSurname("Man");
@@ -77,17 +78,17 @@ public class QueryStringTest extends AbstractQueryTest {
       user2.setCreationDate(Instant.parse("2011-12-03T10:15:30Z"));
       user2.setPasswordExpirationDate(Instant.parse("2011-12-03T10:15:30Z"));
 
-      Address address2 = getModelFactory().makeAddress();
+      Address address2 = makeAddress();
       address2.setStreet("Old Street");
       address2.setPostCode("Y12");
       address2.setNumber(-12);
-      Address address3 = getModelFactory().makeAddress();
+      Address address3 = makeAddress();
       address3.setStreet("Bond Street");
       address3.setPostCode("ZZ");
       address3.setNumber(312);
       user2.setAddresses(Arrays.asList(address2, address3));
 
-      User user3 = getModelFactory().makeUser();
+      User user3 = makeUser();
       user3.setId(3);
       user3.setName("Spider");
       user3.setSurname("Woman");
@@ -97,7 +98,7 @@ public class QueryStringTest extends AbstractQueryTest {
       user3.setPasswordExpirationDate(Instant.parse("2011-12-03T10:15:30Z"));
       user3.setAddresses(new ArrayList<>());
 
-      Transaction transaction0 = getModelFactory().makeTransaction();
+      Transaction transaction0 = makeTransaction();
       transaction0.setId(0);
       transaction0.setDescription("Birthday present");
       transaction0.setAccountId(1);
@@ -107,7 +108,7 @@ public class QueryStringTest extends AbstractQueryTest {
       transaction0.setNotes("card was not present");
       transaction0.setValid(true);
 
-      Transaction transaction1 = getModelFactory().makeTransaction();
+      Transaction transaction1 = makeTransaction();
       transaction1.setId(1);
       transaction1.setDescription("Feb. rent payment");
       transaction1.setLongDescription("Feb. rent payment");
@@ -117,7 +118,7 @@ public class QueryStringTest extends AbstractQueryTest {
       transaction1.setDebit(true);
       transaction1.setValid(true);
 
-      Transaction transaction2 = getModelFactory().makeTransaction();
+      Transaction transaction2 = makeTransaction();
       transaction2.setId(2);
       transaction2.setDescription("Starbucks");
       transaction2.setLongDescription("Starbucks");
@@ -127,7 +128,7 @@ public class QueryStringTest extends AbstractQueryTest {
       transaction2.setDebit(true);
       transaction2.setValid(true);
 
-      Transaction transaction3 = getModelFactory().makeTransaction();
+      Transaction transaction3 = makeTransaction();
       transaction3.setId(3);
       transaction3.setDescription("Hotel");
       transaction3.setAccountId(2);
@@ -136,7 +137,7 @@ public class QueryStringTest extends AbstractQueryTest {
       transaction3.setDebit(true);
       transaction3.setValid(true);
 
-      Transaction transaction4 = getModelFactory().makeTransaction();
+      Transaction transaction4 = makeTransaction();
       transaction4.setId(4);
       transaction4.setDescription("Last january");
       transaction4.setLongDescription("Last january");
@@ -146,7 +147,7 @@ public class QueryStringTest extends AbstractQueryTest {
       transaction4.setDebit(true);
       transaction4.setValid(true);
 
-      Transaction transaction5 = getModelFactory().makeTransaction();
+      Transaction transaction5 = makeTransaction();
       transaction5.setId(5);
       transaction5.setDescription("-Popcorn");
       transaction5.setLongDescription("-Popcorn");
@@ -169,7 +170,7 @@ public class QueryStringTest extends AbstractQueryTest {
       getCacheForWrite().put("transaction_" + transaction5.getId(), transaction5);
 
       for (int i = 0; i < 50; i++) {
-         Transaction transaction = getModelFactory().makeTransaction();
+         Transaction transaction = makeTransaction();
          transaction.setId(50 + i);
          transaction.setDescription("Expensive shoes " + i);
          transaction.setLongDescription("Expensive shoes. Just beer, really " + i);
@@ -184,12 +185,11 @@ public class QueryStringTest extends AbstractQueryTest {
       getCacheForWrite().put("notIndexed1", new NotIndexed("testing 123"));
       getCacheForWrite().put("notIndexed2", new NotIndexed("xyz"));
 
-      getCacheForWrite().put("flightA", new FlightRoute("A", 46.7716, 23.5895, 37.7608, 140.4748));
-      getCacheForWrite().put("flightB", new FlightRoute("B", 43.7716, 20.5895, 34.7608, 137.4748));
+       getCacheForWrite().putAll(FlightRoute.data());
    }
 
    public void testParam() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where id = :idParam");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " where id = :idParam");
 
       q.setParameter("idParam", 1);
 
@@ -209,48 +209,48 @@ public class QueryStringTest extends AbstractQueryTest {
    @Test(enabled = false)
    public void testParamWithSpacePadding() {
       //todo [anistor] need special tree nodes for all literal types (and for params) to be able to distinguish them better; QueryRendererDelegate.predicateXXX should receive such a tree node instead of a string
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where id = :  idParam");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " where id = :  idParam");
       List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
    }
 
    public void testExactMatch() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where description = 'Birthday present'");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " where description = 'Birthday present'");
 
       List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
    }
 
    public void testFullTextTerm() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'rent'");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " where longDescription:'rent'");
 
       List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
    }
 
    public void testFullTextTermRightOperandAnalyzed() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'RENT'");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " where longDescription:'RENT'");
 
       List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
    }
 
    public void testFullTextTermBoost() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription:('rent'^8 'shoes')");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " where longDescription:('rent'^8 'shoes')");
 
       List<Transaction> list = q.execute().list();
       assertEquals(51, list.size());
    }
 
    public void testFullTextPhrase() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription:'expensive shoes'");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " where longDescription:'expensive shoes'");
 
       List<Transaction> list = q.execute().list();
       assertEquals(50, list.size());
    }
 
    public void testFullTextWithAggregation() {
-      Query<Object[]> q = createQueryFromString("select t.accountId, max(t.amount), max(t.description) from " + getModelFactory().getTransactionTypeName()
+      Query<Object[]> q = createQueryFromString("select t.accountId, max(t.amount), max(t.description) from " + getTransactionTypeName()
                                                       + " t where t.longDescription : (+'beer' && -'food') group by t.accountId");
 
       List<Object[]> list = q.execute().list();
@@ -261,49 +261,49 @@ public class QueryStringTest extends AbstractQueryTest {
    }
 
    public void testFullTextTermBoostAndSorting() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription:('rent'^8 'shoes') order by amount");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " where longDescription:('rent'^8 'shoes') order by amount");
 
       List<Transaction> list = q.execute().list();
       assertEquals(51, list.size());
    }
 
    public void testFullTextTermOccur() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where not (t.longDescription : (+'failed') or t.longDescription : 'blocked')");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " t where not (t.longDescription : (+'failed') or t.longDescription : 'blocked')");
 
       List<Transaction> list = q.execute().list();
       assertEquals(56, list.size());
    }
 
    public void testFullTextTermDoesntOccur() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : (-'really')");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " t where t.longDescription : (-'really')");
 
       List<Transaction> list = q.execute().list();
       assertEquals(6, list.size());
    }
 
    public void testFullTextRangeWildcard() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : [* to *]");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " t where t.longDescription : [* to *]");
 
       List<Transaction> list = q.execute().list();
       assertEquals(54, list.size());
    }
 
    public void testFullTextRange() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.amount : [23 to 45]");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " t where t.amount : [23 to 45]");
 
       List<Transaction> list = q.execute().list();
       assertEquals(2, list.size());
    }
 
    public void testFullTextPrefix() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ren*'");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " t where t.longDescription : 'ren*'");
 
       List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
    }
 
    public void testFullTextWildcard() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 're?t'");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " t where t.longDescription : 're?t'");
 
       List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
@@ -311,13 +311,13 @@ public class QueryStringTest extends AbstractQueryTest {
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN014036: Prefix, wildcard or regexp queries cannot be fuzzy.*")
    public void testFullTextWildcardFuzzyNotAllowed() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 're?t'~2");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " t where t.longDescription : 're?t'~2");
 
       q.execute();
    }
 
    public void testFullTextFuzzy() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'retn'~");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " t where t.longDescription : 'retn'~");
 
       List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
@@ -325,31 +325,31 @@ public class QueryStringTest extends AbstractQueryTest {
 
    public void testFullTextFuzzyDefaultEdits() {
       // default number of edits should be 2
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ertn'~");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " t where t.longDescription : 'ertn'~");
 
       List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
 
-      q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ajunayr'~");
+      q = createQueryFromString("from " + getTransactionTypeName() + " t where t.longDescription : 'ajunayr'~");
 
       list = q.execute().list();
       assertEquals(0, list.size());
    }
 
    public void testFullTextFuzzySpecifiedEdits() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ajnuary'~1");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " t where t.longDescription : 'ajnuary'~1");
 
       List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
 
-      q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : 'ajunary'~1");
+      q = createQueryFromString("from " + getTransactionTypeName() + " t where t.longDescription : 'ajunary'~1");
 
       list = q.execute().list();
       assertEquals(0, list.size());
    }
 
    public void testFullTextRegexp() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : /[R|r]ent/");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " t where t.longDescription : /[R|r]ent/");
 
       List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
@@ -357,42 +357,42 @@ public class QueryStringTest extends AbstractQueryTest {
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
    public void testFullTextRegexpFuzzyNotAllowed() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : /[R|r]ent/~2");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " t where t.longDescription : /[R|r]ent/~2");
 
       q.execute();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028522: .*property is analyzed.*")
    public void testExactMatchOnAnalyzedFieldNotAllowed() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where longDescription = 'Birthday present'");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " where longDescription = 'Birthday present'");
 
       q.execute();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028521: .*unless the property is indexed and analyzed.*")
    public void testFullTextTermOnNonAnalyzedFieldNotAllowed() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " where description:'rent'");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " where description:'rent'");
 
       q.execute();
    }
 
    @Test(enabled = false) //TODO [anistor] fix!
    public void testFullTextRegexp2() {
-      Query<Transaction> q = createQueryFromString("from " + getModelFactory().getTransactionTypeName() + " t where t.longDescription : ( -'beer' and '*')");
+      Query<Transaction> q = createQueryFromString("from " + getTransactionTypeName() + " t where t.longDescription : ( -'beer' and '*')");
 
       List<Transaction> list = q.execute().list();
       assertEquals(1, list.size());
    }
 
    public void testInstant1() {
-      Query<User> q = createQueryFromString("from " + getModelFactory().getUserTypeName() + " u where u.creationDate = '2011-12-03T10:15:30Z'");
+      Query<User> q = createQueryFromString("from " + getUserTypeName() + " u where u.creationDate = '2011-12-03T10:15:30Z'");
 
       List<User> list = q.execute().list();
       assertEquals(3, list.size());
    }
 
    public void testInstant2() {
-      Query<User> q = createQueryFromString("from " + getModelFactory().getUserTypeName() + " u where u.passwordExpirationDate = '2011-12-03T10:15:30Z'");
+      Query<User> q = createQueryFromString("from " + getUserTypeName() + " u where u.passwordExpirationDate = '2011-12-03T10:15:30Z'");
 
       List<User> list = q.execute().list();
       assertEquals(3, list.size());
@@ -410,12 +410,12 @@ public class QueryStringTest extends AbstractQueryTest {
     * See <a href="https://issues.jboss.org/browse/ISPN-7863">ISPN-7863</a>
     */
    public void testAliasContainingLetterV() {
-      Query<Transaction> q = createQueryFromString("FROM " + getModelFactory().getTransactionTypeName() + " vvv WHERE vvv.description = 'Birthday present'");
+      Query<Transaction> q = createQueryFromString("FROM " + getTransactionTypeName() + " vvv WHERE vvv.description = 'Birthday present'");
       assertEquals(1, q.execute().list().size());
    }
 
    public void testSelectWithAsAlias() {
-      Query<Object[]> q = createQueryFromString("SELECT e.description FROM " + getModelFactory().getTransactionTypeName() + " AS e WHERE e.description = 'Birthday present'");
+      Query<Object[]> q = createQueryFromString("SELECT e.description FROM " + getTransactionTypeName() + " AS e WHERE e.description = 'Birthday present'");
       List<Object[]> list = q.execute().list();
       assertEquals(1, list.size());
       assertEquals("Birthday present", list.get(0)[0]);
@@ -438,7 +438,7 @@ public class QueryStringTest extends AbstractQueryTest {
    }
 
    public void testDeleteByQueryOnIndexedField() throws Exception {
-      Transaction tx = getModelFactory().makeTransaction();
+      Transaction tx = makeTransaction();
       tx.setId(9999);
       tx.setDescription("Holiday booking");
       tx.setAccountId(1);
@@ -449,12 +449,12 @@ public class QueryStringTest extends AbstractQueryTest {
       tx.setValid(true);
       getCacheForWrite().put("transaction_" + tx.getId(), tx);
 
-      Query<Transaction> select = createQueryFromString("FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Holiday booking'");
+      Query<Transaction> select = createQueryFromString("FROM " + getTransactionTypeName() + " WHERE description = 'Holiday booking'");
       QueryResult<Transaction> result = select.execute();
       assertEquals(1, result.count().value());
       assertTrue(result.count().exact());
 
-      Query<Transaction> delete = createQueryFromString("DELETE FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Holiday booking'");
+      Query<Transaction> delete = createQueryFromString("DELETE FROM " + getTransactionTypeName() + " WHERE description = 'Holiday booking'");
       assertEquals(1, delete.executeStatement());
 
       result = select.execute();
@@ -463,7 +463,7 @@ public class QueryStringTest extends AbstractQueryTest {
    }
 
    public void testDeleteByHybridQuery() throws Exception {
-      Transaction tx = getModelFactory().makeTransaction();
+      Transaction tx = makeTransaction();
       tx.setId(9999);
       tx.setDescription("Holiday booking");
       tx.setAccountId(1);
@@ -474,12 +474,12 @@ public class QueryStringTest extends AbstractQueryTest {
       tx.setValid(false);
       getCacheForWrite().put("transaction_" + tx.getId(), tx);
 
-      Query<Transaction> select = createQueryFromString("FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Holiday booking' AND isValid = false");
+      Query<Transaction> select = createQueryFromString("FROM " + getTransactionTypeName() + " WHERE description = 'Holiday booking' AND isValid = false");
       QueryResult<Transaction> result = select.execute();
       assertThat(result.count().value()).isEqualTo(1);
       assertThat(result.count().exact()).isTrue();
 
-      Query<Transaction> delete = createQueryFromString("DELETE FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Holiday booking' AND isValid = false");
+      Query<Transaction> delete = createQueryFromString("DELETE FROM " + getTransactionTypeName() + " WHERE description = 'Holiday booking' AND isValid = false");
       assertEquals(1, delete.executeStatement());
 
       result = select.execute();
@@ -490,7 +490,7 @@ public class QueryStringTest extends AbstractQueryTest {
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
    public void testDeleteWithProjections() {
       // exception thrown on create when in embedded mode
-      Query<Transaction> delete = createQueryFromString("DELETE t.description FROM " + getModelFactory().getTransactionTypeName() + " as t WHERE t.description = 'bogus' ORDER BY amount");
+      Query<Transaction> delete = createQueryFromString("DELETE t.description FROM " + getTransactionTypeName() + " as t WHERE t.description = 'bogus' ORDER BY amount");
 
       // exception thrown just on execute when in remote mode
       delete.executeStatement();
@@ -498,19 +498,19 @@ public class QueryStringTest extends AbstractQueryTest {
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
    public void testDeleteWithOrderBy() {
-      Query<Transaction> delete = createQueryFromString("DELETE FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'bogus' ORDER BY amount");
+      Query<Transaction> delete = createQueryFromString("DELETE FROM " + getTransactionTypeName() + " WHERE description = 'bogus' ORDER BY amount");
       delete.executeStatement();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
    public void testDeleteWithGroupBy() {
-      Query<Transaction> delete = createQueryFromString("DELETE FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'bogus' GROUP BY accountId");
+      Query<Transaction> delete = createQueryFromString("DELETE FROM " + getTransactionTypeName() + " WHERE description = 'bogus' GROUP BY accountId");
       delete.executeStatement();
    }
 
    @Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = "ISPN014057: DELETE and UPDATE statements cannot use paging \\(firstResult/maxResults\\)")
    public void testDeleteWithPaging() {
-      Query<Transaction> delete = createQueryFromString("DELETE FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'bogus'");
+      Query<Transaction> delete = createQueryFromString("DELETE FROM " + getTransactionTypeName() + " WHERE description = 'bogus'");
       delete.maxResults(5);
       delete.executeStatement();
    }
@@ -533,7 +533,7 @@ public class QueryStringTest extends AbstractQueryTest {
    }
 
    public void testUpdateByQueryOnIndexedField() throws Exception {
-      Transaction tx = getModelFactory().makeTransaction();
+      Transaction tx = makeTransaction();
       tx.setId(9999);
       tx.setDescription("Holiday booking");
       tx.setAccountId(1);
@@ -544,22 +544,22 @@ public class QueryStringTest extends AbstractQueryTest {
       tx.setValid(true);
       getCacheForWrite().put("transaction_" + tx.getId(), tx);
 
-      Query<Transaction> select = createQueryFromString("FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Holiday booking'");
+      Query<Transaction> select = createQueryFromString("FROM " + getTransactionTypeName() + " WHERE description = 'Holiday booking'");
       QueryResult<Transaction> result = select.execute();
       assertEquals(1, result.count().value());
       assertTrue(result.count().exact());
 
-      Query<Transaction> update = createQueryFromString("UPDATE FROM " + getModelFactory().getTransactionTypeName() + " SET description = 'Updated booking' WHERE description = 'Holiday booking'");
+      Query<Transaction> update = createQueryFromString("UPDATE FROM " + getTransactionTypeName() + " SET description = 'Updated booking' WHERE description = 'Holiday booking'");
       assertEquals(1, update.executeStatement());
 
-      Query<Transaction> selectUpdated = createQueryFromString("FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Updated booking'");
+      Query<Transaction> selectUpdated = createQueryFromString("FROM " + getTransactionTypeName() + " WHERE description = 'Updated booking'");
       result = selectUpdated.execute();
       assertEquals(1, result.count().value());
       assertTrue(result.count().exact());
    }
 
    public void testUpdateByHybridQuery() throws Exception {
-      Transaction tx = getModelFactory().makeTransaction();
+      Transaction tx = makeTransaction();
       tx.setId(9999);
       tx.setDescription("Holiday booking");
       tx.setAccountId(1);
@@ -570,22 +570,22 @@ public class QueryStringTest extends AbstractQueryTest {
       tx.setValid(false);
       getCacheForWrite().put("transaction_" + tx.getId(), tx);
 
-      Query<Transaction> select = createQueryFromString("FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Holiday booking' AND isValid = false");
+      Query<Transaction> select = createQueryFromString("FROM " + getTransactionTypeName() + " WHERE description = 'Holiday booking' AND isValid = false");
       QueryResult<Transaction> result = select.execute();
       assertThat(result.count().value()).isEqualTo(1);
       assertThat(result.count().exact()).isTrue();
 
-      Query<Transaction> update = createQueryFromString("UPDATE FROM " + getModelFactory().getTransactionTypeName() + " SET description = 'Updated booking' WHERE description = 'Holiday booking' AND isValid = false");
+      Query<Transaction> update = createQueryFromString("UPDATE FROM " + getTransactionTypeName() + " SET description = 'Updated booking' WHERE description = 'Holiday booking' AND isValid = false");
       assertEquals(1, update.executeStatement());
 
-      Query<Transaction> selectUpdated = createQueryFromString("FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Updated booking'");
+      Query<Transaction> selectUpdated = createQueryFromString("FROM " + getTransactionTypeName() + " WHERE description = 'Updated booking'");
       result = selectUpdated.execute();
       assertThat(result.count().value()).isEqualTo(1);
       assertThat(result.count().exact()).isTrue();
    }
 
    public void testUpdateWithSetParameter() throws Exception {
-      Transaction tx = getModelFactory().makeTransaction();
+      Transaction tx = makeTransaction();
       tx.setId(9998);
       tx.setDescription("Param test");
       tx.setAccountId(1);
@@ -596,52 +596,52 @@ public class QueryStringTest extends AbstractQueryTest {
       getCacheForWrite().put("transaction_" + tx.getId(), tx);
 
       Query<Transaction> update = createQueryFromString(
-            "UPDATE FROM " + getModelFactory().getTransactionTypeName()
+            "UPDATE FROM " + getTransactionTypeName()
                   + " SET description = :newDesc WHERE description = :oldDesc");
       update.setParameter("newDesc", "Updated via param");
       update.setParameter("oldDesc", "Param test");
       assertEquals(1, update.executeStatement());
 
       Query<Transaction> select = createQueryFromString(
-            "FROM " + getModelFactory().getTransactionTypeName() + " WHERE description = 'Updated via param'");
+            "FROM " + getTransactionTypeName() + " WHERE description = 'Updated via param'");
       assertEquals(1, select.execute().count().value());
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
    public void testUpdateWithProjections() {
-      Query<Transaction> update = createQueryFromString("UPDATE t.description FROM " + getModelFactory().getTransactionTypeName() + " as t SET description = 'bogus' WHERE t.description = 'bogus'");
+      Query<Transaction> update = createQueryFromString("UPDATE t.description FROM " + getTransactionTypeName() + " as t SET description = 'bogus' WHERE t.description = 'bogus'");
       update.executeStatement();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
    public void testUpdateWithOrderBy() {
-      Query<Transaction> update = createQueryFromString("UPDATE FROM " + getModelFactory().getTransactionTypeName() + " SET description = 'bogus' WHERE description = 'bogus' ORDER BY amount");
+      Query<Transaction> update = createQueryFromString("UPDATE FROM " + getTransactionTypeName() + " SET description = 'bogus' WHERE description = 'bogus' ORDER BY amount");
       update.executeStatement();
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN028526: Invalid query.*")
    public void testUpdateWithGroupBy() {
-      Query<Transaction> update = createQueryFromString("UPDATE FROM " + getModelFactory().getTransactionTypeName() + " SET description = 'bogus' WHERE description = 'bogus' GROUP BY accountId");
+      Query<Transaction> update = createQueryFromString("UPDATE FROM " + getTransactionTypeName() + " SET description = 'bogus' WHERE description = 'bogus' GROUP BY accountId");
       update.executeStatement();
    }
 
    @Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = "ISPN014057: DELETE and UPDATE statements cannot use paging \\(firstResult/maxResults\\)")
    public void testUpdateWithPaging() {
-      Query<Transaction> update = createQueryFromString("UPDATE FROM " + getModelFactory().getTransactionTypeName() + " SET description = 'bogus' WHERE description = 'bogus'");
+      Query<Transaction> update = createQueryFromString("UPDATE FROM " + getTransactionTypeName() + " SET description = 'bogus' WHERE description = 'bogus'");
       update.maxResults(5);
       update.executeStatement();
    }
 
    public void testSpatialPredicate() {
       Query<FlightRoute> q = createQueryFromString("SELECT r.name" +
-            " FROM org.infinispan.query.dsl.embedded.testdomain.FlightRoute r" +
+            " FROM org.infinispan.protostream.sampledomain.FlightRoute r" +
             " WHERE r.start WITHIN CIRCLE(46.7716, 23.5895, 100)");
 
       List<FlightRoute> list = q.execute().list();
       assertEquals(1, list.size());
 
       q = createQueryFromString("SELECT r.name" +
-            " FROM org.infinispan.query.dsl.embedded.testdomain.FlightRoute r" +
+            " FROM org.infinispan.protostream.sampledomain.FlightRoute r" +
             " WHERE r.start WITHIN CIRCLE(46.7716, 23.5895, 100) AND r.start NOT WITHIN CIRCLE(46.7716, 23.5895, 10)");
 
       list = q.execute().list();

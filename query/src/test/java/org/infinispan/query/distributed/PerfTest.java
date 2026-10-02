@@ -10,7 +10,7 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.queries.faceting.Car;
+import org.infinispan.protostream.sampledomain.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;

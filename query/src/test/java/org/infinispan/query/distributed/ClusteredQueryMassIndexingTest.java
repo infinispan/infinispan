@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
-import org.infinispan.query.queries.faceting.Car;
+import org.infinispan.protostream.sampledomain.Car;
 import org.testng.annotations.Test;
 
 /**

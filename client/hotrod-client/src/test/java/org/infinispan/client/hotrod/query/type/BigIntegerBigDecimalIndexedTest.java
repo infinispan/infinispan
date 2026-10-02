@@ -7,15 +7,15 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.CalculusIndexed;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.CalculusIndexedSchemaImpl;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.Product;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.sampledomain.CalculusIndexed;
+import org.infinispan.protostream.sampledomain.CalculusIndexedSchemaImpl;
+import org.infinispan.protostream.sampledomain.Product;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 

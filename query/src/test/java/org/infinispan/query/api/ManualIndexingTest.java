@@ -10,8 +10,8 @@ import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
-import org.infinispan.query.queries.faceting.Car;
+import org.infinispan.protostream.sampledomain.Car;
+import org.infinispan.query.Indexer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -42,7 +42,7 @@ public class ManualIndexingTest extends MultipleCacheManagersTest {
       assertNumberOfCars(0, "ford");
 
       // rebuild index
-      join(Search.getIndexer(caches.get(0)).run());
+      join(Indexer.of(caches.get(0)).run());
 
       assertNumberOfCars(2, "megane");
       assertNumberOfCars(1, "ford");

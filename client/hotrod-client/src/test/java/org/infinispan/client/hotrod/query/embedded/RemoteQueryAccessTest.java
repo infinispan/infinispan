@@ -11,9 +11,9 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.Search;
+import org.infinispan.protostream.sampledomain.Game;
 import org.infinispan.query.core.stats.QueryStatistics;
-import org.infinispan.query.model.Game;
+import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.tasks.query.RemoteQueryAccess;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -44,7 +44,7 @@ public class RemoteQueryAccessTest extends SingleHotRodServerTest {
 
    @BeforeMethod
    public void setUp() {
-      Search.getSearchStatistics(cache).getQueryStatistics().clear();
+      SearchStatistics.of(cache).getQueryStatistics().clear();
 
       RemoteCache<Object, Object> remoteCache = remoteCacheManager.getCache();
       if (!remoteCache.isEmpty()) {
@@ -95,7 +95,7 @@ public class RemoteQueryAccessTest extends SingleHotRodServerTest {
    }
 
    private void expectedIndexedQueries(int expectedIndexedQueries, int expectedHybridQueries) {
-      QueryStatistics queryStatistics = Search.getSearchStatistics(cache).getQueryStatistics();
+      QueryStatistics queryStatistics = SearchStatistics.of(cache).getQueryStatistics();
       assertThat(queryStatistics.getLocalIndexedQueryCount()).isEqualTo(expectedIndexedQueries);
       assertThat(queryStatistics.getHybridQueryCount()).isEqualTo(expectedHybridQueries);
       assertThat(queryStatistics.getNonIndexedQueryCount()).isZero();

@@ -2,10 +2,10 @@ package org.infinispan.client.hotrod.event;
 
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.ProtoSchema;
-import org.infinispan.query.dsl.embedded.DslSCI;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
 
 @ProtoSchema(
-      dependsOn = DslSCI.class,
+      dependsOn = TestDomainSCI.class,
       includeClasses = {
             ClientEventsTest.CustomKey.class,
             ClientListenerWithFilterAndProtobufTest.CustomEventFilter.class,

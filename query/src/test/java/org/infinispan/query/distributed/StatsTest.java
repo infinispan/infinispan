@@ -16,10 +16,10 @@ import org.hibernate.search.backend.lucene.index.LuceneIndexManager;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.IndexInfo;
 import org.infinispan.query.core.stats.QueryStatistics;
 import org.infinispan.query.core.stats.SearchStatistics;
+import org.infinispan.query.core.stats.SearchStatisticsSnapshot;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.mapper.mapping.SearchIndexedEntity;
 import org.infinispan.query.mapper.mapping.SearchMapping;
@@ -63,9 +63,9 @@ public class StatsTest extends MultipleCacheManagersTest {
       cache0 = cache(0);
       cache1 = cache(1);
       cache2 = cache(2);
-      queryStatistics0 = Search.getSearchStatistics(cache0).getQueryStatistics();
-      queryStatistics1 = Search.getSearchStatistics(cache1).getQueryStatistics();
-      queryStatistics2 = Search.getSearchStatistics(cache2).getQueryStatistics();
+      queryStatistics0 = SearchStatistics.of(cache0).getQueryStatistics();
+      queryStatistics1 = SearchStatistics.of(cache1).getQueryStatistics();
+      queryStatistics2 = SearchStatistics.of(cache2).getQueryStatistics();
    }
 
    @BeforeMethod
@@ -89,7 +89,7 @@ public class StatsTest extends MultipleCacheManagersTest {
 
       Set<String> totalEntities = new HashSet<>();
       for (int i = 0; i < cacheManagers.size(); i++) {
-         SearchStatistics searchStatistics = Search.getSearchStatistics(cache(i));
+         SearchStatistics searchStatistics = SearchStatistics.of(cache(i));
          Map<String, IndexInfo> indexInfos = await(searchStatistics.getIndexStatistics().computeIndexInfos());
          totalEntities.addAll(indexInfos.keySet());
          for (IndexInfo indexInfo : indexInfos.values()) {
@@ -99,7 +99,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       }
       assertEquals(totalEntities, expectedEntities);
 
-      SearchStatistics clusteredStats = await(Search.getClusteredSearchStatistics(cache0));
+      SearchStatistics clusteredStats = await(SearchStatisticsSnapshot.of(cache0));
       Map<String, IndexInfo> classIndexInfoMap = await(clusteredStats.getIndexStatistics().computeIndexInfos());
       assertEquals(classIndexInfoMap.keySet(), expectedEntities);
 
@@ -121,7 +121,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       int totalCount = 0;
       long totalSize = 0L;
       for (int i = 0; i < cacheManagers.size(); i++) {
-         SearchStatistics searchStatistics = Search.getSearchStatistics(cache(i));
+         SearchStatistics searchStatistics = SearchStatistics.of(cache(i));
          Map<String, IndexInfo> indexInfos = await(searchStatistics.getIndexStatistics().computeIndexInfos());
          totalEntities.addAll(indexInfos.keySet());
          for (IndexInfo indexInfo : indexInfos.values()) {
@@ -133,7 +133,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       assertEquals(totalCount, expectDocuments);
       assertEquals(totalSize, totalIndexSize());
 
-      SearchStatistics clusteredStats = await(Search.getClusteredSearchStatistics(cache0));
+      SearchStatistics clusteredStats = await(SearchStatisticsSnapshot.of(cache0));
       Map<String, IndexInfo> classIndexInfoMap = await(clusteredStats.getIndexStatistics().computeIndexInfos());
       assertEquals(classIndexInfoMap.keySet(), expectedEntities);
 
@@ -150,7 +150,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       queryStatistics1.clear();
       queryStatistics2.clear();
 
-      SearchStatistics clustered = await(Search.getClusteredSearchStatistics(cache0));
+      SearchStatistics clustered = await(SearchStatisticsSnapshot.of(cache0));
       QueryStatistics localQueryStatistics = clustered.getQueryStatistics();
       assertEquals(0, localQueryStatistics.getNonIndexedQueryCount());
       assertEquals(0, localQueryStatistics.getHybridQueryCount());
@@ -164,7 +164,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       assertEquals(1, queryStatistics0.getNonIndexedQueryCount());
       assertEquals(0, queryStatistics1.getNonIndexedQueryCount());
       assertEquals(0, queryStatistics2.getNonIndexedQueryCount());
-      SearchStatistics clustered1 = await(Search.getClusteredSearchStatistics(cache1));
+      SearchStatistics clustered1 = await(SearchStatisticsSnapshot.of(cache1));
       assertEquals(1, clustered1.getQueryStatistics().getNonIndexedQueryCount());
 
       executeQuery(nonIndexedQuery, cache1);
@@ -172,7 +172,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       assertEquals(1, queryStatistics0.getNonIndexedQueryCount());
       assertEquals(1, queryStatistics1.getNonIndexedQueryCount());
       assertEquals(0, queryStatistics2.getNonIndexedQueryCount());
-      SearchStatistics clustered2 = await(Search.getClusteredSearchStatistics(cache2));
+      SearchStatistics clustered2 = await(SearchStatisticsSnapshot.of(cache2));
       assertEquals(2, clustered2.getQueryStatistics().getNonIndexedQueryCount());
 
       executeQuery(nonIndexedQuery, cache2);
@@ -180,7 +180,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       assertEquals(1, queryStatistics0.getNonIndexedQueryCount());
       assertEquals(1, queryStatistics1.getNonIndexedQueryCount());
       assertEquals(1, queryStatistics2.getNonIndexedQueryCount());
-      SearchStatistics clustered0 = await(Search.getClusteredSearchStatistics(cache0));
+      SearchStatistics clustered0 = await(SearchStatisticsSnapshot.of(cache0));
       assertEquals(3, clustered0.getQueryStatistics().getNonIndexedQueryCount());
    }
 
@@ -196,7 +196,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       assertEquals(1, queryStatistics2.getLocalIndexedQueryCount());
       assertEquals(0, queryStatistics2.getDistributedIndexedQueryCount());
 
-      SearchStatistics clustered = await(Search.getClusteredSearchStatistics(cache1));
+      SearchStatistics clustered = await(SearchStatisticsSnapshot.of(cache1));
       assertEquals(3, clustered.getQueryStatistics().getLocalIndexedQueryCount());
       assertEquals(1, clustered.getQueryStatistics().getDistributedIndexedQueryCount());
 
@@ -211,7 +211,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       assertEquals(2, queryStatistics2.getLocalIndexedQueryCount());
       assertEquals(0, queryStatistics2.getDistributedIndexedQueryCount());
 
-      clustered = await(Search.getClusteredSearchStatistics(cache1));
+      clustered = await(SearchStatisticsSnapshot.of(cache1));
       assertEquals(6, clustered.getQueryStatistics().getLocalIndexedQueryCount());
       assertEquals(2, clustered.getQueryStatistics().getDistributedIndexedQueryCount());
 
@@ -226,7 +226,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       assertEquals(3, queryStatistics2.getLocalIndexedQueryCount());
       assertEquals(1, queryStatistics2.getDistributedIndexedQueryCount());
 
-      clustered = await(Search.getClusteredSearchStatistics(cache1));
+      clustered = await(SearchStatisticsSnapshot.of(cache1));
       assertEquals(9, clustered.getQueryStatistics().getLocalIndexedQueryCount());
       assertEquals(3, clustered.getQueryStatistics().getDistributedIndexedQueryCount());
    }
@@ -246,7 +246,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       assertEquals(4, queryStatistics2.getLocalIndexedQueryCount());
       assertEquals(1, queryStatistics2.getDistributedIndexedQueryCount());
 
-      SearchStatistics clustered = await(Search.getClusteredSearchStatistics(cache1));
+      SearchStatistics clustered = await(SearchStatisticsSnapshot.of(cache1));
       assertEquals(1, clustered.getQueryStatistics().getHybridQueryCount());
       assertEquals(12, clustered.getQueryStatistics().getLocalIndexedQueryCount());
       assertEquals(4, clustered.getQueryStatistics().getDistributedIndexedQueryCount());
@@ -265,7 +265,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       assertEquals(5, queryStatistics2.getLocalIndexedQueryCount());
       assertEquals(1, queryStatistics2.getDistributedIndexedQueryCount());
 
-      clustered = await(Search.getClusteredSearchStatistics(cache1));
+      clustered = await(SearchStatisticsSnapshot.of(cache1));
       assertEquals(2, clustered.getQueryStatistics().getHybridQueryCount());
       assertEquals(15, clustered.getQueryStatistics().getLocalIndexedQueryCount());
       assertEquals(5, clustered.getQueryStatistics().getDistributedIndexedQueryCount());
@@ -284,7 +284,7 @@ public class StatsTest extends MultipleCacheManagersTest {
       assertEquals(6, queryStatistics2.getLocalIndexedQueryCount());
       assertEquals(2, queryStatistics2.getDistributedIndexedQueryCount());
 
-      clustered = await(Search.getClusteredSearchStatistics(cache1));
+      clustered = await(SearchStatisticsSnapshot.of(cache1));
       assertEquals(3, clustered.getQueryStatistics().getHybridQueryCount());
       assertEquals(18, clustered.getQueryStatistics().getLocalIndexedQueryCount());
       assertEquals(6, clustered.getQueryStatistics().getDistributedIndexedQueryCount());

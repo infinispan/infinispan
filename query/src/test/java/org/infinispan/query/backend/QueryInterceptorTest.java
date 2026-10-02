@@ -23,10 +23,9 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
+import org.infinispan.protostream.sampledomain.Car;
 import org.infinispan.query.Indexer;
-import org.infinispan.query.Search;
 import org.infinispan.query.helper.TestQueryHelperFactory;
-import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -146,7 +145,7 @@ public class QueryInterceptorTest extends AbstractInfinispanTest {
             assertEquals(2, countIndex(Car.class, cache));
             assertEquals(2, countIndex(Person.class, cache));
 
-            Indexer indexer = Search.getIndexer(cache);
+            Indexer indexer = Indexer.of(cache);
 
             CompletionStages.join(indexer.remove(Car.class));
             assertEquals(0, countIndex(Car.class, cache));

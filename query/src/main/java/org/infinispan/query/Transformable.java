@@ -13,9 +13,11 @@ import org.infinispan.query.impl.DefaultTransformer;
  *
  * @author Manik Surtani
  * @since 4.0
+ * @deprecated Use {@link org.infinispan.api.annotations.query.Transformable} instead
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
+@Deprecated
 public @interface Transformable {
 
    /**

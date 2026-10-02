@@ -18,7 +18,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.model.Sale;
+import org.infinispan.protostream.sampledomain.Sale;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -48,38 +48,38 @@ public class QueryAggregationBroadcastTest extends MultipleCacheManagersTest {
 
       Query<Object[]> query;
 
-      query = cache.query("select status, count(code) from org.infinispan.query.model.Sale where day >= :start and day <= :end group by status order by status");
+      query = cache.query("select status, count(code) from org.infinispan.protostream.sampledomain.Sale where day >= :start and day <= :end group by status order by status");
       query.setParameter("start", START_DAY);
       query.setParameter("end", END_DAY);
       assertThat(query.list()).containsExactly(AGGREGATION_RESULT);
 
-      query = cache.query("select count(code), status from org.infinispan.query.model.Sale where day >= :start and day <= :end group by status order by status");
+      query = cache.query("select count(code), status from org.infinispan.protostream.sampledomain.Sale where day >= :start and day <= :end group by status order by status");
       query.setParameter("start", START_DAY);
       query.setParameter("end", END_DAY);
       assertThat(query.list()).containsExactly(REV_AGGREGATION_RESULT);
 
-      query = cache.query("select status, count(code) from org.infinispan.query.model.Sale where day >= :start and day <= :end group by status");
+      query = cache.query("select status, count(code) from org.infinispan.protostream.sampledomain.Sale where day >= :start and day <= :end group by status");
       query.setParameter("start", START_DAY);
       query.setParameter("end", END_DAY);
       assertThat(query.list()).containsExactlyInAnyOrder(AGGREGATION_RESULT);
 
-      query = cache.query("select status, count(code) from org.infinispan.query.model.Sale group by status");
+      query = cache.query("select status, count(code) from org.infinispan.protostream.sampledomain.Sale group by status");
       Optional<Integer> totalNotNullItems = query.list().stream()
             .map(objects -> ((Long) objects[1]).intValue()).reduce(Integer::sum);
       assertThat(totalNotNullItems).hasValue(TOTAL_NOT_NULL_ITEMS);
 
       // alias
-      query = cache.query("select s.status, count(s.code) from org.infinispan.query.model.Sale s where s.day >= :start and s.day <= :end group by s.status order by s.status");
+      query = cache.query("select s.status, count(s.code) from org.infinispan.protostream.sampledomain.Sale s where s.day >= :start and s.day <= :end group by s.status order by s.status");
       query.setParameter("start", START_DAY);
       query.setParameter("end", END_DAY);
       assertThat(query.list()).containsExactly(AGGREGATION_RESULT);
       // alias && count on entity
-      query = cache.query("select s.status, count(s) from org.infinispan.query.model.Sale s where s.day >= :start and s.day <= :end group by s.status order by s.status");
+      query = cache.query("select s.status, count(s) from org.infinispan.protostream.sampledomain.Sale s where s.day >= :start and s.day <= :end group by s.status order by s.status");
       query.setParameter("start", START_DAY);
       query.setParameter("end", END_DAY);
       assertThat(query.list()).containsExactly(FULL_AGGREGATION_RESULT);
       // no alias && count on entity
-      query = cache.query("select status, count(*) from org.infinispan.query.model.Sale where day >= :start and day <= :end group by status");
+      query = cache.query("select status, count(*) from org.infinispan.protostream.sampledomain.Sale where day >= :start and day <= :end group by status");
       query.setParameter("start", START_DAY);
       query.setParameter("end", END_DAY);
       assertThat(query.list()).containsExactly(FULL_AGGREGATION_RESULT);

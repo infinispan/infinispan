@@ -18,7 +18,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Indexer;
-import org.infinispan.query.Search;
 import org.infinispan.rest.assertion.ResponseAssertion;
 import org.infinispan.rest.helper.RestServerHelper;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -88,7 +87,7 @@ public class IndexedCacheNonIndexedEntityTest extends SingleCacheManagerTest {
       ResponseAssertion.assertThat(response).containsReturnedText(errorText);
 
       // The Indexer should not have "running" status
-      Indexer indexer = Search.getIndexer(cacheManager.getCache(CACHE_NAME));
+      Indexer indexer = Indexer.of(cacheManager.getCache(CACHE_NAME));
       assertFalse(indexer.isRunning());
    }
 }

@@ -21,7 +21,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
@@ -80,7 +79,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
       assertTrue(mBeanServer.isRegistered(name));
 
       // check that our settings are not ignored
-      SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
+      SearchStatistics searchStatistics = SearchStatistics.of(cache);
       assertTrue(searchStatistics.getQueryStatistics().isEnabled());
 
       // add some test data
