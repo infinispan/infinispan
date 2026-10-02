@@ -2,6 +2,8 @@ package org.infinispan.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -32,6 +34,7 @@ public class ConcurrentCacheStartupTest extends MultipleCacheManagersTest {
 
    private static final String CACHE_A = "cacheA";
    private static final String CACHE_B = "cacheB";
+   private static final int CONCURRENT_READERS = 4;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -121,6 +124,32 @@ public class ConcurrentCacheStartupTest extends MultipleCacheManagersTest {
       assertThat(cacheA).isNotNull();
       assertThat(cacheA.get("key")).isEqualTo("value");
       assertThat(startupManager(cm2).getState(CACHE_A)).isEqualTo(CacheStartupState.READY);
+   }
+
+   public void testConcurrentGetCacheObservesReadyState() throws Exception {
+      CountDownLatch started = new CountDownLatch(1);
+      CountDownLatch proceed = new CountDownLatch(1);
+
+      EmbeddedCacheManager cm2 = startSecondNodeWithDelay(CACHE_A, started, proceed);
+
+      assertThat(started.await(30, TimeUnit.SECONDS))
+            .as("State transfer should have started").isTrue();
+
+      CacheStartupManager sm = startupManager(cm2);
+      List<Future<CacheStartupState>> readers = new ArrayList<>(CONCURRENT_READERS);
+      for (int i = 0; i < CONCURRENT_READERS; i++) {
+         readers.add(fork(() -> {
+            cm2.getCache(CACHE_A);
+            // The state is never STARTING for a cache already handed over to the caller.
+            return sm.getState(CACHE_A);
+         }));
+      }
+
+      proceed.countDown();
+
+      for (Future<CacheStartupState> reader : readers) {
+         assertThat(reader.get(30, TimeUnit.SECONDS)).isEqualTo(CacheStartupState.READY);
+      }
    }
 
    private EmbeddedCacheManager startSecondNodeWithDelay(String delayedCache,

@@ -651,6 +651,9 @@ public class DefaultCacheManager extends InternalCacheManager {
                cr.getStatus() != ComponentStatus.RUNNING && cr.getStatus() != ComponentStatus.INITIALIZING;
          // start the cache-level components
          cache.start();
+         // Update the startup state before publishing the cache, otherwise a thread waiting for the cache could
+         // observe it as still starting after retrieving it.
+         cacheStarted(cacheName);
          cacheFuture.complete(cache);
          boolean needToNotifyCacheStarted = notStartedYet && cr.getStatus() == ComponentStatus.RUNNING;
          if (needToNotifyCacheStarted) {
@@ -664,6 +667,13 @@ public class DefaultCacheManager extends InternalCacheManager {
       } catch (Throwable t) {
          cacheFuture.completeExceptionally(new CacheException(t));
          throw t;
+      }
+   }
+
+   private void cacheStarted(String cacheName) {
+      CacheStartupManager startupManager = globalComponentRegistry.getComponent(CacheStartupManager.class);
+      if (startupManager != null) {
+         startupManager.cacheStarted(cacheName);
       }
    }
 
