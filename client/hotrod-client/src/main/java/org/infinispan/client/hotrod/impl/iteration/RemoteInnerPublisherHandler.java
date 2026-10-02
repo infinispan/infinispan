@@ -9,6 +9,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.operations.IterationNextResponse;
@@ -88,11 +89,11 @@ class RemoteInnerPublisherHandler<K, E> extends AbstractAsyncPublisherHandler<Ma
    @Override
    protected long handleNextResponse(IterationNextResponse<K, E> nextResponse, Map.Entry<SocketAddress, IntSet> target) {
       if (!nextResponse.hasMore()) {
-         // server doesn't clean up when complete
-         sendCancel(target);
          // Don't complete the segments if it was an invalid iteration
          if (nextResponse.getStatus() != HotRodConstants.INVALID_ITERATION) {
             log.tracef("No more entries retrieved, so completing segments %s from %s", target.getValue(), target.getKey());
+            // server doesn't clean up when complete
+            sendCancel(target);
             publisher.completeSegments(target.getValue());
          } else {
             log.tracef("Invalid iteration response, so must retry segments %s", target.getValue());
@@ -108,7 +109,8 @@ class RemoteInnerPublisherHandler<K, E> extends AbstractAsyncPublisherHandler<Ma
          log.tracef("Completed segments: %s still have %s left for %s", completedSegments, targetSegments,
                target.getKey());
       }
-      publisher.completeSegments(completedSegments);
+      if (nextResponse.getStatus() != HotRodConstants.INVALID_ITERATION)
+         publisher.completeSegments(completedSegments);
       List<Map.Entry<K, E>> entries = nextResponse.getEntries();
       for (Map.Entry<K, E> entry : entries) {
          if (!onNext(entry)) {
@@ -120,24 +122,33 @@ class RemoteInnerPublisherHandler<K, E> extends AbstractAsyncPublisherHandler<Ma
 
    @Override
    protected void handleThrowableInResponse(Throwable t, Map.Entry<SocketAddress, IntSet> target) {
-      if ((t instanceof TransportException || t instanceof RemoteIllegalLifecycleStateException || t instanceof ConnectException)
-            && target.getKey() != null) {
-         log.throwableDuringPublisher(t);
-         if (log.isTraceEnabled()) {
-            IntSet targetSegments = target.getValue();
-            if (targetSegments != null) {
-               log.tracef("There are still outstanding segments %s that will need to be retried", targetSegments);
+      if ((t instanceof ConnectException || t instanceof HotRodClientException)) {
+         SocketAddress failedServer = target.getKey();
+         if (failedServer == null) {
+            if (t instanceof TransportException te) {
+               failedServer = te.getServerAddress();
+            } else if (t instanceof RemoteIllegalLifecycleStateException rilse) {
+               failedServer = rilse.getServerAddress();
             }
          }
-         publisher.erroredServer(target.getKey());
-         // Try next target if possible
-         targetComplete();
+         if (failedServer != null) {
+            log.throwableDuringPublisher(t);
+            if (log.isTraceEnabled()) {
+               IntSet targetSegments = target.getValue();
+               if (targetSegments != null) {
+                  log.tracef("There are still outstanding segments %s that will need to be retried", targetSegments);
+               }
+            }
+            publisher.erroredServer(failedServer);
+            // Try next target if possible
+            targetComplete();
 
-         accept(0);
-      } else {
-         t.addSuppressed(new TraceException());
-         super.handleThrowableInResponse(t, target);
+            accept(0);
+            return;
+         }
       }
 
+      t.addSuppressed(new TraceException());
+      super.handleThrowableInResponse(t, target);
    }
 }
