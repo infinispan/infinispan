@@ -50,6 +50,13 @@ public class InfinispanRemoteConfigurationProperties extends org.infinispan.clie
     */
    private boolean useSchemaRegistration = true;
 
+   /**
+    * The marshaller to use for cache serialization.
+    * Shortcuts: "java" (Java Serialization), "protostream" (recommended).
+    * Can also be a fully qualified class name.
+    */
+   private String marshaller;
+
    public String getClientProperties() {
       return clientProperties;
    }
@@ -163,5 +170,13 @@ public class InfinispanRemoteConfigurationProperties extends org.infinispan.clie
 
    public void setUseSchemaRegistration(boolean useSchemaRegistration) {
       this.useSchemaRegistration = useSchemaRegistration;
+   }
+
+   public String getMarshaller() {
+      return marshaller;
+   }
+
+   public void setMarshaller(String marshaller) {
+      this.marshaller = marshaller;
    }
 }
