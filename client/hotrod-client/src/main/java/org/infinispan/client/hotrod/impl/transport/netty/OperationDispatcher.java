@@ -113,6 +113,10 @@ public class OperationDispatcher {
    private volatile boolean isRunning;
    private final long awaitTimeout;
 
+   // Track caches that have been degraded from AUTO to BASIC intelligence
+   @GuardedBy("lock")
+   private final Set<String> degradedCaches = new HashSet<>();
+
    public OperationDispatcher(Configuration configuration, ExecutorService executorService, TimeService timeService,
                               ClientListenerNotifier clientListenerNotifier, Consumer<ChannelPipeline> pipelineDecorator) {
       this.executorService = executorService;
@@ -957,17 +961,44 @@ public class OperationDispatcher {
    @GuardedBy("lock")
    private void resetCachesWithFailedServers() {
       List<String> failedCaches = new ArrayList<>();
+      List<String> cachesToDegrade = new ArrayList<>();
+      ClusterInfo cluster = topologyInfo.getCluster();
+      ClientIntelligence configuredIntelligence = cluster.getConfiguredIntelligence();
+
       topologyInfo.forEachCache((cacheNameBytes, cacheInfo) -> {
          List<InetSocketAddress> cacheServers = cacheInfo.getServers();
          boolean currentServersHaveFailed = connectionFailedServers.containsAll(cacheServers);
          boolean canReset = !cacheServers.equals(topologyInfo.getCluster().getInitialServers());
          if (currentServersHaveFailed && canReset) {
             failedCaches.add(cacheInfo.getCacheName());
+            // Check if we should degrade from AUTO to BASIC
+            if (configuredIntelligence == ClientIntelligence.AUTO && !degradedCaches.contains(cacheInfo.getCacheName())) {
+               cachesToDegrade.add(cacheInfo.getCacheName());
+            }
          }
       });
-      if (!failedCaches.isEmpty()) {
-         HOTROD.revertCacheToInitialServerList(failedCaches);
-         for (String cacheName : failedCaches) {
+
+      // Degrade caches from AUTO to BASIC if topology connections failed
+      if (!cachesToDegrade.isEmpty()) {
+         HOTROD.degradingToBasicIntelligence(cachesToDegrade);
+         for (String cacheName : cachesToDegrade) {
+            degradedCaches.add(cacheName);
+            CacheInfo oldCacheInfo = topologyInfo.getCacheInfo(cacheName);
+            // Degrade to BASIC intelligence with initial servers
+            CacheInfo newCacheInfo = oldCacheInfo.withNewServers(
+                  HotRodConstants.DEFAULT_CACHE_TOPOLOGY,
+                  cluster.getInitialServers(),
+                  ClientIntelligence.BASIC);
+            topologyInfo.updateCacheInfo(cacheName, oldCacheInfo, newCacheInfo);
+         }
+      }
+
+      // Reset non-AUTO caches to initial server list
+      List<String> cachesToReset = new ArrayList<>(failedCaches);
+      cachesToReset.removeAll(cachesToDegrade);
+      if (!cachesToReset.isEmpty()) {
+         HOTROD.revertCacheToInitialServerList(cachesToReset);
+         for (String cacheName : cachesToReset) {
             topologyInfo.reset(cacheName);
          }
       }
