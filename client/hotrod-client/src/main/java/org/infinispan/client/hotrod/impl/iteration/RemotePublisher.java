@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import static org.infinispan.client.hotrod.impl.protocol.HotRodConstants.INVALID_ITERATION;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import java.lang.invoke.MethodHandles;
@@ -93,6 +94,13 @@ public class RemotePublisher<K, E> implements Publisher<Map.Entry<K, E>> {
                // Let it retry again if necessary
                shouldRetry.set(true);
                super.handleThrowableInResponse(t, target);
+            }
+
+            @Override
+            protected long handleNextResponse(IterationNextResponse<K, E> nextResponse, Map.Entry<SocketAddress, IntSet> target) {
+               if (nextResponse.getStatus() == INVALID_ITERATION)
+                  shouldRetry.set(true);
+               return super.handleNextResponse(nextResponse, target);
             }
          };
          innerHandler.startPublisher().subscribe(subscriber);
