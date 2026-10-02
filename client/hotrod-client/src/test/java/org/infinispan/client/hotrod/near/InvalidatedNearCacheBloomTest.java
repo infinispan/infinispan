@@ -11,12 +11,10 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
-import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.util.BloomFilter;
 import org.infinispan.commons.util.MurmurHash3BloomFilter;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -31,20 +29,26 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
    private static final int NEAR_CACHE_SIZE = 4;
 
    private StorageType storageType;
+   // When set the client acts as if it was talking to a server that cannot remove single keys from the bloom
+   // filter, which is how it behaves against servers older than 16.3
+   private boolean legacyBloomUpdates;
    private AssertsNearCache<Integer, String> assertClient;
 
    private final BloomFilter<byte[]> bloomFilter = MurmurHash3BloomFilter.createFilter(NEAR_CACHE_SIZE << 2);
 
-   private InvalidatedNearCacheBloomTest storageType(StorageType storageType) {
+   private InvalidatedNearCacheBloomTest withParameters(StorageType storageType, boolean legacyBloomUpdates) {
       this.storageType = storageType;
+      this.legacyBloomUpdates = legacyBloomUpdates;
       return this;
    }
 
    @Factory
    public Object[] factory() {
       return new Object[]{
-            new InvalidatedNearCacheBloomTest().storageType(StorageType.HEAP),
-            new InvalidatedNearCacheBloomTest().storageType(StorageType.OFF_HEAP),
+            new InvalidatedNearCacheBloomTest().withParameters(StorageType.HEAP, false),
+            new InvalidatedNearCacheBloomTest().withParameters(StorageType.OFF_HEAP, false),
+            new InvalidatedNearCacheBloomTest().withParameters(StorageType.HEAP, true),
+            new InvalidatedNearCacheBloomTest().withParameters(StorageType.OFF_HEAP, true),
       };
    }
 
@@ -59,15 +63,15 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
    void resetBloomFilter() throws InterruptedException {
       assertClient.expectNoNearEvents(50, TimeUnit.MILLISECONDS);
 
-      ((InvalidatedNearRemoteCache) assertClient.remote).clearNearCache();
-      CompletionStages.join(((InvalidatedNearRemoteCache) assertClient.remote).updateBloomFilter());
+      // Clearing the near cache also resets the server side filter
+      assertClient.clearNearCache();
       // Don't let the clear leak
-      assertClient.events.clear();
+      assertClient.resetEvents();
    }
 
    @Override
    protected String parameters() {
-      return "[storageType-" + storageType + "]";
+      return "[storageType-" + storageType + ", legacyBloomUpdates-" + legacyBloomUpdates + "]";
    }
 
    @Override
@@ -85,7 +89,7 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
 
    private <K, V> AssertsNearCache<K, V> createAssertClient() {
       ConfigurationBuilder builder = clientConfiguration();
-      return AssertsNearCache.create(this.cache(), builder);
+      return AssertsNearCache.create(this.cache(), "", builder, legacyBloomUpdates);
    }
 
    private ConfigurationBuilder clientConfiguration() {
@@ -171,6 +175,79 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
       }
 
       assertTrue(serverBloomFilterUpdated, "The server bloom filter was never updated and we got remove events every time");
+   }
+
+   /**
+    * A write to a key that only collides with a cached one in the filter must not make the server forget about the
+    * key that is actually cached, otherwise that entry would go stale forever.
+    */
+   public void testFalsePositiveDoesNotDropTheCachedKey() throws InterruptedException {
+      assertClient.put(1, "v1").expectNearPreemptiveRemove(1);
+      assertClient.get(1, "v1").expectNearGetMissWithValue(1, "v1");
+
+      int conflictKey = findNextKey(bloomFilter, 1, true);
+      // This is a create thus no remove is sent
+      assertClient.put(conflictKey, "v1").expectNearPreemptiveRemove(conflictKey);
+      // The key was never read, so this invalidation is a false positive caused by the bits of key 1
+      assertClient.put(conflictKey, "v2").expectNearRemove(conflictKey);
+
+      // Key 1 is still cached and the server still knows about it
+      assertClient.get(1, "v1").expectNearGetValue(1, "v1");
+      assertClient.put(1, "v2").expectNearRemove(1);
+      drainAsyncEvents();
+   }
+
+   /**
+    * Reads that find nothing may not accumulate in the server filter, as nothing will ever invalidate them.
+    */
+   public void testReadWithNoValueIsNotKeptInTheFilter() throws InterruptedException {
+      assertClient.get(1, null).expectNearGetMiss(1);
+
+      assertClient.flushBloomFilterRemovals();
+
+      // The near cache holds nothing, so this write does not have to be replicated back to us
+      assertClient.put(1, "v1").expectNearPreemptiveRemove(1);
+      assertClient.expectNoNearEvents(50, TimeUnit.MILLISECONDS);
+   }
+
+   /**
+    * Clearing the near cache has to reset the server side filter, otherwise the server keeps sending invalidations
+    * for entries that are long gone.
+    */
+   public void testClearNearCacheResetsTheServerFilter() throws InterruptedException {
+      assertClient.put(1, "v1").expectNearPreemptiveRemove(1);
+      assertClient.get(1, "v1").expectNearGetMissWithValue(1, "v1");
+
+      assertClient.clearNearCache();
+      assertClient.expectNearClearInClient(assertClient);
+
+      assertClient.put(1, "v2").expectNearPreemptiveRemove(1);
+      assertClient.expectNoNearEvents(50, TimeUnit.MILLISECONDS);
+   }
+
+   /**
+    * Entries dropped because the near cache is full are reported to the server as well. Doing so may never cost the
+    * entries that are still cached their place in the filter, as they would go stale.
+    */
+   public void testEvictionDoesNotCauseStaleEntries() {
+      // Read more keys than the near cache can hold so that some of them are evicted again
+      for (int i = 1; i <= NEAR_CACHE_SIZE * 2; ++i) {
+         assertClient.remote.put(i, "v" + i);
+         assertEquals("v" + i, assertClient.remote.get(i));
+         drainAsyncEvents();
+      }
+      // Reads overlapping a full filter update are not cached, so the near cache may hold a little less than its max
+      int cached = assertClient.nearCacheSize();
+      assertTrue(cached > 0 && cached <= NEAR_CACHE_SIZE, "Near cache holds " + cached + " entries");
+
+      assertClient.flushBloomFilterRemovals();
+      drainAsyncEvents();
+
+      // Everything the near cache still holds has to be invalidated by a write
+      for (Integer key : assertClient.nearCacheKeys()) {
+         assertClient.put(key, "updated").expectNearRemove(key);
+         drainAsyncEvents();
+      }
    }
 
    private void drainAsyncEvents() {

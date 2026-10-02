@@ -4,6 +4,7 @@ import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
 import java.lang.invoke.MethodHandles;
 import java.net.SocketAddress;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -16,7 +17,9 @@ import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.ClientListenerOperation;
 import org.infinispan.client.hotrod.impl.operations.GetWithMetadataOperation;
 import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.netty.ChannelRecord;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationChannel;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.near.NearCacheService;
@@ -104,7 +107,10 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
             }
             nearcache.remove(key, calculatingPlaceholder);
             return remoteValue.toCompletableFuture()
-                  .thenApply(GetWithMetadataOperation.GetWithMetadataResult::value);
+                  .thenApply(v -> {
+                     entryNotCached(key, v, prevVersion);
+                     return v != null ? v.value() : null;
+                  });
          }
          return remoteValue.thenApply(v -> {
             boolean shouldRemove = true;
@@ -125,15 +131,15 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
                            org.infinispan.commons.util.Util.toStr(key));
                   }
                } else {
-                  nearcache.replace(key, calculatingPlaceholder, value);
+                  shouldRemove = !nearcache.replace(key, calculatingPlaceholder, value);
                   if (value.getMaxIdle() > 0) {
                      HOTROD.nearCacheMaxIdleUnsupported();
                   }
-                  shouldRemove = false;
                }
             }
             if (shouldRemove) {
                nearcache.remove(key, calculatingPlaceholder);
+               entryNotCached(key, v, prevVersion);
             }
             return value;
          }).toCompletableFuture();
@@ -141,6 +147,23 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
          clientStatistics.incrementNearCacheHits();
          return CompletableFuture.completedFuture(nearValue);
       }
+   }
+
+   /**
+    * The server adds every key it serves through a read to the bloom filter of this connection. When we end up not
+    * storing the result in the near cache nothing will ever invalidate it, so we let the server know right away.
+    * <p>
+    * This is only safe when the read was actually served by the node holding the filter and did not overlap a full
+    * filter update, otherwise the key could be removed from the filter without ever having been added to it.
+    */
+   private void entryNotCached(K key, GetWithMetadataOperation.GetWithMetadataResult<V> result, int prevVersion) {
+      if (bloomFilterUpdateVersion == null || result == null || result.retried()) {
+         return;
+      }
+      if ((prevVersion & 1) == 1 || prevVersion != getCurrentVersion()) {
+         return;
+      }
+      nearcache.entryNotCached(key);
    }
 
    @Override
@@ -232,8 +255,13 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
       super.stop();
    }
 
-   public void clearNearCache() {
-      nearcache.clear();
+   /**
+    * Empties the near cache and resets the bloom filter the server keeps for it.
+    *
+    * @return stage that completes once the server side filter was reset as well
+    */
+   public CompletionStage<Void> clearNearCache() {
+      return nearcache.clearAndResetBloomFilter();
    }
 
    // Increments the bloom filter version if it is even and returns whether it was incremented
@@ -280,6 +308,36 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
       CacheOperationsFactory operationsFactory = getOperationsFactory();
       HotRodOperation<Void> op = operationsFactory.newUpdateBloomFilterOperation(bloomFilterBits);
       return incrementBloomVersionUponCompletion(getDispatcher().executeOnSingleAddress(op, ChannelRecord.of(listenerChannel)));
+   }
+
+   @Override
+   public CompletionStage<Void> removeBloomFilterKeys(List<byte[]> keys) {
+      if (bloomFilterUpdateVersion == null) {
+         return CompletableFutures.completedNull();
+      }
+      Channel channel = listenerChannel;
+      if (channel == null || !isRemoveBloomFilterKeysSupported(channel)) {
+         // The server cannot remove single keys, recompute and send the whole filter instead
+         return updateBloomFilter();
+      }
+      if (trace) {
+         log.tracef("Removing %d keys from the bloom filter on %s for listenerId(%s)", keys.size(), channel,
+               org.infinispan.commons.util.Util.printArray(nearcache.getListenerId()));
+      }
+      HotRodOperation<Void> op = getOperationsFactory().newRemoveBloomFilterKeysOperation(keys);
+      return getDispatcher().executeOnSingleAddress(op, ChannelRecord.of(channel));
+   }
+
+   @Override
+   public boolean supportsBloomFilterKeyRemoval() {
+      Channel channel = listenerChannel;
+      return channel != null && isRemoveBloomFilterKeysSupported(channel);
+   }
+
+   private static boolean isRemoveBloomFilterKeysSupported(Channel channel) {
+      OperationChannel operationChannel = channel.attr(OperationChannel.OPERATION_CHANNEL_ATTRIBUTE_KEY).get();
+      return operationChannel != null
+            && operationChannel.isOpSupported(HotRodConstants.REMOVE_BLOOM_FILTER_KEYS_REQUEST);
    }
 
    public SocketAddress getBloomListenerAddress() {

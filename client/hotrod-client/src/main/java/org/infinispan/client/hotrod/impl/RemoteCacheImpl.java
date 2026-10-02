@@ -894,6 +894,16 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
    }
 
    @Override
+   public CompletionStage<Void> removeBloomFilterKeys(List<byte[]> keys) {
+      return CompletableFuture.completedFuture(null);
+   }
+
+   @Override
+   public boolean supportsBloomFilterKeyRemoval() {
+      return false;
+   }
+
+   @Override
    public String toString() {
       return "RemoteCache " + name;
    }

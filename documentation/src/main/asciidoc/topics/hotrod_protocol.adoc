@@ -117,6 +117,7 @@ In this particular case, this is +10+
 +0x37+ = getStream (since 2.6) +
 +0x39+ = putStream (since 2.6) +
 +0x43+ = addBloomFilterClientListener (since 3.1) +
++0x47+ = removeBloomFilterKeys (since 4.1) +
 | Cache Name Length   | vInt       | Length of cache name. If the passed
 length is +0+ (followed by no cache name), the operation will interact with
 the default cache.
@@ -3573,4 +3574,41 @@ Response (0xEA):
 | Field Name          | Size       | Value
 
 | Header              | variable   | Response header
+|==============================================================================
+
+.RemoveBloomFilterKeys
+
+Tells the server that the given keys are no longer held in the near cache so that it can take them out of the
+bloom filter it keeps for this connection. The server stores a counter per bloom filter position, so a key has to
+be sent as many times as it was read: duplicates are meaningful and must not be collapsed.
+
+This operation must be sent on the same connection the bloom filter near cache listener was registered on. It
+replaces having to periodically recompute and resend the entire filter with the UpdateBloomFilter (0x43)
+operation, which stays available and is still used to signal that the client emptied its near cache.
+
+Request (0x47):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Request header
+| Key count           | vInt       | How many keys follow
+| Key 1 Length        | vInt       | Length of key
+| Key 1               | byte array | Key that is no longer in the near cache
+| Key 2 Length        | vInt       |
+| Key 2               | byte array |
+|... continues until key count is reached||
+|==============================================================================
+
+Response (0x48):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Response header
+| Response status     | 1 byte     |
++0x00+ = success, the keys were removed from the filter +
++0x01+ = not executed, this connection has no bloom filter for the cache +
 |==============================================================================

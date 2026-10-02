@@ -241,6 +241,12 @@ keys returns Set<byte[]>:
    numKeys { keys = allocSet(ctx.channel(), numKeys); } #numKeys ( key { keys.add(key); } )
    ;
 
+// Unlike keys this keeps duplicates, as every occurrence of a key has to be removed from the counting bloom filter
+numBloomKeys: vInt;
+bloomKeys returns List<byte[]>:
+   numBloomKeys { bloomKeys = allocList(ctx.channel(), numBloomKeys); } #numBloomKeys ( key { bloomKeys.add(key); } )
+   ;
+
 segmentMask: optionalArray[bytesAvailable(buf)];
 filterConverterFactory: optionalString[bytesAvailable(buf)];
 filterConverterParams returns List<byte[]>
@@ -375,6 +381,7 @@ parameters switch opCode
    | { GET_STREAM_REQUEST }? key offset { cacheProcessor.getWithMetadata(getHeader(), auth.getSubject(operation), key, offset); }
    | { PUT_STREAM_REQUEST }? key expiration entryVersion chunkedValue { cacheProcessor.putStream(getHeader(), auth.getSubject(operation), key, chunkedValue, entryVersion, expiration) }
    | { UPDATE_BLOOM_FILTER_REQUEST }? bloomArray { cacheProcessor.updateBloomFilter(getHeader(), auth.getSubject(operation), bloomArray); }
+   | { REMOVE_BLOOM_FILTER_KEYS_REQUEST }? bloomKeys { cacheProcessor.removeBloomFilterKeys(getHeader(), auth.getSubject(operation), bloomKeys); }
    | { START_PUT_STREAM_REQUEST }? key expiration entryVersion { cacheProcessor.putStreamStart(getHeader(), auth.getSubject(operation), key, expiration, entryVersion); }
    | { NEXT_PUT_STREAM_REQUEST }? intValue lastPut chunk { cacheProcessor.putStreamNext(getHeader(), auth.getSubject(operation), intValue, lastPut, retainedChunk); }
    | { END_PUT_STREAM_REQUEST }? intValue { cacheProcessor.putStreamEnd(getHeader(), auth.getSubject(operation), intValue); }
