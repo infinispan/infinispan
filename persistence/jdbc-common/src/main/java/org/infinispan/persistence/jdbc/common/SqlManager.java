@@ -30,27 +30,16 @@ public interface SqlManager {
    }
 
    static SqlManager fromDatabaseType(DatabaseType databaseType, String tableName, boolean namedParameters) {
-      switch (databaseType) {
-         case DB2:
-         case DB2_390:
-            return new DB2SqlManager(tableName, namedParameters);
-         case H2:
-            return new H2SqlManager(tableName, namedParameters);
-         case MARIA_DB:
-         case MYSQL:
-            return new MySQLSqlManager(tableName, namedParameters);
-         case ORACLE:
-            return new OracleSqlManager(tableName, namedParameters);
-         case POSTGRES:
-            return new PostgresqlSqlManager(tableName, namedParameters);
-         case SQLITE:
-            return new SQLLiteSqlManager(tableName, namedParameters);
-         case SYBASE:
-            return new SybaseSqlManager(tableName, namedParameters);
-         case SQL_SERVER:
-            return new SQLServerSqlManager(tableName, namedParameters);
-         default:
-            return new GenericSqlManager(tableName, namedParameters);
-      }
+      return switch (databaseType) {
+         case DB2, DB2_390 -> new DB2SqlManager(tableName, namedParameters);
+         case H2 -> new H2SqlManager(tableName, namedParameters);
+         case MARIA_DB, MYSQL -> new MySQLSqlManager(tableName, namedParameters);
+         case ORACLE, ORACLE_XE -> new OracleSqlManager(tableName, namedParameters);
+         case COCKROACHDB, POSTGRES -> new PostgresqlSqlManager(tableName, namedParameters);
+         case SQLITE -> new SQLLiteSqlManager(tableName, namedParameters);
+         case SYBASE -> new SybaseSqlManager(tableName, namedParameters);
+         case SQL_SERVER -> new SQLServerSqlManager(tableName, namedParameters);
+         default -> new GenericSqlManager(tableName, namedParameters);
+      };
    }
 }

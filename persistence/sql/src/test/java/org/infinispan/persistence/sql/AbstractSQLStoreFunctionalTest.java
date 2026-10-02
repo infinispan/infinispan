@@ -21,7 +21,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
@@ -371,7 +370,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
       );
 
       loadSchema.set(true);
-      // Schema registered successfully afterwards.
+      // Schema registered successfully afterward.
       // Should be fully functional now.
       Cache<Object, Object> cache = cacheManager.getCache(cacheName);
       String key = "joe";
@@ -416,7 +415,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
 
       assertEquals(value, cache.get(key));
 
-      List<Map.Entry<Object, Object>> entryList = cache.entrySet().stream().collect(Collectors.toList());
+      List<Map.Entry<Object, Object>> entryList = cache.entrySet().stream().toList();
       assertEquals(1, entryList.size());
 
       Map.Entry<Object, Object> entry = entryList.get(0);
@@ -495,72 +494,47 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
    }
 
    String floatType() {
-      switch (DB_TYPE) {
-         case SQLITE:
+      return switch (DB_TYPE) {
          // SQL_SERVER and DB2 databases do not support NUMERIC data type with precision of 45
-         case SQL_SERVER:
-         case DB2:
-            return "REAL";
-         case ORACLE:
-            return "BINARY_FLOAT";
-         default:
-            return "NUMERIC(45, 6)";
-      }
+         case SQLITE, SQL_SERVER, DB2 -> "REAL";
+         case ORACLE -> "BINARY_FLOAT";
+         default -> "NUMERIC(45, 6)";
+      };
    }
 
    String doubleType() {
-      switch (DB_TYPE) {
-         case SQLITE:
-            return "REAL";
-         case SQL_SERVER:
-            return "FLOAT";
-         case POSTGRES:
-            return "DOUBLE PRECISION";
-         case ORACLE:
-            return "BINARY_DOUBLE";
-         default:
-            return "DOUBLE";
-      }
+      return switch (DB_TYPE) {
+         case SQLITE -> "REAL";
+         case SQL_SERVER -> "FLOAT";
+         case POSTGRES -> "DOUBLE PRECISION";
+         case ORACLE -> "BINARY_DOUBLE";
+         default -> "DOUBLE";
+      };
    }
 
    String binaryType() {
-      switch (DB_TYPE) {
-         case POSTGRES:
-            return "BYTEA";
-         case ORACLE:
-            return "RAW(255)";
-         case SQLITE:
-            return "BINARY";
-         default:
-            return "VARBINARY(255)";
-      }
+      return switch (DB_TYPE) {
+         case POSTGRES -> "BYTEA";
+         case ORACLE -> "RAW(255)";
+         case SQLITE -> "BINARY";
+         default -> "VARBINARY(255)";
+      };
    }
 
    String booleanType() {
-      switch (DB_TYPE) {
-         case SQL_SERVER:
-            return "BIT";
-         case ORACLE:
-         case ORACLE_XE:
-            return "NUMBER(1, 0)";
-         default:
-            return "BOOLEAN";
-      }
+      return switch (DB_TYPE) {
+         case SQL_SERVER -> "BIT";
+         case ORACLE, ORACLE_XE -> "NUMBER(1, 0)";
+         default -> "BOOLEAN";
+      };
    }
 
    String dateTimeType() {
-      switch (DB_TYPE) {
-         case SYBASE:
-         case MYSQL:
-         case MARIA_DB:
-            return "DATETIME";
-         case SQL_SERVER:
-            return "DATETIME2";
-         case POSTGRES:
-         case H2:
-         default:
-            return "TIMESTAMP";
-      }
+      return switch (DB_TYPE) {
+         case SYBASE, MYSQL, MARIA_DB -> "DATETIME";
+         case SQL_SERVER -> "DATETIME2";
+         default -> "TIMESTAMP";
+      };
    }
 
    protected void createTable(String cacheName, String tableName, ConnectionFactoryConfigurationBuilder<ConnectionFactoryConfiguration> builder) {
@@ -708,7 +682,7 @@ public abstract class AbstractSQLStoreFunctionalTest extends BaseStoreFunctional
       Objects.requireNonNull(JDBC_USERNAME);
       Objects.requireNonNull(JDBC_PASSWORD);
       Objects.requireNonNull(DATABASE);
-      List<DatabaseType> databaseTypes = Arrays.stream(DATABASE.split(",")).map(DatabaseType::guessDialect).collect(Collectors.toList());
+      List<DatabaseType> databaseTypes = Arrays.stream(DATABASE.split(",")).map(DatabaseType::guessDialect).toList();
       HashMap<DatabaseType, JdbcConnection> map = new HashMap<>();
       for (int i = 0; i < databaseTypes.size(); i++) {
          String jdbcURL = JDBC_URL.split(",")[i];
