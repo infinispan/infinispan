@@ -23,7 +23,7 @@ init {
    }
 
    private TextHeader getHeader(String op) {
-      return accessLogging ? new TextHeader(requestBytes, requestStart, principalName, null, null, op) : null;
+      return accessLogging ? new TextHeader(currentRequestBytes(), requestStart, principalName, null, null, op) : null;
    }
 }
 
@@ -41,7 +41,7 @@ exceptionally {
    if (closing) return;
    state = 0;
    if (t instanceof TooLongFrameException tlfe) {
-      log.requestTooLarge(ctx.channel(), maxContentLength, requestBytes);
+      log.requestTooLarge(ctx.channel(), maxContentLength, currentRequestBytes());
       if (log.isTraceEnabled()) log.trace("Request too large", tlfe);
       closing = true;
       ctx.close();
@@ -59,17 +59,17 @@ deadend {
 }
 
 root request
-   : { posBefore = buf.readerIndex(); }
+   : { startRequest(buf); }
      command_name { requestStart = Instant.now(); } parameters
    ;
 
-key: text_key[reader, bytesAvailable(buf, requestBytes)];
-command_name: command[reader, bytesAvailable(buf, requestBytes)];
-exptime: long_number[reader, bytesAvailable(buf, requestBytes)];
-flags: int_number[reader, bytesAvailable(buf, requestBytes)];
-vsize: int_number[reader, bytesAvailable(buf, requestBytes)];
+key: text_key[reader, bytesAvailable(buf)];
+command_name: command[reader, bytesAvailable(buf)];
+exptime: long_number[reader, bytesAvailable(buf)];
+flags: int_number[reader, bytesAvailable(buf)];
+vsize: int_number[reader, bytesAvailable(buf)];
 value returns byte[]
-   : { vsize > 0 }? fixedArray[vsize, bytesAvailable(buf, requestBytes)]
+   : { vsize > 0 }? fixedArray[vsize, bytesAvailable(buf)]
    | { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
    ;
 eol: short;

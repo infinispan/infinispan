@@ -45,9 +45,9 @@ public class MemcachedTestingUtil {
    private static final Log log = Log.getLog(MemcachedTestingUtil.class);
 
    private static final String host = "127.0.0.1";
-   private static final String USERNAME = "user";
+   public static final String USERNAME = "user";
+   public static final String PASSWORD = "secret";
    private static final String REALM = "default";
-   private static final String PASSWORD = "secret";
    private static final long TIMEOUT = 10_000;
 
    public static MemcachedServer createMemcachedServer(boolean useTestHandlers) {
