@@ -1,0 +1,22 @@
+[id='upgrade-strategies']
+:context: upgrade-strategies
+= Upgrade strategies
+
+{brandname} supports three main approaches for moving a deployment from one version to another, either up or down.
+Before choosing an approach, review xref:compatibility_chart[Compatibility chart] for any incompatibilities between your current and target versions; several exceptions apply only while a cluster runs mixed versions of {brandname}.
+
+In-place rolling upgrade::
+Upgrade each node of your existing cluster one at a time without application-facing downtime.
+{brandname} rebalances data automatically as nodes leave and rejoin, so you wait for healthy status between every step; see xref:inplace-rolling-upgrades[Performing in-place rolling upgrades].
+
+Hot Rod migration::
+Provision a new target cluster running the target version and synchronize data from your existing source cluster through a remote cache store while both clusters run.
+This also avoids downtime, but it requires an additional full set of servers for the duration of the migration; see xref:hotrod-migration[Migrating data with Hot Rod].
+
+Full cluster shutdown::
+Stop every node at once, replace each installation with the target version, and restart all nodes together inside a single maintenance window.
+Use this approach when scheduled downtime is acceptable or you lack capacity for an additional temporary or replacement cluster; see xref:shutdown-upgrade[Upgrading with a full cluster shutdown].
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]
