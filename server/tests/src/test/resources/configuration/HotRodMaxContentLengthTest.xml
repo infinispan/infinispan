@@ -1,0 +1,28 @@
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xi="http://www.w3.org/2001/XInclude"
+        xsi:schemaLocation="urn:infinispan:config:16.3 https://infinispan.org/schemas/infinispan-config-16.3.xsd
+                            urn:infinispan:server:16.3 https://infinispan.org/schemas/infinispan-server-16.3.xsd"
+        xmlns="urn:infinispan:config:16.3"
+        xmlns:server="urn:infinispan:server:16.3">
+
+   <xi:include href="jgroups/stacks.xml"/>
+
+   <xi:include href="cache-container/clustered.xml"/>
+
+   <server xmlns="urn:infinispan:server:16.3">
+
+      <xi:include href="interfaces/default.xml"/>
+
+      <xi:include href="socket-bindings/default.xml"/>
+
+      <xi:include href="security/none.xml"/>
+
+      <endpoints>
+         <endpoint socket-binding="default">
+            <hotrod-connector name="hotrod" max-content-length="1MB"/>
+            <rest-connector name="rest"/>
+         </endpoint>
+      </endpoints>
+   </server>
+</infinispan>
