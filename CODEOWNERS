@@ -1,32 +1,27 @@
 *                      @infinispan/community-committers
 /api/                  @karesti @tristantarrant
-/archetypes/           @ryanemerson
-/cli/                  @tristantarrant
-/client/hotrod-client  @wburns
-/client/rest-client/   @tristantarrant
-/core/                 @jabolina @pruivo @wburns
-/counter/              @pruivo
-/documentation/        @theashiot @andyuk1986 @Crumby
-/graalvm/              @ryanemerson
-/hibernate/            @wburns
-/integrationtests/     @andyuk1986 @Crumby
-/jboss-marshalling/    @ryanemerson
-/jcache/               @tristantarrant
-/lock/                 @karesti
-/multimap/             @karesti
-/object-filter/        @fax4ever
-/quarkus/              @ryanemerson @wburns
-/persistence/          @ryanemerson @wburns
-/query/                @karesti
-/server/core/          @wburns
-/server/hotrod/        @wburns
-/server/memcached/     @tristantarrant @wburns
-/server/resp/          @karesti @jabolina @rigazilla @wburns
+/cli/                  @Crumby @tristantarrant
+/client/hotrod-client  @jabolina @wburns
+/client/rest-client/   @jabolina @tristantarrant
+/core/                 @jabolina @tristantarrant @wburns
+/graalvm/              @karesti @wburns @tristantarrant
+/hibernate/            @tristantarrant @wburns
+/integrationtests/     @andyuk1986 @Crumby @jabolina @tristantarrant @wburns
+/jcache/               @tristantarrant @wburns
+/lock/                 @jabolina @karesti
+/multimap/             @karesti @wburns
+/quarkus/              @karesti @wburns
+/persistence/          @jabolina @wburns
+/query/                @karesti @tristantarrant
+/server/core/          @jabolina @wburns
+/server/hotrod/        @jabolina @wburns
+/server/memcached/     @jabolina @tristantarrant @wburns
+/server/resp/          @jabolina @karesti @rigazilla @wburns
 /server/rollingupgradetests @jabolina @wburns
-/server/router/        @tristantarrant
-/server/runtime/       @tristantarrant
-/server/tests/         @andyuk1986 @Crumby
+/server/router/        @tristantarrant @wburns
+/server/runtime/       @jabolina @tristantarrant @wburns
+/server/tests/         @andyuk1986 @Crumby @jabolina @tristantarrant @wburns
 /server/testdriver/    @karesti @tristantarrant
-/spring/               @karesti
-/tasks/                @tristantarrant
-/tools/                @ryanemerson @tristantarrant
+/spring/               @karesti @tristantarrant
+/tasks/                @tristantarrant @wburns
+/transcoders/          @tristantarrant @wburns
