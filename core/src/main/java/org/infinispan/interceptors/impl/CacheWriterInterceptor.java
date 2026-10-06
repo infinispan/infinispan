@@ -3,6 +3,8 @@ package org.infinispan.interceptors.impl;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicLong;
@@ -93,6 +95,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    protected final InvocationSuccessFunction<PutMapCommand> handlePutMapCommandReturn = this::handlePutMapCommandReturn;
    protected final InvocationSuccessFunction<RemoveAllCommand> handleRemoveAllCommandReturn = this::handleRemoveAllCommandReturn;
    private final InvocationSuccessFunction<AbstractTransactionBoundaryCommand> afterCommit = this::afterCommit;
+   private final InvocationSuccessFunction<WriteCommand> removeEntriesAndReturn = this::removeEntriesAndReturn;
 
    protected Log getLog() {
       return log;
@@ -188,7 +191,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                !isProperWriter(rCtx, removeCommand, removeCommand.getKey())) {
             return rv;
          }
-         return delayedValue(removeEntry(rCtx, removeCommand.getKey(), removeCommand.getSegment(), removeCommand), rv);
+         return removeEntriesAndReturn(rCtx, removeCommand, rv);
       });
    }
 
@@ -220,7 +223,9 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
          if (!isProperWriter(rCtx, cmd, key))
             return rv;
 
-         return delayedValue(cmd.isRemove() ? removeEntry(rCtx, key, cmd.getSegment(), cmd) : storeEntry(rCtx, key, cmd), rv);
+         return cmd.isRemove()
+               ? removeEntriesAndReturn(rCtx, cmd, rv)
+               : delayedValue(storeEntry(rCtx, key, cmd), rv);
       });
    }
 
@@ -231,20 +236,12 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                !isProperWriter(rCtx, computeCommand, computeCommand.getKey()))
             return rv;
 
-         Object key = computeCommand.getKey();
-         CompletionStage<?> resultStage;
-         if(rv == null) {
-            CompletionStage<Boolean> stage = persistenceManager.deleteFromAllStores(key, computeCommand.getSegment(), BOTH);
-            if (log.isTraceEnabled()) {
-               resultStage = stage.thenAccept(removed ->
-                     getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, removed));
-            } else {
-               resultStage = stage;
-            }
-         } else {
-            resultStage = storeEntry(rCtx, key, computeCommand);
-         }
-         return delayedValue(resultStage, rv);
+         // A compute that returns null removes the entry, so it goes through the same hooks as a remove command.
+         // Avoid a scenario where passivation and container removal could passivate the entry back into the store.
+         if (rv == null)
+            return removeEntriesAndReturn(rCtx, computeCommand, rv);
+
+         return delayedValue(storeEntry(rCtx, computeCommand.getKey(), computeCommand), rv);
       });
    }
 
@@ -338,11 +335,8 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                CacheEntry<?, ?> entry = rCtx.lookupEntry(key);
                if (entry != null) {
                   if (entry.isRemoved()) {
-                     stage = persistenceManager.deleteFromAllStores(key, dataWriteCommand.getSegment(), BOTH);
-                     if (log.isTraceEnabled()) {
-                        stage = stage.thenAccept(removed ->
-                              getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, removed));
-                     }
+                     // A functional write that removes the entry goes through the remove hook to handle ordering with passivation.
+                     return removeEntriesAndReturn(rCtx, dataWriteCommand, rv);
                   } else if (entry.isChanged()) {
                      stage = storeEntry(rCtx, key, dataWriteCommand);
                      if (log.isTraceEnabled()) {
@@ -395,41 +389,29 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
 
          CompletionStage<Void> stage = CompletableFutures.completedNull();
          Param<PersistenceMode> persistMode = manyEntriesCommand.getParams().get(PersistenceMode.ID);
-         switch (persistMode.get()) {
+         return switch (persistMode.get()) {
             case LOAD_PERSIST:
             case SKIP_LOAD:
                AggregateCompletionStage<Void> composedCompletionStage = CompletionStages.aggregateCompletionStage();
                int storedCount = 0;
                for (Object key : manyEntriesCommand.getAffectedKeys()) {
                   CacheEntry<?, ?> entry = rCtx.lookupEntry(key);
-                  if (entry != null) {
-                     if (entry.isRemoved()) {
-                        CompletionStage<?> innerStage = persistenceManager.deleteFromAllStores(key,
-                              keyPartitioner.getSegment(key), BOTH);
-                        if (log.isTraceEnabled()) {
-                           innerStage = innerStage.thenAccept(removed ->
-                                 getLog().tracef("Removed entry under key %s and got response %s from CacheStore", key, removed));
-                        }
-                        composedCompletionStage.dependsOn(innerStage);
-                     } else {
-                        if (entry.isChanged() && isProperWriter(rCtx, manyEntriesCommand, key)) {
-                           composedCompletionStage.dependsOn(storeEntry(rCtx, key, manyEntriesCommand, false));
-                           storedCount++;
-                        }
-                     }
+                  // Removed entries are handled below.
+                  if (entry != null &&!entry.isRemoved() && entry.isChanged() && isProperWriter(rCtx, manyEntriesCommand, key)) {
+                     composedCompletionStage.dependsOn(storeEntry(rCtx, key, manyEntriesCommand, false));
+                     storedCount++;
                   }
                }
 
                if (getStatisticsEnabled())
                   cacheStores.getAndAdd(storedCount);
-               stage = composedCompletionStage.freeze();
-               break;
+               yield makeStage(delayedValue(composedCompletionStage.freeze(), rv))
+                     .thenApply(rCtx, manyEntriesCommand, removeEntriesAndReturn);
             case SKIP_PERSIST:
             case SKIP:
                log.trace("Skipping cache store since persistence mode parameter is SKIP");
-               break;
-         }
-         return delayedValue(stage, rv);
+               yield delayedValue(stage, rv);
+         };
       });
    }
 
@@ -505,6 +487,81 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       return stage;
    }
 
+   /**
+    * Returns the keys {@code command} removes, which must be deleted from the cache stores.
+    * <p>
+    * A single-key command reaches the store writer's removal only once its visitor has decided the key is removed, so
+    * its key is returned as is. For a multi-key command, only the keys whose entry is removed in {@code ctx} are
+    * returned.
+    * </p>
+    *
+    * @param ctx     the invocation context of {@code command}.
+    * @param command the command removing the keys.
+    * @return the removed keys, in no particular order; empty if {@code command} removes none.
+    */
+   final List<?> removedKeys(InvocationContext ctx, WriteCommand command) {
+      if (command instanceof DataWriteCommand dwc)
+         return Collections.singletonList(dwc.getKey());
+
+      List<Object> removed = null;
+      for (Object key : command.getAffectedKeys()) {
+         CacheEntry<?, ?> entry = ctx.lookupEntry(key);
+         if (entry != null && entry.isRemoved()) {
+            if (removed == null)
+               removed = new ArrayList<>();
+            removed.add(key);
+         }
+      }
+
+      return removed == null ? Collections.emptyList() : removed;
+   }
+
+   /**
+    * Returns the segment of {@code key}, taken from {@code command} when it targets a single key.
+    *
+    * @param command the command removing {@code key}.
+    * @param key     one of the keys returned by {@link #removedKeys(InvocationContext, WriteCommand)}.
+    * @return the segment {@code key} belongs to.
+    */
+   final int segmentOf(WriteCommand command, Object key) {
+      return command instanceof DataWriteCommand dwc
+            ? dwc.getSegment()
+            : keyPartitioner.getSegment(key);
+   }
+
+   /**
+    * Deletes every key {@code command} removes from the cache stores.
+    *
+    * @param ctx     the invocation context of {@code command}.
+    * @param command the command removing the keys.
+    * @return a stage that completes once every removed key is deleted from the stores, or with the first failure.
+    */
+   final CompletionStage<Void> removeEntries(InvocationContext ctx, WriteCommand command) {
+      AggregateCompletionStage<Void> stage = CompletionStages.aggregateCompletionStage();
+      for (Object key : removedKeys(ctx, command)) {
+         stage.dependsOn(removeEntry(ctx, key, segmentOf(command, key), command));
+      }
+      return stage.freeze();
+   }
+
+   /**
+    * Removes the keys {@code command} removes from the cache stores before the removal commits, and returns {@code rv}
+    * once they are removed.
+    *
+    * <p>
+    * Implementations may also take the keys out of memory ahead of the commit, so the commit of the removed entries
+    * finds nothing to remove. They must not leave any per-key state behind if the removal never commits.
+    * </p>
+    *
+    * @param ctx     the invocation context of {@code command}.
+    * @param command the command removing the keys.
+    * @param rv      the return value of {@code command}.
+    * @return {@code rv}, or an {@link InvocationStage} that completes with {@code rv} once the keys are removed, or with
+    *         the failure if the removal fails.
+    */
+   Object removeEntriesAndReturn(InvocationContext ctx, WriteCommand command, Object rv) {
+      return delayedValue(removeEntries(ctx, command), rv);
+   }
 
    MarshallableEntry<Object, Object> marshalledEntry(InvocationContext ctx, Object key) {
       InternalCacheValue<?> sv = entryFactory.getValueFromCtx(key, ctx);
