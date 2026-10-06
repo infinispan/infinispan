@@ -778,6 +778,9 @@
         }, {
           "name" : "STATE_TRANSFER_PROGRESS",
           "integer" : 30
+        }, {
+          "name" : "PEEK",
+          "integer" : 31
         } ]
       }, {
         "name" : "AvailabilityMode",
@@ -2227,6 +2230,30 @@
           "is_repeated" : true
         } ]
       }, {
+        "name" : "GetBucketHashesCommand",
+        "type_id" : 1339,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "wrappedSegments",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "bucketCount",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
         "name" : "ClusterEvent",
         "type_id" : 1054,
         "fields" : [ {
@@ -2610,6 +2637,30 @@
           "id" : 2,
           "name" : "segments",
           "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "BucketHash",
+        "type_id" : 1338,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "segmentId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "bucketId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "hash",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "entryCount",
+          "type" : "int32",
           "optional" : true
         } ]
       }, {
@@ -4095,6 +4146,50 @@
         "type_id" : 1287,
         "fields" : [ ]
       }, {
+        "name" : "RemoveAllBackupWriteCommand",
+        "type_id" : 1342,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "sequence",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "segmentId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "wrappedKeys",
+          "type" : "MarshallableCollection",
+          "optional" : true
+        }, {
+          "id" : 8,
+          "name" : "internalMetadata",
+          "type" : "MarshallableMap",
+          "optional" : true
+        } ]
+      }, {
         "name" : "PeekDoubleOperation",
         "type_id" : 1207,
         "fields" : [ {
@@ -4861,6 +4956,35 @@
           "optional" : true
         } ]
       }, {
+        "name" : "GetBucketEntriesCommand",
+        "type_id" : 1340,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "segmentId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "wrappedBucketIds",
+          "type" : "org.infinispan.protostream.WrappedMessage",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "bucketCount",
+          "type" : "int32",
+          "optional" : true
+        } ]
+      }, {
         "name" : "PeekOperation",
         "type_id" : 1197,
         "fields" : [ {
@@ -5269,6 +5393,45 @@
           "id" : 2,
           "name" : "accurateSize",
           "type" : "bool",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "RemoveAllCommand",
+        "type_id" : 1341,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "cacheName",
+          "type" : "org.infinispan.persistence.core.ByteString",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "flags",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "topologyId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 4,
+          "name" : "keys",
+          "type" : "MarshallableCollection",
+          "optional" : true
+        }, {
+          "id" : 5,
+          "name" : "commandInvocationId",
+          "type" : "CommandInvocationId",
+          "optional" : true
+        }, {
+          "id" : 6,
+          "name" : "forwarded",
+          "type" : "bool",
+          "optional" : true
+        }, {
+          "id" : 7,
+          "name" : "internalMetadata",
+          "type" : "MarshallableMap",
           "optional" : true
         } ]
       }, {
@@ -6017,6 +6180,25 @@
           "id" : 2,
           "name" : "site",
           "type" : "string",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SegmentHash",
+        "type_id" : 1337,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "segmentId",
+          "type" : "int32",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "hash",
+          "type" : "int64",
+          "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "entryCount",
+          "type" : "int32",
           "optional" : true
         } ]
       }, {
@@ -6851,6 +7033,11 @@
           "name" : "actualMembers",
           "type" : "org.infinispan.persistence.core.Address",
           "is_repeated" : true
+        }, {
+          "id" : 10,
+          "name" : "availabilityMode",
+          "type" : "AvailabilityMode",
+          "optional" : true
         } ]
       }, {
         "name" : "EncoderEntryMapper",

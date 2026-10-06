@@ -141,6 +141,11 @@
           "name" : "count",
           "type" : "int64",
           "optional" : true
+        }, {
+          "id" : 3,
+          "name" : "minSize",
+          "type" : "int64",
+          "optional" : true
         } ]
       }, {
         "name" : "TrimFunction",
