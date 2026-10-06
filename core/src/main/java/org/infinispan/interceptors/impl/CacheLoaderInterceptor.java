@@ -415,7 +415,9 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor imp
                return ice;
             };
 
-            dataContainer.compute(segment, (K) key, putIfAbsentOrExpired);
+            // Skips loading the entry back into the data container for remove operations.
+            if (!(cmd instanceof RemoveCommand rc) || rc.isConditional())
+               dataContainer.compute(segment, (K) key, putIfAbsentOrExpired);
             return ice;
          } else {
             if (log.isTraceEnabled()) {
