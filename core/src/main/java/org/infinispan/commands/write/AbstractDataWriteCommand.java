@@ -2,6 +2,7 @@ package org.infinispan.commands.write;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.read.AbstractDataCommand;
@@ -10,6 +11,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.marshall.protostream.impl.MarshallableObject;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
 /**
@@ -21,6 +23,7 @@ import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 public abstract class AbstractDataWriteCommand extends AbstractDataCommand implements CacheRpcCommand, DataWriteCommand, RemoteLockCommand {
 
    protected CommandInvocationId commandInvocationId;
+   private transient volatile CompletableFuture<DataOperationOrderer.Operation> orderer;
 
    protected AbstractDataWriteCommand(ByteString cacheName, MarshallableObject<?> wrappedKey, long flags, int topologyId, int segment,
                                       CommandInvocationId commandInvocationId) {
@@ -67,5 +70,13 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
    @ProtoField(6)
    public CommandInvocationId getCommandInvocationId() {
       return commandInvocationId;
+   }
+
+   public CompletableFuture<DataOperationOrderer.Operation> getOrderer() {
+      return orderer;
+   }
+
+   public void setOrderer(CompletableFuture<DataOperationOrderer.Operation> cf) {
+      this.orderer = cf;
    }
 }
