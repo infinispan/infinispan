@@ -146,7 +146,7 @@ This halves the number of network round trips for simple operations.
 
 {brandname} registers with the JTA transaction manager as either a `Synchronization` or an `XAResource`:
 
-[plantuml, target=architecture-tx-jta, format=svg, align=center]
+[plantuml, target=architecture-tx-jta, format=svg, align=center, subs="attributes+"]
 ....
 @startuml
 skinparam defaultFontName sans-serif
