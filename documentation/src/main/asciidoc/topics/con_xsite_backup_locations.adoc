@@ -5,7 +5,25 @@
 
 For example, the following diagram shows three caches, "customers", "eu-orders", and "us-orders":
 
-image::xsite-caches.svg[]
+[plantuml, target=xsite-backups, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+rectangle "LON" as L {
+node "customers (backup location: NYC)" as LC
+node "eu-orders (local only, no backup)" as LE
+}
+
+rectangle "NYC" as N {
+node "customers (backup location: LON)" as NC
+node "us-orders (local only, no backup)" as NU
+}
+
+LC <--> NC : backups
+@enduml
+....
 
 * In **LON**, "customers" names **NYC** as a backup location.
 * In **NYC**, "customers" names **LON** as a backup location.

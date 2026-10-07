@@ -2,8 +2,137 @@
 = MetadataValue API
 Use the `MetadataValue` interface for versioned operations.
 
-The following example shows a remove operation that occurs only if the version
-of the value for the entry is unchanged:
+Together with each key/value pair, Hot Rod stores a version number that uniquely identifies each modification.
+Clients can use this version to perform conditional operations, which guarantee data consistency without sending the previous value to the server.
+
+[NOTE]
+====
+Hot Rod clients can also use link:#hotrod_transactions[transactions] to guarantee data consistency.
+====
+
+== Data consistency problem
+Consider two ATMs that connect to a bank using Hot Rod, where an account's balance is stored.
+Two closely followed operations to retrieve the latest balance could both return 500 CHF (Swiss francs):
+
+.Concurrent readers (both ATMs read the same balance)
+[plantuml, target=hotrod-concurrent-readers, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "ATM 1" as A1
+actor "ATM 2" as A2
+participant "{brandname}\n(account balance)" as B
+
+A1 -> B : Get current account balance (Hot Rod)
+B --> A1 : Balance is 500 CHF
+B --> A2 : Balance is 500 CHF (both ATMs now hold the same value)
+
+@enduml
+....
+
+A customer connects to the first ATM and withdraws 400 CHF.
+Based on the last value read, the ATM calculates the new balance, 100 CHF, and puts this value.
+Around the same time, another customer connects to the second ATM and withdraws 200 CHF.
+The second ATM assumes that it has the latest balance and, based on its calculations, sets the new balance to 300 CHF:
+
+.Concurrent updates (lost update)
+[plantuml, target=hotrod-lost-update, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "ATM 1" as A1
+actor "ATM 2" as A2
+participant "{brandname}\n(account balance)" as B
+
+A1 -> B : Put the new balance: 100 CHF (500 - 400)
+A2 -> B : Put the new balance: 300 CHF (500 - 200)
+note over B : The second put silently overwrote\nthe first one —\nthe resulting balance is incorrect.
+
+@enduml
+....
+
+Two concurrent updates have resulted in an incorrect account balance.
+The second update should not have been allowed, because the balance that the second ATM held was stale.
+Reading the balance again before calculating the new one does not help, because another update can occur between the read and the write.
+
+== Embedded mode solution
+If the ATM and the {brandname} instance storing the account lived in the same JVM, the ATM could use the link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#replace-K-V-V-[conditional replace API] of `ConcurrentMap`.
+The ATM sends the previously known value so that the cache can verify that it has not changed since it was last read.
+The first operation succeeds because the balance is still 500 CHF.
+When the second operation arrives, the balance is no longer 500 CHF, so the conditional replace fails:
+
+.Embedded solution: conditional replace
+[plantuml, target=hotrod-embedded-solution, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "ATM 1" as A1
+actor "ATM 2" as A2
+participant "{brandname}\n(same JVM)" as C
+
+A1 -> C : Conditional replace (previous = 500, new = 100)
+A2 -> C : Conditional replace (previous = 500, new = 300)
+C --x A2 : Rejected — the current value is no longer\n500; it was already changed to 100
+@enduml
+....
+
+== Hot Rod solution
+Hot Rod could use the same approach, but sending the previous value is impractical because values can be large.
+Instead, Hot Rod offers versioned operations.
+
+Use `getWithMetadata()` to retrieve both the value and its current version:
+
+.Retrieving values together with their version
+[plantuml, target=hotrod-get-versioned, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "ATM 1" as A1
+participant "{brandname}\n(account balance)" as B
+
+A1 -> B : Get value and current version together (getWithMetadata)
+B --> A1 : Balance is 500 CHF, current version = 1
+
+@enduml
+....
+
+To modify the balance, instead of calling `put()`, the ATMs call `replaceWithVersion()` and pass the latest version they know about.
+The operation succeeds only if the passed version matches the version on the server.
+The first ATM passes version 1, which matches the server-side version, so its modification is accepted and the version becomes 2.
+The second ATM also passes version 1, which no longer matches version 2, so its modification is rejected:
+
+.Replace only when the version still matches
+[plantuml, target=hotrod-replace-with-version, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "ATM 1" as A1
+actor "ATM 2" as A2
+participant "{brandname}\n(account balance)" as B
+
+A1 -> B : replaceWithVersion, passing version = 1\nand new balance = 100 CHF (500 - 400)
+B --> A1 : Accepted — the passed version matched;\nthe server-side version changes
+A2 -> B : Same operation with its stale read:\npasses version = 1 and new balance = 300 CHF (500 - 200)
+B --x A2 : Rejected — the passed version (1) does not\nmatch the current server-side version
+@enduml
+....
+
+The following example shows a remove operation that occurs only if the version of the value for the entry is unchanged:
 
 [source,java]
 ----
@@ -11,12 +140,13 @@ RemoteCacheManager remoteCacheManager = new RemoteCacheManager();
       RemoteCache<String, String> remoteCache = remoteCacheManager.getCache();
 
       remoteCache.put("car", "ferrari");
-      VersionedValue valueBinary = remoteCache.getWithMetadata("car");
+      MetadataValue<String> valueBinary = remoteCache.getWithMetadata("car");
 
-      assert remoteCache.remove("car", valueBinary.getVersion());
+      assert remoteCache.removeWithVersion("car", valueBinary.getVersion());
       assert !remoteCache.containsKey("car");
 ----
 
 .Reference
 
 * link:{javadocroot}/org/infinispan/client/hotrod/MetadataValue.html[org.infinispan.client.hotrod.MetadataValue]
+* link:{javadocroot}/org/infinispan/client/hotrod/RemoteCache.html[org.infinispan.client.hotrod.RemoteCache]
