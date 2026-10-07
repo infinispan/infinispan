@@ -71,7 +71,7 @@ class TransactionRequestProcessor extends CacheRequestProcessor {
             // in the executor to ensure it never blocks the netty thread
             AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
             validateConfiguration(cache);
-            prepareTransactionInternal(header, cache, cacheInfo.versionGenerator, xid, onePhaseCommit,
+            prepareTransactionInternal(header, cache, cacheInfo.versionGenerator(), xid, onePhaseCommit,
                   writes, recoverable, timeout);
          } catch (Throwable t) {
             writeException(header, t);
