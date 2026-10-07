@@ -30,7 +30,9 @@ interface EmbeddedCacheManager extends CacheContainer {
   +getHealth(): Health
 }
 
-class DefaultCacheManager implements EmbeddedCacheManager {
+abstract class InternalCacheManager implements EmbeddedCacheManager
+
+class DefaultCacheManager extends InternalCacheManager {
   -globalConfiguration: GlobalConfiguration
   -cacheManagers: Map
   -transport: Transport
@@ -68,11 +70,14 @@ class CacheImpl<K, V> implements AdvancedCache {
   -componentRegistry: ComponentRegistry
 }
 
-class DecoratedCache<K, V> extends CacheImpl {
+abstract class AbstractDelegatingAdvancedCache<K, V> implements AdvancedCache
+
+class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache {
   -flags: long
 }
 
 EmbeddedCacheManager --> "manages *" Cache
+DecoratedCache *-- "1" CacheImpl : delegates to
 @enduml
 ....
 
@@ -184,7 +189,7 @@ All `@Stop` methods are invoked in reverse inheritance order.
 
 === Annotations
 
-{brandname} defines a set of annotations in the `org.infinispan.factories.annotations` package that drive dependency injection and lifecycle management.
+{brandname} defines a set of annotations in the `org.infinispan.factories.annotations` package that drive dependency injection and lifecycle management, with one exception: `@Scope`, which lives in the separate `org.infinispan.factories.scopes` package.
 These annotations use `@Retention(RetentionPolicy.CLASS)` — they are processed at compile time by an annotation processor and are not available via runtime reflection.
 
 `@Inject`::
@@ -266,10 +271,11 @@ note right
   stop() methods
 end note
 
-CAP -> GMB: Generate ModuleMetadataBuilderImpl
+CAP -> GMB: Generate *ModuleImpl class\n(implements ModuleMetadataBuilder)
 note right
   Registered via
   META-INF/services/
+  org.infinispan.factories.impl.
   ModuleMetadataBuilder
 end note
 
@@ -304,7 +310,7 @@ Calls the component's `@Start` methods in superclass-first order.
 `stop(instance)`::
 Calls the component's `@Stop` methods in reverse order.
 
-These generated accessors are registered in per-package `*PackageImpl` classes, which are aggregated into a `ModuleMetadataBuilderImpl` per module.
+These generated accessors are registered in per-package `*PackageImpl` classes, which a generated `*ModuleImpl` class (one per module) aggregates by implementing `org.infinispan.factories.impl.ModuleMetadataBuilder`.
 At runtime, the `ModuleRepository` loads all builders via `ServiceLoader` and provides the registry with direct accessor references for every known component.
 
 === Component factories
@@ -328,22 +334,26 @@ interface AutoInstantiableFactory {
   with no-arg constructor.
 }
 
-abstract class AbstractComponentFactory implements ComponentFactory {
+abstract class AnyScopeComponentFactory implements ComponentFactory {
   @Inject globalComponentRegistry
   @Inject globalConfiguration
 }
 
-class "DataContainerFactory" as DCF extends AbstractComponentFactory implements AutoInstantiableFactory {
+abstract class AbstractComponentFactory extends AnyScopeComponentFactory
+
+abstract class AbstractNamedCacheComponentFactory extends AnyScopeComponentFactory
+
+class "DataContainerFactory" as DCF extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
   +construct(name): Object
 }
 
-class "LockManagerFactory" as LMF extends AbstractComponentFactory implements AutoInstantiableFactory {
+class "LockManagerFactory" as LMF extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
   +construct(name): Object
 }
 
 note bottom of DCF
   @DefaultFactoryFor(
-    classes = DataContainer.class
+    classes = InternalDataContainer.class
   )
 end note
 @enduml
@@ -365,11 +375,11 @@ The resolution flow is:
 
 [source,java]
 ----
-@InfinispanModule(name = "core",
-                  requiredModules = "commons")
-public class LifecycleManager implements ModuleLifecycle { ... }
+@InfinispanModule(name = "core")
+public class CoreModule implements ModuleLifecycle { ... }
 ----
 
-At compile time, the annotation processor generates a `ModuleMetadataBuilder` implementation for each module and registers it via `META-INF/services`.
+Modules can additionally declare dependencies on other modules with the `requiredModules` and `optionalModules` attributes; the core module declares none.
+At compile time, the annotation processor generates a `*ModuleImpl` implementation of `org.infinispan.factories.impl.ModuleMetadataBuilder` for each module and registers it via `META-INF/services`.
 At runtime, the `ModuleRepository.Builder` loads all module builders, resolves dependencies between modules, sorts them topologically, and calls `registerMetadata()` on each to populate the component and factory registries.
 This allows {brandname} modules (core, server, query, etc.) to contribute their own components and factories without requiring a central registration point.
