@@ -19,7 +19,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class PING extends RespCommand implements Resp3Command {
    public static final String NAME = "PING";
-   private static final byte[] PONG = { 'P', 'O', 'N', 'G'};
+   private static final String PONG = "PONG";
 
    public PING() {
       super(NAME, -1, 0, 0, 0, AclCategory.FAST.mask() | AclCategory.CONNECTION.mask());
@@ -29,12 +29,13 @@ public class PING extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx,
                                                                 List<byte[]> arguments) {
       if (arguments.isEmpty()) {
-         handler.writer().string(PONG);
+         handler.writer().simpleString(PONG);
          return handler.myStage();
       } else if (arguments.size()==1) {
          handler.writer().string(arguments.get(0));
          return handler.myStage();
       }
-      return handler.delegate(ctx, this, arguments);
+      handler.writer().wrongArgumentNumber(this);
+      return handler.myStage();
    }
 }

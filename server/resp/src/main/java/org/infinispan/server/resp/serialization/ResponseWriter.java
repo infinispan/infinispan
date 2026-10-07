@@ -281,10 +281,6 @@ public interface ResponseWriter {
       error("-ERR " + error);
    }
 
-   default void wrongArgumentCount(RespCommand command) {
-      error("ERR wrong number of arguments for '" + command.getName().toLowerCase() + "' command");
-   }
-
    default void nanOrInfinity() {
       error("-ERR increment would produce NaN or Infinity");
    }
