@@ -139,7 +139,22 @@ To reference a section within the same book, use `link:#`:
 [[documentation_guidelines_images]]
 == Diagrams, Screenshots, and Other Media
 
-* Images should be saved as *PNG* or *JPG*, with a width of at least *660 px*, at *110 dpi*. Try to keep file size less than *300 KB*.
+Use Asciidoctor Diagram blocks instead of pre-rendered images whenever a diagram can be expressed in text form. The build renders them at generation time, so they stay consistent with the surrounding content and scale without loss of quality. Use `[plantuml]` blocks for UML-style diagrams such as class, sequence, or flowcharts:
+
+* Example 1: PlantUML block rendered to SVG.
++
+----
+[plantuml, target=example-diagram, format=svg, align=center]
+....
+@startuml
+A -> B : request
+B --> A : response
+@enduml
+....
+----
+
+Use `syntrax` blocks for syntax diagrams and other custom tree-like structures. If a diagram cannot be expressed with Asciidoctor Diagrams at all, save it as an *SVG* file rather than PNG or JPG so that it remains crisp when scaled. Use raster images (*PNG* or *JPG*) only for screenshots of the user interface:
+
 * Screenshots supplement the text, not replace it.  *Do not use images as the sole means to convey information or context*.
 * *Do not include any test or pre-release labels*.
 * *Do not include any personally identifying information*.
@@ -163,6 +178,20 @@ image::icon.png[Alt text, 50, 50]
 +
 ----
 This is an inline image. image:icon.png[Alt text] Cool!
+----
+
+[[documentation_guidelines_math_expressions]]
+== Mathematical Expressions
+
+Write mathematical expressions in AsciiMath rather than embedding them as images. Use a single pair of plus signs for inline formulas and `[stem]` listing blocks for larger ones; the build renders both with MathJax:
+
+----
+The energy at rest is +E = mc^2+.
+
+[stem]
+++++
+\sqrt(x^2 + y^2) <= r
+++++
 ----
 
 [[documentation_guidelines_code_blocks]]

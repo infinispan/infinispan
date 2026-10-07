@@ -8,10 +8,10 @@ So the exact meaning of _origin_ is relative to the developer: you could think o
 
 == Prerequisites
 This document assumes some working knowledge of git.
-We recommend Scott Chacon's excellent link:http://progit.org/[Pro Git] as a valuable piece of background reading.
+We recommend Scott Chacon's excellent link:https://git-scm.com/book/en/v2[Pro Git] as a valuable piece of background reading.
 The book is released under the Creative Commons license and can be downloaded in electronic form for free.
-At very least, we recommend that you read link:http://progit.org/book/ch2-0.html[Chapter 2],
-link:http://progit.org/book/ch3-0.html[Chapter 3] and link:http://progit.org/book/ch5-0.html[Chapter 5] of _Pro Git_ before proceeding.
+At very least, we recommend that you read link:https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository[Chapter 2],
+link:https://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell[Chapter 3] and link:https://git-scm.com/book/en/v2/Distributed-Git-Distributed-Workflows[Chapter 5] of _Pro Git_ before proceeding.
 
 == Repositories
 {brandname} uses link:http://github.com/infinispan/infinispan[] as its canonical repository, and this repository contains the stable code on main as well as the maintenance branches for previous minor versions (e.g., 5.0.x, 4.2.x, 4.1.x, etc)
@@ -25,7 +25,6 @@ The project assumes one of 2 _roles_ an individual may assume when interacting w
 *  _Contributor_
 *  _Project Admin_ (typically, no more than a small handful of people)
 
-NOTE: None of the roles assume that you are a Red Hat employee.
 All it assumes is how much responsibility over the project has been granted to you.
 Typically, someone may be in more than one role at any given time, and puts on a different "hats" based on the task at hand.
 
@@ -40,8 +39,23 @@ This process is certainly not restricted to just {brandname} core developers; an
 
 ==== Creating a pull request on GitHub
 
-image::git_wf_2.png[]
+[plantuml, target=contributor-workflow, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+participant "{brandname} upstream repository (GitHub)" as UP
+participant "Personal fork on GitHub" as FK
+participant "Local clone" as LC
 
+UP -> FK : 1. Contributor forks the upstream repository to their personal account
+FK -> LC : 2. Clone the personal fork locally
+LC -> LC : 3. Modify code and commit changes on a topic branch
+LC -> FK : 4. Push the changes back to the personal fork
+FK --> UP : 5. Create a pull request against upstream
+@enduml
+....
 In this workflow, the contributor forks the {brandname} upstream repository on GitHub, clones their fork, and makes changes to this private fork.
 When changes have been tested and are ready to be contributed back to the project, a _pull request_ is issued via GitHub so that one of the _Project Administrators_ can pull in the change.
 
@@ -58,24 +72,24 @@ Consolidating them (squashing) or breaking them up as necessary and cleaning up 
 Also, prior to issuing a pull request, you should make sure you rebase your branch against the upstream branch you expect it to be merged into.
 Also, only submit pull requests for your topic branch - not for your main!
 
-TIP: The section on _Public Small Project_ in link:http://progit.org/book/ch5-2.html[Chapter 5, Section 2] of Pro Git has more information on this style of workflow.
+TIP: The _Contributing to a Project_ section in link:https://git-scm.com/book/en/v2/GitHub-Contributing-to-a-Project[Chapter 6] of Pro Git has more information on this style of workflow.
 
 ===== A worked example
 . Make sure your main branch is synced up with upstream. See <<link_ifyouhaveforkedupstream,this section>> for how to do this
-. Create new branch for your topic and switch to it. For the example issue, ISPN-1234:
+. Create new branch for your topic and switch to it, naming it after the GitHub issue number and title (for example `1234/anodyne_widget`):
 
- git checkout -b t_ISPN-12345 main
+ git checkout -b 1234/anodyne_widget main
 
 . Do your work. Test. Repeat
 . Commit your work on your topic branch
 . Push your topic branch to GitHub. For example:
 
- git push origin t_ISPN-12345
+ git push origin 1234/anodyne_widget
 
 . Issue a pull request using the link:http://help.github.com/send-pull-requests/[GitHub pull request system]
 . Once your pull request has been applied upstream, delete the topic branch both locally and on your fork. For example:
 
- git branch -d t_ISPN-12345 && git push origin :t_ISPN-12345
+ git branch -d 1234/anodyne_widget && git push origin :1234/anodyne_widget
 
 . Sync with upstream again so that your changes now appear in your main branch
 
@@ -88,7 +102,7 @@ If your topic branch has been open for a while, and you are afraid that changes 
 
 . Switch to your topic branch. For example:
 
- git checkout t_ISPN-12345
+ git checkout 1234/anodyne_widget
 
 . Rebase your topic branch against main:
 
@@ -98,7 +112,7 @@ If your topic branch has been open for a while, and you are afraid that changes 
 . When you're done test your code again.
 . Push your rebased topic branch to your repo on GitHub (you will likely need to force this with the -f option).
 
- git push -f origin ISPN-12345
+ git push -f origin 1234/anodyne_widget
 
 . Continue your work on your topic branch.
 
@@ -121,21 +135,21 @@ For example, developer B would add developer A's personal {brandname} fork repos
 
  git remote add devA https://github.com/developerA/infinispan.git
 
-. Developer A starts implementing feature ISPN-244 and works on a local topic branch `t_ISPN244`.
-Developer A pushes `t_ISPN244` to personal {brandname} fork. For example:
+. Developer A starts implementing a fix for GitHub issue `102`, working on the topic branch `102/improve-rebalancing`.
+Developer A pushes `102/improve-rebalancing` to personal {brandname} fork. For example:
 
- git push origin t_ISPN244
+ git push origin 102/improve-rebalancing
 
-. Developer B fetches branch `t_ISPN244` to local repository. For example:
+. Developer B fetches branch `102/improve-rebalancing` to local repository. For example:
 
- git fetch devA t_ispn244:my_t_ispn244
+ git fetch devA 102/improve-rebalancing
 
-. Developer B works on local branch `my_t_ispn244`
-. Developer B commits changes, pushes `my_t_ispn244` to own fork.
+. Developer B works on local branch `102/improve-rebalancing`
+. Developer B commits changes, pushes `102/improve-rebalancing` to own fork.
 
- git push origin my_t_ispn244
+ git push origin 102/improve-rebalancing
 
-. Developer B sends pull request to developer A to integrate changes from `my_t_ispn244` to `t_ispn244`
+. Developer B sends pull request to developer A to integrate the updated branch back into their own fork copy of it
 
 === Project Admin
 Project Admins have a very limited role.
@@ -149,42 +163,22 @@ Further, it ensures clean and easily traceable code history and makes sure that 
 
 ==== Handling pull requests
 
-image::git_wf_3.png[]
-
-Project Admins are also responsible for responding to pull requests.
-When pulling in changes from a forked repository, more than a single commit may be pulled in.
-Again, this should be done on a newly created working branch, code reviewed, tested and cleaned up as necessary.
-
-If commits need to be altered - e.g., rebasing to squash or split commits, or to alter commit messages - it is often better to contact the Contributor and ask the Contributor to do so and re-issue the pull request, since doing so on the upstream repo could cause update issues for other contributors later on.
-If commits were altered or three-way merge was performed during a merge instead of fast-forward, it's also a good idea to check the log to make sure that the resulting repository history looks OK:
-
-----
-
-$ git log --pretty=oneline --graph --abbrev-commit  # History messed up due to a bad merge
-*   3005020 Merge branch 'ISPN-786' of git://github.com/Sanne/infinispan
-|\ 
-| * e757265 ISPN-786 Make dependency to log4j optional  <-- Same with cb4e5d6 - unnecessary
-* | cb4e5d6 ISPN-786 Make dependency to log4j optional  <-- Cherry-picked commit by other admin
-|/
-* ...
-
-$ git reset cb4e5d6  # revert the bad merge
-
-----
-
-It is therefore _strongly recommended_ that you use the link:https://github.com/maniksurtani/githelpers/blob/master/project_admins/handle_pull_request[`handle_pull_request`] script that ensures a clean merge.
-If you _still_ wish to do this manually, please consider reading through the script first to get an idea of what needs to happen.
-
-TIP: More information on pulling changes from remote, forked repos can be found in link:http://progit.org/book/ch5-3.html[Chapter 5, Section 3] of Pro Git, under _Checking Out Remote Branches_ .
-
-===== Possible trouble handling pull requests
-. If you have warnings about "Merge made by recursive" you have to fix it rebasing.
-. If you have warnings about "non-fast-forward" you have to rebase.
-. If you see "non-fast-forward updates were rejected" you *must never* use `--force` on upstream!
-It means that another patch was merged before you and you have to update your main again, and rebase again.
-. `--force` is allowed only in special maintenance circumstances.
-If you find you're needing it to handle a pull request, then you're doing it wrong, and the mistake might be a dangerous one!
-It's like the good rule of never commit when you're drunk (drunk coding, however, is allowed).
+[plantuml, target=pull-request-review-flow, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+participant "Project Admin (reviewer)" as PA
+participant "{brandname} upstream repository on GitHub" as GH
+participant "Local review branch" as LB
+PA -> GH : Open the pull request in the web interface, then read diffs and leave comments
+PA -> LB : If a deeper review is required, fetch the PR commits into a local branch for IDE or other tooling
+PA -> GH : Approve and merge via GitHub interface (never push directly)
+@enduml
+....
+It is recommended that reviewers use the GitHub pull request web interface to review code; this is sufficient for most changes.
+If a deeper review is required, fetch the commits of the pull request into a local branch and inspect them with your IDE or other local tooling. Approval and merge must always be done via the GitHub interface.
 
 .Never use `--force` on `git push`
 WARNING: Using `--force` while pushing on a shared repository such as _upstream_ you could effectively erase other committed patches.
@@ -204,8 +198,9 @@ Some of the biggest features of git are speed and efficiency of branching, and a
 As a result, best practices involve making frequent use of branches.
 Creating several topic branches a day, even, should not be considered excessive, and working on several topic branches simultaneously again should be commonplace.
 
-link:http://progit.org/book/ch3-4.html[Chapter 3, Section 4] of Pro Git has a detailed discussion of topic branches.
-For {brandname}, it makes sense to create a topic branch and name it after the issue it corresponds to. (if it doesn't correspond to an issue, a simple but descriptive name should be used).
+link:https://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging[Chapter 3] of Pro Git has a detailed discussion of branching workflows.
+Topic branches are named after the GitHub issue they address, in the form <number>/issue_title (for example `1234/anodyne_widget`).
+If the pull request targets a release branch other than main, append that branch name after a hyphen (for example `1234/anodyne_widget-4.2.x`).
 
 ==== Topic Branches Affecting More Than One Release Branch
 Most topic branches will only affect a single release branch, e.g. features targeted at the current unstable release will only affect the main release branch.
@@ -214,40 +209,39 @@ However, occasionally, fixes may apply to both release branches 4.2.x and main. 
 
 . Create topic branch off 4.2.x. For example:
 
- git checkout -b <topic>_4.2.x 4.2.x
+ git checkout -b <number>/<title>-4.2.x 4.2.x
 
 . Create topic branch off main. For example:
 
- git checkout -b <topic>_main main
+ git checkout -b <number>/<title> main
 
-. Do your work on `<topic>_main`, test and commit your fixes
-. Switch to `<topic>_4.2.x`. For example:
+. Do your work on `<number>/<title>`, test and commit your fixes
+. Switch to `<number>/<title>-4.2.x`. For example:
 
- git checkout <topic>_4.2.x
+ git checkout <number>/<title>-4.2.x
 
-.  Cherry-pick your commit from `<topic>_main` onto `<topic>_4.2.x`. For example:
+.  Cherry-pick your commit from `<number>/<title>` onto `<number>/<title>-4.2.x`. For example:
 
  git cherry-pick <commit_id>
 
-. Test `<topic>_4.2.x` for correctness, modify as necessary
+. Test `<number>/<title>-4.2.x` for correctness, modify as necessary
 . Issue two separate pull requests for both branches
 
 === Comments
 It is _extremely important_ that comments for each commit are clear and follow certain conventions.
 This allows for proper parsing of logs by git tools.
-Read link:http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html[this article] on how to format comments for git and adhere to them.
-Further to the recommendations in the article, the short summary of the commit message should be in the following format:
 
-  XXX Subject line of the issue in question
+* The title line begins with the GitHub issue number in square brackets, for example `[#102]`, followed by a short summary. Write it in imperative mood, starting upper case and without a trailing period; keep it to 50 characters or fewer.
+* Leave a blank line between the title and the body.
+* The body explains _what_ changed and _why_, rather than _how_; wrap lines at 72 characters.
+For example:
 
-This can optionally be followed by a detailed explanation of the commit.
-Why it was done, how much of it was completed, etc.
-You may wish to express this as a list, for example:
+----
+[#102] Fix stale entries served by the cache loader
 
- * Add a unit test
- * Add more unit tests
- * Fix regressions
- * Solve major NP-Complete problems
+The loader returned cached values even when the store held newer data, so
+reads after a restart could observe an outdated state until the first write.
+----
 
 Make sure however to split separate concerns - especially if they are unrelated - in separate commits.
 
@@ -257,14 +251,14 @@ For example, committing a test. Then committing another test. Then perhaps commi
 And perhaps fixing your own fix in the next commit...
 Before issuing a pull request for this topic branch, consider cleaning up these commits.
 Interactive rebasing helps you squash several commits into a single commit, which is often more coherent to deal with for others merging in your work.
-link:http://progit.org/book/ch6-4.html[Chapter 6, Section 4] of Pro Git has details on how to squash commits and generally, clean up a series of commits before sharing this work with others.
+link:https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History[the Rewriting History] of the Git book has details on how to squash commits and generally, clean up a series of commits before sharing this work with others.
 Note that you can also easily reorder them, just change the order of lines during the interactive rebase process.
 
 Also, it is important to make sure you don't accidentally commit files for which no real changes have happened, but rather, whitespace has been modified.
 This often happens with some IDEs. `git diff --check` should be run before you issue such a pull request, which will check for such "noise" commits and warn you accordingly.
 Such files should be reverted and not be committed to the branch.
 
-Adhering to link:chapter-1-The_Basics.html#style_requirements[{brandname}'s code style] guidelines will help minimise "noise" commits.
+Adhering to link:#style_requirements[{brandname}'s code style] guidelines will help minimise "noise" commits.
 Project Admins are going to ask contributors to reformat their code if necessary.
 
 == Keeping your repo in sync with upstream
@@ -284,7 +278,7 @@ will often do the trick. You could then pull the specific branches you would nee
 ==== Updating topic branches
 You should rebase your topic branches at this point so that they are up-to-date and when pulled by upstream, upstream can fast-forward the release branches:
 
- $ git checkout <topic>_main
+ $ git checkout <number>/<title>
  $ git rebase main
 
 and/or
@@ -390,7 +384,7 @@ For Linux users, there are lots of alternatives: _gitk_ , _gitg_ , _giggle_, ...
 
 === Visual diff and merge tools
 There are several options available, including link:http://kdiff3.sourceforge.net/[KDiff3], link:http://meld.sourceforge.net/[meld] and Perforce's link:http://www.perforce.com/perforce/products/merge.html[P4Merge] which are all either open source or available for free.
-See link:http://progit.org/book/ch7-1.html[this link] on setting these up (section under _External Merge and Diff Tools_)
+See link:https://git-scm.com/book/en/v2/Customizing-Git-Git-Configuration[this link] on setting these up (section under _External Merge and Diff Tools_)
 
 === Choosing an Editor
 You can customise the editor used by git editing `~/.gitconfig`.

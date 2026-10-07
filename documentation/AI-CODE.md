@@ -93,6 +93,10 @@ include::code_examples/MyClass.java[]
 - All images must have alt text for accessibility
 - Syntax: `image::filename.png[Alt text description]`
 
+### Mathematical Expressions
+- Write math in AsciiMath rather than embedding it as an image.
+- Inline formulas use a single pair of plus signs (`+E = mc^2+`); larger ones go in `[stem]` listing blocks delimited by `++++`. The build renders both via MathJax (latexmath stem).
+
 ## Conditional Content
 
 Use `ifdef` / `endif` for community vs enterprise content:
@@ -112,9 +116,9 @@ Follow the terminology defined in `topics/contributing/terminology.adoc`. Key te
 - **Add/Remove** — for container membership; **Create/Delete** — for building/destroying objects; **Clear** — delete all elements
 
 ## Building Documentation
-- Build HTML: `mvn install -pl documentation`
-- Build PDF: `mvn install -pl documentation -Ppdf`
-- Output: `documentation/target/generated/{version}/html/`
+- The module is only in the reactor under the `distribution` profile; other Infinispan modules must already be installed locally. Build HTML from the repository root with: `mvn install -Pdistribution -pl documentation`. Alternatively use `-f documentation/pom.xml`, which needs no profile.
+- Serve generated HTML locally (JDK 18+): `mvn exec:exec@serve-docs -f documentation/pom.xml` → http://127.0.0.1:8080/ . Override the port with `-Ddocs.port=<port>`.
+- Output: `documentation/target/generated/{version}/html/` (for example, 16.3)
 
 ## When Creating New Documentation
 1. Determine if the content is a concept, procedure, or reference — use the correct `con_`/`proc_`/`ref_` prefix
