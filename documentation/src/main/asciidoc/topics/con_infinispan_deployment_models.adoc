@@ -21,11 +21,23 @@ Near-caching capabilities allow remote clients to store data locally, which mean
 Near-caching significantly increases speed of read operations and achieves the same performance as an embedded cache.
 
 .Remote cache deployment model
-//Community content
-ifdef::community[]
-image::remote-caches.svg[A {brandname} cluster of four server nodes with remote caches that allow applications to perform read and write operations through remote clients.]
-endif::community[]
-//Downstream content
-ifdef::downstream[]
-image::remote-caches.png[A {brandname} cluster of four server nodes with remote caches that allow applications to perform read and write operations through remote clients.]
-endif::downstream[]
+[plantuml, target=remote-cache-deployment-model, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+package "{brandname} cluster" as CL {
+  node "Server 1\n{brandname}" as S1
+  node "Server 2\n{brandname}" as S2
+  node "Server 3\n{brandname}" as S3
+  node "Server N\n{brandname}" as SN
+}
+
+[Applications] as A1
+[Applications] as A2
+
+A1 <--> S1 : read / write operations through remote caches
+A2 <--> SN
+@enduml
+....

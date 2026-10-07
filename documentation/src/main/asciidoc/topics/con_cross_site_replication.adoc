@@ -8,14 +8,42 @@ Cross-site replication provides {brandname} with a global cluster view and:
 * Presents client applications with a single point of access to data in globally distributed caches.
 
 .Cross-site replication
-//Community content
-ifdef::community[]
-image::cross-site-replication.svg[Cross-site replication with a {brandname} deployment.]
-endif::community[]
-//Downstream content
-ifdef::downstream[]
-image::cross-site-replication.png[Cross-site replication with a {brandname} deployment.]
-endif::downstream[]
+[plantuml, target=xsite-cross-site-replication, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+
+rectangle "LON" as SiteA {
+  node "Cluster A" as ClusterA {
+    node "Node A1" as A1
+    node "Node A2" as A2
+    node "Node A3" as A3
+  }
+  A1 <-ri-> A2
+  A2 <--> A3
+  A1 <--> A3
+}
+
+rectangle "NYC" as SiteB {
+  node "Cluster B" as ClusterB {
+    node "Node B1" as B1
+    node "Node B2" as B2
+    node "Node B3" as B3
+    node "Node B4" as B4
+  }
+  B1 <-ri-> B2
+  B2 <--> B3
+  B1 <--> B3
+  B1 <--> B4
+  B3 <-ri-> B4
+  B2 <-> B4
+}
+
+ClusterA <~ri~> ClusterB : JGroups RELAY2
+@enduml
+....
 
 [role="_additional-resources"]
 .Additional resources

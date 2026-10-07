@@ -10,7 +10,22 @@ To achieve Active/Passive, the client, application, or load balancer must be con
 
 The following diagram illustrates Active/Passive where {brandname} handles client requests from one cluster only:
 
-image::xsite-active-passive.svg[]
+[plantuml, target=xsite-active-passive, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "Client" as Cl
+participant "{brandname} LON (relay node n1)" as N1
+participant "{brandname} NYC (relay node nA)" as NA
+
+Cl -> N1 : Connects to the primary site (LON)
+Cl -> N1 : put(k1)
+N1 -> NA : Replicate k1 to the remote site (NYC)
+@enduml
+....
 
 In the preceding image:
 
@@ -27,7 +42,27 @@ When you bring **LON** back online you can synchronize data with **NYC** and the
 
 The following diagram illustrates Active/Active where {brandname} handles client requests at two sites:
 
-image::xsite-active-active.svg[]
+[plantuml, target=xsite-active-active, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "Client A" as CA
+participant "{brandname} LON (relay node)" as N1
+participant "{brandname} NYC (relay node)" as NA
+participant "Client B" as CB
+
+CA -> N1 : put(k1)
+CB -> NA : put(k2)
+par Concurrent cross-site replication
+  N1 -> NA : Replicate k1 to NYC
+also
+  NA -> N1 : Replicate k2 to LON
+end
+@enduml
+....
 
 In the preceding image:
 

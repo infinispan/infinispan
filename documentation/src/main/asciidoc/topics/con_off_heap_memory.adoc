@@ -7,7 +7,26 @@ You can configure {brandname} to use off-heap storage, which means that your dat
 The following diagram is a simplified illustration of the memory space for a JVM process where {brandname} is running:
 
 .JVM memory space
-image::jvm_memory_space.png[This diagram depicts the JVM memory space divided into heap and off-heap memory.]
+[plantuml, target=jvm-memory-space, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+rectangle "Host memory (RAM)" as HOST {
+  rectangle "{brandname} JVM process" as JVM {
+    rectangle "JVM heap" as HEAP {
+      [Young generation]
+      [Old generation]
+    }
+    rectangle "Off-heap (native memory)" as OFF {
+      [Metaspace\n(class metadata)]
+      [{brandname} cache entries]
+    }
+  }
+}
+@enduml
+....
 
 [discrete]
 == JVM heap memory
