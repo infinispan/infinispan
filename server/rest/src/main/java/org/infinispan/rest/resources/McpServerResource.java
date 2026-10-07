@@ -26,6 +26,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.counter.api.CounterConfiguration;
 import org.infinispan.counter.api.CounterType;
 import org.infinispan.counter.api.Storage;
@@ -1278,7 +1279,8 @@ public class McpServerResource implements ResourceHandler {
             : MediaType.TEXT_PLAIN;
       AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, MediaType.TEXT_PLAIN, valueMediaType, request);
       Configuration config = SecurityActions.getCacheConfiguration(cache);
-      final Metadata metadata = CacheOperationsHelper.createMetadata(config, lifespan, maxidle);
+      VersionGenerator versionGenerator = invocationHelper.getRestCacheManager().getVersionGenerator(cacheName);
+      final Metadata metadata = CacheOperationsHelper.createMetadata(config, lifespan, maxidle, versionGenerator);
       return cache.putAsync(key, value, metadata).thenApply(__ -> Json.array());
    }
 
@@ -1297,7 +1299,8 @@ public class McpServerResource implements ResourceHandler {
                   : MediaType.TEXT_PLAIN;
             AdvancedCache<Object, Object> cache = invocationHelper.getRestCacheManager().getCache(cacheName, MediaType.TEXT_PLAIN, valueMediaType, request);
             Configuration config = SecurityActions.getCacheConfiguration(cache);
-            Metadata metadata = CacheOperationsHelper.createMetadata(config, lifespan, maxidle);
+            VersionGenerator versionGenerator = invocationHelper.getRestCacheManager().getVersionGenerator(cacheName);
+            Metadata metadata = CacheOperationsHelper.createMetadata(config, lifespan, maxidle, versionGenerator);
             cache.put(key, value, metadata);
             count++;
          }

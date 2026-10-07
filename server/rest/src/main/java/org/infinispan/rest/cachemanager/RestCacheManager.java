@@ -22,6 +22,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
@@ -251,6 +252,11 @@ public class RestCacheManager<V> {
       if (removeCacheListener != null) {
          CompletionStages.join(SecurityActions.removeListenerAsync(instance, removeCacheListener));
       }
+   }
+
+   public VersionGenerator getVersionGenerator(String cacheName) {
+      CacheInfo<Object, V> cacheInfo = knownCaches.get(cacheName);
+      return cacheInfo != null ? cacheInfo.versionGenerator() : null;
    }
 
    public void resetCacheInfo(String cacheName) {

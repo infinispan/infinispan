@@ -254,7 +254,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       InfinispanSpan<CacheEntry<?, ?>> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
-         metadata.version(cacheInfo.versionGenerator.generateNew());
+         metadata.version(cacheInfo.versionGenerator().generateNew());
          putInternal(header, cache, key, value, metadata.build(), span);
       }
    }
@@ -291,7 +291,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       InfinispanSpan<ConditionalResponse> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
-         metadata.version(cacheInfo.versionGenerator.generateNew());
+         metadata.version(cacheInfo.versionGenerator().generateNew());
          replaceIfUnmodifiedInternal(header, cache, key, version, value, metadata.build(), span);
       }
    }
@@ -346,7 +346,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       InfinispanSpan<CacheEntry<?, ?>> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
-         metadata.version(cacheInfo.versionGenerator.generateNew());
+         metadata.version(cacheInfo.versionGenerator().generateNew());
          replaceInternal(header, cache, key, value, metadata.build(), span);
       }
    }
@@ -387,7 +387,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       InfinispanSpan<CacheEntry<?, ?>> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
-         metadata.version(cacheInfo.versionGenerator.generateNew());
+         metadata.version(cacheInfo.versionGenerator().generateNew());
          putIfAbsentInternal(header, cache, key, value, metadata.build(), span);
       }
    }
@@ -495,7 +495,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       InfinispanSpan<Void> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
-         metadata.version(cacheInfo.versionGenerator.generateNew());
+         metadata.version(cacheInfo.versionGenerator().generateNew());
          putAllInternal(header, cache, entries, metadata.build(), span);
       }
    }
