@@ -59,7 +59,7 @@ public class MEMORY extends RespCommand implements Resp3Command {
             break;
          case "USAGE":
             if (arguments.size() < 2) {
-               handler.writer().wrongArgumentCount(this);
+               handler.writer().wrongArgumentNumber(this);
                return handler.myStage();
             } else {
                byte[] key = arguments.get(1);
