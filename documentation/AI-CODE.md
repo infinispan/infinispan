@@ -80,8 +80,15 @@ include::code_examples/MyClass.java[]
 ----
 ```
 
-### Images
-- Format: PNG or JPG, minimum 660px wide at 110 dpi, maximum 300KB
+### Diagrams
+- Prefer Asciidoctor Diagram blocks over pre-rendered images; they are rendered at build time and scale without loss of quality.
+- UML-style diagrams (class, sequence, flowcharts): `[plantuml, target=diagram-name, format=svg, align=center]` block with PlantUML source (`@startuml`/`@enduml`). The theme comes from the `:plantuml-theme:` attribute; do not hardcode colors.
+- Diagram content is passed to PlantUML verbatim unless you opt in to substitutions. If a diagram references attributes such as `{brandname}`, add `subs="attributes+"` to the block header (for example, `[plantuml, target=diagram-name, format=svg, align=center, subs="attributes+"]`) or Asciidoctor leaves the attribute reference unresolved in the rendered image.
+- Syntax or tree-like diagrams: `syntrax` blocks (jsyntrax), e.g., `[syntrax, diagram-name, format=svg, align=center]`. See `topics/ref_query_ickle_syntax.adoc` for examples.
+- Only when a diagram cannot be expressed with Asciidoctor Diagrams at all: save it as SVG under `topics/images/`. Never use PNG/JPG for diagrams.
+
+### Screenshots and Raster Images
+- Use PNG or JPG only for user interface screenshots (minimum 660px wide, maximum 300KB).
 - Location: `topics/images/`
 - All images must have alt text for accessibility
 - Syntax: `image::filename.png[Alt text description]`

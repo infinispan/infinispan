@@ -8,7 +8,7 @@
 The persistence subsystem is managed by `PersistenceManager`, which coordinates one or more cache stores per cache.
 Stores implement the `NonBlockingStore` interface, which provides a fully reactive API based on Reactive Streams.
 
-[plantuml, target=architecture-persistence-overview, format=svg, align=center]
+[plantuml, target=architecture-persistence-overview, format=svg, align=center, subs="attributes+"]
 ....
 @startuml
 skinparam defaultFontName sans-serif
