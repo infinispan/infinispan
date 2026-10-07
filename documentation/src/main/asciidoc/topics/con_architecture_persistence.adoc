@@ -16,15 +16,15 @@ skinparam shadowing false
 skinparam classAttributeIconSize 0
 
 interface NonBlockingStore<K, V> {
-  +load(segment, key): CompletionStage
-  +write(segment, entry): CompletionStage
-  +delete(segment, key): CompletionStage
-  +publishEntries(segments, filter): Publisher
-  +size(segments): CompletionStage
-  +clear(): CompletionStage
-  +purgeExpired(): CompletionStage
-  +start(ctx): CompletionStage
-  +stop(): CompletionStage
+  +load(segment, key): CompletionStage<MarshallableEntry>
+  +write(segment, entry): CompletionStage<Void>
+  +delete(segment, key): CompletionStage<Boolean>
+  +publishEntries(segments, filter, includeValues): Publisher
+  +size(segments): CompletionStage<Long>
+  +clear(): CompletionStage<Void>
+  +purgeExpired(): Publisher
+  +start(ctx): CompletionStage<Void>
+  +stop(): CompletionStage<Void>
 }
 
 class PersistenceManager {
@@ -37,7 +37,7 @@ class PersistenceManager {
   +purgeExpired()
 }
 
-class SoftIndexFileStore implements NonBlockingStore {
+class NonBlockingSoftIndexFileStore implements NonBlockingStore {
   Default file-based store.
   Append-only log with
   B+ tree index.

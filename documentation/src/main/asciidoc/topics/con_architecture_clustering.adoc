@@ -309,13 +309,13 @@ deactivate Primary
 activate Backup1
 Backup1 -> Backup1: Wait for sequence N\n(per-segment ordering)
 Backup1 -> Backup1: Apply write
-Backup1 --> Orig: BackupAckCommand
+Backup1 --> Orig: BackupMultiKeyAckCommand\n(calls CommandAckCollector.backupAck)
 deactivate Backup1
 
 activate Backup2
 Backup2 -> Backup2: Wait for sequence N\n(per-segment ordering)
 Backup2 -> Backup2: Apply write
-Backup2 --> Orig: BackupAckCommand
+Backup2 --> Orig: BackupMultiKeyAckCommand\n(calls CommandAckCollector.backupAck)
 deactivate Backup2
 
 Orig -> Orig: All ACKs received\nCommandAckCollector completes\nCompletableFuture
