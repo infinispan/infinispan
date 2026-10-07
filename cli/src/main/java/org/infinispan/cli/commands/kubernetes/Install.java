@@ -30,7 +30,7 @@ public class Install extends CliCommand {
    @Option(shortName = 'c', description = "Selects the channel to install and subscribes to upgrades for that release stream. If not specified, the latest stable channel is installed.")
    String channel;
 
-   @Option(defaultValue = "false", name = "manual", shortName = 'm', description = "Requires approval before applying upgrades from the Operator subscription. Defaults to automatic approval.")
+   @Option(hasValue = false, name = "manual", shortName = 'm', description = "Requires approval before applying upgrades from the Operator subscription. Defaults to automatic approval.")
    boolean manual;
 
    @Option(description = "Specifies the CatalogSource for the Operator subscription. Selects an environment-dependent CatalogSource by default.")
