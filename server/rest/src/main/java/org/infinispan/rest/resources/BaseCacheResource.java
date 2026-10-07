@@ -18,6 +18,7 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.rest.CacheControl;
 import org.infinispan.rest.DateUtils;
@@ -272,7 +273,9 @@ public class BaseCacheResource {
                                                     AdvancedCache<Object, Object> cache, Object key, byte[] data, Long ttl,
                                                     Long idleTime) {
       Configuration config = SecurityActions.getCacheConfiguration(cache);
-      final Metadata metadata = CacheOperationsHelper.createMetadata(config, ttl, idleTime);
+      VersionGenerator versionGenerator = invocationHelper.getRestCacheManager()
+            .getVersionGenerator(cache.getName());
+      final Metadata metadata = CacheOperationsHelper.createMetadata(config, ttl, idleTime, versionGenerator);
       responseBuilder.header("etag", calcETAG(data));
       return cache.putAsync(key, data, metadata)
             .thenApply(o -> responseBuilder.build());
