@@ -8,8 +8,11 @@ package org.infinispan.manager;
  * <pre>
  *   STARTING -> READY   (cache started successfully)
  *   STARTING -> FAILED   (cache startup threw an exception, or shutdown occurred)
+ *   FAILED   -> READY   (a failed cache started successfully on a manual retry)
  * </pre>
- * Terminal states ({@link CacheStartupState#READY} and {@link CacheStartupState#FAILED}) are never revisited.
+ * {@link CacheStartupState#READY} is terminal, a running cache is never downgraded. {@link CacheStartupState#FAILED}
+ * is not, since the cache can be retried with {@link EmbeddedCacheManager#getCache(String)} and the state reflects the
+ * outcome of the retry.
  *
  * @since 16.2
  * @author José Bolina
@@ -29,7 +32,8 @@ public enum CacheStartupState {
 
    /**
     * The cache failed to start. The failure is logged and does not affect other caches or the cache manager. The cache
-    * can be retried manually via {@link EmbeddedCacheManager#getCache(String)}.
+    * can be retried manually via {@link EmbeddedCacheManager#getCache(String)}, and moves to
+    * {@link CacheStartupState#READY} if the retry succeeds.
     */
    FAILED
 }
