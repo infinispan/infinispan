@@ -1,23 +1,33 @@
 package org.infinispan.spring.starter.embedded;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.protostream.GeneratedSchema;
+import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.spring.common.marshalling.MarshallerResolver;
+import org.infinispan.spring.common.marshalling.SchemaRegistration;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.cache.autoconfigure.CacheAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Conditional;
@@ -38,6 +48,12 @@ public class InfinispanEmbeddedAutoConfiguration {
 
    @Autowired
    private InfinispanEmbeddedConfigurationProperties infinispanProperties;
+
+   @Autowired
+   private ApplicationContext ctx;
+
+   @Autowired(required = false)
+   private List<SerializationContextInitializer> contextInitializers;
 
    @Autowired(required = false)
    private final List<InfinispanCacheConfigurer> configurers = Collections.emptyList();
@@ -66,14 +82,18 @@ public class InfinispanEmbeddedAutoConfiguration {
          if (globalConfigurationBuilder.serialization().getMarshaller() == null) {
             // spring session needs does not work with protostream right now, easy users to configure the marshaller
             // and the classes we need for spring embedded
-            globalConfigurationBuilder.serialization().marshaller(new JavaSerializationMarshaller());
+            Marshaller marshaller = MarshallerResolver.resolve(infinispanProperties.getMarshaller());
+            globalConfigurationBuilder.serialization().marshaller(marshaller);
          }
          globalConfigurationCustomizers.forEach(customizer -> customizer.customize(globalConfigurationBuilder));
+         addSchemaAutoDiscovery(globalConfigurationBuilder);
          allowInternalClasses(globalConfigurationBuilder);
          manager = new DefaultCacheManager(holder, false);
       } else {
          GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
-         globalConfigurationBuilder.serialization().marshaller(new JavaSerializationMarshaller());
+         Marshaller marshaller = MarshallerResolver.resolve(infinispanProperties.getMarshaller(),
+               "java.util\\..*", "org.springframework\\..*");
+         globalConfigurationBuilder.serialization().marshaller(marshaller);
          allowInternalClasses(globalConfigurationBuilder);
 
          if (infinispanGlobalConfigurer != null) {
@@ -84,6 +104,7 @@ public class InfinispanEmbeddedAutoConfiguration {
          }
 
          globalConfigurationCustomizers.forEach(customizer -> customizer.customize(globalConfigurationBuilder));
+         addSchemaAutoDiscovery(globalConfigurationBuilder);
          manager = new DefaultCacheManager(globalConfigurationBuilder.build(), false);
       }
 
@@ -97,5 +118,36 @@ public class InfinispanEmbeddedAutoConfiguration {
    private void allowInternalClasses(GlobalConfigurationBuilder globalConfigurationBuilder) {
       globalConfigurationBuilder.serialization().allowList().addClass("org.springframework.session.MapSession");
       globalConfigurationBuilder.serialization().allowList().addRegexp("java.util.*");
+   }
+
+   private void addSchemaAutoDiscovery(GlobalConfigurationBuilder globalConfigurationBuilder) {
+      // Auto discover and register schemas
+      List<GeneratedSchema> discoveredSchemas = new ArrayList<>();
+      try {
+         List<String> packages = AutoConfigurationPackages.get((BeanFactory) ctx);
+         discoveredSchemas = SchemaRegistration.discoverSchemas(ctx.getClassLoader(), packages);
+      } catch (IllegalStateException e) {
+         // Auto-configuration packages not available, skipping schema classpath scanning
+      }
+
+      // Collect user defined SerializationContextInitializer beans
+      Set<String> registeredClasses = new HashSet<>();
+      if (contextInitializers != null) {
+         for (SerializationContextInitializer sci : contextInitializers) {
+            if (sci instanceof GeneratedSchema gs && !discoveredSchemas.contains(gs)) {
+               discoveredSchemas.add(gs);
+            }
+            globalConfigurationBuilder.serialization().addContextInitializer(sci);
+            registeredClasses.add(sci.getClass().getName());
+         }
+      }
+
+      // Register classpath-discovered schemas with the builder
+      // Skipping those already registered as beans
+      for (GeneratedSchema schema : discoveredSchemas) {
+         if (!registeredClasses.contains(schema.getClass().getName())) {
+            globalConfigurationBuilder.serialization().addContextInitializer(schema);
+         }
+      }
    }
 }

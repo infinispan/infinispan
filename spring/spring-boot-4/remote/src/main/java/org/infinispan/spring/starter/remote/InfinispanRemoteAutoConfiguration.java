@@ -14,10 +14,11 @@ import java.util.logging.Logger;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.spring.remote.provider.SchemaRegistration;
+import org.infinispan.spring.common.marshalling.MarshallerResolver;
+import org.infinispan.spring.common.marshalling.SchemaRegistration;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -91,7 +92,8 @@ public class InfinispanRemoteAutoConfiguration {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       //by default, add java white list and marshaller
       builder.addJavaSerialAllowList("java.util.*", "java.time.*", "org.springframework.*", "org.infinispan.spring.common.*", "org.infinispan.spring.remote.*");
-      builder.marshaller(new JavaSerializationMarshaller());
+      Marshaller marshaller = MarshallerResolver.resolve(infinispanProperties.getMarshaller());
+      builder.marshaller(marshaller);
 
       if (hasConfigurer) {
          builder.read(Objects.requireNonNull(infinispanRemoteConfigurer.getRemoteConfiguration()));
