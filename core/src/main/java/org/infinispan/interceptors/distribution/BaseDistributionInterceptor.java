@@ -234,7 +234,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          if (log.isTraceEnabled()) log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
          return localResult;
       }
-      if (!command.shouldReplicate(ctx, false)) {
+      if (!command.shouldReplicate(ctx, !ctx.isOriginLocal() && command.hasAnyFlag(FlagBitSets.IGNORE_RETURN_VALUES))) {
          if (log.isTraceEnabled()) log.tracef("Skipping the replication of the command as it does not need to be (%s).", command);
          return localResult;
       }
