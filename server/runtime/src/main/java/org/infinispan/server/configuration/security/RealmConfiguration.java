@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
@@ -18,10 +20,12 @@ import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.server.Server;
 import org.infinispan.server.configuration.Attribute;
 import org.infinispan.server.configuration.Element;
+import org.infinispan.server.logging.Log;
 import org.infinispan.server.security.ServerSecurityRealm;
 import org.infinispan.server.security.realm.CachingModifiableSecurityRealm;
 import org.infinispan.server.security.realm.CachingSecurityRealm;
 import org.wildfly.security.auth.permission.LoginPermission;
+import org.wildfly.security.auth.realm.BruteForceRealmWrapper;
 import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.server.EvidenceDecoder;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
@@ -36,6 +40,14 @@ import org.wildfly.security.ssl.SSLContextBuilder;
  * @since 10.0
  */
 public class RealmConfiguration extends ConfigurationElement<RealmConfiguration> {
+   private static final String BRUTE_FORCE_ENABLED = "infinispan.server.realm.%s.brute-force.enabled";
+   private static final String BRUTE_FORCE_MAX_FAILED_ATTEMPTS = "infinispan.server.realm.%s.brute-force.max-failed-attempts";
+   private static final String BRUTE_FORCE_LOCKOUT_INTERVAL = "infinispan.server.realm.%s.brute-force.lockout-interval";
+   private static final String BRUTE_FORCE_SESSION_TIMEOUT = "infinispan.server.realm.%s.brute-force.session-timeout";
+   private static final String BRUTE_FORCE_MAX_CACHED_SESSIONS = "infinispan.server.realm.%s.brute-force.max-cached-sessions";
+
+   private static volatile ScheduledExecutorService bruteForceExecutor;
+
    static final AttributeDefinition<String> NAME = AttributeDefinition.builder(Attribute.NAME, null, String.class).build();
    static final AttributeDefinition<String> DEFAULT_REALM = AttributeDefinition.builder(Attribute.DEFAULT_REALM, null, String.class).immutable().build();
    static final AttributeDefinition<Integer> CACHE_MAX_SIZE = AttributeDefinition.builder(Attribute.CACHE_MAX_SIZE, 256).build();
@@ -136,14 +148,19 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
       attributes.attribute(EVIDENCE_DECODER).apply(domainBuilder::setEvidenceDecoder);
       domainBuilder.setPermissionMapper((principal, roles) -> PermissionVerifier.from(new LoginPermission()));
 
+      String realmName = attributes.attribute(NAME).get();
       realms = new HashMap<>(realmProviders.size());
       for (RealmProvider provider : realmProviders) {
          SecurityRealm realm = provider.build(security, this, domainBuilder, properties);
          provider.applyFeatures(features);
          realms.put(provider.name(), realm);
          if (realm != null) {
-            domainBuilder.addRealm(provider.name(), cacheable(realm)).build();
-            if (domainBuilder.getDefaultRealmName() == null) {
+            SecurityRealm realmForDomain = cacheable(realm);
+            if (isBruteForceProtectionEnabled(provider, realmName)) {
+               realmForDomain = addBruteForceProtection(realmForDomain, realmName);
+            }
+            domainBuilder.addRealm(provider.name(), realmForDomain).build();
+            if (domainBuilder.getDefaultRealmName() == null && !(provider instanceof LocalRealmConfiguration)) {
                domainBuilder.setDefaultRealmName(provider.name());
             }
          }
@@ -157,8 +174,7 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
          // Initialize the SSLContexts
          buildSSLContexts(sslContextBuilder);
       }
-      String name = attributes.attribute(RealmConfiguration.NAME).get();
-      serverSecurityRealm = new ServerSecurityRealm(name, securityDomain, httpChallengeReadiness, serverIdentitiesConfiguration, features);
+      serverSecurityRealm = new ServerSecurityRealm(realmName, securityDomain, httpChallengeReadiness, serverIdentitiesConfiguration, features);
    }
 
    private void buildSSLContexts(SSLContextBuilder sslContextBuilder) {
@@ -170,6 +186,52 @@ public class RealmConfiguration extends ConfigurationElement<RealmConfiguration>
       } catch (GeneralSecurityException e) {
          throw new CacheConfigurationException(e);
       }
+   }
+
+   private static boolean isBruteForceProtectionEnabled(RealmProvider provider, String realmName) {
+      if (provider instanceof LocalRealmConfiguration ||
+            provider instanceof TrustStoreRealmConfiguration ||
+            provider instanceof TokenRealmConfiguration ||
+            provider instanceof AggregateRealmConfiguration) {
+         return false;
+      }
+      boolean enabled = Boolean.parseBoolean(
+            System.getProperty(String.format(BRUTE_FORCE_ENABLED, realmName), "true"));
+      if (!enabled) {
+         Log.SERVER.bruteForceProtectionDisabled(realmName);
+      }
+      return enabled;
+   }
+
+   private static SecurityRealm addBruteForceProtection(SecurityRealm realm, String realmName) {
+      BruteForceRealmWrapper wrapper = BruteForceRealmWrapper.create()
+            .wrapping(realm)
+            .withExecutor(getBruteForceExecutor())
+            .setRealmName(realmName)
+            .setMaxFailedAttempts(Integer.getInteger(String.format(BRUTE_FORCE_MAX_FAILED_ATTEMPTS, realmName), -1))
+            .setLockoutInterval(Integer.getInteger(String.format(BRUTE_FORCE_LOCKOUT_INTERVAL, realmName), -1))
+            .setFailureSessionTimeout(Integer.getInteger(String.format(BRUTE_FORCE_SESSION_TIMEOUT, realmName), -1))
+            .setMaxCachedSessions(Integer.getInteger(String.format(BRUTE_FORCE_MAX_CACHED_SESSIONS, realmName), -1));
+      if (realm instanceof ModifiableSecurityRealm) {
+         return wrapper.wrap(ModifiableSecurityRealm.class);
+      } else {
+         return wrapper.wrap(SecurityRealm.class);
+      }
+   }
+
+   private static ScheduledExecutorService getBruteForceExecutor() {
+      if (bruteForceExecutor == null) {
+         synchronized (RealmConfiguration.class) {
+            if (bruteForceExecutor == null) {
+               bruteForceExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+                  Thread t = new Thread(r, "brute-force-protection");
+                  t.setDaemon(true);
+                  return t;
+               });
+            }
+         }
+      }
+      return bruteForceExecutor;
    }
 
    private SecurityRealm cacheable(SecurityRealm realm) {
