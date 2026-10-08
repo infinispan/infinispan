@@ -12,10 +12,10 @@ import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.core.Search;
 import org.infinispan.query.core.stats.IndexStatistics;
 import org.infinispan.query.core.stats.QueryStatistics;
 import org.infinispan.query.core.stats.SearchStatistics;
+import org.infinispan.query.core.stats.SearchStatisticsSnapshot;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -104,12 +104,12 @@ public class QueryCoreTest extends SingleCacheManagerTest {
       Query<Person> query = cache.query(q);
       query.execute().list();
 
-      SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
+      SearchStatistics searchStatistics = SearchStatistics.of(cache);
       QueryStatistics queryStatistics = searchStatistics.getQueryStatistics();
       IndexStatistics indexStatistics = searchStatistics.getIndexStatistics();
 
       assertTrue(await(indexStatistics.computeIndexInfos()).isEmpty());
-      assertTrue(await(Search.getClusteredSearchStatistics(cache)).getIndexStatistics().indexInfos().isEmpty());
+      assertTrue(await(SearchStatisticsSnapshot.of(cache)).getIndexStatistics().indexInfos().isEmpty());
 
       assertEquals(0, queryStatistics.getNonIndexedQueryCount());
 
@@ -117,12 +117,12 @@ public class QueryCoreTest extends SingleCacheManagerTest {
       query = cacheWithStats.query(String.format("FROM %s", Person.class.getName()));
       query.execute().list();
 
-      searchStatistics = Search.getSearchStatistics(cacheWithStats);
+      searchStatistics = SearchStatistics.of(cacheWithStats);
       queryStatistics = searchStatistics.getQueryStatistics();
       indexStatistics = searchStatistics.getIndexStatistics();
 
       assertTrue(await(indexStatistics.computeIndexInfos()).isEmpty());
-      assertTrue(await(Search.getClusteredSearchStatistics(cacheWithStats)
+      assertTrue(await(SearchStatisticsSnapshot.of(cacheWithStats)
               .thenCompose(s -> s.getIndexStatistics().computeIndexInfos())).isEmpty());
 
       assertEquals(1, queryStatistics.getNonIndexedQueryCount());

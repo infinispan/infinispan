@@ -8,7 +8,7 @@
         <distributed-cache name="default" mode="SYNC">
             <indexing storage="local-heap">
                 <indexed-entities>
-                    <indexed-entity>org.infinispan.query.queries.faceting.Car</indexed-entity>
+                    <indexed-entity>org.infinispan.protostream.sampledomain.Car</indexed-entity>
                 </indexed-entities>
             </indexing>
         </distributed-cache>

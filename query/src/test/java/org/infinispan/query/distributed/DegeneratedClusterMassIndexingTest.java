@@ -9,8 +9,8 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
-import org.infinispan.query.Search;
-import org.infinispan.query.queries.faceting.Car;
+import org.infinispan.protostream.sampledomain.Car;
+import org.infinispan.query.Indexer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
@@ -45,7 +45,7 @@ public class DegeneratedClusterMassIndexingTest extends MultipleCacheManagersTes
       assertEquals(0, query.execute().count().value());
 
       //reindex
-      join(Search.getIndexer(cache).run());
+      join(Indexer.of(cache).run());
 
       // check that the indexing is complete immediately
       assertEquals(3, query.execute().count().value());

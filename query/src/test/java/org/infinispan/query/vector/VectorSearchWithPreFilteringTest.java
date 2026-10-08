@@ -15,11 +15,11 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.sampledomain.Item;
+import org.infinispan.protostream.sampledomain.Metadata;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.query.mapper.scope.SearchScope;
 import org.infinispan.query.mapper.session.SearchSession;
-import org.infinispan.query.model.Item;
-import org.infinispan.query.model.Metadata;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
@@ -75,7 +75,7 @@ public class VectorSearchWithPreFilteringTest extends SingleCacheManagerTest {
    @Test
    public void ickleQuery_simpleFiltering() {
       Query<Object[]> query = cache.query(
-            "select score(i), i from org.infinispan.query.model.Item i where i.floatVector <-> [:a]~:k filtering i.buggy : 'cat'");
+            "select score(i), i from org.infinispan.protostream.sampledomain.Item i where i.floatVector <-> [:a]~:k filtering i.buggy : 'cat'");
       query.setParameter("a", new float[]{7.0f, 7.0f, 7.0f});
       query.setParameter("k", 3);
 
@@ -87,7 +87,7 @@ public class VectorSearchWithPreFilteringTest extends SingleCacheManagerTest {
    @Test
    public void ickleQuery_complexFiltering() {
       Query<Object[]> query = cache.query(
-            "select score(i), i from org.infinispan.query.model.Item i where i.floatVector <-> [:a]~:k filtering (i.buggy : 'cat' or i.buggy : 'code')");
+            "select score(i), i from org.infinispan.protostream.sampledomain.Item i where i.floatVector <-> [:a]~:k filtering (i.buggy : 'cat' or i.buggy : 'code')");
       query.setParameter("a", new float[]{7.0f, 7.0f, 7.0f});
       query.setParameter("k", 3);
 
@@ -99,7 +99,7 @@ public class VectorSearchWithPreFilteringTest extends SingleCacheManagerTest {
    @Test
    public void entityProjection() {
       Query<Item> query = cache.query(
-            "from org.infinispan.query.model.Item i where i.floatVector <-> [:a]~:k filtering i.buggy : 'cat'");
+            "from org.infinispan.protostream.sampledomain.Item i where i.floatVector <-> [:a]~:k filtering i.buggy : 'cat'");
       query.setParameter("a", new float[]{7.0f, 7.0f, 7.0f});
       query.setParameter("k", 3);
 
@@ -107,7 +107,7 @@ public class VectorSearchWithPreFilteringTest extends SingleCacheManagerTest {
       assertThat(hits).extracting("code").containsExactly("c7", "c14", "c21");
 
       query = cache.query(
-            "from org.infinispan.query.model.Item i where i.floatVector <-> [:a]~:k filtering (i.buggy : 'cat' or i.buggy : 'code')");
+            "from org.infinispan.protostream.sampledomain.Item i where i.floatVector <-> [:a]~:k filtering (i.buggy : 'cat' or i.buggy : 'code')");
       query.setParameter("a", new float[]{7.0f, 7.0f, 7.0f});
       query.setParameter("k", 3);
 

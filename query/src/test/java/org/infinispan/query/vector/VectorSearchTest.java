@@ -8,7 +8,7 @@ import java.util.List;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.model.Item;
+import org.infinispan.protostream.sampledomain.Item;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -33,22 +33,22 @@ public class VectorSearchTest extends SingleCacheManagerTest {
          cache.put(item, new Item("c" + item, bytes, new float[]{1.1f * item, 1.1f * item, 1.1f * item}, "bla" + item, (int)item, null));
       }
 
-      Query<Item> query = cache.query("from org.infinispan.query.model.Item i where i.byteVector <-> [7,7,7]~3");
+      Query<Item> query = cache.query("from org.infinispan.protostream.sampledomain.Item i where i.byteVector <-> [7,7,7]~3");
       List<Item> hits = query.list();
       assertThat(hits).extracting("code").containsExactly("c7", "c6", "c8");
 
-      query = cache.query("from org.infinispan.query.model.Item i where i.floatVector <-> [7.1,7,3.1]~3");
+      query = cache.query("from org.infinispan.protostream.sampledomain.Item i where i.floatVector <-> [7.1,7,3.1]~3");
       hits = query.list();
       assertThat(hits).extracting("code").containsExactly("c5", "c6", "c4");
 
-      query = cache.query("from org.infinispan.query.model.Item i where i.byteVector <-> [:a,:b,:c]~3");
+      query = cache.query("from org.infinispan.protostream.sampledomain.Item i where i.byteVector <-> [:a,:b,:c]~3");
       query.setParameter("a", 0);
       query.setParameter("b", 2);
       query.setParameter("c", 3);
       hits = query.list();
       assertThat(hits).extracting("code").containsExactly("c2", "c1", "c3"); // the order matters
 
-      query = cache.query("from org.infinispan.query.model.Item i where i.floatVector <-> [:a,:b,:c]~:d");
+      query = cache.query("from org.infinispan.protostream.sampledomain.Item i where i.floatVector <-> [:a,:b,:c]~:d");
       query.setParameter("a", 1);
       query.setParameter("b", 4.3);
       query.setParameter("c", 3.3);
@@ -56,12 +56,12 @@ public class VectorSearchTest extends SingleCacheManagerTest {
       hits = query.list();
       assertThat(hits).extracting("code").containsExactly("c3", "c2", "c4", "c1");
 
-      query = cache.query("from org.infinispan.query.model.Item i where i.byteVector <-> [:a]~3");
+      query = cache.query("from org.infinispan.protostream.sampledomain.Item i where i.byteVector <-> [:a]~3");
       query.setParameter("a", new byte[]{7, 7, 7});
       hits = query.list();
       assertThat(hits).extracting("code").containsExactly("c7", "c6", "c8");
 
-      query = cache.query("from org.infinispan.query.model.Item i where i.floatVector <-> [:a]~:b");
+      query = cache.query("from org.infinispan.protostream.sampledomain.Item i where i.floatVector <-> [:a]~:b");
       query.setParameter("a", new float[]{7.1f, 7.0f, 3.1f});
       query.setParameter("b", 3);
       hits = query.list();

@@ -3,15 +3,12 @@ package org.infinispan.client.hotrod.event;
 
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -25,9 +22,6 @@ import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.filter.Filters;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.CacheMode;
@@ -35,8 +29,8 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.dsl.embedded.testdomain.Address;
-import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.server.core.query.impl.GlobalContextInitializer;
 import org.infinispan.server.core.query.impl.filter.IckleCacheEventFilterConverterFactory;
@@ -54,7 +48,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
 
    private static final int NUM_NODES = 5;
 
-   private RemoteCache<Object, Object> remoteCache;
+   private RemoteCache<String, User> remoteCache;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -81,121 +75,42 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       cfgBuilder.indexing().enable()
             .storage(LOCAL_HEAP)
-            .addIndexedEntity("sample_bank_account.User");
+            .addIndexedEntity(User.ENTITY_NAME);
       return cfgBuilder;
    }
 
    public void testEventFilter() {
-      User user1 = new UserPB();
-      user1.setId(1);
-      user1.setName("John");
-      user1.setSurname("Doe");
-      user1.setGender(User.Gender.MALE);
-      user1.setAge(22);
-      user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
-      user1.setNotes("Lorem ipsum dolor sit amet");
-
-      Address address1 = new AddressPB();
-      address1.setStreet("Main Street");
-      address1.setPostCode("X1234");
-      user1.setAddresses(Collections.singletonList(address1));
-
-      User user2 = new UserPB();
-      user2.setId(2);
-      user2.setName("Spider");
-      user2.setSurname("Man");
-      user2.setGender(User.Gender.MALE);
-      user2.setAge(32);
-      user2.setAccountIds(Collections.singleton(3));
-
-      Address address2 = new AddressPB();
-      address2.setStreet("Old Street");
-      address2.setPostCode("Y12");
-      Address address3 = new AddressPB();
-      address3.setStreet("Bond Street");
-      address3.setPostCode("ZZ");
-      user2.setAddresses(Arrays.asList(address2, address3));
-
-      User user3 = new UserPB();
-      user3.setId(3);
-      user3.setName("Spider");
-      user3.setSurname("Woman");
-      user3.setGender(User.Gender.FEMALE);
-      user3.setAge(31);
-
       remoteCache.clear();
-      remoteCache.put("user_" + user1.getId(), user1);
-      remoteCache.put("user_" + user2.getId(), user2);
-      remoteCache.put("user_" + user3.getId(), user3);
-      assertEquals(3, remoteCache.size());
+      remoteCache.putAll(User.data());
 
       SerializationContext serCtx = MarshallerUtil.getSerializationContext(client(0));
 
-      Query<Object[]> query = remoteCache.query("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam");
+      Query<Object[]> query = remoteCache.query("SELECT age FROM sample_domain.User WHERE age <= :ageParam");
       query.setParameter("ageParam", 32);
 
       ClientEntryListener listener = new ClientEntryListener(serCtx);
       ClientEvents.addClientQueryListener(remoteCache, listener, query);
       expectElementsInQueue(listener.createEvents, 3);
 
-      user3.setAge(40);
-      remoteCache.put("user_" + user1.getId(), user1);
-      remoteCache.put("user_" + user2.getId(), user2);
-      remoteCache.put("user_" + user3.getId(), user3);
+      User spiderWoman = remoteCache.get("Spider Woman");
+      spiderWoman.setAge(40);
+      remoteCache.put("John Doe", remoteCache.get("John Doe"));
+      remoteCache.put("Spider Man", remoteCache.get("Spider Man"));
+      remoteCache.put("Spider Woman", spiderWoman);
 
-      assertEquals(3, remoteCache.size());
       expectElementsInQueue(listener.modifyEvents, 2);
 
       remoteCache.removeClientListener(listener);
    }
 
    public void testEventFilterChangingParameter() {
-      User user1 = new UserPB();
-      user1.setId(1);
-      user1.setName("John");
-      user1.setSurname("Doe");
-      user1.setGender(User.Gender.MALE);
-      user1.setAge(22);
-      user1.setAccountIds(new HashSet<>(Arrays.asList(1, 2)));
-      user1.setNotes("Lorem ipsum dolor sit amet");
-
-      Address address1 = new AddressPB();
-      address1.setStreet("Main Street");
-      address1.setPostCode("X1234");
-      user1.setAddresses(Collections.singletonList(address1));
-
-      User user2 = new UserPB();
-      user2.setId(2);
-      user2.setName("Spider");
-      user2.setSurname("Man");
-      user2.setGender(User.Gender.MALE);
-      user2.setAge(32);
-      user2.setAccountIds(Collections.singleton(3));
-
-      Address address2 = new AddressPB();
-      address2.setStreet("Old Street");
-      address2.setPostCode("Y12");
-      Address address3 = new AddressPB();
-      address3.setStreet("Bond Street");
-      address3.setPostCode("ZZ");
-      user2.setAddresses(Arrays.asList(address2, address3));
-
-      User user3 = new UserPB();
-      user3.setId(3);
-      user3.setName("Spider");
-      user3.setSurname("Woman");
-      user3.setGender(User.Gender.FEMALE);
-      user3.setAge(31);
 
       remoteCache.clear();
-      remoteCache.put("user_" + user1.getId(), user1);
-      remoteCache.put("user_" + user2.getId(), user2);
-      remoteCache.put("user_" + user3.getId(), user3);
-      assertEquals(3, remoteCache.size());
+      remoteCache.putAll(User.data());
 
       SerializationContext serCtx = MarshallerUtil.getSerializationContext(client(0));
 
-      Query<Object[]> query = remoteCache.query("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam");
+      Query<Object[]> query = remoteCache.query("SELECT age FROM sample_domain.User WHERE age <= :ageParam");
       query.setParameter("ageParam", 32);
 
       ClientEntryListener listener = new ClientEntryListener(serCtx);
@@ -218,7 +133,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
     */
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN028509:.*")
    public void testDisallowGroupingAndAggregation() {
-      Query<Object[]> query = remoteCache.query("SELECT MAX(age) FROM sample_bank_account.User WHERE age >= 20");
+      Query<Object[]> query = remoteCache.query("SELECT MAX(age) FROM sample_domain.User WHERE age >= 20");
 
       ClientEntryListener listener = new ClientEntryListener(MarshallerUtil.getSerializationContext(client(0)));
       ClientEvents.addClientQueryListener(remoteCache, listener, query);
@@ -229,7 +144,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
     */
    @Test(expectedExceptions = IncorrectClientListenerException.class, expectedExceptionsMessageRegExp = "ISPN004058:.*")
    public void testRequireRawDataListener() {
-      Query<User> query = remoteCache.query("FROM sample_bank_account.User WHERE age >= 20");
+      Query<User> query = remoteCache.query("FROM sample_domain.User WHERE age >= 20");
 
       @ClientListener(filterFactoryName = Filters.QUERY_DSL_FILTER_FACTORY_NAME,
             converterFactoryName = Filters.QUERY_DSL_FILTER_FACTORY_NAME,
@@ -248,7 +163,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
     */
    @Test(expectedExceptions = IncorrectClientListenerException.class, expectedExceptionsMessageRegExp = "ISPN004059:.*")
    public void testRequireQueryDslFilterFactoryNameForListener() {
-      Query<User> query = remoteCache.query("FROM sample_bank_account.User WHERE age >= 20");
+      Query<User> query = remoteCache.query("FROM sample_domain.User WHERE age >= 20");
 
       @ClientListener(filterFactoryName = "some-filter-factory-name",
             converterFactoryName = "some-filter-factory-name",

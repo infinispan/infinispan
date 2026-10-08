@@ -7,10 +7,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.infinispan.api.annotations.query.Transformable;
+import org.infinispan.api.query.Transformer;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
-import org.infinispan.query.Transformable;
-import org.infinispan.query.Transformer;
 import org.infinispan.query.impl.DefaultTransformer;
 
 /**
@@ -22,14 +22,14 @@ import org.infinispan.query.impl.DefaultTransformer;
  * For simple keys, users don't need to do anything, these keys are automatically transformed by this class.
  * <p>
  * For user-defined keys, three options are supported. Types annotated with @Transformable, and declaring an appropriate
- * {@link org.infinispan.query.Transformer} implementation, types for which a {@link org.infinispan.query.Transformer}
+ * {@link Transformer} implementation, types for which a {@link Transformer}
  * has been explicitly registered through KeyTransformationHandler.registerTransformer() or through the indexing configuration
  * ({@link org.infinispan.configuration.cache.IndexingConfigurationBuilder#addKeyTransformer}).
  *
  * @author Manik Surtani
  * @author Marko Luksa
- * @see org.infinispan.query.Transformable
- * @see org.infinispan.query.Transformer
+ * @see org.infinispan.api.annotations.query.Transformable
+ * @see org.infinispan.api.query.Transformer
  * @since 4.0
  */
 public final class KeyTransformationHandler {
@@ -169,8 +169,8 @@ public final class KeyTransformationHandler {
    }
 
    /**
-    * Retrieves a {@link org.infinispan.query.Transformer} instance for this key.  If the key is not {@link
-    * org.infinispan.query.Transformable} and no transformer has been registered for the key's class, null is returned.
+    * Retrieves a {@link org.infinispan.api.query.Transformer} instance for this key.  If the key is not {@link
+    * Transformable} and no transformer has been registered for the key's class, null is returned.
     *
     * @param keyClass key class to analyze
     * @return a Transformer for this key, or null if the key type is not properly annotated.
@@ -190,8 +190,18 @@ public final class KeyTransformationHandler {
    private Class<? extends Transformer> getTransformerClass(Class<?> keyClass) {
       Class<? extends Transformer> transformerClass = transformerTypes.get(keyClass);
       if (transformerClass == null) {
-         Transformable transformableAnnotation = keyClass.getAnnotation(Transformable.class);
-         transformerClass = transformableAnnotation != null ? transformableAnnotation.transformer() : null;
+         Transformable annotation = keyClass.getAnnotation(Transformable.class);
+         if (annotation != null) {
+            transformerClass = annotation.transformer();
+            if (transformerClass == null) {
+               transformerClass = DefaultTransformer.class;
+            }
+         } else {
+            org.infinispan.query.Transformable legacyAnnotation = keyClass.getAnnotation(org.infinispan.query.Transformable.class);
+            if (legacyAnnotation != null) {
+               transformerClass = legacyAnnotation.transformer();
+            }
+         }
          if (transformerClass != null) {
             if (transformerClass == DefaultTransformer.class) {
                CONTAINER.typeIsUsingDefaultTransformer(keyClass);
@@ -203,7 +213,7 @@ public final class KeyTransformationHandler {
    }
 
    /**
-    * Registers a {@link org.infinispan.query.Transformer} for the supplied key class.
+    * Registers a {@link org.infinispan.api.query.Transformer} for the supplied key class.
     *
     * @param keyClass         the key class for which the supplied transformerClass should be used
     * @param transformerClass the transformer class to use for the supplied key class

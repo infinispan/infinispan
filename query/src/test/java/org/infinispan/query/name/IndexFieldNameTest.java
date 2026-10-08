@@ -9,11 +9,11 @@ import java.util.Map;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
+import org.infinispan.protostream.sampledomain.ChangeName;
 import org.infinispan.query.core.stats.QueryStatistics;
+import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.query.mapper.mapping.metamodel.IndexMetamodel;
-import org.infinispan.query.model.ChangeName;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -41,7 +41,7 @@ public class IndexFieldNameTest extends SingleCacheManagerTest {
       assertThat(metamodel).containsKeys(ENTITY_NAME);
       assertThat(metamodel.get(ENTITY_NAME).getValueFields()).containsKeys(ChangeName.INDEX_FIELD_NAME);
 
-      QueryStatistics statistics = Search.getSearchStatistics(cache).getQueryStatistics();
+      QueryStatistics statistics = SearchStatistics.of(cache).getQueryStatistics();
       statistics.clear();
 
       cache.put("one", new ChangeName("one"));

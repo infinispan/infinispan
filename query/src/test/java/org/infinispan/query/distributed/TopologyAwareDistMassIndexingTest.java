@@ -7,7 +7,7 @@ import java.util.List;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.queries.faceting.Car;
+import org.infinispan.protostream.sampledomain.Car;
 import org.testng.annotations.Test;
 
 /**

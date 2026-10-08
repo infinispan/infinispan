@@ -8,9 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.protostream.sampledomain.Car;
 import org.infinispan.query.Indexer;
-import org.infinispan.query.Search;
-import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.QueryTestSCI;
 import org.testng.annotations.Test;
 
@@ -58,7 +57,7 @@ public class ReplRamMassIndexingTest extends DistributedMassIndexingTest {
    @Override
    protected void rebuildIndexes() {
       for (Cache<?, ?> cache : caches()) {
-         Indexer indexer = Search.getIndexer(cache);
+         Indexer indexer = Indexer.of(cache);
          eventually(() -> !indexer.isRunning());
          join(indexer.run());
       }

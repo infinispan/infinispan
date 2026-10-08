@@ -8,7 +8,7 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.model.Developer;
+import org.infinispan.protostream.sampledomain.Developer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.testing.annotation.TestForIssue;

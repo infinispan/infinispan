@@ -36,7 +36,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
-import org.infinispan.protostream.sampledomain.User;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.protostream.schema.Schema;
 import org.infinispan.server.functional.hotrod.HotRodCacheQueries;
 import org.infinispan.server.test.api.TestUser;
@@ -314,7 +314,7 @@ abstract class HotRodAuthorizationTest {
          RemoteCache<Integer, User> userCache = ext.hotrod().withClientConfiguration(clientConfigurationWithProtostreamMarshaller(user)).withServerConfiguration(builder).get();
          User fromCache = userCache.get(1);
          HotRodCacheQueries.assertUser1(fromCache);
-         Query<User> query = userCache.query("FROM sample_bank_account.User WHERE name = 'Tom'");
+         Query<User> query = userCache.query("FROM sample_domain.User WHERE name = 'Tom'");
          List<User> list = query.execute().list();
          assertNotNull(list);
          assertEquals(1, list.size());
@@ -328,7 +328,7 @@ abstract class HotRodAuthorizationTest {
       org.infinispan.configuration.cache.ConfigurationBuilder builder = prepareIndexedCache();
       for (TestUser user : EnumSet.of(TestUser.READER, TestUser.WRITER)) {
          RemoteCache<Integer, User> userCache = ext.hotrod().withClientConfiguration(clientConfigurationWithProtostreamMarshaller(user)).withServerConfiguration(builder).get();
-         Query<User> query = userCache.query("FROM sample_bank_account.User WHERE name = 'Tom'");
+         Query<User> query = userCache.query("FROM sample_domain.User WHERE name = 'Tom'");
          Exceptions.expectException(HotRodClientException.class, UNAUTHORIZED_EXCEPTION, () -> query.execute().list());
       }
    }
@@ -362,7 +362,7 @@ abstract class HotRodAuthorizationTest {
       builder
             .clustering().cacheMode(CacheMode.DIST_SYNC).stateTransfer().awaitInitialTransfer(true)
             .security().authorization().enable()
-            .indexing().enable().storage(LOCAL_HEAP).addIndexedEntity("sample_bank_account.User");
+            .indexing().enable().storage(LOCAL_HEAP).addIndexedEntity(User.ENTITY_NAME);
 
       RemoteCache<Integer, User> adminCache = ext.hotrod().withClientConfiguration(clientConfigurationWithProtostreamMarshaller(TestUser.ADMIN)).withServerConfiguration(builder).create();
       adminCache.put(1, HotRodCacheQueries.createUser1());
