@@ -43,24 +43,17 @@ init {
    protected HotRodHeader getHeader() {
       if (accessLogging && header != null) {
          // this causes two checks for subject but we don't mind
-         return new AccessLoggingHeader(header, auth.getSubjectWithoutValidation(), key != null ? key : taskName, requestBytes, requestStart);
+         return new AccessLoggingHeader(header, auth.getSubjectWithoutValidation(), key != null ? key : taskName, currentRequestBytes(), requestStart);
       } else {
          return header;
       }
-   }
-
-   protected int bytesAvailable(ByteBuf buf) {
-      if (maxContentLength > 0) {
-         return Math.max(maxContentLength - requestBytes - buf.readerIndex() + posBefore, 0);
-      }
-      return -1;
    }
 }
 
 exceptionally {
    if (closing) return;
    if (t instanceof TooLongFrameException tlfe) {
-      log.requestTooLarge(ctx.channel(), maxContentLength, requestBytes);
+      log.requestTooLarge(ctx.channel(), maxContentLength, currentRequestBytes());
       if (log.isTraceEnabled()) log.trace("Request too large", tlfe);
       closing = true;
       ctx.close();
@@ -87,7 +80,7 @@ deadend {
 
 // this is the root
 root request
-   : { posBefore = buf.readerIndex(); }
+   : { startRequest(buf); }
      magic { if (accessLogging) { requestStart = Instant.now(); } }
      header {
         if (log.isTraceEnabled()) log.tracef("Parsed header: %s", header);

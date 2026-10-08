@@ -28,7 +28,7 @@ init {
    }
 
    private void updateHeaderParameters() {
-      acquireHeader().replace(requestStart, requestBytes, principalName, key, opCode, opaque, cas);
+      acquireHeader().replace(requestStart, currentRequestBytes(), principalName, key, opCode, opaque, cas);
    }
 
    private int preCommand() {
@@ -42,7 +42,7 @@ exceptionally {
    if (closing) return;
    state = 0;
    if (t instanceof TooLongFrameException tlfe) {
-      log.requestTooLarge(ctx.channel(), maxContentLength, requestBytes);
+      log.requestTooLarge(ctx.channel(), maxContentLength, currentRequestBytes());
       if (log.isTraceEnabled()) log.trace("Request too large", tlfe);
       closing = true;
       ctx.close();
@@ -73,7 +73,7 @@ beforedecode {
 
 // this is the root
 root request
-   : { posBefore = buf.readerIndex(); }
+   : { startRequest(buf); }
      magic { if (accessLogging) requestStart = Instant.now(); }
      header { if (log.isTraceEnabled()) log.tracef("Parsed header: %s", header); }
      parameters
@@ -109,12 +109,12 @@ valueLength returns int
    : { totalBodyLength - keyLength - extrasLength };
 
 key returns byte[]
-   :  { keyLength > 0 }? fixedArray[keyLength, bytesAvailable(buf, requestBytes)]
+   :  { keyLength > 0 }? fixedArray[keyLength, bytesAvailable(buf)]
    |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
    ;
 
 value returns byte[]
-   : { valueLength > 0 }? fixedArray[valueLength, bytesAvailable(buf, requestBytes)]
+   : { valueLength > 0 }? fixedArray[valueLength, bytesAvailable(buf)]
    |  { org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY }
    ;
 

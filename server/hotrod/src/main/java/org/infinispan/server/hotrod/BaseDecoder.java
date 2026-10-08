@@ -13,24 +13,20 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.core.ServerConstants;
 import org.infinispan.server.core.logging.Log;
-import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
+import org.infinispan.server.core.transport.RequestLimitDecoder;
 import org.infinispan.telemetry.InfinispanTelemetry;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.DecoderException;
 
-abstract class BaseDecoder extends ByteToMessageDecoder {
+abstract class BaseDecoder extends RequestLimitDecoder {
    protected static final Log log = Log.getLog(BaseDecoder.class);
 
    protected final EmbeddedCacheManager cacheManager;
    protected final Executor executor;
    protected final HotRodServer server;
-   protected final int maxContentLength;
    private final int maxCollectionSize;
-   // And this is the ByteBuf pos before decode is performed
-   protected int posBefore;
    // Set when the connection is being closed due to a protocol error (e.g. TooLongFrameException)
    // to suppress further error logging while the async close completes
    protected boolean closing;
@@ -42,11 +38,10 @@ abstract class BaseDecoder extends ByteToMessageDecoder {
    protected TaskRequestProcessor taskProcessor;
 
    protected BaseDecoder(EmbeddedCacheManager cacheManager, Executor executor, HotRodServer server) {
+      super(server.getConfiguration().maxContentLengthBytes(), -1);
       this.cacheManager = cacheManager;
       this.executor = executor;
       this.server = server;
-      HotRodServerConfiguration configuration = server.getConfiguration();
-      this.maxContentLength = configuration.maxContentLengthBytes();
       this.maxCollectionSize = Integer.getInteger("infinispan.hotrod.server.max-collection-size", maxContentLength / 16);
    }
 
