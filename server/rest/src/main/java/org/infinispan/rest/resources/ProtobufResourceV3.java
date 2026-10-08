@@ -65,6 +65,13 @@ public class ProtobufResourceV3 extends ProtobufResource implements ResourceHand
                .response(OK, "List of known Protobuf types", APPLICATION_JSON)
                .handleWith(this::getTypes)
 
+            .invocation().methods(GET).path("/v3/meta/schemas/_annotations")
+               .name("Get all registered Protobuf indexing annotations")
+               .operationId("getProtobufAnnotations")
+               .parameter("pretty", ParameterIn.QUERY, false, Schema.BOOLEAN, "Pretty print the JSON output")
+               .response(OK, "List of registered Protobuf indexing annotations with their attributes", APPLICATION_JSON)
+               .handleWith(this::getAnnotations)
+
             // Create schema
             .invocation().methods(POST).path("/v3/schemas/{schemaName}")
                .name("Create Protobuf schema")
