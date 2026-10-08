@@ -17,8 +17,10 @@ import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.NoOpJGroupsMetricManager;
+import org.infinispan.remoting.transport.jgroups.BaseJGroupsMetricManager;
+import org.infinispan.remoting.transport.jgroups.RequestTracker;
 import org.infinispan.remoting.transport.jgroups.StaggeredRequest;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
@@ -34,12 +36,18 @@ public class RequestRepositoryTest {
       }
    }
 
+   private static BaseJGroupsMetricManager metricsManager() {
+      BaseJGroupsMetricManager manager = new BaseJGroupsMetricManager();
+      TestingUtil.replaceField(new ControlledTimeService(), "timeService", manager, BaseJGroupsMetricManager.class);
+      return manager;
+   }
+
    public void testSingleRequestRegistersAndReceivesResponse() throws Exception {
       Address target = Address.random();
-      RequestRepository repository = new RequestRepository(NoOpJGroupsMetricManager.INSTANCE, null, null);
+      RequestRepository repository = new RequestRepository(metricsManager(), null, null);
 
       Request<Address, ValidResponse<?>> request = repository.singleRequest(
-            target, SingleResponseCollector.validOnly(), 0, TimeUnit.MILLISECONDS);
+            target, 0L, SingleResponseCollector.validOnly(), 0, TimeUnit.MILLISECONDS);
 
       repository.addResponse(request.getRequestId(), target, SUCCESSFUL_EMPTY_RESPONSE);
 
@@ -50,10 +58,10 @@ public class RequestRepositoryTest {
    public void testSingleRequestTimesOutAfterSpecifiedDuration() {
       Address target = Address.random();
       timeoutExecutor = Executors.newSingleThreadScheduledExecutor();
-      RequestRepository repository = new RequestRepository(NoOpJGroupsMetricManager.INSTANCE, timeoutExecutor, null);
+      RequestRepository repository = new RequestRepository(metricsManager(), timeoutExecutor, null);
 
       Request<Address, ValidResponse<?>> request = repository.singleRequest(
-            target, SingleResponseCollector.validOnly(), 1, TimeUnit.MILLISECONDS);
+            target, 0L, SingleResponseCollector.validOnly(), 1, TimeUnit.MILLISECONDS);
 
       assertThatThrownBy(() -> request.toCompletableFuture().get(10, TimeUnit.SECONDS))
             .isInstanceOf(ExecutionException.class)
@@ -63,10 +71,10 @@ public class RequestRepositoryTest {
    public void testSingleRequestWithZeroTimeoutDoesNotTimeout() throws Exception {
       Address target = Address.random();
       timeoutExecutor = Executors.newSingleThreadScheduledExecutor();
-      RequestRepository repository = new RequestRepository(NoOpJGroupsMetricManager.INSTANCE, timeoutExecutor, null);
+      RequestRepository repository = new RequestRepository(metricsManager(), timeoutExecutor, null);
 
       Request<Address, ValidResponse<?>> request = repository.singleRequest(
-            target, SingleResponseCollector.validOnly(), 0, TimeUnit.MILLISECONDS);
+            target, 0L, SingleResponseCollector.validOnly(), 0, TimeUnit.MILLISECONDS);
 
       assertThat(request.toCompletableFuture()).isNotDone();
 
@@ -78,11 +86,11 @@ public class RequestRepositoryTest {
 
    public void testSingleRequestCancelledWhenNotRunning() {
       Address target = Address.random();
-      RequestRepository repository = new RequestRepository(NoOpJGroupsMetricManager.INSTANCE, null, null);
+      RequestRepository repository = new RequestRepository(metricsManager(), null, null);
       repository.stop();
 
       Request<Address, ValidResponse<?>> request = repository.singleRequest(
-            target, SingleResponseCollector.validOnly(), 0, TimeUnit.MILLISECONDS);
+            target, 0L, SingleResponseCollector.validOnly(), 0, TimeUnit.MILLISECONDS);
 
       assertThat(request.toCompletableFuture())
             .isCompletedExceptionally();
@@ -91,11 +99,44 @@ public class RequestRepositoryTest {
             .hasCauseInstanceOf(IllegalLifecycleStateException.class);
    }
 
+   public void testSingleRequestShedWhenDestinationBacklogged() {
+      Address target = Address.random();
+      timeoutExecutor = Executors.newSingleThreadScheduledExecutor();
+      BaseJGroupsMetricManager metricsManager = metricsManager();
+
+      // Degrade the destination: consecutive timeouts shrink its adaptive concurrency limit.
+      for (int i = 0; i < 4; i++) {
+         metricsManager.trackRequest(target, 0L).resolve(RequestTracker.Outcome.TIMEOUT);
+      }
+
+      // Pile the in-flight count past the shrunken limit before the request under test.
+      for (int i = 0; i < 20_000; i++) {
+         metricsManager.trackRequest(target, 0L);
+      }
+
+      RequestRepository repository = new RequestRepository(metricsManager, timeoutExecutor, new ControlledTimeService());
+
+      Request<Address, ValidResponse<?>> request = repository.singleRequest(
+            target, 0L, SingleResponseCollector.validOnly(), 1, TimeUnit.SECONDS);
+
+      assertThat(request.toCompletableFuture())
+            .isCompletedExceptionally();
+      assertThatThrownBy(() -> request.toCompletableFuture().get(10, TimeUnit.SECONDS))
+            .isInstanceOf(ExecutionException.class)
+            .hasCauseInstanceOf(TimeoutException.class);
+
+      // Assert the operation is still submitted if the timeout is 0.
+      Request<Address, ValidResponse<?>> request2 = repository.singleRequest(target, 0L, SingleResponseCollector.validOnly(), 0, TimeUnit.MILLISECONDS);
+      assertThat(request2.toCompletableFuture().isDone()).isFalse();
+      repository.addResponse(request2.getRequestId(), target, SUCCESSFUL_EMPTY_RESPONSE);
+      assertThat(request2.toCompletableFuture().isDone()).isTrue();
+   }
+
    public void testMultiRequestRegistersAndReceivesResponses() throws Exception {
       Address self = Address.random();
       Address target1 = Address.random();
       Address target2 = Address.random();
-      RequestRepository repository = new RequestRepository(NoOpJGroupsMetricManager.INSTANCE, null, null);
+      RequestRepository repository = new RequestRepository(metricsManager(), null, null);
 
       Request<Address, Map<Address, Response>> request = repository.multiRequest(
             List.of(self, target1, target2), self,
@@ -113,7 +154,7 @@ public class RequestRepositoryTest {
 
    public void testMultiRequestAllExcludedCompletesImmediately() throws Exception {
       Address self = Address.random();
-      RequestRepository repository = new RequestRepository(NoOpJGroupsMetricManager.INSTANCE, null, null);
+      RequestRepository repository = new RequestRepository(metricsManager(), null, null);
 
       Request<Address, Map<Address, Response>> request = repository.multiRequest(
             List.of(self), self,
@@ -133,12 +174,12 @@ public class RequestRepositoryTest {
       Address target2 = Address.random();
       timeoutExecutor = Executors.newSingleThreadScheduledExecutor();
 
-      RequestRepository repository = new RequestRepository(NoOpJGroupsMetricManager.INSTANCE, timeoutExecutor,
+      RequestRepository repository = new RequestRepository(metricsManager(), timeoutExecutor,
             new ControlledTimeService());
 
       // Single-target with 1ms timeout will time out
       Request<Address, ValidResponse<?>> singleRequest = repository.singleRequest(
-            target1, SingleResponseCollector.validOnly(), 1, TimeUnit.MILLISECONDS);
+            target1, 0L, SingleResponseCollector.validOnly(), 1, TimeUnit.MILLISECONDS);
 
       // Staggered with same timeout, factory must NOT schedule timeout
       StaggeredRequest<Map<Address, Response>> staggeredRequest = repository.staggeredRequest(
@@ -157,7 +198,7 @@ public class RequestRepositoryTest {
    public void testSingleSiteRequestRegistersAndTimesOut() {
       String site = "NYC";
       timeoutExecutor = Executors.newSingleThreadScheduledExecutor();
-      RequestRepository repository = new RequestRepository(NoOpJGroupsMetricManager.INSTANCE, timeoutExecutor, null);
+      RequestRepository repository = new RequestRepository(metricsManager(), timeoutExecutor, null);
 
       Request<String, ValidResponse<?>> request = repository.singleSiteRequest(
             site, SingleResponseCollector.validOnly(), 1, TimeUnit.MILLISECONDS);
@@ -169,7 +210,7 @@ public class RequestRepositoryTest {
 
    public void testSingleSiteRequestRegistersAndReceivesResponse() throws Exception {
       String site = "NYC";
-      RequestRepository repository = new RequestRepository(NoOpJGroupsMetricManager.INSTANCE, null, null);
+      RequestRepository repository = new RequestRepository(metricsManager(), null, null);
 
       Request<String, ValidResponse<?>> request = repository.singleSiteRequest(
             site, SingleResponseCollector.validOnly(), 0, TimeUnit.MILLISECONDS);
