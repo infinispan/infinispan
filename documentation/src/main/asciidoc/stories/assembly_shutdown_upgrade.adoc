@@ -1,0 +1,58 @@
+[id='shutdown-upgrade']
+:context: shutdown-upgrade
+= Upgrading with a full cluster shutdown
+
+Upgrade your deployment by gracefully shutting down every node, replacing each installation with the target version, and restarting all nodes together inside a single maintenance window.
+This approach requires scheduled downtime; see xref:upgrade-strategies[Upgrade strategies] for how it compares to in-place rolling upgrades and Hot Rod migration.
+
+.Prerequisites
+
+* Your deployment meets the prerequisites described in xref:inplace-rolling-upgrades[Performing in-place rolling upgrades].
+Because all nodes are stopped at once, your cluster never runs a mixed version of {brandname}, so compatibility chart exceptions that affect only mixed-version clusters do not apply to this approach.
+
+* You have agreed on a maintenance window with application owners during which no traffic is served to the deployment.
+
+.Procedure
+
+. Gracefully shut down every node in the cluster.
++
+For server deployments, replace `<server-url|bookmark>` with your server's REST URL or the name of a saved {brandname} CLI bookmark that stores the connection details for that node. The following command stops all nodes after storing cluster state and persisting entries if there is a cache store:
++
+[source,shell,options="nowrap",subs=attributes+]
+----
+bin/cli.sh -c <server-url|bookmark> shutdown cluster
+----
++
+For embedded deployments, stop each node's application using your own deployment or orchestration tooling. Because an embedded node has no REST connector and runs inside its own process, there is no single remote command that shuts down the entire cluster at once; make sure every node stops before you proceed to replace installations.
+
+. Verify that each node shut down cleanly by confirming no `___global.lck` lock file remains in its global persistent location; a clean shutdown deletes the file and persists the node's global state correctly.
++
+A node that was terminated abruptly leaves a dangling lock file, and with the default `unclean-shutdown-action="FAIL"` it refuses to start again until you resolve this situation.
+
+. Replace each {brandname} Server installation with the target version while preserving its `server` directory, which contains the persisted data and configuration.
++
+For embedded deployments, redeploy your application with the updated dependency on every node instead.
+
+. Start all nodes together so that they form a single cluster view running entirely on the target version:
++
+[source,shell,options="nowrap",subs=attributes+]
+----
+bin/server.sh -s /path/to/existing/server
+----
+
+. Verify that the cluster reports healthy status and each cache holds its expected number of entries before you release applications back to it:
++
+For server deployments, run this command against any node (replace `<server-url|bookmark>` as described earlier):
++
+[source,shell,options="nowrap",subs=attributes+]
+----
+bin/cli.sh -c <server-url|bookmark> health
+----
++
+For embedded deployments, check the cluster's health status using JMX or your application's own monitoring integration (for example, Spring Boot Actuator or Quarkus SmallRye Health), since there is no REST endpoint available for a remote CLI call.
+
+If something goes wrong after the upgrade, you can repeat this procedure in reverse using the previous version.
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

@@ -1,5 +1,5 @@
 <distributed-cache>
-  <!-- Remote cache stores for rolling upgrades must disable passivation. -->
+  <!-- Remote cache stores for Hot Rod migration must disable passivation. -->
   <persistence passivation="false">
     <!-- The value of the cache attribute matches the name of a cache in the source cluster. Target clusters load data from this cache using the remote cache store. -->
      <!-- The "protocol-version" attribute matches the Hot Rod protocol version of the source cluster. 2.5 is the minimum version and is suitable for any upgrade path. -->

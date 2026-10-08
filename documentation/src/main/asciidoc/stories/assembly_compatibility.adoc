@@ -1,7 +1,10 @@
+[appendix]
+[id='compatibility_chart']
 = Compatibility chart
 
 The following table describes any incompatibilities that may compromise in-place rolling upgrades.
 If the exceptions listed below do not affect your deployment, you should be able to upgrade the cluster with no
 consequences on runtime operations.
 
+[id='compat-table']
 include::{generated}/compatibility.adoc[leveloffset=+1]

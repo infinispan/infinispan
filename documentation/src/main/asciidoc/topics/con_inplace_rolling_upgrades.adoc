@@ -1,0 +1,254 @@
+[id='inplace-rolling-upgrades_{context}']
+= In-place rolling upgrades
+
+In-place rolling upgrades let you upgrade (or downgrade) a {brandname} cluster one node at a time, without downtime and without provisioning a separate target cluster.
+Each node is stopped, upgraded to the new version, and restarted while the remaining nodes continue to serve requests.
+
+[NOTE]
+====
+In-place rolling upgrades are supported for both {brandname} Server deployments and embedded deployments.
+====
+
+[NOTE]
+====
+If your cluster runs on {k8s} under management of the {ispn_operator}, you do not perform in-place rolling upgrades manually.
+The operator manages the entire process transparently as part of its standard upgrade procedure, based on StatefulSet rolling updates.
+For more information, see link:{k8s_docs}#upgrading-clusters[Upgrading clusters with the Infinispan Operator] and the link:https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#rolling-updates[Kubernetes documentation on StatefulSet rolling updates].
+====
+
+The following diagram illustrates the basic per-node loop of an in-place rolling upgrade; both approaches described later repeat this same sequence once per node.
+{brandname} automatically rebalances data when a node leaves or rejoins the cluster, so you must wait for each rebalance to complete before upgrading the next node.
+The recommended approach adds one temporary node before starting in order to keep your cluster at full capacity; see xref:inplace-rolling-upgrade-spare-node_{context}[Upgrading with an additional temporary node].
+
+[.text-center]
+.In-place rolling upgrade process
+[plantuml, target=inplace-rolling-upgrade-process, format=svg]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam padding 4
+skinparam sequenceMessageAlign center
+skinparam sequenceArrowThickness 2
+skinparam ParticipantFontSize 13
+skinparam SequenceDividerFontSize 12
+
+participant "Operator\n(CLI, admin API or JMX)" as Op
+box "Node under upgrade" #FFF8E6
+  participant "Node N" as Node
+end box
+box "Rest of cluster" #E8F4FD
+  participant "Other nodes" as Rest
+end box
+
+== Verify initial health ==
+
+Op -> Rest : Check membership and health
+activate Rest
+Rest --> Op : All expected nodes are members of the cluster view
+deactivate Rest
+
+note over Node, Rest
+  One node at a time:
+  stopping multiple nodes simultaneously risks data loss
+end note
+
+loop repeat for each remaining node
+
+  Op -> Node : Shut down the node gracefully
+  activate Node
+  Node --> Rest : Leaves cluster view
+  deactivate Node
+
+  Rest -> Rest : Rebalance data across remaining nodes
+  Rest --> Op : Container status returns to HEALTHY\n(no rebalancing in progress)
+
+  Op -> Node : Replace installation with target version,\nthen start the node
+  activate Node
+  Node --> Rest : Rejoins cluster view
+  Rest -> Rest : Rebalance data to restore owners
+  Rest --> Op : Container status returns to HEALTHY\n(owners restored on all segments)
+  deactivate Node
+
+end loop
+
+== Final verification ==
+
+note over Op, Rest
+  Confirm the container health reports HEALTHY on every node and that all caches have
+  the expected number of entries
+end note
+
+@enduml
+....
+
+== Prerequisites
+
+Before you perform an in-place rolling upgrade, verify that your deployment meets the following requirements.
+
+Supported versions::
+Check the xref:compatibility_chart[compatibility chart] for any incompatibilities between the current and target versions.
+If the chart lists caveats that affect your deployment, you must address those before upgrading.
+
+Protobuf serialization::
+All cached entities must use Protocol Buffers (Protobuf) serialization.
+Protobuf provides a stable, version-independent binary format that both the old and new {brandname} versions can read.
++
+Your `.proto` schemas must follow best practices for schema evolution so that both old and new nodes can deserialize entries written by nodes running a different version.
++
+New clients may read entries that were written while older versions were still running, and those entries do not contain fields added to your schemas later.
+Client code must handle such unset values with appropriate defaults even when its write path always sets them.
++
+For more information, see the link:{encoding_docs}#protostream-protocol-buffers-best-practices_marshalling[Protocol Buffers best practices].
+
+Number of owners::
+All distributed and replicated caches must be configured with at least two owners (`owners="2"` or higher).
++
+[WARNING]
+====
+If a node is stopped for upgrade and another node fails at the same time, data loss can occur when the number of owners is less than two.
+With two or more owners, {brandname} keeps redundant copies of each entry on different nodes so that data survives individual node outages during the upgrade.
+====
+
+Equivalent configurations::
+Cache and cluster configurations must be essentially equivalent between the old and new versions.
+Per-node attributes such as `bind-address` or `node-name` can differ, but cache definitions, clustering mode, and partition handling must match.
+
+Client compatibility::
+Defer upgrading your client applications until every node in the cluster runs on the target version, and do not use features introduced by that version before then either.
+Mixed-version clusters only support the feature set of the oldest version present.
+In an embedded deployment each application is upgraded together with its cache manager, so you cannot defer the client upgrade itself; instead, make sure a newly deployed build does not use capabilities added in the target {brandname} version until all remaining nodes have been upgraded as well.
+
+Global state configuration::
+{brandname} persists cluster topology, consistent hash, and other metadata to the global state directory.
+If you want each node to rejoin the cluster with the same identity after a restart, configure a stable global persistent location
++
+For server deployments, {brandname} Server configures this automatically in the `{server_home}/server/data` directory.
+For embedded deployments, you must explicitly configure the global persistent location.
++
+For more information, see link:{config_docs}#global-persistent-location_persistence[Global persistent location].
+
+
+Clean shutdown::
+Before upgrading a node, ensure it has been shut down cleanly.
+If you are using a persistent global state, you can confirm this by checking that no `___global.lck` lock file remains in its global persistent location; a node that stops normally deletes the file.
+A clean shutdown persists the node's global state correctly, which is required for the node to rejoin the cluster with the same identity after the upgrade.
+If a node was terminated abruptly, the dangling lock file prevents it from restarting; you must resolve this situation before proceeding with the upgrade.
++
+For more information, see link:{config_docs}#global-persistent-location_persistence[Global persistent location].
+
+Cluster stability::
+Perform upgrades during low-load time windows on clusters that have a proven track record of stability.
+A cluster that is prone to network splits, high memory pressure, or other instability issues should be stabilized before you attempt an upgrade.
+Upgrading an unstable cluster significantly increases the risk of data loss.
+
+Separate the upgrade from other changes::
+Perform the {brandname} upgrade as a standalone activity without bundling it with unrelated configuration or application changes at the same time.
+Keeping each variable isolated makes it easier to identify the cause of problems that arise during or after the process and simplifies rolling back if something goes wrong.
+
+Monitoring::
+Have monitoring in place to verify cluster health before, during, and after the upgrade.
+For embedded deployments, use JMX to monitor cache and cluster metrics.
+For server deployments, use the OpenMetrics (Prometheus) endpoint to track cluster membership, cache health, and data distribution.
+The {brandname} CLI provides a `health` command that reports container or per-cache status on demand; the server upgrade procedure relies on it to gate each node transition.
+In an embedded deployment, you cannot use the CLI because there is no REST connector for it to connect to.
+Use JMX instead, or expose cluster health through your application's own monitoring integration (for example, Spring Boot Actuator or Quarkus SmallRye Health).
+The embedded upgrade procedure uses `CacheManager.getHealth()` programmatically for this purpose.
++
+Additionally, monitor JVM metrics such as heap usage, garbage collection activity, and thread counts to detect memory pressure or resource exhaustion during the upgrade.
+Monitoring helps you detect issues such as nodes failing to rejoin, unbalanced data distribution, or unexpected cache state changes during the upgrade process.
++
+Also examine your server or application logs throughout the upgrade and look for `WARN` and `ERROR` messages that may indicate problems such as failed rebalances, serialization errors, or nodes failing to rejoin.
++
+For more information, see link:{metrics_docs}[Monitoring {brandname}].
+
+== Automatic rebalancing during the upgrade
+
+{brandname} automatically rebalances data when nodes join or leave a cluster.
+When a node is shut down for an upgrade, {brandname} redistributes its entries to the remaining nodes.
+When the upgraded node rejoins the cluster, {brandname} redistributes entries again so that every segment has the configured number of owners.
+
+Because rebalancing runs automatically on every topology change, you do not need to disable or re-enable it as part of the upgrade procedure.
+Instead, wait until all caches report stable topologies after a node leaves and rejoins before stopping the next node.
+
+[NOTE]
+====
+Rebalancing increases load on the cluster during an in-place rolling upgrade because data is redistributed twice per node: once when the node departs and again when it rejoins.
+For clusters that hold large volumes of data, schedule upgrades during low-load windows to minimize impact on application performance.
+====
+
+[id='inplace-rolling-upgrade-spare-node_{context}']
+== Upgrading with an additional temporary node (Recommended)
+
+[TIP]
+====
+This approach keeps your cluster at full capacity throughout the upgrade and gives {brandname} more headroom to absorb an unexpected failure while a node is being upgraded.
+As a result, it carries less risk of data loss than stopping and restarting nodes one by one without any extra capacity.
+It is the preferred way to perform in-place rolling upgrades when you can provision the additional node.
+====
+
+You keep your cluster at full capacity during the upgrade by adding one extra node that runs the target version.
+This temporary node is only needed until all of your original nodes have been upgraded and then removed from the cluster again.
+
+While any single original node is stopped for its upgrade, the remaining originals plus the temporary node provide the same total number of members as before, so applications do not experience reduced resources during the upgrade window.
+The larger membership also gives {brandname} more headroom to absorb an unexpected failure while a node is being upgraded.
+
+To use this approach:
+
+. Provision one additional machine or container and install the target version on it.
++
+Configure its caches identically to those in your cluster so that it can own segments of every cache, and size it for its share of data plus rebalancing traffic.
+
+. Start the temporary node so that it joins your cluster, then wait until every cache reports a stable topology before you stop any original node.
++
+This initial join triggers a rebalance that spreads data across all members, including the temporary one.
+
+. Perform the standard xref:server-inplace-rolling-upgrade_{context}[Server] or xref:embedded-inplace-rolling-upgrade_{context}[embedded] procedure for each original node, one at a time.
++
+While an original node is stopped and being upgraded, your cluster continues to run with its full complement of members (the remaining originals plus the temporary node).
+
+. After all original nodes run the target version, gracefully shut down the temporary node and wait until every cache reports a stable topology again.
+The final rebalance redistributes data across your original nodes only.
+
+[NOTE]
+====
+In addition to the usual data movement, this approach performs one extra rebalance when the temporary node joins and another one when it leaves.
+It also requires one unit of spare capacity (CPU, memory, and storage) for the duration of the upgrade.
+====
+
+[id='inplace-rolling-upgrade-stop-restart_{context}']
+== Upgrading without an additional temporary node
+
+You can also upgrade each node in place by stopping and restarting them one at a time, as illustrated above.
+This approach does not require any extra capacity, but it is riskier than the recommended procedure described earlier.
+
+[WARNING]
+====
+While a node is stopped for its upgrade, your cluster runs with one fewer member, so the remaining nodes serve normal traffic and rebalancing work on reduced resources.
+If another node fails during that window — particularly while {brandname} has not yet finished redistributing data after a topology change — entries whose only surviving copies were on the failed or stopped node can be lost permanently.
+When you can provision an additional node, use xref:inplace-rolling-upgrade-spare-node_{context}[the recommended procedure] instead; keeping your cluster at full membership makes such failures much less likely to result in data loss.
+====
+
+For step-by-step instructions on this approach, see xref:server-inplace-rolling-upgrade_{context}[Performing an in-place rolling upgrade for {brandname} Server] or xref:embedded-inplace-rolling-upgrade_{context}[Performing an in-place rolling upgrade for embedded caches].
+
+[id='inplace-rolling-upgrade-downgrade_{context}']
+== Rolling back an upgrade by downgrading
+
+If something goes wrong after you have upgraded some or all of your nodes — for example, if your application misbehaves on the target version — you can stop the rolling process and roll back to the previous version.
+The in-place procedure works identically in reverse: downgrade each node that has already been upgraded one at a time, waiting until every cache reports a stable topology between steps.
+
+[WARNING]
+====
+Rolling back is supported only as long as no features introduced by the target version are being used during the mixed-version window.
+If clients have written data using new fields or capabilities of the target version, downgrading can lose that data because nodes running the previous version cannot read it.
+Check the xref:compatibility_chart[compatibility chart] for any caveats specific to your downgrade path before you roll back.
+====
+
+== Common mistakes
+
+[WARNING]
+====
+Do not stop multiple nodes at the same time.
+With the default of two owners, stopping two nodes simultaneously can leave some cache entries with no available owner, resulting in permanent data loss.
+Always wait for the previously upgraded node to fully rejoin the cluster before stopping the next one.
+====
