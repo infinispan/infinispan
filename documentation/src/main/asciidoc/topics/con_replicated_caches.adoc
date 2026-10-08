@@ -10,12 +10,30 @@ However, you can use UDP multicasting for replication requests to improve perfor
 
 Each key has a primary owner, which serializes data container updates in order to provide consistency.
 
-ifdef::community[]
-image::replicated_cache_ispn.png[align="center", title="Replicated cache"]
-endif::community[]
-ifdef::downstream[]
-image::replicated_cache_rhdg.png[align="center", title="Replicated cache"]
-endif::downstream[]
+.Replicated cache
+[plantuml, target=replicated-cache-put-flow, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "Client" as Cl
+participant "{brandname}\n(primary owner)" as P
+participant "{brandname} A\n(backup owner)" as BA
+participant "{brandname} B\n(backup owner)" as BB
+participant "{brandname} C\n(backup owner)" as BC
+
+Cl -> P : put(k, v)
+par Concurrent replication to backup owners
+  P -> BA : Replicate (k, v)
+also
+  P -> BB : Replicate (k, v)
+also
+  P -> BC : Replicate (k, v)
+end
+@enduml
+....
 
 .Synchronous or asynchronous replication
 

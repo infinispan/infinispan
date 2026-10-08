@@ -6,14 +6,47 @@ However, when it comes to Hot Rod protocol backed servers, clients do not yet ha
 == Data Consistency Problem
 Imagine you have two ATMs that connect using Hot Rod to a bank where an account's balance is stored.  Two closely followed operations to retrieve the latest balance could return 500 CHF (swiss francs) as shown below:
 
-image::server_modules_6.png[align="center", title="Concurrent readers"]
+.Concurrent readers (both ATMs read the same balance)
+[plantuml, target=hotrod-concurrent-readers, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "ATM 1" as A1
+actor "ATM 2" as A2
+participant "{brandname}\n(account balance)" as B
+
+A1 -> B : Get current account balance (Hot Rod)
+B --> A1 : Balance is 500 CHF
+B --> A2 : Balance is 500 CHF (both ATMs now hold the same value)
+
+@enduml
+....
 
 Next a customer connects to the first ATM and requests 400 CHF to be retrieved.
 Based on the last value read, the ATM could calculate what the new balance is, which is 100 CHF, and request a put with this new value.
 Imagine now that around the same time another customer connects to the ATM and requests 200 CHF to be retrieved.
 Assume that the ATM thinks it has the latest balance and based on its calculations it sets the new balance to 300 CHF:
 
-image::server_modules_7.png[Concurrent updates]
+.Concurrent updates (lost update)
+[plantuml, target=hotrod-lost-update, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "ATM 1" as A1
+participant "{brandname}\n(account balance)" as B
+
+A1 -> B : Put the new balance: 100 CHF (500 - 400)
+A2 -> B : Put the new balance: 300 CHF (500 - 200)
+note over B : The second put silently overwrote\nthe first one —\nthe resulting balance is incorrect.
+
+@enduml
+....
 
 This would be wrong.
 Two concurrent updates have resulted in an incorrect account balance.
@@ -25,7 +58,21 @@ Before finding out how to solve this issue in a client-server scenario with Hot 
 
 If the ATM and the {brandname} instance storing the bank account lived in the same JVM, the ATM could use the link:{jdkdocroot}/java/util/concurrent/ConcurrentMap.html#replace-K-V-V-[conditional replace API] referred at the beginning of this article.  So, it could send the previous known value to verify whether it has changed since it was last read.  By doing so, the first operation could double-check that the balance is still 500 CHF when it was to update to 100 CHF.  Now, when the second operation comes, the current balance would not be 500 CHF anymore and hence the conditional replace call would fail, hence avoiding data consistency issues:
 
-image::server_modules_8.png[align="center", title="P2P solution"]
+.Peer-to-peer (embedded) solution: conditional replace
+[plantuml, target=hotrod-p2p-solution, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "{brandname}\n(same JVM)" as C
+
+A1 -> C : Conditional replace (previous = 500, new = 100)
+A2 -> C : Conditional replace (previous = 500, new = 300)
+C --x A2 : Rejected — the current value is no longer\n500; it was already changed to 100
+@enduml
+....
 
 === Client-Server Solution
 In theory, Hot Rod could use the same p2p solution but sending the previous value would not be practical.  In this example, the previous value is an integer but the value could be a lot bigger and hence forcing clients to send it to the server would be rather wasteful.  Instead, Hot Rod offers versioned operations to deal with this situation.
@@ -34,8 +81,38 @@ Together with each key/value pair, Hot Rod stores a version number which uniquel
 Using an operation called getVersioned or getWithVersion, clients can retrieve not only the value associated with a key, but also the current version.
 Looking at the previous example once again, the ATMs could call getVersioned and get the balance's version:
 
-image::server_modules_9.png[align="center", title="Get versioned"]
+.Retrieving values together with their version
+[plantuml, target=hotrod-get-versioned, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "{brandname}\n(account balance)" as B
+
+A1 -> B : Get value and current version together (getVersioned)
+B --> A1 : Balance is 500 CHF, current version = 1
+
+@enduml
+....
 
 When the ATMs wanted to modify the balance, instead of calling put, they could call replaceIfUnmodified operation passing the latest version number of which the clients are aware of.  The operation will only succeed if the version passed matches the version in the server.  So, the first modification by the ATM would be allowed since the client passes 1 as version and the server side version for the balance is also 1.  On the other hand, the second ATM would not be able to make the modification because after the first ATMs modification the version would have been incremented to 2, and now the passed version (1) and the server side version (2) would not match:
 
-image::server_modules_10.png[align="center", title="Replace if versions match"]
+'.Replace only when the version still matches.
+[plantuml, target=hotrod-replace-if-unmodified, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "ATM 2" as A2
+participant "{brandname}\n(account balance)" as B
+
+A1 -> B : replaceIfUnmodified, passing version = 1\nand new balance = 100 CHF (500 - 400)
+B --> A1 : Accepted — the passed version matched;\nthe server-side version becomes 2
+A2 -> B : Same operation with its stale read:\npasses version = 1 and new balance = 300 CHF (500 - 200)
+B --x A2 : Rejected — the passed version (1) does not\nmatch the current server-side version (2)
+@enduml
+....

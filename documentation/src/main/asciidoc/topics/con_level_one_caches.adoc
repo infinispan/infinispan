@@ -6,12 +6,30 @@ L1 caches avoid repeatedly looking up entries on primary owner nodes and adds pe
 
 The following diagram illustrates how L1 caches work:
 
-ifdef::community[]
-image::l1_cache_ispn.png[align="center", title="L1 cache"]
-endif::community[]
-ifdef::downstream[]
-image::l1_cache_rhdg.png[align="center", title="L1 cache"]
-endif::downstream[]
+.L1 cache
+[plantuml, target=level-one-cache-flow, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "Client" as Cl
+participant "{brandname}\n(originator node)" as O
+participant "{brandname}\n(primary owner)" as P
+
+== First read: no local replica yet ==
+Cl -> O : Read an entry\nowned by another node (cache.get)
+O -> P : Forward the read to\nthe primary owner
+P --> O : Key/value entry
+
+note right of O: The originator keeps a local\n(L1) replica of this entry.
+
+== Subsequent reads ==
+Cl -> O : Read the same key\n(cache.get)
+O --> Cl : Key/value entry served from\nthe local (L1) replica, without\nforwarding to the primary owner
+@enduml
+....
 
 In the "L1 cache" diagram:
 

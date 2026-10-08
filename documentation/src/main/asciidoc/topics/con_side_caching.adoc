@@ -4,14 +4,31 @@
 {brandname} stores data that applications retrieve from persistent storage, which reduces the number of read operations to persistent storage and increases response times for subsequent reads.
 
 .Side caches
-//Community content
-ifdef::community[]
-image::side-cache.svg[{brandname} side cache to which applications write to avoid repeatedly reading the same entries from persistent storage.]
-endif::community[]
-//Downstream content
-ifdef::downstream[]
-image::side-cache.png[{brandname} side cache to which applications write to avoid repeatedly reading the same entries from persistent storage.]
-endif::downstream[]
+[plantuml, target=side-caching-flow, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "Applications" as App
+participant "{brandname}\nside cache (k/v)" as Cache
+database "Persistent\nstorage" as PS
+
+== Stage 1: read misses the side cache ==
+App -> PS : Read k/v
+PS --> App : k/v
+App -> Cache : Write k/v
+
+== Stage 2: next read hits the side cache ==
+App -> Cache : Read k/v
+Cache --> App : k/v (served from\nthe {brandname} side cache)
+
+== Stage 3: repeated reads hit the side cache ==
+App -> Cache : Read k/v again
+Cache --> App : k/v, without accessing\npersistent storage
+@enduml
+....
 
 With side caches, applications control how data is added to {brandname} clusters from persistent storage.
 When an application requests an entry, the following occurs:

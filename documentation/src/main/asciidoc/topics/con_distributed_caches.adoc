@@ -16,19 +16,47 @@ The more copies you maintain, the lower performance will be, but also the lower 
 The following diagram shows a write operation that a client sends to a backup owner.
 In this case the backup node forwards the write operation to the primary owner, which then replicates the write operation to the backup.
 
-ifdef::community[]
-image::replication_ispn.png[align="center", title="Cluster replication"]
-endif::community[]
-ifdef::downstream[]
-image::replication_rhdg.png[align="center", title="Cluster replication"]
-endif::downstream[]
+.Cluster replication
+[plantuml, target=distributed-cache-replication, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
 
-ifdef::community[]
-image::distributed_cache_ispn.png[align="center", title="Distributed cache"]
-endif::community[]
-ifdef::downstream[]
-image::distributed_cache_rhdg.png[align="center", title="Distributed cache"]
-endif::downstream[]
+participant "Client" as Cl
+participant "{brandname}\n(backup owner)" as Bk
+participant "{brandname}\n(primary owner)" as Pr
+
+Cl -> Bk : put(k, v)\n(sent to a backup owner)
+Bk -> Pr : Forward the put\nto the primary owner
+Pr --> Bk : Replicate (k, v)\nback to the backup owner
+@enduml
+....
+
+.Distributed cache
+[plantuml, target=distributed-cache-put-flow, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "Client" as Cl
+participant "{brandname}\n(primary owner)" as P
+participant "{brandname} A\n(backup owner)" as BA
+participant "{brandname} B\n(backup owner)" as BB
+participant "{brandname} C\n(non-owner)" as BC
+
+Cl -> P : put(k, v)
+par Concurrent replication to backup owners
+  P -> BA : Replicate (k, v)
+also
+  P -> BB : Replicate (k, v)
+end
+note right of BC : Does not own key k\nand receives no update
+@enduml
+....
 
 .Read operations
 

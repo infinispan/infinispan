@@ -4,32 +4,43 @@ Tips to get started with Infinispan documentation.
 
 ## Documentation Guidelines
 
-Start by reading the [Documentation Guidelines](https://infinispan.org/docs/stable/titles/contributing/contributing.html#documentation_guidelines) in the _Contributer's Guide_.
+Start by reading the [Documentation Guidelines](https://infinispan.org/docs/stable/titles/contributing/contributing.html#documentation_guidelines) in the _Contributor's Guide_.
 
-## Tooling
+## Requirements
 
-Install the complete AsciiDoctor toolchain. See the following:
-* [Installing AsciiDoctor](http://asciidoctor.org/docs/install-toolchain/#installing-or-updating-asciidoctor)
-  * [Mac OS](http://asciidoctor.org/docs/install-asciidoctor-macosx/)
-* [Text editors](http://asciidoctor.org/docs/install-toolchain/#text-editors-and-syntax-highlighting)
+No additional toolchain is required beyond a JDK and Maven. The build uses the [asciidoctor-maven-plugin](https://github.com/asciidoctor/maven-plugins), which runs Asciidoctor in-process via JRuby, so there is no need to install Ruby or AsciiDoctor separately.
 
 ## Building Documentation
 
-Use _live previews_ to review your changes while editing or contributing
-content. See [Editing AsciiDoc with Live Preview](http://asciidoctor.org/docs/editing-asciidoc-with-live-preview/).
-
-Run the _asciidoctor_ command against the main book file to build HTML locally.
-For example, to build the _User Guide_ locally, run:
+From the repository root, run:
 
 ```bash
-$ asciidoctor user_guide.asciidoc
+$ mvn install -Pdistribution -pl documentation
 ```
 
-**Tips:**
+The other Infinispan modules must already be installed in your local Maven repository (for example by running `mvn install -Pdistribution` once). The generated HTML is written to `documentation/target/generated/<version>/html`. To preview it locally, see the _Serving Generated Documentation_ section.
 
-- Use the `Guardfile` in the documentation repository to apply stylesheets correctly if you use Guard to monitor changes and regenerate HTML as you edit.
-- The `pom.xml` for documentation is _*experimental*_ and is not
-currently functional.
+## Generated Content
+
+Besides converting AsciiDoc sources, the build aggregates information from other parts of the codebase into AsciiDoc (under `target/generated-asciidoc/`) before rendering:
+
+* **Metrics** — `Metrics2Asciidoc` discovers all metrics registered through the `MetricInfo` service and generates a reference table (`metrics.adoc`).
+* **Version compatibility** — the `Compatibility` class in _server/testdriver/core_ loads `compatibility.json` and renders the supported server version matrix for rolling upgrades (`compatibility.adoc`).
+* **RESP commands** — `RespCommands2Asciidoc` lists every registered RESP command, grouped by family with ACL information, combined with author notes from `src/main/resources/resp-command-notes.properties` (`ref_redis_commands.adoc`).
+* **REST API reference** — the _openapi-generator-maven-plugin_ converts the OpenAPI specification built in _server/rest_ into AsciiDoc under `generated-asciidoc/openapi`.
+* **Configuration defaults** — the _infinispan-defaults-maven-plugin_ extracts default attribute values from the core and cache store jars (`target/default-attributes.adoc`), which topics include via the `{defaults}` attribute.
+
+When building with `-Pdistribution`, two more reports are added: `XSDoc` renders the module XML schemas as HTML under `<version>/html/configuration-schema`, and a Saxon transformation of collected log messages produces the logging report described below.
+
+## Serving Generated Documentation
+
+After building, serve the generated HTML locally with the bundled JDK web server (`jwebserver`, requires JDK 18+). From the repository root:
+
+```bash
+$ mvn exec:exec@serve-docs -f documentation/pom.xml
+```
+
+Then open `http://127.0.0.1:8080/` in a browser and press Ctrl+C to stop the server. Use `-Ddocs.port=<port>` to change the port.
 
 ## Generating log reports
 

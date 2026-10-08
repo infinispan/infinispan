@@ -80,11 +80,22 @@ include::code_examples/MyClass.java[]
 ----
 ```
 
-### Images
-- Format: PNG or JPG, minimum 660px wide at 110 dpi, maximum 300KB
+### Diagrams
+- Prefer Asciidoctor Diagram blocks over pre-rendered images; they are rendered at build time and scale without loss of quality.
+- UML-style diagrams (class, sequence, flowcharts): `[plantuml, target=diagram-name, format=svg, align=center]` block with PlantUML source (`@startuml`/`@enduml`). The theme comes from the `:plantuml-theme:` attribute; do not hardcode colors.
+- Diagram content is passed to PlantUML verbatim unless you opt in to substitutions. If a diagram references attributes such as `{brandname}`, add `subs="attributes+"` to the block header (for example, `[plantuml, target=diagram-name, format=svg, align=center, subs="attributes+"]`) or Asciidoctor leaves the attribute reference unresolved in the rendered image.
+- Syntax or tree-like diagrams: `syntrax` blocks (jsyntrax), e.g., `[syntrax, diagram-name, format=svg, align=center]`. See `topics/ref_query_ickle_syntax.adoc` for examples.
+- Only when a diagram cannot be expressed with Asciidoctor Diagrams at all: save it as SVG under `topics/images/`. Never use PNG/JPG for diagrams.
+
+### Screenshots and Raster Images
+- Use PNG or JPG only for user interface screenshots (minimum 660px wide, maximum 300KB).
 - Location: `topics/images/`
 - All images must have alt text for accessibility
 - Syntax: `image::filename.png[Alt text description]`
+
+### Mathematical Expressions
+- Write math in AsciiMath rather than embedding it as an image.
+- Inline formulas use a single pair of plus signs (`+E = mc^2+`); larger ones go in `[stem]` listing blocks delimited by `++++`. The build renders both via MathJax (latexmath stem).
 
 ## Conditional Content
 
@@ -105,9 +116,9 @@ Follow the terminology defined in `topics/contributing/terminology.adoc`. Key te
 - **Add/Remove** — for container membership; **Create/Delete** — for building/destroying objects; **Clear** — delete all elements
 
 ## Building Documentation
-- Build HTML: `mvn install -pl documentation`
-- Build PDF: `mvn install -pl documentation -Ppdf`
-- Output: `documentation/target/generated/{version}/html/`
+- The module is only in the reactor under the `distribution` profile; other Infinispan modules must already be installed locally. Build HTML from the repository root with: `mvn install -Pdistribution -pl documentation`. Alternatively use `-f documentation/pom.xml`, which needs no profile.
+- Serve generated HTML locally (JDK 18+): `mvn exec:exec@serve-docs -f documentation/pom.xml` → http://127.0.0.1:8080/ . Override the port with `-Ddocs.port=<port>`.
+- Output: `documentation/target/generated/{version}/html/` (for example, 16.3)
 
 ## When Creating New Documentation
 1. Determine if the content is a concept, procedure, or reference — use the correct `con_`/`proc_`/`ref_` prefix
