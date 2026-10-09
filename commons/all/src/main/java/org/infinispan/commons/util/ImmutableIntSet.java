@@ -117,4 +117,28 @@ class ImmutableIntSet extends AbstractImmutableIntSet {
          return iterator.hasNext();
       }
    }
+
+   @Override
+   public void setBits(byte[] bytes) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setBits(IntSet intSet) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o instanceof ImmutableIntSet) {
+         return set.equals(((ImmutableIntSet) o).set);
+      }
+      return set.equals(o);
+   }
+
+   @Override
+   public int hashCode() {
+      return set.hashCode();
+   }
 }

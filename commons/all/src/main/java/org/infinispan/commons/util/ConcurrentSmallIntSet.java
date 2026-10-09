@@ -197,7 +197,110 @@ public class ConcurrentSmallIntSet implements IntSet {
    }
 
    @Override
+   public void setBits(byte[] bytes) {
+      int arrayLength = array.length();
+      int byteLen = bytes.length;
+      int fullInts = byteLen >>> 2;
+      int totalDelta = 0;
+
+      try {
+         int byteIdx = 0;
+         for (int i = 0; i < fullInts; i++) {
+            int word = (bytes[byteIdx] & 0xFF)
+                  | ((bytes[byteIdx + 1] & 0xFF) << 8)
+                  | ((bytes[byteIdx + 2] & 0xFF) << 16)
+                  | ((bytes[byteIdx + 3] & 0xFF) << 24);
+            byteIdx += 4;
+            if (i < arrayLength) {
+               int oldWord = array.getAndSet(i, word);
+               totalDelta += Integer.bitCount(word) - Integer.bitCount(oldWord);
+            } else if (word != 0) {
+               checkBounds(i);
+            }
+         }
+         int wordsSet = Math.min(arrayLength, fullInts);
+         if (byteIdx < byteLen) {
+            int word = 0;
+            int shift = 0;
+            while (byteIdx < byteLen) {
+               word |= (bytes[byteIdx++] & 0xFF) << shift;
+               shift += 8;
+            }
+            if (wordsSet < arrayLength) {
+               int oldWord = array.getAndSet(wordsSet, word);
+               totalDelta += Integer.bitCount(word) - Integer.bitCount(oldWord);
+               wordsSet++;
+            } else if (word != 0) {
+               checkBounds(wordsSet);
+            }
+         }
+         for (int i = wordsSet; i < arrayLength; i++) {
+            int oldWord = array.getAndSet(i, 0);
+            totalDelta -= Integer.bitCount(oldWord);
+         }
+      } finally {
+         if (totalDelta != 0) {
+            currentSize.addAndGet(totalDelta);
+         }
+      }
+   }
+
+   @Override
+   public void setBits(IntSet intSet) {
+      if (intSet instanceof ConcurrentSmallIntSet other) {
+         int otherLength = other.array.length();
+         int totalDelta = 0;
+         int wordsSet = Math.min(array.length(), otherLength);
+         try {
+            for (int i = 0; i < otherLength; i++) {
+               int word = other.array.get(i);
+               if (i < array.length()) {
+                  int oldWord = array.getAndSet(i, word);
+                  totalDelta += Integer.bitCount(word) - Integer.bitCount(oldWord);
+               } else if (word != 0) {
+                  checkBounds(i);
+               }
+            }
+            for (int i = wordsSet; i < array.length(); i++) {
+               int oldWord = array.getAndSet(i, 0);
+               totalDelta -= Integer.bitCount(oldWord);
+            }
+         } finally {
+            if (totalDelta != 0) {
+               currentSize.addAndGet(totalDelta);
+            }
+         }
+      } else {
+         setBits(intSet.toBitSet());
+      }
+   }
+
+   @Override
    public boolean addAll(IntSet set) {
+      if (set instanceof ConcurrentSmallIntSet other) {
+         int otherLength = other.array.length();
+         boolean changed = false;
+         for (int i = 0; i < otherLength; i++) {
+            int otherWord = other.array.get(i);
+            if (otherWord != 0) {
+               checkBounds(i);
+               while (true) {
+                  int current = array.get(i);
+                  int target = current | otherWord;
+                  if (current == target) {
+                     break;
+                  }
+                  if (array.compareAndSet(i, current, target)) {
+                     int addedBits = Integer.bitCount(target) - Integer.bitCount(current);
+                     currentSize.addAndGet(addedBits);
+                     changed = true;
+                     break;
+                  }
+               }
+            }
+         }
+         return changed;
+      }
       boolean changed = false;
       for (PrimitiveIterator.OfInt iter = set.iterator(); iter.hasNext(); ) {
          changed |= add(iter.nextInt());
