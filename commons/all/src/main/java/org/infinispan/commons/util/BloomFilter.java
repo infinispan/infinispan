@@ -1,19 +1,44 @@
 package org.infinispan.commons.util;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.ToIntFunction;
 
 public class BloomFilter<E> {
+   private static final ToIntFunction<?>[] EMPTY_FUNCTIONS = new ToIntFunction[0];
+
    private final int bitsToUse;
    private final IntSet intSet;
-   private final Iterable<ToIntFunction<? super E>> hashFunctions;
+   private final ToIntFunction<? super E>[] hashFunctions;
 
+   @SuppressWarnings("unchecked")
    BloomFilter(int bitsToUse, IntSet intSet, Iterable<ToIntFunction<? super E>> hashFunctions) {
+      this.bitsToUse = bitsToUse;
+      this.intSet = intSet;
+      if (hashFunctions instanceof Collection) {
+         this.hashFunctions = ((Collection<ToIntFunction<? super E>>) hashFunctions).toArray((ToIntFunction<? super E>[]) EMPTY_FUNCTIONS);
+      } else {
+         List<ToIntFunction<? super E>> list = new ArrayList<>();
+         for (ToIntFunction<? super E> function : hashFunctions) {
+            list.add(function);
+         }
+         this.hashFunctions = list.toArray((ToIntFunction<? super E>[]) EMPTY_FUNCTIONS);
+      }
+   }
+
+   BloomFilter(int bitsToUse, IntSet intSet, ToIntFunction<? super E>[] hashFunctions) {
       this.bitsToUse = bitsToUse;
       this.intSet = intSet;
       this.hashFunctions = hashFunctions;
    }
 
    public static <E> BloomFilter<E> createFilter(int bitsToUse, Iterable<ToIntFunction<? super E>> hashFunctions) {
+      return new BloomFilter<>(bitsToUse, IntSets.mutableEmptySet(bitsToUse), hashFunctions);
+   }
+
+   @SafeVarargs
+   public static <E> BloomFilter<E> createFilter(int bitsToUse, ToIntFunction<? super E>... hashFunctions) {
       return new BloomFilter<>(bitsToUse, IntSets.mutableEmptySet(bitsToUse), hashFunctions);
    }
 
@@ -31,6 +56,11 @@ public class BloomFilter<E> {
       return new BloomFilter<>(bitsToUse, IntSets.concurrentSet(bitsToUse), hashFunctions);
    }
 
+   @SafeVarargs
+   public static <E> BloomFilter<E> createConcurrentFilter(int bitsToUse, ToIntFunction<? super E>... hashFunctions) {
+      return new BloomFilter<>(bitsToUse, IntSets.concurrentSet(bitsToUse), hashFunctions);
+   }
+
    /**
     * Adds a value to the filter setting up to a number of bits equal to the number of hash functions. This method
     * will also return {code true} if any of the bits were updated, meaning this value was for sure not present before.
@@ -40,8 +70,8 @@ public class BloomFilter<E> {
    public boolean addToFilter(E value) {
       boolean setABit = false;
       for (ToIntFunction<? super E> function : hashFunctions) {
-         int hashResult = Math.abs(function.applyAsInt(value));
-         int bitToCheck = hashResult % bitsToUse;
+         int hashResult = function.applyAsInt(value);
+         int bitToCheck = (hashResult == Integer.MIN_VALUE ? 0 : Math.abs(hashResult)) % bitsToUse;
          setABit |= intSet.add(bitToCheck);
       }
       return setABit;
@@ -54,8 +84,8 @@ public class BloomFilter<E> {
     */
    public boolean possiblyPresent(E value) {
       for (ToIntFunction<? super E> function : hashFunctions) {
-         int hashResult = Math.abs(function.applyAsInt(value));
-         int bitToCheck = hashResult % bitsToUse;
+         int hashResult = function.applyAsInt(value);
+         int bitToCheck = (hashResult == Integer.MIN_VALUE ? 0 : Math.abs(hashResult)) % bitsToUse;
          if (!intSet.contains(bitToCheck)) {
             return false;
          }
