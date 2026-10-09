@@ -69,8 +69,15 @@ public class BloomFilter<E> {
     * @param intSet
     */
    public void setBits(IntSet intSet) {
-      this.intSet.clear();
-      this.intSet.addAll(intSet);
+      this.intSet.setBits(intSet);
+   }
+
+   /**
+    * Clears all current bits and sets them to the values in the provided byte array.
+    * @param bytes byte array representation of the bit set
+    */
+   public void setBits(byte[] bytes) {
+      this.intSet.setBits(bytes);
    }
 
    public IntSet getIntSet() {
