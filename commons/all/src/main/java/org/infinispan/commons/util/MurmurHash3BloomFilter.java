@@ -1,7 +1,5 @@
 package org.infinispan.commons.util;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.ToIntFunction;
 
 import org.infinispan.commons.hash.MurmurHash3;
@@ -15,7 +13,7 @@ import org.infinispan.commons.hash.MurmurHash3;
  */
 public class MurmurHash3BloomFilter extends BloomFilter<byte[]> {
    MurmurHash3BloomFilter(int bitsToUse, IntSet intSet, int hashFunctions) {
-      super(bitsToUse, intSet, (Iterable) functions(hashFunctions));
+      super(bitsToUse, intSet, functions(hashFunctions));
    }
 
    private static int defaultHashFunctionCount() {
@@ -38,14 +36,15 @@ public class MurmurHash3BloomFilter extends BloomFilter<byte[]> {
       return new MurmurHash3BloomFilter(bitsToUse, IntSets.concurrentSet(bitsToUse), hashFunctions);
    }
 
-   private static Iterable<ToIntFunction<byte[]>> functions(int hashFunctions) {
+   @SuppressWarnings("unchecked")
+   private static ToIntFunction<byte[]>[] functions(int hashFunctions) {
       if (hashFunctions <= 0) {
          throw new IllegalArgumentException("Number of hash functions must be positive, received " + hashFunctions);
       }
-      List<ToIntFunction<byte[]>> functions = new ArrayList<>(hashFunctions);
+      ToIntFunction<byte[]>[] functions = new ToIntFunction[hashFunctions];
       for (int i = 0; i < hashFunctions; ++i) {
          int prime = getPrime(i);
-         functions.add(bytes -> MurmurHash3.MurmurHash3_x64_32(bytes, prime));
+         functions[i] = bytes -> MurmurHash3.MurmurHash3_x64_32(bytes, prime);
       }
       return functions;
    }
