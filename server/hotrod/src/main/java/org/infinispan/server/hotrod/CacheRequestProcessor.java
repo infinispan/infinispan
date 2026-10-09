@@ -16,7 +16,6 @@ import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.BloomFilter;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.MurmurHash3BloomFilter;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -111,7 +110,7 @@ class CacheRequestProcessor extends BaseRequestProcessor {
             if (log.isTraceEnabled()) {
                log.tracef("Updating bloom filter %s found for cache %s", filter, header.cacheName);
             }
-            filter.setBits(IntSets.from(bloomArray));
+            filter.setBits(bloomArray);
             if (log.isTraceEnabled()) {
                log.tracef("Updated bloom filter %s for cache %s", filter, header.cacheName);
             }

@@ -204,6 +204,23 @@ public class SmallIntSet implements IntSet {
    }
 
    @Override
+   public void setBits(byte[] bytes) {
+      bitSet.clear();
+      bitSet.or(BitSet.valueOf(bytes));
+   }
+
+   @Override
+   public void setBits(IntSet intSet) {
+      if (intSet instanceof SmallIntSet) {
+         bitSet.clear();
+         bitSet.or(((SmallIntSet) intSet).bitSet);
+      } else {
+         bitSet.clear();
+         addAll(intSet);
+      }
+   }
+
+   @Override
    public int nextSetBit(int fromIndex) {
       return bitSet.nextSetBit(fromIndex);
    }

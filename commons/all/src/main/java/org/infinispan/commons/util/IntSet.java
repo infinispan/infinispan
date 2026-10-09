@@ -213,4 +213,26 @@ public interface IntSet extends Set<Integer> {
     * @return the index of the next set bit, or -1 if there is no such bit
     */
    int nextSetBit(int fromIndex);
+
+   /**
+    * Clears all current ints and sets them to the values in the provided bit set byte array.
+    *
+    * @param bytes byte array representation of the bit set in little-endian bit order
+    * @since 16.3
+    */
+   default void setBits(byte[] bytes) {
+      clear();
+      addAll(IntSets.from(bytes));
+   }
+
+   /**
+    * Clears all current ints and sets them to the values in the provided IntSet.
+    *
+    * @param intSet the int set whose values to set
+    * @since 16.3
+    */
+   default void setBits(IntSet intSet) {
+      clear();
+      addAll(intSet);
+   }
 }
