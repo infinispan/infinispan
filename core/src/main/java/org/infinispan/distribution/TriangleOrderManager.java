@@ -37,14 +37,19 @@ public class TriangleOrderManager {
       sequencers = triangleSequencers;
    }
 
+   /**
+    * Returns the next sequence number of {@code segmentId} for the topology {@code commandTopologyId}.
+    * <p>
+    * The topology is checked before the sequence number is taken. Once this method returns, the sequence number is
+    * consumed and the backups wait for it until they install a newer topology. The caller must send a backup write or
+    * a {@link org.infinispan.commands.triangle.BackupNoopCommand} with it, even if a later topology check fails.
+    *
+    * @throws OutdatedTopologyException if the topology id of the command is not the current one, or is older than the
+    *                                   one of the last sequence number taken for the segment.
+    */
    public long next(int segmentId, final int commandTopologyId) {
       checkTopologyId(commandTopologyId);
-      try {
-         return getNext(segmentId, commandTopologyId);
-      } finally {
-         //check if topology didn't change in the meanwhile
-         checkTopologyId(commandTopologyId);
-      }
+      return getNext(segmentId, commandTopologyId);
    }
 
    public boolean isNext(int segmentId, long sequenceNumber, int commandTopologyId) {

@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
+import java.util.function.LongFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -362,26 +363,20 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
 
    private <C extends WriteCommand> void sendToBackups(C command, Collection<Object> keysToSend,
          LocalizedCacheTopology cacheTopology, MultiKeyBackupBuilder<C> backupBuilder) {
-      int topologyId = command.getTopologyId();
       for (Map.Entry<Integer, Collection<Object>> entry : filterBySegment(cacheTopology, keysToSend).entrySet()) {
          int segmentId = entry.getKey();
-         Collection<Address> backups = cacheTopology.getSegmentDistribution(segmentId).writeBackups();
-         if (backups.isEmpty()) {
+         Collection<Address> backupOwners = cacheTopology.getSegmentDistribution(segmentId).writeBackups();
+         if (backupOwners.isEmpty()) {
             // Only the primary owner. Other segments may have more than one owner, e.g. during rebalance.
             continue;
          }
-         long sequence = triangleOrderManager.next(segmentId, topologyId);
-         try {
-            BackupWriteCommand backupCommand = backupBuilder.build(command, entry.getValue(), sequence, segmentId);
+         sendWithSequence(command, segmentId, backupOwners, sequence -> {
             if (log.isTraceEnabled()) {
-               log.tracef("Command %s got sequence %s for segment %s", command.getCommandInvocationId(), segmentId,
-                          sequence);
+               log.tracef("Command %s got sequence %s for segment %s", command.getCommandInvocationId(), sequence,
+                          segmentId);
             }
-            rpcManager.sendToMany(backups, backupCommand, DeliverOrder.NONE);
-         } catch (Throwable t) {
-            sendBackupNoopCommand(command, backups, segmentId, sequence);
-            throw t;
-         }
+            return backupBuilder.build(command, entry.getValue(), sequence, segmentId);
+         });
       }
    }
 
@@ -524,17 +519,33 @@ public class TriangleDistributionInterceptor extends BaseDistributionInterceptor
       if (log.isTraceEnabled()) {
          log.tracef("Command %s send to backup owner %s.", id, backupOwners);
       }
-      long sequenceNumber = triangleOrderManager.next(segmentId, command.getTopologyId());
-      try {
-         BackupWriteCommand backupCommand = backupBuilder.build(command, sequenceNumber, segmentId);
+      sendWithSequence(command, segmentId, backupOwners, sequenceNumber -> {
          if (log.isTraceEnabled()) {
             log.tracef("Command %s got sequence %s for segment %s", id, sequenceNumber, segmentId);
          }
+         return backupBuilder.build(command, sequenceNumber, segmentId);
+      });
+   }
+
+   /**
+    * Takes the next sequence number of the segment and sends the backup write built with it.
+    * <p>
+    * The backups wait for every sequence number, so once one is taken a backup write or a
+    * {@link BackupNoopCommand} must be sent with it, whatever fails afterwards, including the topology check.
+    */
+   private void sendWithSequence(WriteCommand command, int segmentId, Collection<Address> backupOwners,
+         LongFunction<BackupWriteCommand> backupFactory) {
+      int topologyId = command.getTopologyId();
+      long sequence = triangleOrderManager.next(segmentId, topologyId);
+      try {
+         if (distributionManager.getCacheTopology().getTopologyId() != topologyId) {
+            throw OutdatedTopologyException.RETRY_NEXT_TOPOLOGY;
+         }
          // TODO Should we use sendToAll in replicated mode?
          // we must send the message only after the collector is registered in the map
-         rpcManager.sendToMany(backupOwners, backupCommand, DeliverOrder.NONE);
+         rpcManager.sendToMany(backupOwners, backupFactory.apply(sequence), DeliverOrder.NONE);
       } catch (Throwable t) {
-         sendBackupNoopCommand(command, backupOwners, segmentId, sequenceNumber);
+         sendBackupNoopCommand(command, backupOwners, segmentId, sequence);
          throw t;
       }
    }
