@@ -93,6 +93,9 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
    @Stop
    public void stop() {
       this.stopped = true;
+      // Tasks that are waiting for a topology or a sequence number that will never arrive are ready now,
+      // and are answered without invoking the command
+      checkForReadyTasks();
    }
 
    public boolean isStopped() {
