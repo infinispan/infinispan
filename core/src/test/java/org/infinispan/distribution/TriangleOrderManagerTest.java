@@ -60,6 +60,20 @@ public class TriangleOrderManagerTest extends AbstractInfinispanTest {
       }
    }
 
+   public void testNextDoesNotFailAfterSequenceTaken() {
+      TriangleOrderManager triangleOrderManager = new TriangleOrderManager(4);
+      DistributionManager mockDistributionManager = mock(DistributionManager.class);
+      // the topology changes right after the sequence number was taken
+      when(mockDistributionManager.getCacheTopology())
+            .thenReturn(mockCacheTopology(1))
+            .thenReturn(mockCacheTopology(2));
+      TestingUtil.inject(triangleOrderManager, mockDistributionManager);
+
+      // the caller must be able to send a noop command with the sequence number, so next() must return it
+      assertEquals(1, triangleOrderManager.next(0, 1));
+      assertEquals(1, triangleOrderManager.latestSent(0, 1));
+   }
+
    public void testSequence() {
       TriangleOrderManager triangleOrderManager = new TriangleOrderManager(4);
       DistributionManager mockDistributionManager = mock(DistributionManager.class);
