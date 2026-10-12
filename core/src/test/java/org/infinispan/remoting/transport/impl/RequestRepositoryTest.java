@@ -9,11 +9,13 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.time.ControlledTimeService;
+import org.infinispan.commons.util.concurrent.LifecycleRejectedExecutionHandler;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
@@ -26,6 +28,15 @@ import org.testng.annotations.Test;
 public class RequestRepositoryTest {
 
    private ScheduledExecutorService timeoutExecutor;
+
+   /**
+    * Creates an executor service mimicking the cache manager's timeout executor: once shut down it rejects new tasks by throwing {@link IllegalLifecycleStateException}.
+    */
+   private static ScheduledExecutorService newTimeoutExecutor() {
+      ScheduledThreadPoolExecutor result = new ScheduledThreadPoolExecutor(1);
+      result.setRejectedExecutionHandler(LifecycleRejectedExecutionHandler.getInstance());
+      return result;
+   }
 
    @AfterMethod
    public void tearDown() {
@@ -178,5 +189,65 @@ public class RequestRepositoryTest {
 
       assertThat(request.toCompletableFuture().get(10, TimeUnit.SECONDS))
             .isSameAs(SUCCESSFUL_EMPTY_RESPONSE);
+   }
+
+   /**
+    * Reproduces the production race: a request is created after both the repository has stopped and its timeout
+    * executor service has been shut down (as happens while stopping cache managers/transports). Creating the request
+    * must not throw, it must simply return an already-cancelled request.
+    */
+   public void testSingleSiteRequestDoesNotThrowAfterStopWithShutDownExecutor() {
+      String site = "NYC";
+      timeoutExecutor = newTimeoutExecutor();
+      RequestRepository repository = new RequestRepository(NoOpJGroupsMetricManager.INSTANCE, timeoutExecutor, null);
+
+      // Stop the repository and shut down its executor service as happens when stopping a cache manager/transport.
+      repository.stop();
+      timeoutExecutor.shutdown();
+
+      Request<String, ValidResponse<?>> request = repository.singleSiteRequest(
+            site, SingleResponseCollector.validOnly(), 500, TimeUnit.MILLISECONDS);
+
+      assertThatThrownBy(() -> request.toCompletableFuture().get(10, TimeUnit.SECONDS))
+            .isInstanceOf(ExecutionException.class)
+            .hasCauseInstanceOf(IllegalLifecycleStateException.class);
+   }
+
+   public void testMultiRequestDoesNotThrowAfterStopWithShutDownExecutor() {
+      Address self = Address.random();
+      Address target = Address.random();
+      timeoutExecutor = newTimeoutExecutor();
+      RequestRepository repository = new RequestRepository(NoOpJGroupsMetricManager.INSTANCE, timeoutExecutor, null);
+
+      repository.stop();
+      timeoutExecutor.shutdown();
+
+      Request<Address, Map<Address, Response>> request = repository.multiRequest(
+            List.of(self, target), self,
+            MapResponseCollector.ignoreLeavers(2), 500, TimeUnit.MILLISECONDS);
+
+      assertThatThrownBy(() -> request.toCompletableFuture().get(10, TimeUnit.SECONDS))
+            .isInstanceOf(ExecutionException.class)
+            .hasCauseInstanceOf(IllegalLifecycleStateException.class);
+   }
+
+   /**
+    * Reproduces the concurrent stop race: the executor service is shut down while requests are still being created.
+    * Scheduling the timeout task must fail gracefully and cancel the request instead of throwing from the factory method.
+    */
+   public void testSingleSiteRequestCancelledWhenTimeoutExecutorShutsDownConcurrently() {
+      String site = "NYC";
+      timeoutExecutor = newTimeoutExecutor();
+      RequestRepository repository = new RequestRepository(NoOpJGroupsMetricManager.INSTANCE, timeoutExecutor, null);
+
+      // Shut down the executor while the repository is still running: schedule() will be rejected.
+      timeoutExecutor.shutdown();
+
+      Request<String, ValidResponse<?>> request = repository.singleSiteRequest(
+            site, SingleResponseCollector.validOnly(), 500, TimeUnit.MILLISECONDS);
+
+      assertThatThrownBy(() -> request.toCompletableFuture().get(10, TimeUnit.SECONDS))
+            .isInstanceOf(ExecutionException.class)
+            .hasCauseInstanceOf(IllegalLifecycleStateException.class);
    }
 }

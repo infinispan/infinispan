@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.remoting.responses.Response;
@@ -162,13 +163,32 @@ public class RequestRepository implements Lifecycle {
    private <A, B> Request<A, B> handleRequest(AbstractRequest<A, B> request, long timeout, TimeUnit unit) {
       addRequest(request);
 
-      if (!running)
-         request.cancel(CONTAINER.cacheManagerIsStopping());
+      if (running && scheduleTimeout(request, timeout, unit))
+         return request;
 
-      if (timeout > 0 && timeoutExecutor != null)
-         request.setTimeout(timeoutExecutor, timeout, unit);
-
+      // The repository has stopped or the executor is shutting down concurrently: no responses can be collected any
+      // more and a timeout task could not run anyway, so cancel the request instead of throwing from this method.
+      request.cancel(CONTAINER.cacheManagerIsStopping());
       return request;
+   }
+
+   /**
+    * Schedules a timeout task on {@link #timeoutExecutor}, unless there is nothing to schedule (non-positive timeout or no executor).
+    *
+    * @return false if the executor has been shut down and the timeout could not be scheduled, true otherwise.
+    */
+   private boolean scheduleTimeout(AbstractRequest<?, ?> request, long timeout, TimeUnit unit) {
+      if (timeout <= 0 || timeoutExecutor == null)
+         return true;
+
+      try {
+         request.setTimeout(timeoutExecutor, timeout, unit);
+         return true;
+      } catch (IllegalLifecycleStateException e) {
+         // The executor is shutting down concurrently with us: handleRequest() will cancel the request.
+         log.tracef(e, "Could not schedule a timeout for request %s", request.getRequestId());
+         return false;
+      }
    }
 
    protected void addRequest(Request<?, ?> request) {
