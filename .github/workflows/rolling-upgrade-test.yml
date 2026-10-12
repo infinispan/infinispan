@@ -117,7 +117,7 @@ jobs:
       # This allows the main workflow to distinguish between matrix runs
       - name: Upload jacoco exec files
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: jacoco-files-rolling-upgrades-${{ inputs.name }}
           path: |
@@ -125,7 +125,7 @@ jobs:
 
       - name: Upload surefire test report
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: surefire-test-report-rolling-upgrades-${{ inputs.name }}
           path: |
@@ -137,7 +137,7 @@ jobs:
 
       - name: Upload log files
         if: (success() || failure())
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: log-files-rolling-upgrades-${{ inputs.name }}
           compression-level: 9
