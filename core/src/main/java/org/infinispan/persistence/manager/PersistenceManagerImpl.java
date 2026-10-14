@@ -108,6 +108,7 @@ import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.subjects.CompletableSubject;
 
 @Scope(Scopes.NAMED_CACHE)
 public class PersistenceManagerImpl implements PersistenceManager {
@@ -144,6 +145,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private volatile boolean clearOnStop;
    private volatile AutoCloseable availabilityTask;
    private volatile String unavailableExceptionMessage;
+
+   // Fails when stop begins.
+   private volatile CompletableSubject stopSignal = CompletableSubject.create();
 
    // We track pending submitted operations to the underlying stores.
    // These operations need to complete before stopping the stores.
@@ -208,6 +212,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public void start() {
       enabled = configuration.persistence().usingStores();
       segmentCount = configuration.clustering().hash().numSegments();
+      stopSignal = CompletableSubject.create();
 
       isInvalidationCache = configuration.clustering().cacheMode().isInvalidation();
       // Initialize even when no stores are configured at startup, as stores can be added dynamically (e.g. Hot Rod migration)
@@ -449,6 +454,25 @@ public class PersistenceManagerImpl implements PersistenceManager {
       });
    }
 
+   /**
+    * Tracks an operation that holds the read lock for its whole run, so the stop can find it.
+    *
+    * <p>
+    * Unlike {@link #deferReadLockRelease(CompletionStage, long)}, the operation releases the lock itself. The stage must
+    * cancel the operation when completed from outside, which releases the lock. A stage from RxJava's
+    * {@code toCompletionStage()} disposes its upstream on {@code completeExceptionally}, which runs the
+    * {@code using} disposer.
+    * </p>
+    *
+    * @param stage The stage of the running operation.
+    * @return A stage completing with the operation.
+    * @param <T> The result type.
+    */
+   private <T> CompletionStage<T> trackPendingOperation(CompletionStage<T> stage) {
+      pendingStages.add(stage);
+      return stage.whenComplete((ignore, t) -> pendingStages.remove(stage));
+   }
+
    @Override
    @Stop
    public void stop() {
@@ -462,20 +486,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
                pendingStages.size(), globalConfiguration.transport().distributedSyncTimeout());
       }
       long deadline = timeService.expectedEndTime(globalConfiguration.transport().distributedSyncTimeout(), MILLISECONDS);
-      long stamp;
-      CompletionStage<?> stage;
-      while ((stage = pendingStages.poll()) != null || (stamp = tryAcquireWriteLock()) == 0) {
-         if (stage != null) {
-            try {
-               awaitWithDeadline(stage, deadline);
-            } catch (ExecutionException | java.util.concurrent.TimeoutException e) {
-               stage.toCompletableFuture().completeExceptionally(new IllegalLifecycleStateException("Operation failed to complete during stop", e));
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
-               stage.toCompletableFuture().completeExceptionally(new IllegalLifecycleStateException("Thread interrupted while stopping", e));
-            }
-         }
-      }
+      long stamp = canFailPendingOnStop()
+            ? failPendingOperations()
+            : awaitPendingOperations(deadline);
+
       try {
          stopAvailabilityTask();
 
@@ -503,6 +517,119 @@ public class PersistenceManagerImpl implements PersistenceManager {
          log.warn("Exception stopping persistence stores", e);
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
+      }
+   }
+
+   /**
+    * Whether the stop can fail the pending store operations instead of waiting for them.
+    *
+    * <p>
+    * True for clustered caches whose writable stores are all purged on startup: the other owners keep the data, and
+    * the store contents are discarded on the next start anyway.
+    * </p>
+    *
+    * @return {@code true} to fail the pending operations on stop, {@code false} to wait for them.
+    */
+   private boolean canFailPendingOnStop() {
+      // Non-clustered node means this node owns the data.
+      if (!configuration.clustering().cacheMode().isClustered())
+         return false;
+
+      for (StoreConfiguration store : configuration.persistence().stores()) {
+         // Read-only stores don't accept writes and they won't purge, it would be fine to stop operations.
+         if (store.ignoreModifications())
+            continue;
+
+         // Shared store never purge either, so they are covered automatically.
+         // If the node will purge when starting, stopping operations fast is fine.
+         if (!store.purgeOnStartup())
+            return false;
+      }
+      return true;
+   }
+
+   /**
+    * Waits for the pending operations to complete and acquires the write lock.
+    *
+    * <p>
+    * Operations still pending at the deadline fail with {@link IllegalLifecycleStateException}, and the store
+    * publishers still open are ended.
+    * </p>
+    *
+    * @param deadline The time limit to wait for the pending operations.
+    * @return The write lock stamp.
+    */
+   private long awaitPendingOperations(long deadline) {
+      // Complete all pending operations before acquiring the write lock.
+      // If the write lock is not acquire, something is still holding the lock outside the pending stages.
+      long stamp;
+      CompletionStage<?> stage;
+      while ((stage = pendingStages.poll()) != null || (stamp = tryAcquireWriteLock()) == 0) {
+         if (stage != null) {
+            try {
+               awaitWithDeadline(stage, deadline);
+            } catch (ExecutionException | java.util.concurrent.TimeoutException e) {
+               stage.toCompletableFuture().completeExceptionally(new IllegalLifecycleStateException("Operation failed to complete during stop", e));
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+               stage.toCompletableFuture().completeExceptionally(new IllegalLifecycleStateException("Thread interrupted while stopping", e));
+            }
+         } else if (timeService.isTimeExpired(deadline)) {
+            // End the store publisher still open.
+            // The publishers should release their locks upon a cancellation so the stop can proceed with exclusive access.
+            signalStop();
+         } else {
+            // Some pseudo backoff.
+            Thread.onSpinWait();
+         }
+      }
+      return stamp;
+   }
+
+   /**
+    * Fails the pending operations with {@link IllegalLifecycleStateException} and acquires the write lock.
+    *
+    * <p>
+    * The callers receive the failure right away and can retry on another owner. The store keeps working on the
+    * operation in the background.
+    * </p>
+    *
+    * @return The write lock stamp.
+    */
+   private long failPendingOperations() {
+      // The publishers are not tracked as pending operations, let's cancel them first.
+      signalStop();
+
+      IllegalLifecycleStateException cause = new IllegalLifecycleStateException("Persistence manager is stopping for cache: " + cacheName);
+      long stamp;
+      CompletionStage<?> stage;
+      while ((stage = pendingStages.poll()) != null || (stamp = tryAcquireWriteLock()) == 0) {
+         if (stage != null) {
+            // Completing the stage exceptionally should proceed to release the lock inline.
+            stage.toCompletableFuture().completeExceptionally(cause);
+         } else {
+            Thread.onSpinWait();
+         }
+      }
+      return stamp;
+   }
+
+   private Flowable<Void> stoppedSignal() {
+      return Flowable.defer(() -> stopSignal.toFlowable());
+   }
+
+   /**
+    * Ends the store publishers still open with {@link IllegalLifecycleStateException}.
+    *
+    * <p>
+    * Publishers release the read lock when they end. Publishers subscribed afterward end before taking the lock.
+    * </p>
+    */
+   private void signalStop() {
+      CompletableSubject signal = stopSignal;
+      // RxJava reports a second error as UndeliverableException, e.g., when the cache stops twice.
+      if (!signal.hasThrowable()) {
+         signal.onError(new IllegalLifecycleStateException("Persistence manager is stopping for cache: " + cacheName));
       }
    }
 
@@ -889,8 +1016,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
                   }
                }
                return Flowable.empty();
-            },
-            this::releaseReadLock);
+            }, this::releaseReadLock)
+            .takeUntil(stoppedSignal());
    }
 
    @Override
@@ -937,7 +1064,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
                                }
                                return Flowable.empty();
                             },
-                            this::releaseReadLock);
+                            this::releaseReadLock)
+            .takeUntil(stoppedSignal());
    }
 
    @Override
@@ -1232,7 +1360,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    @Override
    public <K, V> CompletionStage<Void> writeEntries(Iterable<MarshallableEntry<K, V>> iterable,
          Predicate<? super StoreConfiguration> predicate) {
-      return Completable.using(
+      return trackPendingOperation(Completable.using(
             this::acquireReadLock,
             ignore -> {
                if (!checkStoreAvailability()) {
@@ -1260,7 +1388,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                      });
             },
             this::releaseReadLock
-      ).toCompletionStage(null);
+      ).toCompletionStage(null));
    }
 
    @Override
@@ -1287,7 +1415,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       boolean skipShared = !ctx.isOriginLocal()
             || removeAllCommand.hasAnyFlag(FlagBitSets.SKIP_SHARED_CACHE_STORE);
 
-      return Completable.using(
+      return trackPendingOperation(Completable.using(
             this::acquireReadLock,
             ignore -> {
                if (!checkStoreAvailability()) {
@@ -1316,7 +1444,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
                      });
             },
             this::releaseReadLock
-      ).toCompletionStage(null).thenApply(ignored -> removeCount);
+      ).toCompletionStage(null)).thenApply(ignored -> removeCount);
    }
 
    @Override
@@ -1340,7 +1468,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
     */
    private <K, V> CompletionStage<Long> batchOperation(Flowable<MVCCEntry<K, V>> mvccEntryFlowable, InvocationContext ctx,
          HandleFlowables<K, V> flowableHandler) {
-      return Single.using(
+      return trackPendingOperation(Single.using(
             this::acquireReadLock,
             ignore -> {
                if (!checkStoreAvailability()) {
@@ -1388,7 +1516,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
             },
             this::releaseReadLock
-      ).toCompletionStage();
+      ).toCompletionStage());
    }
 
    private <K, V> Flowable<NonBlockingStore.SegmentedPublisher<Object>> createRemoveFlowable(
