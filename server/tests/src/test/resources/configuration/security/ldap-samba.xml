@@ -1,6 +1,6 @@
 <security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="urn:infinispan:server:16.3 https://infinispan.org/schemas/infinispan-server-16.3.xsd"
-          xmlns="urn:infinispan:server:16.3">
+          xsi:schemaLocation="urn:infinispan:server:16.0 https://infinispan.org/schemas/infinispan-server-16.0.xsd"
+          xmlns="urn:infinispan:server:16.0">
    <security-realms>
       <security-realm name="default">
          <!-- Active Directory stores only write-only password hashes, so the realm
