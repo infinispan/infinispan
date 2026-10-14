@@ -1,6 +1,7 @@
 package org.infinispan.globalstate.impl;
 
 import static org.infinispan.util.logging.Log.CONFIG;
+import static org.infinispan.util.logging.Log.CONTAINER;
 
 import java.lang.invoke.MethodHandles;
 import java.util.EnumSet;
@@ -10,8 +11,11 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.api.CacheContainerAdmin;
@@ -22,6 +26,7 @@ import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.configuration.io.ConfigurationSchemaVersion;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.internal.InternalCacheNames;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.ConfigurationManager;
@@ -36,6 +41,8 @@ import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.configuration.parsing.Schema;
 import org.infinispan.container.impl.SharedContainerMaps;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -57,6 +64,7 @@ import org.infinispan.security.RolePermissionMapper;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ByteString;
+import org.infinispan.util.concurrent.ActionSequencer;
 import org.infinispan.util.concurrent.BlockingManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -102,11 +110,23 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
    CacheStartupManager cacheStartupManager;
    @Inject
    Transport transport;
+   @Inject @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR)
+   ExecutorService blockingExecutor;
+   @Inject
+   TimeService timeService;
 
    private Cache<ScopedState, Object> stateCache;
    private ParserRegistry parserRegistry;
    private LocalConfigurationStorage localConfigurationManager;
    private GlobalStateManager globalStateManager;
+
+   // Orders the local application of each entry in the CONFIG cache between startup and the listener.
+   private ActionSequencer configSequencer;
+   // CONFIG entries the listener applied while postStart() defines the configurations it read from the CONFIG cache:
+   // the entries received with the CONFIG state and the values returned when re-asserting the persisted caches.
+   // The listener's value is at least as recent as the one startup read, so startup skips them.
+   // Set to null once startup has defined all of them.
+   private volatile Set<ScopedState> concurrentUpdates = ConcurrentHashMap.newKeySet();
 
    static boolean isKnownScope(String scope) {
       return ScopeType.fromString(scope) != null;
@@ -114,6 +134,9 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
 
    @Override
    public void postStart() {
+      // Contended operations over the same configurations will run on the blocking executor.
+      // Uncontended registration runs on the callers thread.
+      configSequencer = new ActionSequencer(blockingExecutor, false, timeService);
       switch (configurationManager.getGlobalConfiguration().globalState().configurationStorage()) {
          case IMMUTABLE:
             this.localConfigurationManager = new ImmutableLocalConfigurationStorage();
@@ -143,36 +166,44 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       staticCacheNames.removeAll(internalCacheRegistry.getInternalCacheNames());
 
       localConfigurationManager.initialize(cacheManager, configurationManager, blockingManager);
-
-      // Install the global state listener
-      GlobalConfigurationStateListener stateCacheListener = new GlobalConfigurationStateListener(this);
-      getStateCache().addListener(stateCacheListener);
+      globalStateManager = GlobalComponentRegistry.componentOf(cacheManager, GlobalStateManager.class);
 
       // Load the persisted configurations
       Map<String, Configuration> persistedTemplates = localConfigurationManager.loadAllTemplates();
       Map<String, Configuration> persistedCaches = localConfigurationManager.loadAllCaches();
 
-      globalStateManager = GlobalComponentRegistry.componentOf(cacheManager, GlobalStateManager.class);
+      // Install the global state listener after loading the local information.
+      GlobalConfigurationStateListener stateCacheListener = new GlobalConfigurationStateListener(this);
+      getStateCache().addListener(stateCacheListener);
 
       Set<String> persistedCacheNames = new HashSet<>();
       getStateCache().forEach((key, v) -> {
          ScopeType scopeType = ScopeType.fromString(key.getScope());
-         if (scopeType != null) {
+         if (scopeType == null)
+            return;
+
+         CompletionStage<Void> cs = configSequencer.orderOnKey(key, () -> {
             String name = key.getName();
+            // The listener already applied a value at least as recent as v, or removed the entry.
+            // Do not overwrite the cluster decision by loading the local value.
+            if (concurrentUpdates.contains(key))
+               return CompletableFutures.completedNull();
+
             CacheState state = (CacheState) v;
-            switch (scopeType) {
-               case CONTAINER -> CompletionStages.join(updateGlobalConfigurationLocally(state));
+            return switch (scopeType) {
+               case CONTAINER -> updateGlobalConfigurationLocally(state);
                case CACHE -> {
                   ensureClusterCompatibility(name, state, persistedCaches);
-                  CompletionStages.join(createConfigurationLocally(name, state));
                   persistedCacheNames.add(name);
+                  yield createConfigurationLocally(name, state);
                }
                case TEMPLATE -> {
                   ensureClusterCompatibility(name, state, persistedTemplates);
-                  CompletionStages.join(createTemplateLocally(name, state));
+                  yield createTemplateLocally(name, state);
                }
-            }
-         }
+            };
+         });
+         CompletionStages.join(cs);
       });
 
       EnumSet<CacheContainerAdmin.AdminFlag> adminFlags = EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class);
@@ -187,24 +218,147 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       // Create the caches: define the configurations and collect the cache names.
       persistedCaches.forEach((name, configuration) -> {
          ensurePersistenceCompatibility(name, configuration);
+         ScopedState key = new ScopedState(ScopeType.CACHE.toString(), name);
          // The cache configuration was permanent, it still needs to be
          CompletionStages.join(createCacheInternal(name, null, configuration, adminFlags)
                .thenCompose(r -> {
-                  if (r instanceof CacheState) {
-                     Configuration remoteConf = buildConfiguration(name, ((CacheState) r).getConfiguration(), false);
-                     ensurePersistenceCompatibility(name, configuration, remoteConf);
-                     return createConfigurationLocally(name, (CacheState) r);
-                  }
-                  return CompletableFutures.completedNull();
+                  if (!(r instanceof CacheState state))
+                     return CompletableFutures.completedNull();
+
+                  Configuration remoteConf = buildConfiguration(name, state.getConfiguration(), false);
+                  ensurePersistenceCompatibility(name, configuration, remoteConf);
+                  return configSequencer.orderOnKey(key, () -> {
+                     // The listener already applied a value at least as recent as `r`, or removed the configuration.
+                     // Do not overwrite the cluster decision.
+                     if (concurrentUpdates.contains(key))
+                        return CompletableFutures.completedNull();
+
+                     return createConfigurationLocally(name, state);
+                  });
                }));
          persistedCacheNames.add(name);
       });
+      concurrentUpdates = null;
 
       // Start the caches after the configuration is defined.
       Set<String> allUserCaches = new HashSet<>(staticCacheNames);
       allUserCaches.addAll(persistedCacheNames);
       log.debugf("Starting user defined caches: %s", allUserCaches);
       CompletionStages.join(cacheStartupManager.startUserCaches(allUserCaches));
+   }
+
+   /**
+    * Applies a CONFIG cache event locally, after any previous local application of the same entry has completed.
+    *
+    * <p>
+    * Only for listener events: while the node is starting, the entry is recorded so that startup does not apply the
+    * older value it read for it.
+    * </p>
+    *
+    * @param key The entry updated in the config cache.
+    * @param action The action to perform over the entry.
+    * @return A completion stage from the action execution.
+    */
+   private CompletionStage<Void> orderOnEntry(ScopedState key, Callable<CompletionStage<Void>> action) {
+      return configSequencer.orderOnKey(key, () -> {
+         Set<ScopedState> applied = concurrentUpdates;
+         if (applied != null)
+            applied.add(key);
+         return action.call();
+      });
+   }
+
+   /**
+    * Applies locally a CONFIG entry created in the cluster.
+    *
+    * <p>
+    * The local application is ordered with any other application of the same entry, from the listener or from startup.
+    * </p>
+    *
+    * @param key The entry created in the CONFIG cache.
+    * @param state The value of the created entry.
+    * @return A stage that completes once the entry is applied locally.
+    */
+   CompletionStage<Void> createLocally(ScopedState key, CacheState state) {
+      ScopeType st = ScopeType.fromString(key.getScope());
+      if (st == null)
+         return CompletableFutures.completedNull();
+
+      String name = key.getName();
+      return orderOnEntry(key, () -> switch (st) {
+         case CONTAINER -> updateGlobalConfigurationLocally(state);
+         case CACHE -> startCacheLocally(name, state);
+         case TEMPLATE -> createTemplateLocally(name, state);
+      });
+   }
+
+   /**
+    * Applies locally a CONFIG entry updated in the cluster.
+    *
+    * <p>
+    * The local application is ordered with any other application of the same entry. If the configuration is not
+    * defined locally yet, the update is applied as a create.
+    * </p>
+    *
+    * @param key The entry updated in the CONFIG cache.
+    * @param state The new value of the entry.
+    * @return A stage that completes once the entry is applied locally.
+    */
+   CompletionStage<Void> updateLocally(ScopedState key, CacheState state) {
+      ScopeType st = ScopeType.fromString(key.getScope());
+      if (st == null)
+         return CompletableFutures.completedNull();
+
+      String name = key.getName();
+      return orderOnEntry(key, () -> {
+         if (st == ScopeType.CONTAINER)
+            return updateGlobalConfigurationLocally(state);
+
+         // While a node is starting, it might receive an update for something not defined locally yet.
+         // For example, an entry updated but not received through state transfer.
+         if (SecurityActions.getCacheConfiguration(cacheManager, name) == null) {
+            return st == ScopeType.CACHE
+                  ? startCacheLocally(name, state)
+                  : createTemplateLocally(name, state);
+         }
+
+         return updateConfigurationLocally(name, state);
+      });
+   }
+
+   /**
+    * Removes locally a cache or template whose CONFIG entry was removed in the cluster.
+    *
+    * <p>
+    * The local removal is ordered with any other application of the same entry.
+    * </p>
+    *
+    * @param key The entry removed from the CONFIG cache.
+    * @return A stage that completes once the cache or template is removed locally.
+    */
+   CompletionStage<Void> removeLocally(ScopedState key) {
+      ScopeType st = ScopeType.fromString(key.getScope());
+      if (st == null || st == ScopeType.CONTAINER)
+         return CompletableFutures.completedNull();
+
+      String name = key.getName();
+      return orderOnEntry(key, () -> {
+         if (st == ScopeType.CACHE) {
+            CONTAINER.debugf("Stopping cache %s because it was removed from global state", name);
+            return removeCacheLocally(name);
+         }
+         CONTAINER.debugf("Removing template %s because it was removed from global state", name);
+         return removeTemplateLocally(name);
+      });
+   }
+
+   private CompletionStage<Void> startCacheLocally(String name, CacheState state) {
+      CompletionStage<Void> cs = createCacheLocally(name, state);
+      // Zero capacity nodes have to wait for a non-zero capacity node to start the cache.
+      // Do not wait for the start, otherwise the entry stays held in the sequencer and blocks the listener.
+      return configurationManager.getGlobalConfiguration().isZeroCapacityNode()
+            ? CompletableFutures.completedNull()
+            : cs;
    }
 
    private void ensureClusterCompatibility(String name, CacheState state, Map<String, Configuration> configs) {
@@ -399,25 +553,25 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       }
    }
 
-   CompletionStage<Void> createTemplateLocally(String name, CacheState state) {
+   private CompletionStage<Void> createTemplateLocally(String name, CacheState state) {
       Configuration configuration = buildConfiguration(name, state.getConfiguration(), true);
       return createTemplateLocally(name, configuration, state.getFlags());
    }
 
-   CompletionStage<Void> createTemplateLocally(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   private CompletionStage<Void> createTemplateLocally(String name, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       log.debugf("Creating template %s from global state", name);
       return localConfigurationManager.createTemplate(name, configuration, flags)
             .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, ConfigurationChangedEvent.TEMPLATE, name, null))
             .toCompletableFuture();
    }
 
-   CompletionStage<Void> createConfigurationLocally(String name, CacheState state) {
+   private CompletionStage<Void> createConfigurationLocally(String name, CacheState state) {
       Configuration configuration = buildConfiguration(name, state.getConfiguration(), false);
       applyLocalAttributes(name, configuration);
       return createConfigurationLocally(name, state.getTemplate(), configuration, state.getFlags());
    }
 
-   CompletionStage<Void> createConfigurationLocally(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   private CompletionStage<Void> createConfigurationLocally(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       log.debugf("Defining cache configuration %s from global state", name);
       return localConfigurationManager.defineCacheConfiguration(name, template, configuration, flags)
             .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(
@@ -425,7 +579,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
             ));
    }
 
-   CompletionStage<Void> createCacheLocally(String name, CacheState state) {
+   private CompletionStage<Void> createCacheLocally(String name, CacheState state) {
       Configuration configuration = buildConfiguration(name, state.getConfiguration(), false);
       applyLocalAttributes(name, configuration);
       return createCacheLocally(name, state.getTemplate(), configuration, state.getFlags());
@@ -446,7 +600,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       globalStateManager.writeScopedState(scopedState);
    }
 
-   CompletionStage<Void> createCacheLocally(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+   private CompletionStage<Void> createCacheLocally(String name, String template, Configuration configuration, EnumSet<CacheContainerAdmin.AdminFlag> flags) {
       log.debugf("Creating cache %s from global state", name);
       return localConfigurationManager.createCache(name, template, configuration, flags)
             .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.CREATE, ConfigurationChangedEvent.CACHE, name, null))
@@ -459,7 +613,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       return localConfigurationManager.validateConfigurationUpdate(name, configuration, state.getFlags());
    }
 
-   CompletionStage<Void> updateConfigurationLocally(String name, CacheState state) {
+   private CompletionStage<Void> updateConfigurationLocally(String name, CacheState state) {
       log.debugf("Updating configuration %s from global state", name);
       Configuration configuration = buildConfiguration(name, state.getConfiguration(), false);
       return localConfigurationManager.updateConfiguration(name, configuration, state.getFlags())
@@ -504,7 +658,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       return CompletableFutures.completedNull();
    }
 
-   CompletionStage<Void> updateGlobalConfigurationLocally(CacheState state) {
+   private CompletionStage<Void> updateGlobalConfigurationLocally(CacheState state) {
       log.debugf("Updating global configuration from global state");
       GlobalConfiguration live = configurationManager.getGlobalConfiguration();
       Properties attrs = loadProperties(state.getConfiguration());
@@ -570,13 +724,13 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       return getStateCache().removeAsync(new ScopedState(ScopeType.TEMPLATE.toString(), name)).thenCompose((r) -> CompletableFutures.completedNull());
    }
 
-   CompletionStage<Void> removeCacheLocally(String name) {
+   private CompletionStage<Void> removeCacheLocally(String name) {
       globalStateManager.deleteScopedState(LOCAL_ATTRS_SCOPE_PREFIX + name);
       return localConfigurationManager.removeCache(name, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class))
             .thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, ConfigurationChangedEvent.CACHE, name, null));
    }
 
-   CompletionStage<Void> removeTemplateLocally(String name) {
+   private CompletionStage<Void> removeTemplateLocally(String name) {
       return localConfigurationManager.removeTemplate(name, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class)).thenCompose(v -> cacheManagerNotifier.notifyConfigurationChanged(ConfigurationChangedEvent.EventType.REMOVE, ConfigurationChangedEvent.TEMPLATE, name, null));
    }
 }
