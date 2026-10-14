@@ -14,7 +14,7 @@ public class RollingUpgradeTestUtil {
    private static final String INFINISPAN_OLD_VERSION = "infinispan.old.version";
 
    public static RollingUpgradeVersion getFromVersion() {
-      String label = normalizeImageReference(System.getProperty(INFINISPAN_ROLLING_UPGRADE_FROM_VERSION, "latest"));
+      String label = normalizeImageReference(System.getProperty(INFINISPAN_ROLLING_UPGRADE_FROM_VERSION, Version.getMajorMinor()));
       String version = System.getProperty(INFINISPAN_OLD_VERSION);
       if (version == null) {
          version = extractVersionFromImageLabel(label);
