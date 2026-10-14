@@ -199,7 +199,7 @@ public class RollingUpgradeHandler {
    /**
     * Similar to {@link #performUpgrade(RollingUpgradeConfiguration)} except that it will stop processing the upgrade
     * after it has a mixed cluster of 1 new and (n-1) old nodes. This allows for processing operations during this
-    * period. When done you should complete the Future when it can proceed or set it's exception in whic case it will
+    * period. When done you should complete the Future when it can proceed or set its exception in which case it will
     * clean up early.
     *
     * @param configuration the configuration to use
