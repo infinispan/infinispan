@@ -217,7 +217,7 @@
       <versionx.org.codehaus.mojo.versions-maven-plugin>2.22.0</versionx.org.codehaus.mojo.versions-maven-plugin>
       <versionx.org.codehaus.mojo.xml-maven-plugin>1.2.2</versionx.org.codehaus.mojo.xml-maven-plugin>
       <versionx.org.javassist.javassist>3.29.1-GA</versionx.org.javassist.javassist>
-      <versionx.org.jboss.arquillian.container.arquillian-weld-embedded>4.0.0.Final</versionx.org.jboss.arquillian.container.arquillian-weld-embedded>
+      <versionx.org.jboss.arquillian.container.arquillian-weld-embedded>4.0.1.Final</versionx.org.jboss.arquillian.container.arquillian-weld-embedded>
       <versionx.org.jboss.jboss-common-core>2.5.0.Final</versionx.org.jboss.jboss-common-core>
       <versionx.org.jboss.jboss-transaction-spi>8.0.0.Final</versionx.org.jboss.jboss-transaction-spi>
       <versionx.org.jboss.logging.jboss-logging-processor>3.0.4.Final</versionx.org.jboss.logging.jboss-logging-processor>
@@ -226,7 +226,7 @@
       <versionx.org.jboss.weld.weld-core-impl>5.1.7.Final</versionx.org.jboss.weld.weld-core-impl>
       <versionx.org.jboss.weld.weld-api>5.0.SP3</versionx.org.jboss.weld.weld-api>
       <versionx.org.mariadb.jdbc>3.5.10</versionx.org.mariadb.jdbc>
-      <versionx.org.postgresql>42.7.13</versionx.org.postgresql>
+      <versionx.org.postgresql>42.7.14</versionx.org.postgresql>
       <versionx.org.testcontainers.testcontainers>2.0.5</versionx.org.testcontainers.testcontainers>
       <!-- Test dependency. Careful about GraalVM metadata repository -->
       <versionx.com.github.docker-java>3.7.1</versionx.com.github.docker-java>

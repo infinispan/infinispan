@@ -97,7 +97,7 @@
       <version.insights>2.0.4</version.insights>
       <version.io.agroal>2.8.2</version.io.agroal>
       <version.io.lettuce>6.8.2.RELEASE</version.io.lettuce>
-      <version.vertx>4.5.34</version.vertx>
+      <version.vertx>4.5.35</version.vertx>
       <version.io.mashona>1.1.0</version.io.mashona>
       <version.jackson>2.22.3</version.jackson>
       <version.jackson.annotations>2.22</version.jackson.annotations>
@@ -133,7 +133,7 @@
       <version.micrometer>1.17.1</version.micrometer>
       <version.mockito>5.24.0</version.mockito>
       <version.nashorn>15.7</version.nashorn>
-      <version.netty>4.1.138.Final</version.netty>
+      <version.netty>4.1.139.Final</version.netty>
       <version.netty.incubator.iouring>0.0.26.Final</version.netty.incubator.iouring>
       <version.openjdk.jmh>1.37</version.openjdk.jmh>
       <version.org.wildfly.arquillian>5.1.0.Final</version.org.wildfly.arquillian>
@@ -201,7 +201,7 @@
       <version.maven.help>3.5.2</version.maven.help>
       <version.maven.install>3.1.4</version.maven.install>
       <version.maven.invoker>3.10.1</version.maven.invoker>
-      <version.maven.japicmp>0.26.2</version.maven.japicmp>
+      <version.maven.japicmp>0.26.3</version.maven.japicmp>
       <version.maven.jar>3.5.1</version.maven.jar>
       <version.maven-plugin-plugin>3.16.0</version.maven-plugin-plugin>
       <version.maven.project-info-reports>3.9.0</version.maven.project-info-reports>
@@ -213,7 +213,7 @@
       <version.maven.source>3.4.0</version.maven.source>
       <version.maven.surefire>3.5.6</version.maven.surefire>
       <version.maven.war>3.5.1</version.maven.war>
-      <version.org.jboss.galleon>7.0.10.Final</version.org.jboss.galleon>
+      <version.org.jboss.galleon>7.0.11.Final</version.org.jboss.galleon>
       <version.org.wildfly.galleon-plugins>7.4.0.Final</version.org.wildfly.galleon-plugins>
       <version.pmd.plugin>3.28.0</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>9.2.0</version.owasp-dependency-check-plugin>
