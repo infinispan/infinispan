@@ -290,7 +290,7 @@ jobs:
   operator-main:
     needs: [images, release]
     if: ${{ !contains(needs.release.outputs.version, '.Dev') }}
-    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@a9ed7c78b0261a61f7ef145d492d536462307587 # main
+    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@5af8cfb3df84c16bff29c10f2c232787d75b36f5 # main
     secrets: inherit
     with:
       image: quay.io/infinispan/server:${{ needs.release.outputs.version }}
@@ -323,7 +323,7 @@ jobs:
     needs: [published, release]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
         id: app-token
         with:
             client-id: ${{ secrets.GH_APP_ISPN_ID }}

@@ -161,7 +161,7 @@ jobs:
             !**/*[:"<>\*\?]*.log
       - name: Publish Test Report
         if: always()
-        uses: ctrf-io/github-test-reporter@7974087018bf4857cf5a9d78723e152038c3fa31 # v1
+        uses: ctrf-io/github-test-reporter@dbb08957b5b2af918b39136ab2c5532002c7649b # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
