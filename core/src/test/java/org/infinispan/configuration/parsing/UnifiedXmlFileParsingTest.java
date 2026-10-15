@@ -583,6 +583,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
             c = getConfiguration(holder, "invalid");
             assertEquals(CacheMode.INVALIDATION_SYNC, c.clustering().cacheMode());
+            assertEquals(35000, c.clustering().remoteTimeout());
             assertTrue(c.invocationBatching().enabled());
             assertTrue(c.statistics().enabled());
             assertEquals(30500, c.locking().lockAcquisitionTimeout());

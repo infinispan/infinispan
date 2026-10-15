@@ -53,6 +53,13 @@ public class JwtConfigurationBuilder implements Builder<JwtConfiguration> {
       return this;
    }
 
+   /**
+    * Sets the lifetime of cached JSON Web Keys retrieved from a JKU URL.
+    * This does not limit the duration of a key fetch and is independent of the connection and read timeouts.
+    *
+    * @param timeout cache lifetime, with optional time units
+    * @return this builder
+    */
    public JwtConfigurationBuilder jkuTimeout(String timeout) {
       attributes.attribute(JKU_TIMEOUT).set(TimeQuantity.valueOf(timeout));
       return this;

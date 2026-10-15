@@ -10,6 +10,7 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
+import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -71,6 +72,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    /**
     * Timeout(millis) used for replicating calls to other sites.
+    * For synchronous backups, the timeout must be greater than zero milliseconds.
     */
    public BackupConfigurationBuilder replicationTimeout(long milliseconds) {
       attributes.attribute(REPLICATION_TIMEOUT).set(TimeQuantity.valueOf(milliseconds));
@@ -79,6 +81,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    /**
     * Same as {@link #replicationTimeout(long)} but supporting time units.
+    * For synchronous backups, the timeout must resolve to more than zero milliseconds.
     *
     */
    public BackupConfigurationBuilder replicationTimeout(String timeQuantity) {
@@ -138,6 +141,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    @Override
    public void validate() {
+      BackupConfiguration.validateReplicationTimeout(strategy(), attributes.attribute(REPLICATION_TIMEOUT).get());
       takeOfflineBuilder.validate();
       stateTransferBuilder.validate();
       String siteName = attributes.attribute(SITE).get();
@@ -177,10 +181,33 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
       if (attributes.attribute(USE_TWO_PHASE_COMMIT).get() && asyncStrategy) {
          throw CONFIG.twoPhaseCommitAsyncBackup();
       }
+
+      if (getBuilder() != null && !asyncStrategy) {
+         CacheMode cacheMode = clustering().cacheMode();
+         if (cacheMode.isDistributed() || cacheMode.isReplicated()) {
+            Attribute<TimeQuantity> replTimeoutAttr = attributes.attribute(REPLICATION_TIMEOUT);
+            Attribute<TimeQuantity> remoteTimeoutAttr = clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT);
+            long replTimeoutVal = replTimeoutAttr.get().longValue();
+            long remoteTimeoutVal = remoteTimeoutAttr.get().longValue();
+            Attribute<TimeQuantity> lockTimeoutAttr = locking().attributes().attribute(LockingConfiguration.LOCK_ACQUISITION_TIMEOUT);
+            long lockTimeoutVal = lockTimeoutAttr.get().longValue();
+            if (lockTimeoutVal > 0 && (replTimeoutVal < 0 || replTimeoutVal >= lockTimeoutVal)) {
+               CONFIG.backupReplicationTimeoutTooLong(siteName, replTimeoutAttr.get().toString(), lockTimeoutAttr.get().toString());
+            }
+            if (remoteTimeoutVal >= 0) {
+               if (replTimeoutVal < 0 || remoteTimeoutVal < replTimeoutVal) {
+                  throw CONFIG.invalidBackupReplicationTimeout(remoteTimeoutAttr.get().toString(), siteName, replTimeoutAttr.get().toString());
+               } else if (remoteTimeoutVal == replTimeoutVal) {
+                  CONFIG.remoteTimeoutEqualsBackupReplicationTimeout(remoteTimeoutAttr.get().toString(), siteName, replTimeoutAttr.get().toString());
+               }
+            }
+         }
+      }
    }
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
+      BackupConfiguration.validateReplicationTimeout(strategy(), attributes.attribute(REPLICATION_TIMEOUT).get());
       takeOfflineBuilder.validate(globalConfig);
       stateTransferBuilder.validate(globalConfig);
    }

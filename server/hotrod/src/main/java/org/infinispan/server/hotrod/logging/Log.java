@@ -117,4 +117,11 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Listener Bloom filter limit is invalid: max-bloom-filter-bits (%d) must be positive", id = 6032)
    CacheConfigurationException invalidMaxBloomFilterBits(int maxBits);
+
+   @Message(value = "Topology cache replication timeout (%s) cannot be less than lock acquisition timeout (%s)", id = 6033)
+   CacheConfigurationException invalidTopologyTimeout(String replTimeout, String lockTimeout);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Topology cache replication timeout (%s) is equal to lock acquisition timeout (%s). Replication timeouts may mask lock acquisition timeouts.", id = 6031)
+   void topologyReplTimeoutEqualsLockTimeout(String replTimeout, String lockTimeout);
 }

@@ -178,6 +178,8 @@ public class NoLockLostOnLongTxTest extends MultipleCacheManagersTest {
          @Override
          public ConfigurationBuilder config() {
             ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+            builder.clustering().remoteTimeout(5000);
+            builder.locking().lockAcquisitionTimeout(1000);
             builder.transaction()
                   .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
                   .lockingMode(LockingMode.PESSIMISTIC)
@@ -204,6 +206,8 @@ public class NoLockLostOnLongTxTest extends MultipleCacheManagersTest {
          @Override
          public ConfigurationBuilder config() {
             ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+            builder.clustering().remoteTimeout(5000);
+            builder.locking().lockAcquisitionTimeout(1000);
             builder.transaction()
                   .transactionManagerLookup(new EmbeddedTransactionManagerLookup())
                   .lockingMode(LockingMode.OPTIMISTIC)

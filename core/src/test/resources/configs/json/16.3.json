@@ -338,6 +338,7 @@
         "invalid": {
           "invalidation-cache": {
             "mode": "SYNC",
+            "remote-timeout": "35000",
             "statistics": true,
             "locking": {
               "concurrency-level": "2500",
@@ -365,6 +366,7 @@
             "segments": "16",
             "key-partitioner": "org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner",
             "mode": "SYNC",
+            "remote-timeout": "35000",
             "statistics": true,
             "encoding": {
               "key": {
@@ -959,6 +961,7 @@
         "invalidation-template": {
           "invalidation-cache-configuration": {
             "mode": "SYNC",
+            "remote-timeout": "35000",
             "statistics": true,
             "locking": {
               "concurrency-level": "2500",
@@ -985,6 +988,7 @@
           "invalidation-cache": {
             "configuration": "invalidation-template",
             "mode": "SYNC",
+            "remote-timeout": "35000",
             "statistics": true,
             "locking": {
               "concurrency-level": "2500",
@@ -1012,6 +1016,7 @@
             "segments": "200",
             "key-partitioner": "org.infinispan.distribution.ch.impl.HashFunctionPartitioner",
             "mode": "SYNC",
+            "remote-timeout": "35000",
             "statistics": true,
             "encoding": {
               "key": {

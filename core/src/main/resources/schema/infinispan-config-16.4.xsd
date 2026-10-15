@@ -1850,6 +1850,7 @@
           <xs:annotation>
             <xs:documentation>
               In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown.
+              The value must be greater than zero milliseconds. Infinite timeouts are not supported.
               You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
           </xs:annotation>
@@ -2462,6 +2463,7 @@
       <xs:annotation>
         <xs:documentation>
           Specifies timeout, in milliseconds, for synchronous and asynchronous backup operations.
+          For synchronous backups, the value must be greater than zero milliseconds; infinite timeouts are not supported.
           You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
         </xs:documentation>
       </xs:annotation>

@@ -15,6 +15,7 @@ import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.globalstate.GlobalConfigurationManager;
 import org.infinispan.remoting.transport.NodeVersion;
 import org.infinispan.remoting.transport.Transport;
@@ -130,9 +131,12 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
    public void updateConfigurationAttribute(String cacheName, String attributeName, String attributeValue) {
       authorizer.checkPermission(subject, AuthorizationPermission.CREATE);
       Cache<Object, Object> cache = cacheManager.getCache(cacheName);
-      Configuration config = SecurityActions.getCacheConfiguration(cache.getAdvancedCache());
+      // Validate a detached copy so a rejected update cannot change the running cache.
+      Configuration config = new ConfigurationBuilder()
+            .read(SecurityActions.getCacheConfiguration(cache.getAdvancedCache())).build(false);
       Attribute<?> attribute = config.findAttribute(attributeName);
       attribute.fromString(attributeValue);
+      new ConfigurationBuilder().read(config).validate();
       EnumSet<AdminFlag> newFlags = flags.clone();
       newFlags.add(CacheContainerAdmin.AdminFlag.UPDATE);
       join(clusterConfigurationManager.getOrCreateCache(cacheName, config, newFlags));

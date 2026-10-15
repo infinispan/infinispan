@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.distribution.MagicKey;
 import org.testng.annotations.Test;
@@ -14,10 +15,19 @@ import org.testng.annotations.Test;
 @Test(testName = "container.versioning.DistL1WriteSkewTest", groups = "functional")
 public class DistL1WriteSkewTest extends DistWriteSkewTest {
    @Override
+   protected GlobalConfigurationBuilder defaultGlobalConfigurationBuilder() {
+      GlobalConfigurationBuilder builder = super.defaultGlobalConfigurationBuilder();
+      builder.transport().distributedSyncTimeout(5, TimeUnit.MINUTES);
+      return builder;
+   }
+
+   @Override
    protected void decorate(ConfigurationBuilder builder) {
       // Enable L1
       builder.clustering().l1().enable();
       builder.clustering().remoteTimeout(4, TimeUnit.MINUTES);
+      builder.clustering().stateTransfer().timeout(5, TimeUnit.MINUTES);
+      builder.transaction().completedTxTimeout(TimeUnit.MINUTES.toMillis(5));
    }
 
    @Test

@@ -18,7 +18,17 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
    public static final AttributeDefinition<CacheType> CACHE_TYPE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TYPE, CacheType.LOCAL).immutable().autoPersist(false).build();
    public static final AttributeDefinition<Boolean> CACHE_SYNC = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.MODE, true, Boolean.class).immutable().autoPersist(false).build();
    public static final AttributeDefinition<TimeQuantity> REMOTE_TIMEOUT =
-         AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.REMOTE_TIMEOUT, TimeQuantity.valueOf("15s")).parser(TimeQuantity.PARSER).build();
+         AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.REMOTE_TIMEOUT, TimeQuantity.valueOf("15s"))
+               .parser((type, value) -> validateRemoteTimeout(TimeQuantity.valueOf(value)))
+               .validator(ClusteringConfiguration::validateRemoteTimeout).build();
+
+   private static TimeQuantity validateRemoteTimeout(TimeQuantity timeout) {
+      if (timeout.longValue() <= 0) {
+         throw org.infinispan.commons.logging.Log.CONFIG.attributeMustBeGreaterThanZero(timeout,
+               org.infinispan.configuration.parsing.Attribute.REMOTE_TIMEOUT);
+      }
+      return timeout;
+   }
 
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(ClusteringConfiguration.class, CACHE_TYPE, CACHE_SYNC, REMOTE_TIMEOUT);
@@ -53,6 +63,7 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
    /**
     * This is the timeout used to wait for an acknowledgment when making a remote call, after which
     * the call is aborted and an exception is thrown.
+    * The timeout must be greater than zero milliseconds; infinite timeouts are not supported.
     */
    public long remoteTimeout() {
       return remoteTimeout.get().longValue();
@@ -61,13 +72,22 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
    /**
     * This is the timeout used to wait for an acknowledgment when making a remote call, after which
     * the call is aborted and an exception is thrown.
+    *
+    * @param timeoutMillis timeout in milliseconds, strictly greater than zero
+    * @throws org.infinispan.commons.CacheConfigurationException if the timeout is not positive
     */
    public void remoteTimeout(long timeoutMillis) {
-      remoteTimeout.set(TimeQuantity.valueOf(timeoutMillis));
+      remoteTimeout.set(validateRemoteTimeout(TimeQuantity.valueOf(timeoutMillis)));
    }
 
+   /**
+    * Sets the remote call timeout, with optional time units.
+    *
+    * @param timeout timeout that must resolve to more than zero milliseconds
+    * @throws org.infinispan.commons.CacheConfigurationException if the timeout is not positive
+    */
    public void remoteTimeout(String timeout) {
-      remoteTimeout.set(TimeQuantity.valueOf(timeout));
+      remoteTimeout.set(validateRemoteTimeout(TimeQuantity.valueOf(timeout)));
    }
 
    /**
@@ -112,6 +132,7 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
 
    @Override
    public void update(String parentName, ClusteringConfiguration other) {
+      REMOTE_TIMEOUT.validate(other.remoteTimeout.get());
       if (this.cacheMode == CacheMode.LOCAL && other.cacheMode == CacheMode.LOCAL) {
          return;
       }
@@ -121,6 +142,7 @@ public class ClusteringConfiguration extends ConfigurationElement<ClusteringConf
 
    @Override
    public void validateUpdate(String parentName, ClusteringConfiguration other) {
+      REMOTE_TIMEOUT.validate(other.remoteTimeout.get());
       if (this.cacheMode == CacheMode.LOCAL && other.cacheMode == CacheMode.LOCAL) {
          return;
       }
