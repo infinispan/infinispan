@@ -540,6 +540,16 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
+   public void removeAll(Set<? extends K> keys) {
+      cacheImplementation.removeAll(keys, flags, contextBuilder);
+   }
+
+   @Override
+   public CompletableFuture<Void> removeAllAsync(Set<? extends K> keys) {
+      return cacheImplementation.removeAllAsync(keys, flags, contextBuilder);
+   }
+
+   @Override
    public void clear() {
       cacheImplementation.clear(flags);
    }
