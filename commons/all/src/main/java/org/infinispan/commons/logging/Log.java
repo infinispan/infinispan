@@ -349,6 +349,10 @@ public interface Log extends BasicLogger {
    @Message(value = "JavaSerializationMarshaller is deprecated and will be removed in a future version. It is susceptible to deserialization attacks. Use ProtoStream-based marshalling instead.", id = 985)
    void javaSerializationMarshallerEnabled();
 
+   @LogMessage(level = WARN)
+   @Message(value = "Task '%s' started at %s failed at %s", id = 986)
+   void taskFailed(String name, Instant started, Instant failed, @Cause Throwable t);
+
    @Message(value = "Cannot instantiate class '%s'", id = 29523)
    CacheConfigurationException cannotInstantiateClass(String classname, @Suppressed Throwable t);
 }

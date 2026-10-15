@@ -98,22 +98,27 @@ public final class IndexWorker implements Function<EmbeddedCacheManager, Void> {
       Set<Class<?>> classSet = new HashSet<>(keys.size());
       AggregateCompletionStage<Void> updates = CompletionStages.aggregateCompletionStage();
 
-      progressTracker.addTasks(keys.size());
+      try {
+         progressTracker.addTasks(keys.size());
 
-      for (Object key : keys) {
-         Object storedKey = keyDataConversion.toStorage(key);
-         Object unwrappedKey = keyDataConversion.extractIndexable(storedKey, javaEmbeddedEntities);
-         Object value = cache.get(key);
-         if (value != null) {
-            updates.dependsOn(indexUpdater.updateIndex(unwrappedKey, value, keyPartitioner.getSegment(storedKey)));
-            classSet.add(value.getClass());
+         for (Object key : keys) {
+            Object storedKey = keyDataConversion.toStorage(key);
+            Object unwrappedKey = keyDataConversion.extractIndexable(storedKey, javaEmbeddedEntities);
+            Object value = cache.get(key);
+            if (value != null) {
+               updates.dependsOn(indexUpdater.updateIndex(unwrappedKey, value, keyPartitioner.getSegment(storedKey)));
+               classSet.add(value.getClass());
+            }
          }
-      }
 
-      if (!classSet.isEmpty()) {
-         CompletableFutures.uncheckedAwait(updates.freeze().toCompletableFuture());
-         indexUpdater.flush(classSet);
-         indexUpdater.refresh(classSet);
+         if (!classSet.isEmpty()) {
+            CompletableFutures.uncheckedAwait(updates.freeze().toCompletableFuture());
+            indexUpdater.flush(classSet);
+            indexUpdater.refresh(classSet);
+         }
+      } catch (Throwable t) {
+         progressTracker.failed(t);
+         throw t;
       }
       progressTracker.finishedAllTasks();
       return null;
