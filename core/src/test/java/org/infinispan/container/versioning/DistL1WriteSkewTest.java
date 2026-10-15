@@ -18,6 +18,8 @@ public class DistL1WriteSkewTest extends DistWriteSkewTest {
       // Enable L1
       builder.clustering().l1().enable();
       builder.clustering().remoteTimeout(4, TimeUnit.MINUTES);
+      builder.clustering().stateTransfer().timeout(5, TimeUnit.MINUTES);
+      builder.transaction().completedTxTimeout(TimeUnit.MINUTES.toMillis(5));
    }
 
    @Test

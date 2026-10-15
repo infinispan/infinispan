@@ -119,6 +119,7 @@ public class ConflictManagerTest extends BasePartitionHandlingTest {
    public void testGetAllVersionsTimeout() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       builder.clustering().remoteTimeout(5000).stateTransfer().fetchInMemoryState(true);
+      builder.locking().lockAcquisitionTimeout(1000);
       String cacheName = CACHE_NAME + "2";
       defineConfigurationOnAllManagers(cacheName, builder);
       waitForClusterToForm(cacheName);

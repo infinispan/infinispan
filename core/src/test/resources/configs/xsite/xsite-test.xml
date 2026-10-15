@@ -2,7 +2,7 @@
 <infinispan>
 
    <cache-container default-cache="default">
-      <transport cluster="infinispan-cluster" lock-timeout="50000" stack="udp" node-name="Jalapeno" machine="m1" rack="r1" site="LON"/>
+      <transport cluster="infinispan-cluster" lock-timeout="200000" stack="udp" node-name="Jalapeno" machine="m1" rack="r1" site="LON"/>
       <distributed-cache-configuration name="base">
          <backups>
             <backup site="NYC" strategy="SYNC" failure-policy="IGNORE" timeout="12003"/>
@@ -14,7 +14,7 @@
          <backups/>
          <backup-for remote-cache="someCache" remote-site="NYC"/>
       </distributed-cache>
-      <distributed-cache name="importantCache" configuration="base" >
+      <distributed-cache name="importantCache" configuration="base" remote-timeout="165000">
          <backups>
             <backup site="NYC2" strategy="SYNC" failure-policy="FAIL" timeout="160000"/>
          </backups>
@@ -23,7 +23,7 @@
       <distributed-cache name="noBackups" configuration="base" >
          <backups/>
       </distributed-cache>
-      <distributed-cache name="customBackupPolicy" configuration="base" >
+      <distributed-cache name="customBackupPolicy" configuration="base" remote-timeout="165000">
          <backups>
             <backup site="NYC2" strategy="SYNC" failure-policy="CUSTOM"
                     failure-policy-class="org.infinispan.xsite.CountingCustomFailurePolicy" timeout="160000"/>

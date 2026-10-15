@@ -66,27 +66,39 @@ public class XSiteStateTransferFileParsingTest extends SingleCacheManagerTest {
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000449:.*")
    public void testNegativeTimeout() {
-      testInvalidConfiguration(String.format(XML_FORMAT, -1, DEFAULT_WAIT_TIME, "MANUAL"));
+      testConfiguration(String.format(XML_FORMAT, -1, DEFAULT_WAIT_TIME, "MANUAL"));
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000449:.*")
    public void testZeroTimeout() {
-      testInvalidConfiguration(String.format(XML_FORMAT, 0, DEFAULT_WAIT_TIME, "MANUAL"));
+      testConfiguration(String.format(XML_FORMAT, 0, DEFAULT_WAIT_TIME, "MANUAL"));
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000450:.*")
    public void testNegativeWaitTime() {
-      testInvalidConfiguration(String.format(XML_FORMAT, DEFAULT_TIMEOUT, -1, "MANUAL"));
+      testConfiguration(String.format(XML_FORMAT, DEFAULT_TIMEOUT, -1, "MANUAL"));
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000450:.*")
    public void testZeroWaitTime() {
-      testInvalidConfiguration(String.format(XML_FORMAT, DEFAULT_TIMEOUT, 0, "MANUAL"));
+      testConfiguration(String.format(XML_FORMAT, DEFAULT_TIMEOUT, 0, "MANUAL"));
+   }
+
+   public void testWaitTimeGreaterThanTimeout() {
+      Configuration configuration = testConfiguration(String.format(XML_FORMAT, 1000, 2000, "MANUAL"));
+      assertEquals(1000, configuration.sites().allBackups().get(0).stateTransfer().timeout());
+      assertEquals(2000, configuration.sites().allBackups().get(0).stateTransfer().waitTime());
+   }
+
+   public void testWaitTimeEqualToTimeout() {
+      Configuration configuration = testConfiguration(String.format(XML_FORMAT, 1000, 1000, "MANUAL"));
+      assertEquals(1000, configuration.sites().allBackups().get(0).stateTransfer().timeout());
+      assertEquals(1000, configuration.sites().allBackups().get(0).stateTransfer().waitTime());
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000634:.*")
    public void testAutoStateTransferModeWithSync() {
-      testInvalidConfiguration(String.format(XML_FORMAT, DEFAULT_TIMEOUT, DEFAULT_WAIT_TIME, "AUTO"));
+      testConfiguration(String.format(XML_FORMAT, DEFAULT_TIMEOUT, DEFAULT_WAIT_TIME, "AUTO"));
    }
 
    @Override
@@ -94,15 +106,16 @@ public class XSiteStateTransferFileParsingTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.fromXml(FILE_NAME,false, true, TransportFlags.minimalXsiteFlags());
    }
 
-   private void testInvalidConfiguration(String xmlConfiguration) {
-      EmbeddedCacheManager invalidCacheManager = null;
+   private Configuration testConfiguration(String xmlConfiguration) {
+      EmbeddedCacheManager configuredCacheManager = null;
       try {
          log.infof("Creating cache manager with %s", xmlConfiguration);
-         invalidCacheManager = TestCacheManagerFactory
+         configuredCacheManager = TestCacheManagerFactory
                .fromStream(new ByteArrayInputStream(xmlConfiguration.getBytes()));
+         return configuredCacheManager.getDefaultCacheConfiguration();
       } finally {
-         if (invalidCacheManager != null) {
-            invalidCacheManager.stop();
+         if (configuredCacheManager != null) {
+            configuredCacheManager.stop();
          }
       }
    }

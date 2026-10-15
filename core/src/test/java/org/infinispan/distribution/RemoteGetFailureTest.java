@@ -67,6 +67,7 @@ public class RemoteGetFailureTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       builder.clustering().stateTransfer().timeout(10, TimeUnit.SECONDS);
       builder.clustering().remoteTimeout(5, TimeUnit.SECONDS);
+      builder.locking().lockAcquisitionTimeout(1, TimeUnit.SECONDS);
       createClusteredCaches(3, TestDataSCI.INSTANCE, builder, new TransportFlags().withFD(true));
       waitForClusterToForm();
       key = getKeyForCache(cache(1), cache(2));

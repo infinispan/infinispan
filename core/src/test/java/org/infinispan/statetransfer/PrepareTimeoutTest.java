@@ -44,6 +44,7 @@ public class PrepareTimeoutTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       builder.clustering().remoteTimeout(2000);
+      builder.locking().lockAcquisitionTimeout(500);
       builder.clustering().hash().numSegments(1);
       builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(consistentHashFactory);
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);

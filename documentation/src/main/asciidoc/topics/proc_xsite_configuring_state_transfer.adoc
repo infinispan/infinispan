@@ -18,6 +18,15 @@ Automatic state transfer between cluster only available for asynchronous backup 
 ====
 . Save and close your {brandname} configuration for editing.
 
+[NOTE]
+====
+For synchronous backups, `timeout` applies to each attempt to send a state transfer chunk.
+After an attempt fails, {brandname} waits for `wait-time` before retrying, and each retry gets a new timeout period.
+You can set `wait-time` equal to or greater than `timeout`.
+For example, `timeout="1000"` and `wait-time="2000"` allow each attempt one second to complete, with a two-second delay before the next retry.
+Both values must be greater than zero.
+====
+
 [discrete]
 == State transfer configuration
 
