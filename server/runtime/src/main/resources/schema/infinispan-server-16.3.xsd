@@ -646,10 +646,10 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="replication-timeout" type="xs:string" default="10s">
+      <xs:attribute name="replication-timeout" type="xs:string" default="15s">
          <xs:annotation>
             <xs:documentation>
-               Configures replication timeouts for topology caches. Defaults to 10 seconds.
+               Configures replication timeouts for topology caches. Defaults to 15 seconds.
                You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
          </xs:annotation>

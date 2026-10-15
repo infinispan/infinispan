@@ -284,16 +284,32 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    public void validate() {
       Attribute<TimeQuantity> reaperWakeUpInterval = attributes.attribute(REAPER_WAKE_UP_INTERVAL);
       Attribute<TimeQuantity> completedTxTimeout = attributes.attribute(COMPLETED_TX_TIMEOUT);
-      if (reaperWakeUpInterval.get().longValue()< 0)
+      Attribute<TimeQuantity> cacheStopTimeout = attributes.attribute(CACHE_STOP_TIMEOUT);
+      if (reaperWakeUpInterval.get().longValue() <= 0)
          throw CONFIG.invalidReaperWakeUpInterval(reaperWakeUpInterval.get().longValue());
-      if (completedTxTimeout.get().longValue() < 0)
+      if (completedTxTimeout.get().longValue() <= 0)
          throw CONFIG.invalidCompletedTxTimeout(completedTxTimeout.get().longValue());
+      if (cacheStopTimeout.get().longValue() < 0)
+         throw CONFIG.invalidCacheStopTimeout(cacheStopTimeout.get().longValue());
       CacheMode cacheMode = clustering().cacheMode();
       if (!attributes.attribute(NOTIFICATIONS).get() && !getBuilder().template()) {
          CONFIG.transactionNotificationsDisabled();
       }
-      if (resolveMode().isTransactional() && !cacheMode.isSynchronous()) {
+      boolean isTransactional = resolveMode().isTransactional();
+      if (isTransactional && !cacheMode.isSynchronous()) {
          throw CONFIG.unsupportedAsyncCacheMode(cacheMode);
+      }
+      if (isTransactional && (cacheMode.isDistributed() || cacheMode.isReplicated())) {
+         Attribute<TimeQuantity> remoteTimeout = clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT);
+         long completedTxTimeoutVal = completedTxTimeout.get().longValue();
+         long remoteTimeoutVal = remoteTimeout.get().longValue();
+         if (completedTxTimeoutVal >= 0) {
+            if (remoteTimeoutVal < 0 || completedTxTimeoutVal < remoteTimeoutVal) {
+               throw CONFIG.invalidCompletedTxTimeoutLessThanRemoteTimeout(completedTxTimeout.get().toString(), remoteTimeout.get().toString());
+            } else if (completedTxTimeoutVal == remoteTimeoutVal) {
+               CONFIG.completedTxTimeoutEqualsRemoteTimeout(completedTxTimeout.get().toString(), remoteTimeout.get().toString());
+            }
+         }
       }
       recovery.validate();
    }

@@ -84,6 +84,16 @@ public class XSiteStateTransferFileParsingTest extends SingleCacheManagerTest {
       testInvalidConfiguration(String.format(XML_FORMAT, DEFAULT_TIMEOUT, 0, "MANUAL"));
    }
 
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000733:.*")
+   public void testWaitTimeGreaterThanTimeout() {
+      testInvalidConfiguration(String.format(XML_FORMAT, 1000, 2000, "MANUAL"));
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000733:.*")
+   public void testWaitTimeEqualToTimeout() {
+      testInvalidConfiguration(String.format(XML_FORMAT, 1000, 1000, "MANUAL"));
+   }
+
    @Test(expectedExceptions = CacheConfigurationException.class, expectedExceptionsMessageRegExp = "ISPN000634:.*")
    public void testAutoStateTransferModeWithSync() {
       testInvalidConfiguration(String.format(XML_FORMAT, DEFAULT_TIMEOUT, DEFAULT_WAIT_TIME, "AUTO"));
