@@ -2,9 +2,11 @@ package org.infinispan.commons.util;
 
 import static org.infinispan.testing.Eventually.eventually;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.time.ControlledTimeService;
@@ -81,5 +83,60 @@ public class ProgressTrackerTest {
          tracker.finishedAllTasks();
          assertEquals(ProgressTracker.Progression.DONE, tracker.currentTaskStatus());
       }
+   }
+
+   @Test
+   public void testFailedTaskStopsTracking() {
+      ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
+      // Cancelled checks leave the queue, so an empty queue means the tracker stopped its periodic check.
+      scheduler.setRemoveOnCancelPolicy(true);
+      try {
+         ProgressTracker tracker = new ProgressTracker("name", scheduler, new ControlledTimeService(), 10, TimeUnit.MINUTES);
+
+         tracker.addTasks(5);
+         tracker.removeTasks(2);
+         assertEquals(1, scheduler.getQueue().size());
+
+         tracker.failed(new RuntimeException("Simulated failure"));
+         assertEquals(ProgressTracker.Progression.FAILED, tracker.currentTaskStatus());
+         assertTrue(scheduler.getQueue().isEmpty());
+      } finally {
+         scheduler.shutdownNow();
+      }
+   }
+
+   @Test
+   public void testTasksCompletingAfterFailureAreIgnored() {
+      ProgressTracker tracker = new ProgressTracker("name", executor, new ControlledTimeService(), 10, TimeUnit.MINUTES);
+
+      tracker.addTasks(5);
+      tracker.removeTasks(2);
+      tracker.failed(new RuntimeException("Simulated failure"));
+
+      // Tasks still running when the failure happened can complete afterwards.
+      tracker.removeTasks(1);
+      assertEquals(ProgressTracker.Progression.FAILED, tracker.currentTaskStatus());
+      assertEquals(0, tracker.pendingTasks());
+   }
+
+   @Test
+   public void testTrackerIsReUtilizedAfterFailure() {
+      ProgressTracker tracker = new ProgressTracker("name", executor, new ControlledTimeService(), 10, TimeUnit.MINUTES);
+
+      tracker.addTasks(5);
+      tracker.removeTasks(2);
+      tracker.failed(new RuntimeException("Simulated failure"));
+      assertEquals(ProgressTracker.Progression.FAILED, tracker.currentTaskStatus());
+
+      tracker.addTasks(5);
+      assertEquals(ProgressTracker.Progression.IDLE, tracker.currentTaskStatus());
+      assertEquals(5, tracker.pendingTasks());
+
+      tracker.removeTasks(2);
+      assertEquals(ProgressTracker.Progression.PROGRESSING, tracker.currentTaskStatus());
+      assertEquals(3, tracker.pendingTasks());
+
+      tracker.finishedAllTasks();
+      assertEquals(ProgressTracker.Progression.DONE, tracker.currentTaskStatus());
    }
 }

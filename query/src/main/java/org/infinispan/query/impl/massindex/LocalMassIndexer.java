@@ -3,30 +3,34 @@ package org.infinispan.query.impl.massindex;
 import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.ProgressTracker;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
+import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.mapper.mapping.SearchMapping;
+import org.infinispan.reactive.publisher.PublisherTransformers;
+import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
+import org.infinispan.reactive.publisher.impl.DeliveryGuarantee;
 import org.infinispan.security.actions.SecurityActions;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.reactivestreams.Publisher;
 
-import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * Rebuilds the index of a cache from the entries held by this member.
@@ -40,6 +44,9 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  */
 @Scope(Scopes.NAMED_CACHE)
 public final class LocalMassIndexer {
+
+   // Maximum number of index updates in flight while reindexing.
+   private static final int MAX_CONCURRENT_UPDATES = 100;
 
    private final AdvancedCache<Object, Object> cache;
 
@@ -85,6 +92,7 @@ public final class LocalMassIndexer {
    }
 
    private void doReindex(Collection<Class<?>> indexedTypes, boolean skipIndex) {
+      DataConversion keyDataConversion = cache.getKeyDataConversion();
       DataConversion valueDataConversion = cache.getValueDataConversion();
       AdvancedCache<Object, Object> reindexCache = cache.withStorageMediaType();
       Configuration cfg = SecurityActions.getCacheConfiguration(reindexCache);
@@ -99,33 +107,46 @@ public final class LocalMassIndexer {
       IndexUpdater indexUpdater = new IndexUpdater(searchMapping);
       KeyPartitioner keyPartitioner = ComponentRegistryUtils.getKeyPartitioner(cache);
 
-      preIndex(cache, indexedTypes, indexUpdater, notifier);
-      MassIndexerProgressState progressState = new MassIndexerProgressState(notifier, progressTracker);
+      try {
+         preIndex(cache, indexedTypes, indexUpdater, notifier);
+         MassIndexerProgressState progressState = new MassIndexerProgressState(notifier, progressTracker);
 
-      if (!skipIndex) {
-         progressTracker.addTasks(reindexCache.withFlags(Flag.CACHE_MODE_LOCAL).size());
-         try (Stream<CacheEntry<Object, Object>> stream = reindexCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
-               .cacheEntrySet().stream()) {
-            Iterator<UpdateRecord> records = stream.map(entry -> {
-                     Object key = entry.getKey();
+         if (!skipIndex) {
+            progressTracker.addTasks(reindexCache.withFlags(Flag.CACHE_MODE_LOCAL).size());
+
+            // Iterate this node's entries (memory and stores) without blocking.
+            // A blocking iterator here would pull the next entry using the thread that completed the previous pull from the iteration.
+            // This means the blocking iteration could land on a non-blocking thread.
+            ClusterPublisherManager<Object, Object> publisherManager = ComponentRegistryUtils.getLocalClusterPublisherManager(cache);
+            Publisher<CacheEntry<Object, Object>> entries = publisherManager.entryPublisher(null, null, null,
+                  FlagBitSets.CACHE_MODE_LOCAL, DeliveryGuarantee.AT_MOST_ONCE, cfg.clustering().stateTransfer().chunkSize(), PublisherTransformers.identity()
+            ).publisherWithoutSegments();
+
+            CompletionStage<Void> indexed = Flowable.fromPublisher(entries)
+                  .mapOptional(entry -> {
+                     // The publisher emits the entries in the storage format.
+                     // We must convert them back to a format the indexer can work with.
+                     Object storedKey = entry.getKey();
                      Object value = valueDataConversion.extractIndexable(entry.getValue(), javaEmbeddedEntities);
-                     int segment = keyPartitioner.getSegment(key);
-
                      if (value != null && indexUpdater.typeIsIndexed(value, indexedTypes)) {
-                        return new UpdateRecord(key, value, segment);
+                        Object key = keyDataConversion.extractIndexable(storedKey, javaEmbeddedEntities);
+                        return Optional.of(new UpdateRecord(key, value, keyPartitioner.getSegment(storedKey)));
                      }
-                     return new UpdateRecord(null, null, -1);
-                  }).filter(record -> record.key != null)
-                  .iterator();
-
-            join(CompletionStages.performConcurrently(() -> records, 100, Schedulers.from(new WithinThreadExecutor()), record -> {
-               CompletableFuture<?> updated = indexUpdater.updateIndex(record.key, record.value, record.segment);
-               progressState.addItem(record.key, record.value, updated);
-               return updated;
-            }));
+                     return Optional.empty();
+                  })
+                  .flatMapCompletable(record -> {
+                     CompletableFuture<?> updated = indexUpdater.updateIndex(record.key, record.value, record.segment);
+                     progressState.addItem(record.key, record.value, updated);
+                     return Completable.fromCompletionStage(updated);
+                  }, false, MAX_CONCURRENT_UPDATES)
+                  .toCompletionStage(null);
+            join(indexed);
          }
+         postIndex(indexUpdater, indexedTypes, progressState, notifier);
+      } catch (Throwable t) {
+         progressTracker.failed(t);
+         throw t;
       }
-      postIndex(indexUpdater, indexedTypes, progressState, notifier);
       progressTracker.finishedAllTasks();
    }
 
