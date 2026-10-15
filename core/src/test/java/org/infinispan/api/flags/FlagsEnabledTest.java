@@ -2,6 +2,7 @@ package org.infinispan.api.flags;
 
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
 import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
+import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
 import static org.infinispan.test.TestingUtil.withTx;
@@ -9,11 +10,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 import java.lang.reflect.Method;
+import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
@@ -167,6 +171,46 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
 
       assertCacheValue(cache2, key, "value");
       assertCacheValue(cache1, key, null);
+   }
+
+   public void testRemoveAllWithSkipCacheStore(Method m) {
+      final AdvancedCache<String, String> cache1 = advancedCache(0, cacheName);
+      final AdvancedCache<String, String> cache2 = advancedCache(1, cacheName);
+      final Set<String> keys = Set.of(k(m, 1), k(m, 2));
+      final String value = v(m, 1);
+      for (String key : keys) {
+         cache1.put(key, value);
+      }
+
+      cache1.withFlags(SKIP_CACHE_STORE).removeAll(keys);
+
+      // The removal replicates in memory, but the stores on both nodes keep the entries.
+      for (String key : keys) {
+         assertCacheValue(cache1.withFlags(SKIP_CACHE_LOAD), key, null);
+         assertCacheValue(cache2.withFlags(SKIP_CACHE_LOAD), key, null);
+         assertCacheValue(cache1, key, value);
+         assertCacheValue(cache2, key, value);
+      }
+   }
+
+   public void testRemoveAllAsyncWithSkipCacheStore(Method m) throws Throwable {
+      final AdvancedCache<String, String> cache1 = advancedCache(0, cacheName);
+      final AdvancedCache<String, String> cache2 = advancedCache(1, cacheName);
+      final Set<String> keys = Set.of(k(m, 1), k(m, 2));
+      final String value = v(m, 1);
+      for (String key : keys) {
+         cache1.put(key, value);
+      }
+
+      CompletableFutures.await(cache1.withFlags(SKIP_CACHE_STORE).removeAllAsync(keys).toCompletableFuture(), 10, TimeUnit.SECONDS);
+
+      // The removal replicates in memory, but the stores on both nodes keep the entries.
+      for (String key : keys) {
+         assertCacheValue(cache1.withFlags(SKIP_CACHE_LOAD), key, null);
+         assertCacheValue(cache2.withFlags(SKIP_CACHE_LOAD), key, null);
+         assertCacheValue(cache1, key, value);
+         assertCacheValue(cache2, key, value);
+      }
    }
 
    private void doReplicateSkipCacheLoaderWithinTx(Method m,
