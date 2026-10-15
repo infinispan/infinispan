@@ -36,6 +36,8 @@ import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
 import org.infinispan.testing.Eventually;
 import org.infinispan.testing.Testing;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import net.spy.memcached.ConnectionFactoryBuilder;
 import net.spy.memcached.MemcachedClient;
@@ -47,6 +49,7 @@ import net.spy.memcached.MemcachedClient;
  * @since 11
  */
 public class TestClient {
+   private static final Log log = LogFactory.getLog(TestClient.class);
    protected InfinispanServerTestConfiguration configuration;
    protected TestServer testServer;
    protected List<AutoCloseable> resources;
@@ -117,12 +120,37 @@ public class TestClient {
    }
 
    public void clearResources() {
+      clearResources(true);
+   }
+
+   public void clearResources(boolean removeCaches) {
+      List<Throwable> exceptions = new ArrayList<>();
+      if (removeCaches) {
+         if (hotrodCacheMap != null) {
+            hotrodCacheMap.forEach((n, rcm) -> {
+               try {
+                  rcm.administration().removeCache(n);
+               } catch (Exception e) {
+                  log.debugf(e, "Unable to remove Hot Rod cache %s", n);
+                  exceptions.add(e);
+               }
+            });
+         }
+         if (restCacheMap != null) {
+            restCacheMap.forEach((n, rc) -> {
+               try {
+                  rc.cache(n).delete();
+               } catch (Exception e) {
+                  log.debugf(e, "Unable to remove REST cache %s", n);
+                  exceptions.add(e);
+               }
+            });
+         }
+      }
       if (hotrodCacheMap != null) {
-         hotrodCacheMap.forEach( (n, rcm) -> rcm.administration().removeCache(n));
          hotrodCacheMap.clear();
       }
       if (restCacheMap != null) {
-         restCacheMap.forEach( (n, rc) -> rc.cache(n).delete());
          restCacheMap.clear();
       }
       if (resources != null) {
@@ -136,11 +164,18 @@ public class TestClient {
                   )
                   .get(Eventually.DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
          } catch (ExecutionException | InterruptedException | TimeoutException e) {
-            throw new IllegalStateException("Unable to close resources for " + methodName, e);
+            exceptions.add(new IllegalStateException("Unable to close resources for " + methodName, e));
          } finally {
             resources.clear();
             executor.shutdown();
          }
+      }
+      if (!exceptions.isEmpty()) {
+         IllegalStateException e = new IllegalStateException("Error clearing test resources for " + methodName, exceptions.get(0));
+         for (int i = 1; i < exceptions.size(); i++) {
+            e.addSuppressed(exceptions.get(i));
+         }
+         throw e;
       }
    }
 
