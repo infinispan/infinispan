@@ -4,6 +4,7 @@ import static org.infinispan.commons.util.concurrent.CompletionStages.join;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.getFirstStore;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.EnumSet;
@@ -14,6 +15,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -38,6 +40,7 @@ import org.reactivestreams.Publisher;
 import org.testng.annotations.Test;
 
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 
 @CleanupAfterMethod
 @Test(groups = "unit", testName = "persistence.manager.PersistenceManagerLockLeakTest")
@@ -173,6 +176,35 @@ public class PersistenceManagerLockLeakTest extends SingleCacheManagerTest {
 
          assertStopForcesCompletion(pm);
       } finally {
+         cm.stop();
+      }
+   }
+
+   public void testStopFailsAbandonedPublisherSubscription() throws Exception {
+      EmbeddedCacheManager cm = createShortTimeoutCacheManager();
+      // Requests a single entry and never asks for more, leaving the stream open.
+      TestSubscriber<MarshallableEntry<Object, Object>> subscriber = new TestSubscriber<>(1);
+      try {
+         Cache<Object, Object> c = cm.getCache();
+         for (int i = 0; i < 10; i++) {
+            c.put("k" + i, "v" + i);
+         }
+
+         PersistenceManagerImpl pm = (PersistenceManagerImpl) extractComponent(c, PersistenceManager.class);
+         Flowable.fromPublisher(pm.<Object, Object>publishEntries(true, true)).subscribe(subscriber);
+         subscriber.awaitCount(1);
+
+         // The stop waits for the subscription up to distributedSyncTimeout, then ends it.
+         assertStopForcesCompletion(pm);
+
+         // The subscriber learns that the stream ended because of the stop, instead of waiting forever.
+         subscriber.awaitDone(STOP_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+         subscriber.assertValueCount(1);
+         subscriber.assertError(IllegalLifecycleStateException.class);
+         assertFalse(pm.anyLocksHeld(), "No lock should be held after the stop");
+      } finally {
+         // Releases the read lock if the stop is still waiting for it, so the cache manager can stop.
+         subscriber.cancel();
          cm.stop();
       }
    }

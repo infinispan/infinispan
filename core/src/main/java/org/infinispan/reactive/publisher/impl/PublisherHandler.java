@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
@@ -57,6 +58,7 @@ public class PublisherHandler {
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    private final ConcurrentMap<Object, PublisherState> currentRequests = new ConcurrentHashMap<>();
+   private volatile boolean stopping;
 
    @Inject
    CacheManagerNotifier managerNotifier;
@@ -86,6 +88,7 @@ public class PublisherHandler {
 
    @Start
    public void start() {
+      stopping = false;
       managerNotifier.addListener(this);
    }
 
@@ -93,6 +96,32 @@ public class PublisherHandler {
    public void stop() {
       // If our cache is stopped we should remove our listener, since this doesn't mean the cache manager is stopped
       managerNotifier.removeListener(this);
+      stopping = true;
+      // Close the publisher still open for remote nodes.
+      // A publisher reading from a store holds the persistence read lock until *the remote* completes or cancels, i.e.,
+      // the requester may never ask the next batch.
+      // A publisher performing still subscribing is closed by its register thread once subscribe returns.
+      for (PublisherState ps : currentRequests.values()) {
+         if (ps.subscribed) {
+            closeOnStop(ps);
+         }
+      }
+   }
+
+   /**
+    * Closes the publisher due to the cache stopping, failing its pending response.
+    *
+    * <p>
+    * Only the first caller closes the state, either the stop or the register thread after subscribing.
+    * </p>
+    *
+    * @param ps The publisher state to close.
+    */
+   private void closeOnStop(PublisherState ps) {
+      if (currentRequests.remove(ps.requestId, ps)) {
+         log.tracef("Cache stopping, closing %s publisher", ps.requestId);
+         ps.cancel(new IllegalLifecycleStateException("Cache is stopping, closing publisher " + ps.requestId));
+      }
    }
 
    /**
@@ -112,6 +141,8 @@ public class PublisherHandler {
       } else {
          publisherState = new PublisherState(requestId, command.getOrigin(), command.getBatchSize());
       }
+      if (stopping)
+         throw new IllegalLifecycleStateException("Cache is stopping, rejecting publisher: " + requestId);
 
       PublisherState previousState;
       if ((previousState = currentRequests.put(requestId, publisherState)) != null) {
@@ -128,6 +159,10 @@ public class PublisherHandler {
       }
 
       publisherState.startProcessing(command);
+      // A stop concurrent with subscription skips this state, close it now that upstream is set.
+      if (stopping) {
+         closeOnStop(publisherState);
+      }
 
       return publisherState.results();
    }
@@ -245,6 +280,7 @@ public class PublisherHandler {
       final String requestId;
       final Address origin;
       final int batchSize;
+      private volatile boolean subscribed;
 
       // Stores future responses - Normally this only ever contains zero or one result. This can contain two in the
       // case of having a single entry in the last result. Due to the nature of having to request one additional
@@ -293,6 +329,7 @@ public class PublisherHandler {
             Flowable.fromPublisher(sap.publisherWithLostSegments(true))
                   .subscribe(this);
          }
+         subscribed = true;
       }
 
       @Override
@@ -310,8 +347,12 @@ public class PublisherHandler {
 
       @Override
       public void onError(Throwable t) {
-         complete = true;
          log.trace("Exception encountered while processing publisher", t);
+         failResponse(t);
+      }
+
+      private void failResponse(Throwable t) {
+         complete = true;
          synchronized (this) {
             if (futureResponse == null) {
                futureResponse = CompletableFuture.failedFuture(t);
@@ -319,6 +360,20 @@ public class PublisherHandler {
                futureResponse.completeExceptionally(t);
             }
          }
+      }
+
+      /**
+       * Cancels the publisher and fails its pending response with the given cause.
+       *
+       * <p>
+       * A requester receives an answer right away instead of waiting for the remote timeout.
+       * </p>
+       *
+       * @param cause The cause of the cancel.
+       */
+      public void cancel(Throwable cause) {
+         cancel();
+         failResponse(cause);
       }
 
       @Override
