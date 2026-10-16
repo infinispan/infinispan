@@ -9,11 +9,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
-import org.aesh.command.Command;
 import org.aesh.command.CommandDefinition;
 import org.aesh.command.CommandResult;
-import org.aesh.command.invocation.CommandInvocation;
+import org.infinispan.cli.commands.CliCommand;
 import org.infinispan.cli.commands.Version;
+import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.cli.logging.Messages;
 import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.configuration.io.PropertyReplacer;
@@ -43,7 +43,7 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
             Uninstall.class,
             Version.class
       })
-public class Kube implements Command<CommandInvocation> {
+public class Kube extends CliCommand {
    public static final String DEFAULT_CLUSTER_NAME = "infinispan";
 
    static final CustomResourceDefinitionContext INFINISPAN_CLUSTER_CRD = new CustomResourceDefinitionContext.Builder()
@@ -114,8 +114,9 @@ public class Kube implements Command<CommandInvocation> {
 
 
    @Override
-   public CommandResult execute(CommandInvocation invocation) {
-      invocation.getShell().write(invocation.getHelpInfo());
+   public CommandResult exec(ContextAwareCommandInvocation invocation) {
+      // This command serves only to wrap the sub-commands
+      invocation.println(invocation.getHelpInfo());
       return CommandResult.FAILURE;
    }
 
