@@ -9,11 +9,25 @@ With in-line caches, {brandname} uses cache loaders and cache stores to operate 
 * Cache stores provide read and write access to persistent storage.
 
 .In-line caches
-//Community content
-ifdef::community[]
-image::in-line-cache.svg[{brandname} clusters that use cache loaders and cache stores to handle all application requests for data in persistent storage.]
-endif::community[]
-//Downstream content
-ifdef::downstream[]
-image::in-line-cache.png[{brandname} clusters that use cache loaders and cache stores to handle all application requests for data in persistent storage.]
-endif::downstream[]
+[plantuml, target=in-line-caching-flow, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "Applications" as App
+participant "{brandname}\ncluster (cache)" as C
+database "Persistent\nstorage" as PS
+
+== Read through a cache loader ==
+App -> C : Read K1
+C -> PS : Load K1 via the\ncache loader
+PS --> C : K1
+C --> App : K1
+
+== Write through a cache store ==
+App -> C : Put K2
+C -> PS : Store K2 via the\ncache store
+@enduml
+....

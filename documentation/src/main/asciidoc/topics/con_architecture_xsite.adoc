@@ -66,7 +66,7 @@ participant "LON\n(originator)" as L1
 participant "NYC\n(backup)" as N1
 
 L1 -> L1: put(key, value)
-L1 -> N1: XSiteReplicateCommand
+L1 -> N1: SingleXSiteRpcCommand\n(wraps the write command)
 activate N1
 N1 -> N1: apply to local cache
 N1 --> L1: ACK
@@ -79,7 +79,7 @@ participant "LON\n(originator) " as L2
 participant "NYC\n(backup) " as N2
 
 L2 -> L2: put(key, value)
-L2 -> N2: XSiteReplicateCommand
+L2 -> N2: SingleXSiteRpcCommand\n(wraps the write command)
 L2 -> L2: operation completes\n(no wait for ACK)
 activate N2
 N2 -> N2: apply to local cache
@@ -182,4 +182,5 @@ Cross-site replication is implemented through backup interceptors in the interce
 * `OptimisticBackupInterceptor`: Handles replication for optimistic transactional caches.
 * `PessimisticBackupInterceptor`: Handles replication for pessimistic transactional caches.
 
-These interceptors intercept write commands and send `XSiteReplicateCommand` instances to backup sites via the JGroups RELAY2 bridge.
+The interceptors wrap each intercepted write command in a `SingleXSiteRpcCommand`, which {brandname} sends to the backup site.
+During state transfer, {brandname} pushes entry chunks to the recovering site using `XSiteStatePushCommand`.

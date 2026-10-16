@@ -47,6 +47,13 @@ rectangle "Permissions\n(bitmask)" {
   [ADMIN] as P8
   [LIFECYCLE] as P9
   [MONITOR] as P10
+
+  rectangle "Aggregate values" {
+    [ALL\nall permissions] as PA1
+    [ALL_READ\nREAD + BULK_READ] as PA2
+    [ALL_WRITE\nWRITE + BULK_WRITE] as PA3
+    [NONE\nno permission] as PA4
+  }
 }
 
 Subj --> Princ : contains
@@ -87,18 +94,19 @@ Permissions are combined using bitwise OR, so a user with multiple roles receive
 |All permissions.
 
 |`deployer`
-|READ, WRITE, LISTEN, EXEC, CREATE, MONITOR.
+|ALL_READ (READ + BULK_READ), ALL_WRITE (WRITE + BULK_WRITE), LISTEN, EXEC, CREATE, MONITOR.
 
 |`application`
-|READ, WRITE, LISTEN, EXEC, MONITOR.
+|ALL_READ (READ + BULK_READ), ALL_WRITE (WRITE + BULK_WRITE), LISTEN, EXEC, MONITOR.
 
 |`observer`
-|READ, BULK_READ, MONITOR.
+|ALL_READ (READ + BULK_READ), MONITOR.
 
 |`monitor`
 |MONITOR only.
 |===
 
+Two additional internal roles (`___schema_manager` and `___script_manager`) also exist; they are deprecated and should not be assigned to users.
 Custom roles with arbitrary permission combinations can be defined in the global configuration.
 Caches can optionally restrict which roles are allowed by listing specific role names in their authorization configuration; if no roles are listed, all inheritable global roles apply.
 

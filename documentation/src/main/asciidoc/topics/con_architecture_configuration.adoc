@@ -51,7 +51,8 @@ A single instance per cache manager, holding settings that apply to all caches o
 Configuration::
 One instance per named cache, holding cache-specific settings: clustering mode, memory limits, persistence stores, transactions, encoding, indexing, and expiration.
 
-Both extend `ConfigurationElement`, forming a tree of nested configuration elements, each backed by an `AttributeSet`.
+The per-cache `Configuration` extends `ConfigurationElement`, forming a tree of nested configuration elements, each backed by an `AttributeSet`.
+The global side follows the same pattern one level down: `GlobalConfiguration` is a plain class that delegates to its contained `CacheContainerConfiguration`, which itself extends `ConfigurationElement`.
 
 == Attributes
 
@@ -350,10 +351,13 @@ Each parser declares the namespace URIs it handles using `@Namespace` annotation
 
 [source,java]
 ----
-@Namespace(root = "cache-container",
-           uri = "urn:infinispan:config:16.2")
+@Namespace(root = "local-cache")
+@Namespace(uri = NAMESPACE + "*", root = "local-cache") // where NAMESPACE is "urn:infinispan:config:"
 public class CacheParser implements ConfigurationParser { ... }
 ----
+
+Parsers register wildcard URI namespaces (for example `urn:infinispan:config:*`), so a single parser handles every version of the configuration namespace.
+The schema files shipped with this release are at 16.3, but that version only appears in the XSD names and document examples, never in the parser registration itself.
 
 The `ParserRegistry` matches the document's namespace to the correct parser, which populates builders in a `ConfigurationBuilderHolder`.
 This holder collects the global configuration builder and a map of named cache configuration builders, then resolves template inheritance and validates the result.

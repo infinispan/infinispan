@@ -146,14 +146,14 @@ This halves the number of network round trips for simple operations.
 
 {brandname} registers with the JTA transaction manager as either a `Synchronization` or an `XAResource`:
 
-[plantuml, target=architecture-tx-jta, format=svg, align=center]
+[plantuml, target=architecture-tx-jta, format=svg, align=center, subs="attributes+"]
 ....
 @startuml
 skinparam defaultFontName sans-serif
 skinparam shadowing false
 skinparam classAttributeIconSize 0
 
-interface "javax.transaction\n.Synchronization" as Sync {
+interface "jakarta.transaction\n.Synchronization" as Sync {
   +beforeCompletion()
   +afterCompletion(status)
 }
@@ -197,6 +197,8 @@ Full XA mode::
 {brandname} enlists a `TransactionXaAdapter` as an `XAResource`.
 This enables full XA two-phase commit with recovery support.
 After a crash, the transaction manager can call `recover()` to list in-doubt transactions and `commit()` or `rollback()` to resolve them.
+
+The EE-level JTA types shown above come from `jakarta.transaction`, while the XA SPI (`XAResource` and related classes) deliberately remains under `javax.transaction.xa` as part of Java SE.
 
 == Transaction table
 
@@ -281,7 +283,7 @@ note right: WriteSkewException!\nTx A rolls back.
 @enduml
 ....
 
-Each entry carries a `SimpleClusteredVersion` (topology ID + sequence number).
+Each entry carries a `SimpleClusteredVersion`, made up of the topology id and an entry version.
 When a transaction reads an entry, it records the version.
 At prepare time, the `VersionedEntryWrappingInterceptor` compares the recorded version against the current version.
 If they differ, another transaction committed a change in between, and a `WriteSkewException` is thrown.
