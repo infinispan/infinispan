@@ -1,5 +1,6 @@
 package org.infinispan.util.concurrent;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -59,6 +60,16 @@ public class BlockingManagerTest extends AbstractInfinispanTest {
       return Flowable.fromPublisher(publisher)
             .doOnNext(ignore -> assertTrue(BlockHoundHelper.currentThreadRequiresNonBlocking()))
             .doOnComplete(() -> assertTrue(BlockHoundHelper.currentThreadRequiresNonBlocking()));
+   }
+
+   public void testDispatchBlockingInvokedBlockingThread() {
+      BlockingManager blockingManager = createBlockingManager(true);
+
+      CompletionStage<String> stage = blockingManager.dispatchBlocking(() -> "value", "dispatch-blocking");
+      assertEquals("value", CompletionStages.join(stage));
+
+      // Unlike supplyBlocking, the supplier is submitted to the blocking executor even though the caller is blocking.
+      Mockito.verify(blockingExecutor).execute(Mockito.any());
    }
 
    public void testBlockingPublishToVoidStageInvokedBlockingThread() {

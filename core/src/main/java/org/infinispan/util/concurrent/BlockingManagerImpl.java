@@ -141,6 +141,11 @@ public class BlockingManagerImpl implements BlockingManager {
       return supplyBlockingOperation(supplier, traceId, blockingExecutor);
    }
 
+   @Override
+   public <V> CompletionStage<V> dispatchBlocking(Supplier<V> supplier, Object traceId) {
+      return dispatchSupplyOperation(supplier, traceId, blockingExecutor);
+   }
+
    private <V> CompletionStage<V> supplyBlockingOperation(Supplier<V> supplier, Object traceId, Executor executor) {
       if (isCurrentThreadBlocking()) {
          if (log.isTraceEnabled()) {
@@ -152,6 +157,10 @@ public class BlockingManagerImpl implements BlockingManager {
             return CompletableFuture.failedFuture(t);
          }
       }
+      return dispatchSupplyOperation(supplier, traceId, executor);
+   }
+
+   private <V> CompletionStage<V> dispatchSupplyOperation(Supplier<V> supplier, Object traceId, Executor executor) {
       CompletionStage<V> stage;
       if (log.isTraceEnabled()) {
          log.tracef("Submitting blocking supply operation %s to blocking thread", traceId);
