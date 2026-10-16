@@ -26,6 +26,8 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.core.impl.Log;
+import org.infinispan.security.Security;
+import org.infinispan.util.concurrent.BlockingManager;
 import org.jspecify.annotations.NonNull;
 
 public final class IndexStartupRunner {
@@ -88,9 +90,18 @@ public final class IndexStartupRunner {
             }
          }
       } else if (IndexStartupMode.REINDEX.equals(startupMode)) {
-         Indexer indexer = ComponentRegistry.of(cache).getComponent(Indexer.class);
-         indexer.runLocal();
+         ComponentRegistry cr = ComponentRegistry.of(cache);
+         Indexer indexer = cr.getComponent(Indexer.class);
+         BlockingManager bm = cr.getGlobalComponentRegistry().getComponent(BlockingManager.class);
+         // This runs while the cache is still starting.
+         // Always dispatch the indexer execution to another thread to avoid a deadlock during the cache initialisation.
+         bm.asExecutor("startup-reindex-" + cache.getName())
+               .execute(() -> runIndexerPrivileged(indexer));
       }
+   }
+
+   private void runIndexerPrivileged(Indexer indexer) {
+      Security.doPrivileged(indexer::runLocal);
    }
 
    private IndexStartupMode computeFinalMode(Configuration configuration, boolean zapped) {
