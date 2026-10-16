@@ -261,7 +261,7 @@ GET /rest/v2/cluster/members
 include::json/rest_cluster_members_response.json[]
 ----
 
-* `rolling_upgrade` contains a flag indicate a rolling upgrade going on
+* `rolling_upgrade` contains a flag that indicates a rolling upgrade is in progress, meaning the cluster has nodes running different versions
 
 For each container x
 

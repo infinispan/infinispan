@@ -1,0 +1,80 @@
+[id='embedded-inplace-rolling-upgrade_{context}']
+= Performing an in-place rolling upgrade for embedded caches
+
+Upgrade a {brandname} embedded deployment one node at a time while the cluster continues to serve requests.
+The recommended approach keeps your cluster at full capacity by adding one temporary node before you start; see xref:inplace-rolling-upgrade-spare-node_{context}[Upgrading with an additional temporary node] for details on provisioning and removing it.
+This procedure describes the stop-and-restart process that every upgraded node goes through, whether or not you use a temporary node.
+
+.Prerequisites
+
+* Your deployment meets all xref:inplace-rolling-upgrades_{context}[in-place rolling upgrade prerequisites].
+* Each node has a stable, unique global persistent location configured.
++
+For more information, see link:{config_docs}#configuring-global-persistent-location_persistence[Configuring the global persistent location].
+* The application dependency has been updated to the target {brandname} version.
+
+.Procedure
+
+. Verify that the cluster is healthy and all nodes are members of the cluster view.
++
+You can check cluster health programmatically:
++
+[source,java,options="nowrap",subs=attributes+]
+----
+EmbeddedCacheManager manager = ...;
+Health health = manager.getHealth();
+ClusterHealth clusterHealth = health.getClusterHealth();
+assert clusterHealth.getHealthStatus() == HealthStatus.HEALTHY;
+----
+
+. For each node in the cluster, one at a time, perform the following steps:
++
+.. Stop the node gracefully.
++
+[source,java,options="nowrap",subs=attributes+]
+----
+manager.stop();
+----
++
+Then shut down the application process.
++
+.. Update the application's {brandname} dependency to the target version.
++
+[WARNING]
+====
+In an embedded deployment, upgrading a node also upgrades its clients at the same time.
+While the cluster contains nodes running different versions, an upgraded client may write values that contain fields from a newer schema definition.
+Nodes running the previous version do not know about these fields and drop them when they store or replicate the value, so data can be lost.
+Defer serialization schema changes until every node is running on the target version, and then apply them once the upgrade completes.
+====
+
+.. Rebuild and deploy the application.
+.. Start the application and the cache manager.
++
+The node rejoins the cluster using the identity and topology state persisted in its global persistent location.
+When a node leaves or rejoins, {brandname} automatically rebalances data across the remaining nodes.
++
+.. Wait until the upgraded node has joined the cluster view and all caches report stable topologies before upgrading the next node.
++
+Poll the cluster health of any running node until it reports `HEALTHY`. While a rebalance is in progress, the status reports `HEALTHY_REBALANCING` instead:
++
+[source,java,options="nowrap",subs=attributes+]
+----
+while (manager.getHealth().getClusterHealth().getHealthStatus() != HealthStatus.HEALTHY) {
+   Thread.sleep(5000);
+}
+----
+
+[IMPORTANT]
+====
+Do not stop the next node until the previously upgraded node has fully joined the cluster.
+Stopping multiple nodes simultaneously with only two owners risks data loss.
+====
+
+. Verify that the cluster is healthy and that all caches have the expected number of entries.
+
+.Downgrade procedure
+
+You can use the same procedure to downgrade a cluster to a previous version, which also serves as the rollback path if an upgrade does not go well (see xref:inplace-rolling-upgrade-downgrade_{context}[Rolling back an upgrade by downgrading]).
+Replace the target version with the previous version and follow the same steps.
+Check the xref:compatibility_chart[compatibility chart] for any caveats that apply to the downgrade path.
