@@ -298,4 +298,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(id = 14508, value = "Incompatible or corrupt index detected. Wiping directory: %s")
    void incompatibleIndexes(Path indexPath);
+
+   @LogMessage(level = ERROR)
+   @Message(id = 14509, value = "Reindexing cache '%s' at startup failed. The index might be incomplete until the cache is reindexed again.")
+   void startupReindexFailed(String cacheName, @Cause Throwable cause);
 }
