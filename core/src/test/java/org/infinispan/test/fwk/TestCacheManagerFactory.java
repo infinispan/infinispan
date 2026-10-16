@@ -32,6 +32,7 @@ import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.factories.impl.BasicComponentRegistry;
+import org.infinispan.factories.threads.BlockingThreadFactory;
 import org.infinispan.factories.threads.CoreExecutorFactory;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.interceptors.AsyncInterceptor;
@@ -453,6 +454,23 @@ public class TestCacheManagerFactory {
       // builder.listenerThreadPool().threadPoolFactory(executorFactoryWithQueue);
       // TODO Scheduled thread pools don't have a threads limit
       // Timeout thread pool is not configurable at all
+   }
+
+   /**
+    * Makes the cache manager's blocking thread pool create platform threads in a blocking thread group.
+    * <p>
+    * Use it to exercise the code paths that only run when a blocking thread is a platform thread, independently of
+    * the {@code org.infinispan.threads.virtual} property, which applies to the whole JVM.
+    *
+    * @param builder the global configuration to change.
+    * @return the same builder.
+    */
+   public static GlobalConfigurationBuilder platformBlockingThreads(GlobalConfigurationBuilder builder) {
+      BlockingThreadFactory threadFactory = new BlockingThreadFactory(Thread.NORM_PRIORITY,
+            DefaultThreadFactory.DEFAULT_PATTERN, null, "blocking");
+      threadFactory.useVirtualThread(false);
+      builder.blockingThreadPool().threadFactory(threadFactory);
+      return builder;
    }
 
    public static void amendDefaultCache(GlobalConfigurationBuilder builder) {
