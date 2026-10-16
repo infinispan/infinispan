@@ -18,18 +18,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import org.infinispan.commands.CommandInvocationId;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.distribution.Collector;
 import org.infinispan.interceptors.distribution.PrimaryOwnerOnlyCollector;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -57,6 +61,7 @@ public class CommandAckCollector {
    @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService timeoutExecutor;
    @Inject Configuration configuration;
+   @Inject ComponentRef<DistributionManager> distributionManager;
 
    private final ConcurrentHashMap<Long, BaseCollector<?>> collectorMap;
    private long timeoutNanoSeconds;
@@ -186,6 +191,10 @@ public class CommandAckCollector {
       final CompletableFuture<T> exposedFuture;
       volatile T primaryResult;
       volatile boolean primaryResultReceived;
+      // Backups whose ack was counted, reported when the collector times out.
+      final Set<Address> acksReceived = ConcurrentHashMap.newKeySet();
+      // Sender to topology id of an ack dropped because it didn't match the collector's topology.
+      final Map<Address, Integer> acksIgnored = new ConcurrentHashMap<>();
 
       BaseCollector(long id, int topologyId) {
          this.topologyId = topologyId;
@@ -202,8 +211,37 @@ public class CommandAckCollector {
        */
       @Override
       public final synchronized Void call() {
-         future.completeExceptionally(log.timeoutWaitingForAcks(Util.prettyPrintTime(timeoutNanoSeconds, TimeUnit.NANOSECONDS), getAddress(), id, topologyId));
+         String prettyTime = Util.prettyPrintTime(timeoutNanoSeconds, TimeUnit.NANOSECONDS);
+         TimeoutException te = log.timeoutWaitingForAcks(prettyTime, getAddress(), id, topologyId, installedTopologyId(), acksReceived, acksIgnored);
+         future.completeExceptionally(te);
          return null;
+      }
+
+      /**
+       * Returns the topology id currently installed on this node, for the timeout message.
+       *
+       * @return the installed topology id, or {@code -1} when there is no distribution manager, it has no topology yet,
+       *         or it is not running.
+       */
+      private int installedTopologyId() {
+         // Diagnostics only, the component may be stopping, and the future must complete regardless
+         try {
+            DistributionManager dm = distributionManager == null ? null : distributionManager.running();
+            CacheTopology topology = dm == null ? null : dm.getCacheTopology();
+            return topology == null ? -1 : topology.getTopologyId();
+         } catch (RuntimeException e) {
+            return -1;
+         }
+      }
+
+      final void ackReceived(Address from) {
+         acksReceived.add(from);
+      }
+
+      final void ackIgnored(Address from, int ackTopologyId) {
+         if (!future.isDone()) {
+            acksIgnored.put(from, ackTopologyId);
+         }
       }
 
       protected abstract String getAddress();
@@ -302,8 +340,10 @@ public class CommandAckCollector {
                   id, from, topologyId, this.topologyId);
          }
          if (isWrongTopologyOrIsDone(topologyId)) {
+            ackIgnored(from, topologyId);
             return;
          }
+         ackReceived(from);
          boolean empty;
          synchronized (this) {
             empty = backupOwners.remove(from) && backupOwners.isEmpty();
@@ -379,8 +419,10 @@ public class CommandAckCollector {
                   id, from, topologyId, this.topologyId, segment);
          }
          if (isWrongTopologyOrIsDone(topologyId)) {
+            ackIgnored(from, topologyId);
             return;
          }
+         ackReceived(from);
          synchronized (this) {
             Collection<Integer> pendingSegments = backups.getOrDefault(from, Collections.emptyList());
             if (pendingSegments.remove(segment) && pendingSegments.isEmpty()) {
