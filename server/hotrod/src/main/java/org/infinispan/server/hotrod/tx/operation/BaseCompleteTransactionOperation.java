@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod.tx.operation;
 
 import static org.infinispan.remoting.transport.impl.VoidResponseCollector.validOnly;
+import static org.infinispan.server.hotrod.tx.TxCommandInvoker.invokeInCluster;
 
 import java.util.Collection;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -195,22 +196,19 @@ abstract class BaseCompleteTransactionOperation<C1 extends TransactionBoundaryCo
          if (log.isTraceEnabled()) {
             log.tracef("[%s] Originator, %s, left the cluster.", xid, state.getOriginator());
          }
-         completeWithRemoteCommand(cache, state, cache.getRpcManager(), topology.getTopologyId(), stageCollector);
+         completeWithRemoteCommand(cache, state, topology.getTopologyId(), stageCollector);
       }
    }
 
    /**
     * Completes the transaction in the cache when the originator no longer belongs to the cache topology.
     */
-   private void completeWithRemoteCommand(AdvancedCache<?, ?> cache, TxState state, RpcManager rpcManager,
-                                          int topologyId, AggregateCompletionStage<Void> stageCollector) throws Throwable {
+   private void completeWithRemoteCommand(AdvancedCache<?, ?> cache, TxState state, int topologyId,
+                                          AggregateCompletionStage<Void> stageCollector) {
       var registry = SecurityActions.getCacheComponentRegistry(cache);
       var commandsFactory = registry.getCommandsFactory();
       var command = buildRemoteCommand(cache.getCacheConfiguration(), commandsFactory, state);
-      command.setTopologyId(topologyId);
-      stageCollector.dependsOn(rpcManager.invokeCommandOnAll(command, validOnly(), rpcManager.getSyncRpcOptions())
-            .handle(handler()));
-      stageCollector.dependsOn(command.invokeAsync(registry).handle(handler()));
+      stageCollector.dependsOn(invokeInCluster(registry, command, topologyId).handle(handler()));
    }
 
    /**
