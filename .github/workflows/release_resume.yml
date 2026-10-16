@@ -115,7 +115,7 @@ jobs:
   operator:
     needs: images
     if: contains(github.event.inputs.version, '.Final')
-    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@5af8cfb3df84c16bff29c10f2c232787d75b36f5 # main
+    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@ee96075c5dd0cd16491da0770827d96ce8a4c0a5 # main
     secrets: inherit
     with:
       image: quay.io/infinispan/server:${{ github.ref_name }}
