@@ -7,9 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.Search;
+import org.infinispan.protostream.sampledomain.Car;
+import org.infinispan.query.Indexer;
 import org.infinispan.query.helper.TestQueryHelperFactory;
-import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.QueryTestSCI;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -68,6 +68,6 @@ public class ShardingMassIndexTest extends MultipleCacheManagersTest {
    }
 
    protected void runMassIndexer() {
-      join(Search.getIndexer(cache(0)).run());
+      join(Indexer.of(cache(0)).run());
    }
 }

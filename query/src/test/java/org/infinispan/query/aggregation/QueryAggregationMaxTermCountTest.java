@@ -8,7 +8,7 @@ import java.util.List;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.model.Sale;
+import org.infinispan.protostream.sampledomain.Sale;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
@@ -44,7 +44,7 @@ public class QueryAggregationMaxTermCountTest extends SingleCacheManagerTest {
    @Test
    public void testCountAggregationReturnsMoreThanDefaultMaxTermCount() {
       Query<Object[]> query = cache.query(
-            "select s.status, count(s.code) from org.infinispan.query.model.Sale s group by s.status");
+            "select s.status, count(s.code) from org.infinispan.protostream.sampledomain.Sale s group by s.status");
       List<Object[]> results = query.list();
       assertThat(results).hasSize(NUM_DISTINCT_STATUSES);
    }
@@ -52,7 +52,7 @@ public class QueryAggregationMaxTermCountTest extends SingleCacheManagerTest {
    @Test
    public void testCountStarAggregationReturnsMoreThanDefaultMaxTermCount() {
       Query<Object[]> query = cache.query(
-            "select s.status, count(*) from org.infinispan.query.model.Sale s group by s.status");
+            "select s.status, count(*) from org.infinispan.protostream.sampledomain.Sale s group by s.status");
       List<Object[]> results = query.list();
       assertThat(results).hasSize(NUM_DISTINCT_STATUSES);
    }

@@ -153,6 +153,12 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>proto-sample-domain-implementation</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-scripting</artifactId>
          <scope>test</scope>
       </dependency>

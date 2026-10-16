@@ -37,7 +37,6 @@ import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.IndexInfo;
 import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.rest.RequestHeader;
@@ -457,7 +456,7 @@ public abstract class BaseRestSearchTest extends MultipleCacheManagersTest {
    private void assertIndexState(BiConsumer<IndexInfo, Integer> cacheIndexInfo) {
       IntStream.range(0, getNumNodes()).forEach(i -> {
          Cache<?, ?> cache = cache(i, cacheName());
-         SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
+         SearchStatistics searchStatistics = SearchStatistics.of(cache);
          Map<String, IndexInfo> indexInfo = join(searchStatistics.getIndexStatistics().computeIndexInfos());
          cacheIndexInfo.accept(indexInfo.get(Person.class.getName()), i);
       });

@@ -47,6 +47,12 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
+         <artifactId>proto-sample-domain-implementation</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
          <artifactId>infinispan-commons</artifactId>
          <type>test-jar</type>
          <scope>test</scope>

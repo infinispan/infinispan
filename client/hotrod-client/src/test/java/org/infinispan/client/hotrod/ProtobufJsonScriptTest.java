@@ -8,15 +8,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.IOException;
 import java.util.Collections;
 
-import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.testng.annotations.Test;
 
 /**
@@ -53,27 +52,10 @@ public class ProtobufJsonScriptTest extends MultiHotRodServersTest {
    @Test
    public void testDataAsJSONFromScript() throws IOException {
       RemoteCacheManager remoteCacheManager = client(0);
-      RemoteCache<Integer, User> cache = remoteCacheManager.getCache();
+      RemoteCache<String, User> cache = remoteCacheManager.getCache();
+      cache.putAll(User.data());
 
-      User user1 = new UserPB();
-      user1.setId(1);
-      user1.setName("Tom");
-      user1.setSurname("Cat");
-      user1.setGender(User.Gender.MALE);
-      user1.setAge(33);
-      user1.setAccountIds(Collections.singleton(12));
-
-      User user2 = new UserPB();
-      user2.setId(2);
-      user2.setName("Jane");
-      user2.setSurname("Doe");
-      user2.setGender(User.Gender.FEMALE);
-      user2.setAge(39);
-
-      cache.put(1, user1);
-      cache.put(2, user2);
-
-      Query<User> q = cache.query("FROM sample_bank_account.User WHERE name = 'Jane'");
+      Query<User> q = cache.query("FROM sample_domain.User WHERE name = 'Jane'");
       User user = q.execute().list().iterator().next();
       assertEquals("Jane", user.getName());
 
@@ -83,7 +65,7 @@ public class ProtobufJsonScriptTest extends MultiHotRodServersTest {
       User result = cache.execute(SCRIPT_NAME, Collections.emptyMap());
 
       // Read the user as pojo
-      assertEquals(3, result.getId());
+      assertEquals(10, result.getId());
       assertEquals("Rex", result.getName());
       assertEquals(67, (int) result.getAge());
    }

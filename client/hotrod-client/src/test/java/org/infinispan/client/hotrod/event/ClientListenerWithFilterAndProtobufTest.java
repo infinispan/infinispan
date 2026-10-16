@@ -1,10 +1,11 @@
 package org.infinispan.client.hotrod.event;
 
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -14,8 +15,6 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientListener;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.CacheMode;
@@ -28,7 +27,8 @@ import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
-import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.testng.annotations.Test;
 
 
@@ -43,7 +43,7 @@ public class ClientListenerWithFilterAndProtobufTest extends MultiHotRodServersT
 
    private final int NUM_NODES = 2;
 
-   private RemoteCache<Object, Object> remoteCache;
+   private RemoteCache<String, User> remoteCache;
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -67,41 +67,28 @@ public class ClientListenerWithFilterAndProtobufTest extends MultiHotRodServersT
    }
 
    public void testEventFilter() throws Exception {
-      Object[] filterFactoryParams = new Object[]{"string_key_1", "user_1"};
-      ClientEntryListener listener = new ClientEntryListener();
+      Object[] filterFactoryParams = new Object[]{"John Doe", "Jane Doe"};
+      ClientEntryListener<String> listener = new ClientEntryListener<>();
       remoteCache.addClientListener(listener, filterFactoryParams, null);
+      remoteCache.putAll(User.data());
 
-      User user1 = new UserPB();
-      user1.setId(1);
-      user1.setName("John");
-      user1.setSurname("Doe");
-      user1.setGender(User.Gender.MALE);
-      user1.setAge(22);
+      List<String> keys = new ArrayList<>();
+      keys.add(listener.createEvents.poll(5, TimeUnit.SECONDS).getKey());
+      keys.add(listener.createEvents.poll(5, TimeUnit.SECONDS).getKey());
+      assertThat(keys).containsExactlyInAnyOrder("John Doe", "Jane Doe");
 
-      remoteCache.put("string_key_1", "string value 1");
-      remoteCache.put("string_key_2", "string value 2");
-      remoteCache.put("user_1", user1);
-
-      assertEquals(3, remoteCache.keySet().size());
-
-      ClientCacheEntryCreatedEvent e = listener.createEvents.poll(5, TimeUnit.SECONDS);
-      assertEquals("string_key_1", e.getKey());
-
-      e = listener.createEvents.poll(5, TimeUnit.SECONDS);
-      assertEquals("user_1", e.getKey());
-
-      e = listener.createEvents.poll(5, TimeUnit.SECONDS);
+      ClientCacheEntryCreatedEvent<String> e = listener.createEvents.poll(5, TimeUnit.SECONDS);
       assertNull(e, "No more elements expected in queue!");
    }
 
    @ClientListener(filterFactoryName = "custom-filter-factory")
-   public static class ClientEntryListener {
+   public static class ClientEntryListener<K> {
 
-      public final BlockingQueue<ClientCacheEntryCreatedEvent> createEvents = new LinkedBlockingQueue<>();
+      public final BlockingQueue<ClientCacheEntryCreatedEvent<K>> createEvents = new LinkedBlockingQueue<>();
 
       @ClientCacheEntryCreated
       @SuppressWarnings("unused")
-      public void handleClientCacheEntryCreatedEvent(ClientCacheEntryCreatedEvent event) {
+      public void handleClientCacheEntryCreatedEvent(ClientCacheEntryCreatedEvent<K> event) {
          createEvents.add(event);
       }
    }

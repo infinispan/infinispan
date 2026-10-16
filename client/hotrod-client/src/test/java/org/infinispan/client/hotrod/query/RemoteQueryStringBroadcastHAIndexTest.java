@@ -4,6 +4,9 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.protostream.sampledomain.bank.Account;
+import org.infinispan.protostream.sampledomain.bank.Transaction;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.testng.annotations.Test;
 
 /**
@@ -18,11 +21,11 @@ public class RemoteQueryStringBroadcastHAIndexTest extends RemoteQueryStringBroa
    protected ConfigurationBuilder getConfigurationBuilder() {
       ConfigurationBuilder cfgBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
       cfgBuilder.indexing().enable().storage(LOCAL_HEAP)
-            .addIndexedEntity("sample_bank_account.User")
-            .addIndexedEntity("sample_bank_account.Account")
-            .addIndexedEntity("sample_bank_account.Transaction")
-            .addIndexedEntity("sample_bank_account.AnalyzerTestEntity")
-            .addIndexedEntity("sample_bank_account.FlightRoute");
+            .addIndexedEntity(User.ENTITY_NAME)
+            .addIndexedEntity(Account.ENTITY_NAME)
+            .addIndexedEntity(Transaction.ENTITY_NAME)
+            .addIndexedEntity("sample_domain.AnalyzerTestEntity")
+            .addIndexedEntity("sample_domain.FlightRoute");
       return cfgBuilder;
    }
 }
