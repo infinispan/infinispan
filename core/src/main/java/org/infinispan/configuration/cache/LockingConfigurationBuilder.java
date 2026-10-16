@@ -4,6 +4,7 @@ import static org.infinispan.configuration.cache.LockingConfiguration.CONCURRENC
 import static org.infinispan.configuration.cache.LockingConfiguration.ISOLATION_LEVEL;
 import static org.infinispan.configuration.cache.LockingConfiguration.LOCK_ACQUISITION_TIMEOUT;
 import static org.infinispan.configuration.cache.LockingConfiguration.USE_LOCK_STRIPING;
+import static org.infinispan.util.logging.Log.CONFIG;
 
 import java.util.concurrent.TimeUnit;
 
@@ -113,6 +114,21 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
 
       if (isolationLevel.get() == IsolationLevel.SERIALIZABLE)
          isolationLevel.set(IsolationLevel.REPEATABLE_READ);
+
+      CacheMode cacheMode = getBuilder().clustering().cacheMode();
+      if (cacheMode.isDistributed() || cacheMode.isReplicated()) {
+         Attribute<TimeQuantity> lockAcquisitionTimeout = attributes.attribute(LOCK_ACQUISITION_TIMEOUT);
+         Attribute<TimeQuantity> remoteTimeout = getBuilder().clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT);
+         long lockTimeoutVal = lockAcquisitionTimeout.get().longValue();
+         long remoteTimeoutVal = remoteTimeout.get().longValue();
+         if (remoteTimeoutVal >= 0) {
+            if (lockTimeoutVal < 0 || remoteTimeoutVal < lockTimeoutVal) {
+               throw CONFIG.invalidRemoteTimeout(remoteTimeout.get().toString(), lockAcquisitionTimeout.get().toString());
+            } else if (remoteTimeoutVal == lockTimeoutVal) {
+               CONFIG.remoteTimeoutEqualsLockAcquisitionTimeout(remoteTimeout.get().toString(), lockAcquisitionTimeout.get().toString());
+            }
+         }
+      }
    }
 
    @Override

@@ -128,10 +128,18 @@ public class StateTransferConfigurationBuilder extends
             && !getClusteringBuilder().cacheMode().isDistributed())
          throw CONFIG.awaitLeaveTransferOnlyForDist();
 
-      Attribute<TimeQuantity> timeoutAttribute = attributes.attribute(TIMEOUT);
-      Attribute<TimeQuantity> remoteTimeoutAttribute = clustering().attributes.attribute(ClusteringConfiguration.REMOTE_TIMEOUT);
-      if (timeoutAttribute.get().longValue() < remoteTimeoutAttribute.get().longValue()) {
-         throw CONFIG.invalidStateTransferTimeout(timeoutAttribute.get().toString(), remoteTimeoutAttribute.get().toString());
+      if (clustering().cacheMode().needsStateTransfer()) {
+         Attribute<TimeQuantity> timeoutAttribute = attributes.attribute(TIMEOUT);
+         Attribute<TimeQuantity> remoteTimeoutAttribute = clustering().attributes.attribute(ClusteringConfiguration.REMOTE_TIMEOUT);
+         long stateTransferTimeoutVal = timeoutAttribute.get().longValue();
+         long remoteTimeoutVal = remoteTimeoutAttribute.get().longValue();
+         if (stateTransferTimeoutVal >= 0) {
+            if (remoteTimeoutVal < 0 || stateTransferTimeoutVal < remoteTimeoutVal) {
+               throw CONFIG.invalidStateTransferTimeout(timeoutAttribute.get().toString(), remoteTimeoutAttribute.get().toString());
+            } else if (stateTransferTimeoutVal == remoteTimeoutVal) {
+               CONFIG.stateTransferTimeoutEqualsRemoteTimeout(timeoutAttribute.get().toString(), remoteTimeoutAttribute.get().toString());
+            }
+         }
       }
    }
 

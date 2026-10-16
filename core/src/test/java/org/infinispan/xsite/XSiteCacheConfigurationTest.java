@@ -1,7 +1,11 @@
 package org.infinispan.xsite;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
@@ -9,6 +13,7 @@ import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.testing.skip.StringLogAppender;
 import org.testng.annotations.Test;
 
 /**
@@ -143,5 +148,72 @@ public class XSiteCacheConfigurationTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.sites().mergePolicy(null);
       builder.build();
+   }
+
+   public void testSyncBackupReplicationTimeoutGreaterThanRemoteTimeoutThrows() {
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(10000);
+      cb.locking().lockAcquisitionTimeout(5000);
+      cb.sites().addBackup().site(LON).strategy(BackupConfiguration.BackupStrategy.SYNC).replicationTimeout(15000);
+      assertThatThrownBy(cb::build)
+            .isInstanceOf(CacheConfigurationException.class)
+            .hasMessageContaining("ISPN000734");
+   }
+
+   public void testSyncBackupReplicationTimeoutEqualsRemoteTimeoutWarns() {
+      StringLogAppender logAppender = new StringLogAppender("org.infinispan.CONFIG",
+            Level.WARN,
+            t -> true,
+            PatternLayout.newBuilder().setPattern("%m").build());
+      logAppender.install();
+      try {
+         ConfigurationBuilder cb = new ConfigurationBuilder();
+         cb.clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(15000);
+         cb.locking().lockAcquisitionTimeout(5000);
+         cb.sites().addBackup().site(LON).strategy(BackupConfiguration.BackupStrategy.SYNC).replicationTimeout(15000);
+         cb.build();
+         assertThat(logAppender).anyMatch(line -> line.contains("ISPN000735"));
+      } finally {
+         logAppender.uninstall();
+      }
+   }
+
+   public void testAsyncBackupAllowsHigherReplicationTimeout() {
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(5000);
+      cb.locking().lockAcquisitionTimeout(2000);
+      cb.sites().addBackup().site(LON).strategy(BackupConfiguration.BackupStrategy.ASYNC).replicationTimeout(15000);
+      Configuration config = cb.build();
+      assertThat(config).isNotNull();
+   }
+
+   public void testSyncBackupThrowsWhenBackupReplicationTimeoutInfiniteAndRemoteTimeoutFinite() {
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(15000);
+      cb.locking().lockAcquisitionTimeout(5000);
+      cb.sites().addBackup().site(LON).strategy(BackupConfiguration.BackupStrategy.SYNC).replicationTimeout(-1);
+      assertThatThrownBy(cb::build)
+            .isInstanceOf(CacheConfigurationException.class)
+            .hasMessageContaining("ISPN000734");
+   }
+
+   public void testSyncBackupAllowsInfiniteRemoteTimeoutWithFiniteBackupReplicationTimeout() {
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(-1);
+      cb.clustering().stateTransfer().timeout(-1);
+      cb.locking().lockAcquisitionTimeout(5000);
+      cb.sites().addBackup().site(LON).strategy(BackupConfiguration.BackupStrategy.SYNC).replicationTimeout(15000);
+      Configuration config = cb.build();
+      assertThat(config).isNotNull();
+   }
+
+   public void testSyncBackupAllowsBothTimeoutsInfinite() {
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(-1);
+      cb.clustering().stateTransfer().timeout(-1);
+      cb.locking().lockAcquisitionTimeout(-1);
+      cb.sites().addBackup().site(LON).strategy(BackupConfiguration.BackupStrategy.SYNC).replicationTimeout(-1);
+      Configuration config = cb.build();
+      assertThat(config).isNotNull();
    }
 }

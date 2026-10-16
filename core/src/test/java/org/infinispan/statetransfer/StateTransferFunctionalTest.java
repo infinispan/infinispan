@@ -305,7 +305,8 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
       ConfigurationBuilder configToUse = new ConfigurationBuilder();
       configToUse.read(configurationBuilder.build(), Combine.DEFAULT)
-            .clustering().remoteTimeout(1, TimeUnit.NANOSECONDS).stateTransfer().timeout(1, TimeUnit.NANOSECONDS);
+            .clustering().remoteTimeout(1, TimeUnit.NANOSECONDS).stateTransfer().timeout(1, TimeUnit.NANOSECONDS)
+            .locking().lockAcquisitionTimeout(0);
 
       assertEquals(1, cache1.getAdvancedCache().getDistributionManager().getCacheTopology().getMembers().size());
 

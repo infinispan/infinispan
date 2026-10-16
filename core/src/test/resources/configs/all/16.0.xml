@@ -152,7 +152,7 @@
          <expiration interval="10500" lifespan="11" max-idle="6"/>
          <memory max-count="20500"/>
       </invalidation-cache>
-      <replicated-cache name="repl" mode="SYNC" statistics="true" segments="16"
+      <replicated-cache name="repl" mode="SYNC" remote-timeout="35000" statistics="true" segments="16"
                         key-partitioner="org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner">
          <encoding>
             <key media-type="application/x-java-object"/>
@@ -373,7 +373,7 @@
       </invalidation-cache-configuration>
       <invalidation-cache name="invalidation-instance" configuration="invalidation-template" />
 
-      <replicated-cache-configuration name="repl-template" mode="SYNC" statistics="true"
+      <replicated-cache-configuration name="repl-template" mode="SYNC" remote-timeout="35000" statistics="true"
             segments="200"
             key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
          <encoding>

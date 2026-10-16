@@ -11,7 +11,7 @@ import org.infinispan.commons.util.TimeQuantity;
 public class TopologyCacheConfiguration extends ConfigurationElement<TopologyCacheConfiguration> {
    public static final AttributeDefinition<Boolean> TOPOLOGY_AWAIT_INITIAL_TRANSFER = AttributeDefinition.builder(Attribute.AWAIT_INITIAL_RETRIEVAL, true).immutable().build();
    public static final AttributeDefinition<TimeQuantity> TOPOLOGY_LOCK_TIMEOUT = AttributeDefinition.builder(Attribute.LOCK_TIMEOUT, TimeQuantity.valueOf("10s")).immutable().build();
-   public static final AttributeDefinition<TimeQuantity> TOPOLOGY_REPL_TIMEOUT = AttributeDefinition.builder(Attribute.REPLICATION_TIMEOUT, TimeQuantity.valueOf("10s")).immutable().build();
+   public static final AttributeDefinition<TimeQuantity> TOPOLOGY_REPL_TIMEOUT = AttributeDefinition.builder(Attribute.REPLICATION_TIMEOUT, TimeQuantity.valueOf("15s")).immutable().build();
    public static final AttributeDefinition<Boolean> NETWORK_PREFIX_OVERRIDE = AttributeDefinition.builder(Attribute.NETWORK_PREFIX_OVERRIDE, true).immutable().build();
 
    public static AttributeSet attributeDefinitionSet() {

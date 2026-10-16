@@ -365,6 +365,7 @@
             "segments": "16",
             "key-partitioner": "org.infinispan.distribution.ch.impl.RESPHashFunctionPartitioner",
             "mode": "SYNC",
+            "remote-timeout": "35000",
             "statistics": true,
             "encoding": {
               "key": {
@@ -1012,6 +1013,7 @@
             "segments": "200",
             "key-partitioner": "org.infinispan.distribution.ch.impl.HashFunctionPartitioner",
             "mode": "SYNC",
+            "remote-timeout": "35000",
             "statistics": true,
             "encoding": {
               "key": {

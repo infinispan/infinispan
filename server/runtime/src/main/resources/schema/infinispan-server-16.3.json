@@ -1886,8 +1886,8 @@
         },
         "replication-timeout": {
           "type": "string",
-          "description": "Configures replication timeouts for topology caches. Defaults to 10s. Supports time units: ms, s, m, h, d.",
-          "default": "10s"
+          "description": "Configures replication timeouts for topology caches. Defaults to 15s. Supports time units: ms, s, m, h, d.",
+          "default": "15s"
         },
         "await-initial-retrieval": {
           "type": "boolean",
