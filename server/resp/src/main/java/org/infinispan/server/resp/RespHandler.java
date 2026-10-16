@@ -227,7 +227,7 @@ public class RespHandler extends ChannelInboundHandlerAdapter {
    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
       if (closing) return;
       if (cause instanceof TooLongFrameException) {
-         coreLog.requestTooLarge(ctx.channel(), resumeHandler.maxContentLength, 0);
+         coreLog.requestTooLarge(ctx.channel(), resumeHandler.maxContentLength(), resumeHandler.currentRequestBytes());
          if (log.isTraceEnabled()) log.trace("Request too large", cause);
       } else {
          log.unexpectedException(cause);
