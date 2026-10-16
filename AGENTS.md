@@ -25,5 +25,18 @@ When creating GitHub issues, read and follow the instructions in AI-ISSUES.md.
 ## Pull request review instructions
 When reviewing PRs, read and follow the instructions in REVIEW.md.
 
+## AI skills
+Reusable skills (slash commands) are stored in the `.ai-skills/` directory, committed to the repository.
+Each agent tool has its own skills directory (e.g. `.claude/skills/` for Claude Code).
+To make the shared skills available, symlink each skill into your agent's skills directory:
+
+```sh
+# Claude Code
+cd .claude/skills
+for skill in ../../.ai-skills/*/; do
+  ln -sfn "$skill" "$(basename "$skill")"
+done
+```
+
 ## Maintaining AI context files
 When making changes that alter the project structure, module organization, build process, or architectural patterns, check whether the relevant AI context files need updating: AGENTS.md, AI-CODE.md, AI-TEST.md, AI-CONFIG.md, AI-ISSUES.md, REVIEW.md, documentation/AI-CODE.md, and any module-level AI-CODE.md files. The architecture documentation in `documentation/src/main/asciidoc/titles/architecture/` should also be checked when internal architecture changes. Examples of changes that warrant updates: renaming or moving modules, adding new modules, changing build commands, introducing new frameworks or test patterns, modifying configuration architecture, or updating development conventions.
