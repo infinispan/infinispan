@@ -11,6 +11,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.SegmentSpecificCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -247,6 +248,34 @@ public interface ClusteringDependentLogic {
       private CompletionStage<Void> commitEntryOrdered(CacheEntry entry, FlagAffectedCommand command, InvocationContext ctx,
                                                        Flag trackFlag, boolean l1Invalidation) {
          Object key = entry.getKey();
+
+         // A remove with passivation holds a REMOVE slot in the ordered for the duration of the store and container delete.
+         // The writer opens the slot when performing the store delete and passes the orderer along to complete later.
+         // This ensures there is no gap where a key is in-memory and another passivation could write it back to the store.
+         if (entry.isRemoved() && command instanceof AbstractDataWriteCommand adwc) {
+            CompletableFuture<DataOperationOrderer.Operation> cf = adwc.getOrderer();
+            if (cf != null) {
+               // Clear the carrier so a retry doesn't use the same slot.
+               adwc.setOrderer(null);
+               CompletionStage<Void> commitStage;
+               try {
+                  commitStage = commitSingleEntry(entry, command, ctx, trackFlag, l1Invalidation);
+               } catch (Throwable t) {
+                  // Release the slot on failures so it is not held forever.
+                  orderer.completeOperation(key, cf, DataOperationOrderer.Operation.REMOVE);
+                  throw t;
+               }
+
+               // Now, only release the slot again after the entry was removed from the container.
+               if (CompletionStages.isCompletedSuccessfully(commitStage)) {
+                  orderer.completeOperation(key, cf, DataOperationOrderer.Operation.REMOVE);
+                  return CompletableFutures.completedNull();
+               }
+               return commitStage.whenComplete((ignore, t) ->
+                     orderer.completeOperation(key, cf, DataOperationOrderer.Operation.REMOVE));
+            }
+         }
+
          CompletableFuture<DataOperationOrderer.Operation> ourFuture = new CompletableFuture<>();
          // If this future is null it means there is another pending read/write/eviction for this key, thus
          // we have to wait on it before performing our commit to ensure data is updated properly

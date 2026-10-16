@@ -4,6 +4,7 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.B
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -22,6 +23,7 @@ import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.ComputeCommand;
 import org.infinispan.commands.write.ComputeIfAbsentCommand;
@@ -58,6 +60,7 @@ import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.MarshallableEntryFactory;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.DataOperationOrderer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -86,9 +89,11 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    @Inject TransactionManager transactionManager;
    @Inject KeyPartitioner keyPartitioner;
    @Inject MarshallableEntryFactory<?, ?> marshalledEntryFactory;
+   @Inject DataOperationOrderer ordered;
 
    final AtomicLong cacheStores = new AtomicLong(0);
    private volatile boolean usingTransactionalStores;
+   private boolean usingPassivation;
 
    protected final InvocationSuccessFunction<PutMapCommand> handlePutMapCommandReturn = this::handlePutMapCommandReturn;
    protected final InvocationSuccessFunction<RemoveAllCommand> handleRemoveAllCommandReturn = this::handleRemoveAllCommandReturn;
@@ -101,6 +106,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
    @Start
    protected void start() {
       this.setStatisticsEnabled(cacheConfiguration.statistics().enabled());
+      this.usingPassivation = cacheConfiguration.persistence().passivation();
 
       if (cacheConfiguration.transaction().transactionMode().isTransactional()) {
          persistenceManager.addStoreListener(persistenceStatus -> {
@@ -497,6 +503,35 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       if (persistenceManager.isReadOnly())
          return CompletableFutures.completedNull();
 
+      // No need to fill a slot if passivation not enabled, proceed with delete.
+      if (!usingPassivation)
+         return doRemoveEntry(ctx, key, segment, command);
+
+      // Concurrent operations could cause a race that passivate an entry during deletion.
+      // Insert a delete slot in the operation and allocate it to ensure ordering.
+      CompletableFuture<DataOperationOrderer.Operation> cf = new CompletableFuture<>();
+      CompletionStage<DataOperationOrderer.Operation> previous = ordered.orderOn(key, cf);
+
+      CompletionStage<?> stage;
+      if (previous == null) {
+         stage = doRemoveEntry(ctx, key, segment, command);
+      } else {
+         stage = previous.thenCompose(ignore -> doRemoveEntry(ctx, key, segment, command));
+      }
+
+      // When there is an entry being removed, we track the slot for the store and data container removal.
+      // We create the slot here and pass it along to be released once the entry is removed from the store.
+      CacheEntry<?, ?> ctxEntry = ctx.lookupEntry(key);
+      if (ctxEntry != null && ctxEntry.isRemoved() && command instanceof AbstractDataWriteCommand adwc) {
+         adwc.setOrderer(cf);
+         return stage;
+      }
+
+      return stage.whenComplete((ignore, t) ->
+            ordered.completeOperation(key, cf, DataOperationOrderer.Operation.REMOVE));
+   }
+
+   private CompletionStage<?> doRemoveEntry(InvocationContext ctx, Object key, int segment, FlagAffectedCommand command) {
       CompletionStage<?> stage = persistenceManager.deleteFromAllStores(key, segment, skipSharedStores(ctx, key, command) ? PRIVATE : BOTH);
       if (log.isTraceEnabled()) {
          stage = stage.thenAccept(removed ->
