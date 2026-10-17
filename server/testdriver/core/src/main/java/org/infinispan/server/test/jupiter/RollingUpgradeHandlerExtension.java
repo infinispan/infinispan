@@ -1,9 +1,14 @@
 package org.infinispan.server.test.jupiter;
 
 import java.net.InetAddress;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.RemoteCacheContainer;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.counter.api.CounterManager;
+import org.infinispan.health.HealthStatus;
 import org.infinispan.server.test.api.CliTestDriver;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.JmxTestClient;
@@ -11,6 +16,7 @@ import org.infinispan.server.test.api.MemcachedTestClientDriver;
 import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
 import org.infinispan.server.test.api.TestClientDriver;
+import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
@@ -108,11 +114,11 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
    @Override
    public void beforeEach(ExtensionContext context) {
       this.testClient = null;
-      Assumptions.assumeFalse(Compatibility.INSTANCE.isCompatibilitySkip(handler.getConfiguration(), context.getRequiredTestClass().getName(), context.getRequiredTestMethod().getName()));
       // A previous test already confirmed the shared cluster is unresponsive; skip the rest of the
       // suite rather than piling up identical timeout failures.
       Assumptions.assumeFalse(clusterUnresponsive,
             "Skipping - rolling upgrade cluster is not responding, see earlier failure");
+      Assumptions.assumeFalse(Compatibility.INSTANCE.isCompatibilitySkip(handler.getConfiguration(), context.getRequiredTestClass().getName(), context.getRequiredTestMethod().getName()));
       this.testClient = new TestClient(testServer);
       startTestClient(context, testClient);
    }
@@ -131,7 +137,25 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
                   "remaining suite tests will be skipped", handler.getConfiguration().name());
          }
       } finally {
-         if (testClient != null) testClient.clearResources();
+         if (testClient != null) {
+            try {
+               testClient.clearResources(!clusterUnresponsive);
+            } catch (Throwable t) {
+               log.warnf(t, "Error clearing test resources for %s", extensionContext.getDisplayName());
+               if (!clusterUnresponsive && !isClusterResponsive()) {
+                  clusterUnresponsive = true;
+                  log.warnf("Rolling upgrade cluster '%s' is not responding after resource cleanup failure; " +
+                        "remaining suite tests will be skipped", handler.getConfiguration().name());
+               }
+               if (t instanceof RuntimeException) {
+                  throw (RuntimeException) t;
+               }
+               if (t instanceof Error) {
+                  throw (Error) t;
+               }
+               throw new RuntimeException(t);
+            }
+         }
       }
    }
 
@@ -142,13 +166,40 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
    }
 
    /**
-    * Probes the shared mixed-version cluster using the same predicate the handler uses to gate each
-    * upgrade step (a synchronous Hot Rod get plus a server count check). Any exception, including the
-    * client socket timeout, is treated as the cluster being unresponsive.
+    * Probes the shared mixed-version cluster using the handler's isValidServerState predicate and additionally
+    * verifies cluster health by querying the REST health check endpoint on each server. Any exception,
+    * including client timeouts or unhealthy status, is treated as the cluster being unresponsive.
     */
    private boolean isClusterResponsive() {
+      if (handler == null || testServer == null) {
+         return false;
+      }
       try {
-         return handler.getConfiguration().isValidServerState().test(handler);
+         if (!handler.getConfiguration().isValidServerState().test(handler)) {
+            return false;
+         }
+         int numServers = testServer.getDriver().getConfiguration().numServers();
+         for (int i = 0; i < numServers; i++) {
+            RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+            builder.socketTimeout(10_000).connectionTimeout(10_000).pingOnCreate(false);
+            if (testServer.isContainerRunWithDefaultServerConfig()) {
+               builder.security().authentication().username(TestUser.ADMIN.getUser()).password(TestUser.ADMIN.getPassword());
+            }
+            try (RestClient client = testServer.newRestClientForServer(builder, testServer.getDefaultPortNumber(), i);
+                 RestResponse response = client.container().healthStatus().toCompletableFuture().get(10, TimeUnit.SECONDS)) {
+               if (response.status() != 200) {
+                  return false;
+               }
+               String body = response.body();
+               if (body != null) {
+                  body = body.trim();
+               }
+               if (!HealthStatus.HEALTHY.name().equals(body) && !HealthStatus.HEALTHY_REBALANCING.name().equals(body)) {
+                  return false;
+               }
+            }
+         }
+         return true;
       } catch (Exception e) {
          log.debugf(e, "Rolling upgrade cluster health probe failed");
          return false;
