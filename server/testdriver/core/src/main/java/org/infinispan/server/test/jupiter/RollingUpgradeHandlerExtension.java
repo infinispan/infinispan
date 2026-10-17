@@ -1,13 +1,14 @@
 package org.infinispan.server.test.jupiter;
 
 import java.net.InetAddress;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
-import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheContainer;
-import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.commons.configuration.StringConfiguration;
+import org.infinispan.client.rest.RestClient;
+import org.infinispan.client.rest.RestResponse;
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.counter.api.CounterManager;
+import org.infinispan.health.HealthStatus;
 import org.infinispan.server.test.api.CliTestDriver;
 import org.infinispan.server.test.api.HotRodTestClientDriver;
 import org.infinispan.server.test.api.JmxTestClient;
@@ -15,6 +16,7 @@ import org.infinispan.server.test.api.MemcachedTestClientDriver;
 import org.infinispan.server.test.api.RespTestClientDriver;
 import org.infinispan.server.test.api.RestTestClientDriver;
 import org.infinispan.server.test.api.TestClientDriver;
+import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.core.InfinispanServerTestConfiguration;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
@@ -165,39 +167,35 @@ public class RollingUpgradeHandlerExtension extends AbstractServerExtension impl
 
    /**
     * Probes the shared mixed-version cluster using the handler's isValidServerState predicate and additionally
-    * verifies cluster management / configuration coordination (e.g. org.infinispan.CONFIG) by creating and
-    * removing a temporary cache. An in-memory GET on an already created cache can succeed even when cluster
-    * coordination or cache administration is stuck or deadlocked. Any exception, including the client socket
-    * timeout, is treated as the cluster being unresponsive.
+    * verifies cluster health by querying the REST health check endpoint on each server. Any exception,
+    * including client timeouts or unhealthy status, is treated as the cluster being unresponsive.
     */
    private boolean isClusterResponsive() {
-      if (handler == null) {
+      if (handler == null || testServer == null) {
          return false;
       }
       try {
          if (!handler.getConfiguration().isValidServerState().test(handler)) {
             return false;
          }
-         RemoteCacheManager rcm = handler.getRemoteCacheManager();
-         String probeCacheName = "health-probe-" + Long.toHexString(ThreadLocalRandom.current().nextLong());
-         Exception primaryException = null;
-         try {
-            rcm.administration().createCache(probeCacheName, new StringConfiguration("<replicated-cache></replicated-cache>"));
-            RemoteCache<String, String> probeCache = rcm.getCache(probeCacheName);
-            if (probeCache != null) {
-               probeCache.put("k", "v");
+         int numServers = testServer.getDriver().getConfiguration().numServers();
+         for (int i = 0; i < numServers; i++) {
+            RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
+            builder.socketTimeout(10_000).connectionTimeout(10_000).pingOnCreate(false);
+            if (testServer.isContainerRunWithDefaultServerConfig()) {
+               builder.security().authentication().username(TestUser.ADMIN.getUser()).password(TestUser.ADMIN.getPassword());
             }
-         } catch (Exception e) {
-            primaryException = e;
-            throw e;
-         } finally {
-            try {
-               rcm.administration().removeCache(probeCacheName);
-            } catch (Exception e) {
-               if (primaryException != null) {
-                  primaryException.addSuppressed(e);
-               } else {
-                  throw e;
+            try (RestClient client = testServer.newRestClientForServer(builder, testServer.getDefaultPortNumber(), i);
+                 RestResponse response = client.container().healthStatus().toCompletableFuture().get(10, TimeUnit.SECONDS)) {
+               if (response.status() != 200) {
+                  return false;
+               }
+               String body = response.body();
+               if (body != null) {
+                  body = body.trim();
+               }
+               if (!HealthStatus.HEALTHY.name().equals(body) && !HealthStatus.HEALTHY_REBALANCING.name().equals(body)) {
+                  return false;
                }
             }
          }
