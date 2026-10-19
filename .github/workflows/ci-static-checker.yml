@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
 
       - name: actionlint with reviewdog
-        uses: reviewdog/action-actionlint@6a9ff88b9bb9c12ff3d7340e267f0f59effaa7cd # v1.80.1
+        uses: reviewdog/action-actionlint@3cbf14efd750961dba35fccbf00f9e14028cb1f5 # v1.80.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-annotations
