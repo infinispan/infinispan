@@ -42,6 +42,20 @@ Asynchronous backup write operations to the local cache are independent of each 
 If a backup write operation fails, the local cache continue and no exceptions are thrown.
 When this happens, {brandname} also retries the failed backup operation until the remote cluster disconnects from the cross-site view.
 
+[IMPORTANT]
+====
+If you restart all nodes in a cluster that uses asynchronous backups, do one of the following to keep the clusters in sync:
+
+* Enable global state.
+* Purge non-shared cache stores on startup and use cross-site state transfer to restore data from a backup location.
+
+Otherwise, backup locations can ignore writes that the cluster receives after the restart.
+====
+
+[role="_additional-resources"]
+.Additional resources
+* link:{config_docs}#global-persistent-location_persistence[Global persistent location]
+
 [discrete]
 == Synchronous vs asynchronous backups
 
