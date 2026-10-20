@@ -8,6 +8,7 @@ package org.infinispan.persistence.jdbc.common;
  */
 public enum DatabaseType {
    ACCESS,
+   COCKROACHDB,
    DB2,
    DB2_390,
    DERBY,
@@ -21,6 +22,7 @@ public enum DatabaseType {
    ORACLE,
    ORACLE_XE,
    POSTGRES,
+   SQL2003,
    SQLITE,
    SQL_SERVER,
    SYBASE;
@@ -35,8 +37,10 @@ public enum DatabaseType {
          type = DatabaseType.MYSQL;
       } else if (name.contains("mariadb")) {
          type = DatabaseType.MARIA_DB;
-         //postgresqlplus example jdbc:edb://localhost:5444/edb
+      } else if (name.contains("cockroach")) {
+         type = DatabaseType.COCKROACHDB;
       } else if (name.contains("postgres") || name.contains("edb")) {
+         //postgresqlplus example jdbc:edb://localhost:5444/edb
          type = DatabaseType.POSTGRES;
       } else if (name.contains("derby")) {
          type = DatabaseType.DERBY;

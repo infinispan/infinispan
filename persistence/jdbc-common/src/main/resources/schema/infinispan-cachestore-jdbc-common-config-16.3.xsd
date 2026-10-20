@@ -145,6 +145,7 @@
   <xs:simpleType name="dialect">
     <xs:restriction base="xs:token">
       <xs:enumeration value="ACCESS"/>
+      <xs:enumeration value="COCKROACHDB"/>
       <xs:enumeration value="DB2"/>
       <xs:enumeration value="DB2_390"/>
       <xs:enumeration value="DERBY"/>
@@ -156,7 +157,9 @@
       <xs:enumeration value="MARIA_DB"/>
       <xs:enumeration value="MYSQL"/>
       <xs:enumeration value="ORACLE"/>
+      <xs:enumeration value="ORACLE_XE"/>
       <xs:enumeration value="POSTGRES"/>
+      <xs:enumeration value="SQL2003"/>
       <xs:enumeration value="SQL_SERVER"/>
       <xs:enumeration value="SQLITE"/>
       <xs:enumeration value="SYBASE"/>

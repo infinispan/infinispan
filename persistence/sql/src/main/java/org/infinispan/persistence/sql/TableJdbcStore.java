@@ -53,6 +53,9 @@ public class TableJdbcStore<K, V> extends AbstractSchemaJdbcStore<K, V, TableJdb
                connectionFactory.releaseConnection(connection);
             }
          }
+         if (type == null) {
+            throw log.unableToDetectDialect(Arrays.toString(DatabaseType.values()));
+         }
          SqlManager statements = SqlManager.fromDatabaseType(type, config.tableName());
          List<String> keyNames = Arrays.stream(options.keyParameters)
                .map(Parameter::getName).collect(Collectors.toList());
