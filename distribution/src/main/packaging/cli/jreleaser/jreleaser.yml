@@ -54,7 +54,7 @@ release:
 
 distributions:
   infinispan-cli:
-    type: FLAT_BINARY
+    type: BINARY
     stereotype: CLI
     executable:
       name: infinispan-cli
@@ -73,7 +73,7 @@ packagers:
   brew:
     active: ALWAYS
     multiPlatform: true
-    templateDirectory: distribution/src/main/packaging/cli/jreleaser/distributions/infinispan-cli
+    templateDirectory: distribution/src/main/packaging/cli/jreleaser/distributions/infinispan-cli/brew
     repository:
       owner: infinispan
       name: homebrew-tap
@@ -84,6 +84,7 @@ packagers:
 
   scoop:
     active: ALWAYS
+    templateDirectory: distribution/src/main/packaging/cli/jreleaser/distributions/infinispan-cli/scoop
     repository:
       owner: infinispan
       name: scoop-bucket
