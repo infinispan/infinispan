@@ -88,6 +88,8 @@ public interface Connection extends Closeable {
 
    Collection<String> getConnectorNames() throws IOException;
 
+   void credentials(String username, String password);
+
    MediaType getEncoding();
 
    void setEncoding(MediaType encoding);

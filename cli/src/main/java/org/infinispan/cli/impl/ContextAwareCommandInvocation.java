@@ -134,20 +134,6 @@ public class ContextAwareCommandInvocation implements CommandInvocation {
       return System.err;
    }
 
-   public String getPasswordInteractively(String prompt, String confirmPrompt) throws InterruptedException {
-      String password = null;
-      while (password == null) {
-         password = shell.readLine(new Prompt(prompt, '*'));
-      }
-      if (confirmPrompt != null) {
-         String confirm = null;
-         while (confirm == null || !confirm.equals(password)) {
-            confirm = shell.readLine(new Prompt(confirmPrompt, '*'));
-         }
-      }
-      return password;
-   }
-
    public void errorln(String msg) {
       // TODO: this should eventually go to stderr
       if (shell instanceof AeshDelegatingShell ads && ads.getConnection().supportsAnsi()) {

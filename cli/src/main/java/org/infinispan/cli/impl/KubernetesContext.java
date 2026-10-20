@@ -16,7 +16,7 @@ public class KubernetesContext extends ContextImpl {
    private final KubernetesClient kubernetesClient;
 
    public KubernetesContext(Properties defaults, KubernetesClient client) {
-      super(defaults);
+      super(defaults, null);
       this.kubernetesClient = client;
    }
 

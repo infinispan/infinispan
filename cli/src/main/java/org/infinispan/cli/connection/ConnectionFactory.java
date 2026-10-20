@@ -13,7 +13,7 @@ public final class ConnectionFactory {
             return connection;
          }
       }
-      return null;
+      return NoConnection.INSTANCE;
    }
 
 }

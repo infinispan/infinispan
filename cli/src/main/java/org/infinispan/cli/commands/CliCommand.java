@@ -2,8 +2,11 @@ package org.infinispan.cli.commands;
 
 import org.aesh.command.Command;
 import org.aesh.command.CommandException;
+import org.aesh.command.CommandLifecycle;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Option;
+import org.aesh.console.AeshContext;
+import org.infinispan.cli.Context;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.Util;
@@ -12,9 +15,16 @@ import org.infinispan.commons.util.Util;
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
  * @since 10.0
  **/
-public abstract class CliCommand implements Command<ContextAwareCommandInvocation> {
+public abstract class CliCommand implements Command<ContextAwareCommandInvocation>, CommandLifecycle {
    @Option(shortName = 'h', hasValue = false, overrideRequired = true)
    public boolean help;
+
+   protected Context context;
+
+   @Override
+   public void setContext(AeshContext context) {
+      this.context = (Context) context;
+   }
 
    @Override
    public CommandResult execute(ContextAwareCommandInvocation invocation) throws CommandException {
