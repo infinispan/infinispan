@@ -174,6 +174,22 @@ end note
 Each entry carries a vector clock (site version) that allows {brandname} to detect concurrent updates.
 When a conflict is detected, {brandname} applies a configurable merge policy to resolve it deterministically on all sites.
 
+=== Versions after a site restart
+
+Each write receives a version that is newer than the version of the entry it replaces.
+A backup site applies an update only if its version is newer than the version it already has for that entry.
+If the versions are equal, the backup site considers the update a duplicate and ignores it.
+
+When a site restarts, {brandname} must know the versions that the site used before the restart so that new writes receive newer versions.
+{brandname} recovers these versions from one of the following sources:
+
+* Global state, which preserves versions between restarts.
+* Cross-site state transfer, which brings the entries and their versions from a backup location.
+* Cache stores, but only when every entry is still available in the cluster after the restart.
+
+If {brandname} cannot recover the versions, a new write can receive a version that a backup location already has.
+The backup location ignores that write and the sites remain out of sync.
+
 == Integration with the interceptor chain
 
 Cross-site replication is implemented through backup interceptors in the interceptor chain:

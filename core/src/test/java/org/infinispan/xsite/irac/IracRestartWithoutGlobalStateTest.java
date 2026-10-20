@@ -7,6 +7,7 @@ import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.v;
+import static org.infinispan.test.TestingUtil.waitForNoRebalance;
 import static org.infinispan.testing.Testing.tmpDirectory;
 import static org.infinispan.xsite.XSiteAdminOperations.SUCCESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -130,7 +131,7 @@ public class IracRestartWithoutGlobalStateTest extends AbstractMultipleSitesTest
       assertVersions(entryVersionsBefore, snapshotKeyVersions(method, 1), EQUAL);
 
       log.debug("Stopping site_0");
-      stopSite(0);
+      stopSiteOneByOne(0);
 
       log.debug("Starting site_0");
       restartSite(0);
@@ -140,9 +141,10 @@ public class IracRestartWithoutGlobalStateTest extends AbstractMultipleSitesTest
          XSiteAdminOperations operations = adminOperations();
          assertEquals(SUCCESS, operations.pushState(siteName(0)));
          eventually(() -> operations.getRunningStateTransfer().isEmpty());
-         forEachKeyValue(method, "initial", this::eventuallyAssertData);
          assertVersions(entryVersionsBefore, snapshotKeyVersions(method, 0), EQUAL);
       }
+      // with a cache store, the data must survive the restart
+      forEachKeyValue(method, "initial", this::eventuallyAssertData);
 
       forEachKeyValue(method, "final", (k, v) -> cache(reverse ? 1 : 0, 0).put(k, v));
       forEachKeyValue(method, "final", this::eventuallyAssertData);
@@ -191,6 +193,23 @@ public class IracRestartWithoutGlobalStateTest extends AbstractMultipleSitesTest
 
    private void eventuallyAssertData(String key, String value) {
       eventuallyAssertInAllSitesAndCaches(cache -> Objects.equals(value, cache.get(key)));
+   }
+
+   /**
+    * Stops the site's nodes in reverse order, waiting for the remaining nodes to finish rebalancing after each stop.
+    * <p>
+    * The last node to stop owns all segments, so its store holds every entry and its IRAC version. Stopping all
+    * nodes at once can lose segments that are still in transit, and the restarted site would then generate
+    * versions it already used.
+    */
+   private void stopSiteOneByOne(int siteIndex) {
+      TestSite site = site(siteIndex);
+      while (!site.cacheManagers().isEmpty()) {
+         site.kill(site.cacheManagers().size() - 1);
+         if (!site.cacheManagers().isEmpty()) {
+            waitForNoRebalance(site.getCaches(null));
+         }
+      }
    }
 
    private void disableIracBackOff(int siteIndex) {
