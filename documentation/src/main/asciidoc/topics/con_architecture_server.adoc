@@ -123,8 +123,9 @@ This means a cache created via Hot Rod is accessible via REST and vice versa, wi
 {brandname} Server multiplexes all protocols on a single TCP port (default 11222).
 The server inspects the first bytes of each connection to detect the protocol:
 
-* Hot Rod connections start with a specific magic byte (`0xA0`).
-* HTTP connections start with an HTTP method (`GET`, `POST`, etc.).
-* RESP connections start with Redis protocol markers.
+* Hot Rod connections are detected by a specific magic byte (`0xA0`).
+* Binary Memcached connections are detected in the same way using their own magic byte (`0x80`).
+* RESP (Redis) connections have no single magic byte; they start with an array marker followed by one of several handshake commands such as `HELLO`, `AUTH`, or `COMMAND`.
+* REST over HTTP is not sniffed at all: it is the default path for any connection that does not match another protocol, negotiated through ALPN (`http/1.1`).
 
 This simplifies deployment and firewall configuration.

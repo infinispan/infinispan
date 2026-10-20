@@ -10,11 +10,24 @@ Elasticity:: Eliminate the need for rebalancing operations when scaling applicat
 Smaller memory footprints:: Storing session data in external caches reduces overall memory requirements for applications.
 
 .Session externalization
-//Community content
-ifdef::community[]
-image::session-externalization.svg[{brandname} cluster that offloads session data from applications.]
-endif::community[]
-//Downstream content
-ifdef::downstream[]
-image::session-externalization.png[{brandname} cluster that offloads session data from applications.]
-endif::downstream[]
+[plantuml, target=session-externalization-topology, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+skinparam componentStyle rectangle
+
+[Application servers] as Apps
+
+package "{brandname} cluster" {
+  node "Server 1\n{brandname}" as S1
+  node "Server 2\n{brandname}" as S2
+  node "Server N\n{brandname}" as SN
+}
+
+Apps <--> S1 : read/write sessions and other data
+Apps <--> S2
+Apps <--> SN
+@enduml
+....

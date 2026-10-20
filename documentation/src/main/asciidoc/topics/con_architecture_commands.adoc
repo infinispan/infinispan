@@ -37,6 +37,9 @@ stop
 @enduml
 ....
 
+Command creation is delegated to `CommandsFactory`, an interface implemented by `CommandsFactoryImpl`.
+`CacheImpl` holds a reference to this factory and asks it to build each command before invoking the interceptor chain.
+
 == Double-dispatch (Visitor pattern)
 
 The Visitor pattern eliminates the need for `instanceof` checks when interceptors handle different command types.
@@ -116,20 +119,26 @@ skinparam classAttributeIconSize 0
 skinparam packageStyle frame
 
 interface ReplicableCommand {
-  +getCommandId(): byte
-  +invoke(ctx): CompletionStage
+  +getCommandId(): byte <<deprecated>>
 }
 
+note bottom of ReplicableCommand : getCommandId() is deprecated since 16.0.\nIt always returns 0 and the ProtoStream\nmarshaller ignores it.
+
 interface CacheRpcCommand extends ReplicableCommand {
+  +invokeAsync(registry): CompletionStage<?>
   +getCacheName(): ByteString
-  +getOrigin(): Address
   +setOrigin(origin)
+  +getOrigin(): Address
+}
+
+interface TopologyAffectedCommand extends ReplicableCommand {
   +getTopologyId(): int
+  +setTopologyId(topologyId)
 }
 
 interface VisitableCommand extends CacheRpcCommand {
   +acceptVisitor(ctx, visitor): Object
-  +getLoadType(): LoadType
+  +loadType(): LoadType
 }
 
 package "Read Commands" {

@@ -8,11 +8,28 @@ Distributed caches add redundancy to {brandname} clusters to provide fault toler
 {brandname} deployments typically configure integration with persistent storage to preserve cluster state for graceful shutdowns and restore from backup.
 
 .Distributed caches
-//Community content
-ifdef::community[]
-image::distributed-cache.svg[{brandname} cluster of three nodes that replicates entries across nodes in a distributed way.]
-endif::community[]
-//Downstream content
-ifdef::downstream[]
-image::distributed-cache.png[{brandname} cluster of three nodes that replicates entries across nodes in a distributed way.]
-endif::downstream[]
+[plantuml, target=distributed-memory-topology, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+skinparam componentStyle rectangle
+[Applications] as Apps
+
+database "Persistent storage" as PS
+
+rectangle "{brandname} cluster (numOwners = 2)" as CL {
+  node "Node 1\nkey A (primary)\nkey C (backup)" as N1
+  node "Node 2\nkey B (primary)\nkey A (backup)" as N2
+  node "Node 3\nkey C (primary)\nkey B (backup)" as N3
+
+  N1 <--> N2 : replication
+  N2 <--> N3 : replication
+  N1 <--> N3 : replication
+}
+
+Apps --> CL : write operation\n(received by any node, forwarded to the primary owner)
+CL <--> PS : state transfer / persistence
+@enduml
+....

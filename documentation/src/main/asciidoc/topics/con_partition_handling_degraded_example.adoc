@@ -11,8 +11,72 @@ With the `DENY_READ_WRITES` strategy, if the cluster splits into partitions, {br
 In the following diagram, while the cache is split into partitions, {brandname} allows read and write operations for `k1` on partition 1 and `k4` on partition 2.
 Because there is only one replica for `k2` and `k3` on either partition 1 or partition 2, {brandname} denies read and write operations for those entries.
 
-image::partition-handling-partitioning.png[Distributed cache enters network partition]
+.Partitioned cluster (DENY_READ_WRITES strategy)
+[plantuml, target=partition-handling-split, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+state "Normal {brandname} cluster" as Normal {
+  state "Node 1\n[k1, k2]"
+  state "Node 2\n[k1, k3]"
+  state "Node 3\n[k2, k4]"
+  state "Node 4\n[k3, k4]"
+}
+
+Normal --> Partitioned : network partition
+state "Partitioned cluster" as Partitioned {
+
+state "Partition 1" as P1 {
+  state "Node 1\n[k1, --k2--]" as N1
+  state "Node 2\n[k1, --k3--]" as N2
+}
+
+note bottom of P1 : All owners of k1 are in this partition,\nso k1 remains readable and writable.
+
+state "Partition 2" as P2 {
+  state "Node 3\n[k4, --k2--]" as N3
+  state "Node 4\n[k4, --k3--]" as N4
+}
+
+note bottom of P2 : All owners of k4 are in this partition,\nso k4 remains readable and writable
+}
+note bottom of Partitioned: The owners of k2 (Nodes 1 and 3) and k3 (Nodes 2 and 4)\nare split across both partitions, so operations on\nk2 and k3 are denied by every node
+@enduml
+....
 
 When network conditions allow the nodes to re-join the same cluster view, {brandname} merges the partitions without state transfer and restores normal cache operations.
 
-image::partition-handling-merging.png[Distributed cache after partitions are merged]
+.Merged cluster (partitions re-joined without state transfer)
+[plantuml, target=partition-handling-merge, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+
+state "Partitioned cluster" as Partitioned {
+
+state "Partition 1" as P1 {
+  state "Node 1\n[k1, --k2--]" as N1
+  state "Node 2\n[k1, --k3--]" as N2
+}
+
+state "Partition 2" as P2 {
+  state "Node 3\n[k4, --k2--]" as N3
+  state "Node 4\n[k4, --k3--]" as N4
+}
+}
+
+Partitioned --> Merged : merge
+
+state "Normal {brandname} cluster" as Merged {
+  state "Node 1\n[k1, k2]"
+  state "Node 2\n[k1, k3]"
+  state "Node 3\n[k2, k4]"
+  state "Node 4\n[k3, k4]"
+}
+
+note bottom of Merged: Merged without state transfer.
+@enduml
+....
