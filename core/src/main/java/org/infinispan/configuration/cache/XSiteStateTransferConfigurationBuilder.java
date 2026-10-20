@@ -9,6 +9,7 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
+import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -47,6 +48,11 @@ public class XSiteStateTransferConfigurationBuilder extends AbstractConfiguratio
       }
       if (attributes.attribute(WAIT_TIME).get().longValue() <= 0) {
          throw CONFIG.invalidXSiteStateTransferWaitTime();
+      }
+      Attribute<TimeQuantity> waitTimeAttr = attributes.attribute(WAIT_TIME);
+      Attribute<TimeQuantity> timeoutAttr = attributes.attribute(TIMEOUT);
+      if (waitTimeAttr.get().longValue() >= timeoutAttr.get().longValue()) {
+         throw CONFIG.invalidXSiteStateTransferWaitTimeGreaterThanTimeout(waitTimeAttr.get().toString(), timeoutAttr.get().toString());
       }
       XSiteStateTransferMode mode = attributes.attribute(MODE).get();
       if (mode == null) {

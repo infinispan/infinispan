@@ -10,6 +10,7 @@ import static org.infinispan.util.logging.Log.CONFIG;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Combine;
+import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TimeQuantity;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -176,6 +177,23 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
       if (attributes.attribute(USE_TWO_PHASE_COMMIT).get() && asyncStrategy) {
          throw CONFIG.twoPhaseCommitAsyncBackup();
+      }
+
+      if (getBuilder() != null && !asyncStrategy) {
+         CacheMode cacheMode = clustering().cacheMode();
+         if (cacheMode.isDistributed() || cacheMode.isReplicated()) {
+            Attribute<TimeQuantity> replTimeoutAttr = attributes.attribute(REPLICATION_TIMEOUT);
+            Attribute<TimeQuantity> remoteTimeoutAttr = clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT);
+            long replTimeoutVal = replTimeoutAttr.get().longValue();
+            long remoteTimeoutVal = remoteTimeoutAttr.get().longValue();
+            if (remoteTimeoutVal >= 0) {
+               if (replTimeoutVal < 0 || remoteTimeoutVal < replTimeoutVal) {
+                  throw CONFIG.invalidBackupReplicationTimeout(remoteTimeoutAttr.get().toString(), replTimeoutAttr.get().toString(), siteName);
+               } else if (remoteTimeoutVal == replTimeoutVal) {
+                  CONFIG.remoteTimeoutEqualsBackupReplicationTimeout(remoteTimeoutAttr.get().toString(), replTimeoutAttr.get().toString(), siteName);
+               }
+            }
+         }
       }
    }
 
