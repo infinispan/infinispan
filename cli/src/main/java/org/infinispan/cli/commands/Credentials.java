@@ -16,6 +16,7 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.impl.completer.FileOptionCompleter;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
+import org.infinispan.cli.Context;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.auth.server.IdentityCredentials;
@@ -97,13 +98,14 @@ public class Credentials extends CliCommand {
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
+         Context context = invocation.getContext();
          try {
             Path file = resourceToPath(path, serverRoot);
             if (password == null) {
-               password = invocation.getPasswordInteractively(MSG.credentialToolPassword(), Files.exists(file) ? null : MSG.credentialToolPasswordConfirm());
+               password = context.readPassword(MSG.credentialToolPassword(), Files.exists(file) ? null : MSG.credentialToolPasswordConfirm());
             }
             if (credential == null) {
-               credential = invocation.getPasswordInteractively(MSG.credentialToolCredential(), MSG.credentialToolCredentialConfirm());
+               credential = context.readPassword(MSG.credentialToolCredential(), MSG.credentialToolCredentialConfirm());
             }
             KeyStoreCredentialStore store = getKeyStoreCredentialStore(file, type, true, password.toCharArray());
             store.store(alias, new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, credential.toCharArray())), null);
@@ -135,10 +137,11 @@ public class Credentials extends CliCommand {
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
+         Context context = invocation.getContext();
          try {
             Path file = resourceToPath(path, serverRoot);
             if (password == null) {
-               password = invocation.getPasswordInteractively(MSG.credentialToolPassword(), null);
+               password = context.readPassword(MSG.credentialToolPassword(), null);
             }
             KeyStoreCredentialStore store = getKeyStoreCredentialStore(file, type, false, password.toCharArray());
             store.remove(alias, PasswordCredential.class, null, null);
@@ -171,7 +174,7 @@ public class Credentials extends CliCommand {
             Path file = resourceToPath(path, serverRoot);
             if (Files.exists(file)) {
                if (password == null) {
-                  password = invocation.getPasswordInteractively(MSG.credentialToolPassword(), null);
+                  password = invocation.getContext().readPassword(MSG.credentialToolPassword(), null);
                }
                KeyStoreCredentialStore store = getKeyStoreCredentialStore(file, type, false, password.toCharArray());
                for (String alias : store.getAliases()) {
