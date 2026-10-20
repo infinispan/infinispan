@@ -403,11 +403,11 @@ public class ContainerResourceTest extends AbstractRestResourceTest {
    }
 
    protected CompletionStage<RestResponse> getCacheConfigurations(String accept) {
-      return adminClient.container().cacheConfigurations(accept);
+      return client.container().cacheConfigurations(accept);
    }
 
    protected CompletionStage<RestResponse> getTemplates(String accept) {
-      return adminClient.container().templates(accept);
+      return client.container().templates(accept);
    }
 
    protected CompletionStage<RestResponse> getGlobalConfiguration() {
