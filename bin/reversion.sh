@@ -170,7 +170,7 @@ NEWSCHEMAVERSION=$(echo "$NEWVERSION"|cut -d. -f1,2)
 
 sed -i "s/<version.infinispan>$VERSION<\/version.infinispan>/<version.infinispan>$NEWVERSION<\/version.infinispan>/g" build/configuration/pom.xml
 sed -i "s/<infinispan.codename>.*<\/infinispan.codename>/<infinispan.codename>N\/A<\/infinispan.codename>/g" build/configuration/pom.xml
-sed -i "s/<infinispan.base.version>.*<\/infinispan.base.version>/<infinispan.base.version>$NEWMAJOR.$NEWMINOR</infinispan.base.version>/g" build/configuration/pom.xml
+sed -i "s/<infinispan.base.version>.*<\/infinispan.base.version>/<infinispan.base.version>$NEWSCHEMAVERSION<\/infinispan.base.version>/g" build/configuration/pom.xml
 sed -i "s/<infinispan.old.version>.*<\/infinispan.old.version>/<infinispan.old.version>$OLDVERSION</infinispan.old.version>/g" build/configuration/pom.xml
 
 if [ "$OLDSCHEMAVERSION" != "$NEWSCHEMAVERSION" ] && [ "$PROCESS_SCHEMAS" = true ] ;  then
