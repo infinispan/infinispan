@@ -108,7 +108,10 @@ public abstract class CacheChunkedStream<T> {
 
       @Override
       public void onError(Throwable t) {
-         logger.error("Error encountered while streaming cache chunk", t);
+         // the failure is already client-visible, since the response terminates mid-stream, and content that cannot
+         // be converted is handled per key and per entry before reaching this point: the remaining failures are
+         // usually a client disconnecting mid-stream, so they are logged at WARN rather than ERROR
+         logger.warn("Error encountered while streaming a cache response", t);
          if (pendingBuffer != null) {
             pendingBuffer.release();
             pendingBuffer = null;
