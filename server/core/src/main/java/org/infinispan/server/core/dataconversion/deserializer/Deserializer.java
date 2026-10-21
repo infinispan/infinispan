@@ -24,7 +24,9 @@ import static java.io.ObjectStreamConstants.TC_STRING;
 import static java.io.ObjectStreamConstants.baseWireHandle;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
@@ -49,12 +51,14 @@ public class Deserializer {
 
    private static final SEntity END = new SString("END");
    private final PrimitiveClassDescFactory primitiveClassDescFactory = new PrimitiveClassDescFactory();
+   private final MarkedStream markedIn;
    private final DataInputStream din;
    private final List<SEntity> handles = new ArrayList<>();
    private final Map<String, ClassDesc> classDescriptions = new HashMap<>();
 
    public Deserializer(InputStream in, boolean header) throws IOException {
-      this.din = new DataInputStream(in);
+      this.markedIn = new MarkedStream(in);
+      this.din = new DataInputStream(markedIn);
       if (header) {
          if (din.readShort() != STREAM_MAGIC || din.readShort() != STREAM_VERSION)
             throw new StreamCorruptedException("Bad stream header");
@@ -124,16 +128,41 @@ public class Deserializer {
 
    private void classData(SObject t, ObjectClassDesc cd) throws IOException {
       int flags = cd.getFlags();
-      if ((flags & SC_SERIALIZABLE) != 0) {
-         for (FieldDesc fieldDesc : cd.getFields()) {
-            t.setField(fieldDesc.getName(), fieldDesc.read());
-         }
-         if ((flags & SC_WRITE_METHOD) != 0) {
-            objectAnnotation(t);
-         }
+      if ((flags & SC_SERIALIZABLE) != 0 && (flags & SC_WRITE_METHOD) == 0) {
+         readDeclaredFields(t, cd);
+      } else if ((flags & SC_SERIALIZABLE) != 0) {
+         // A class that declares its own writeObject() produces a section containing either the default field values followed by custom data (when it called defaultWriteObject()) or only custom data. The stream does not record which is present, so try reading fields first and fall back to treating the whole section as opaque custom data when parsing fails
+         readCustomWriterSlot(t, cd);
       } else if ((flags & SC_EXTERNALIZABLE) != 0) {
          if ((flags & SC_BLOCK_DATA) == 0) throw new IOException("Can't handle externalContents");
          objectAnnotation(t);
+      }
+   }
+
+   private void readDeclaredFields(SObject t, ObjectClassDesc cd) throws IOException {
+      for (FieldDesc fieldDesc : cd.getFields()) {
+         t.setField(fieldDesc.getName(), fieldDesc.read());
+      }
+   }
+
+   /**
+    * Reads the section of object data belonging to a class that declares its own writeObject(). If the fields cannot be parsed, the stream is rewound and the entire section is re-read as custom data (see {@link #classData}). Note that if hand-written blockdata happens to parse successfully as the declared fields followed by a valid annotation terminator it will be rendered as such; this ambiguity cannot be resolved without access to the class definitions.
+    */
+   private void readCustomWriterSlot(SObject t, ObjectClassDesc cd) throws IOException {
+      Map<String, SEntity> savedFields = t.fieldSnapshot();
+      int handlesSize = handles.size();
+      Set<String> classNamesAtMark = new HashSet<>(classDescriptions.keySet());
+      markedIn.mark();
+      try {
+         readDeclaredFields(t, cd);
+         objectAnnotation(t);
+      } catch (IOException e) {
+         // writeObject did not call defaultWriteObject(): no field values are present in the stream. Rewind and re-read this section as custom data only
+         markedIn.resetToMark();
+         while (handles.size() > handlesSize) handles.remove(handles.size() - 1);
+         classDescriptions.keySet().retainAll(classNamesAtMark);
+         t.restoreFields(savedFields);
+         objectAnnotation(t); // if parsing the custom region also fails let it propagate: the stream is genuinely malformed
       }
    }
 
@@ -566,7 +595,10 @@ public class Deserializer {
       }
 
       SEntity read() throws IOException {
-         return readObject();
+         SEntity entity = readObject();
+         // block data can never appear as a direct child of the instance-data region: encountering it here means we are misaligned (e.g. reading custom writeObject data as fields) so fail loudly rather than storing garbage
+         if (entity instanceof SBlockData) throw new StreamCorruptedException("Unexpected block data in field value");
+         return entity;
       }
 
       public String toString() {
@@ -598,6 +630,56 @@ public class Deserializer {
       @Override
       public String getTypeName() {
          return classDesc.toString();
+      }
+   }
+
+   /**
+    * An {@link InputStream} supporting unbounded mark/reset by replaying the bytes read since the last {@code mark()} call. Each new {@code mark()} discards previously captured bytes, so at most one cycle of mark/replay is outstanding and memory usage stays bounded by the size of a single section being re-parsed.
+    */
+   private static final class MarkedStream extends FilterInputStream {
+
+      private ByteArrayOutputStream captured = new ByteArrayOutputStream();
+
+      MarkedStream(InputStream in) {
+         super(in);
+      }
+      private boolean marked;
+      // snapshot served after resetToMark() before falling through to the underlying stream again
+      private byte[] replay;
+      private int replayPos;
+
+      void mark() {
+         this.captured = new ByteArrayOutputStream();
+         this.marked = true;
+         this.replay = null;
+         this.replayPos = 0;
+      }
+
+      void resetToMark() {
+         if (!marked) throw new IllegalStateException("No active mark");
+         this.replay = captured.toByteArray();
+         this.replayPos = 0;
+      }
+
+      @Override
+      public int read() throws IOException {
+         if (replay != null && replayPos < replay.length) return replay[replayPos++] & 0xff;
+         int b = in.read();
+         if (b >= 0 && marked) captured.write(b);
+         return b;
+      }
+
+      @Override
+      public int read(byte[] b, int off, int len) throws IOException {
+         if (replay != null && replayPos < replay.length) {
+            int n = Math.min(len, replay.length - replayPos);
+            System.arraycopy(replay, replayPos, b, off, n);
+            replayPos += n;
+            return n;
+         }
+         int r = in.read(b, off, len);
+         if (r > 0 && marked) captured.write(b, off, r);
+         return r;
       }
    }
 }
