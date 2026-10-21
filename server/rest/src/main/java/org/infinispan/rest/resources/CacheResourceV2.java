@@ -45,6 +45,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -61,6 +62,7 @@ import org.infinispan.commons.configuration.io.ConfigurationReader;
 import org.infinispan.commons.configuration.io.ConfigurationResourceResolvers;
 import org.infinispan.commons.configuration.io.ConfigurationWriter;
 import org.infinispan.commons.configuration.io.NamingStrategy;
+import org.infinispan.commons.dataconversion.Base16Codec;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
@@ -78,7 +80,9 @@ import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.impl.InternalEntryFactory;
+import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.encoding.DataConversion;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.health.CacheHealth;
@@ -755,20 +759,61 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
       mapper.injectDependencies(registry);
       SegmentPublisherSupplier<CacheEntry<Object, Object>> sps = cpm.entryPublisher(null, null, null, EMPTY_BIT_SET, guarantee,
             batch, PublisherTransformers.identity());
+      final boolean keysAreJson = keyMediaType.match(APPLICATION_JSON);
+      final boolean valuesAreJson = valueMediaType.match(APPLICATION_JSON);
+      AtomicBoolean hexFallbackLogged = new AtomicBoolean();
       Flowable<CacheEntry<?, ?>> flowable = Flowable.fromPublisher(sps.publisherWithoutSegments())
-            .map(mapper::apply);
+            .map(entry -> applyWithHexFallback(mapper, ief, cacheName, keysAreJson, valuesAreJson, hexFallbackLogged, entry));
       if (limit > -1) {
          flowable = flowable.take(limit);
       }
       NettyRestResponse.Builder responseBuilder = invocationHelper.newResponse(request);
-      responseBuilder.entity(new CacheEntryStreamProcessor(flowable, keyMediaType.match(APPLICATION_JSON),
-            valueMediaType.match(APPLICATION_JSON), metadata));
+      responseBuilder.entity(new CacheEntryStreamProcessor(flowable, keysAreJson, valuesAreJson, metadata));
 
       responseBuilder.contentType(APPLICATION_JSON_TYPE);
       responseBuilder.header(ResponseHeader.KEY_CONTENT_TYPE_HEADER.getValue(), keyMediaType.toString());
       responseBuilder.header(ResponseHeader.VALUE_CONTENT_TYPE_HEADER.getValue(), valueMediaType.toString());
 
       return CompletableFuture.completedFuture(responseBuilder.build());
+   }
+
+   /**
+    * Applies the encoder to an entry, falling back to a hex representation of the raw content when conversion fails for this particular entry (for example Java-serialized data whose layout cannot be interpreted). The key and value are converted independently so that an unconvertible value does not degrade the key's representation (nor vice versa). This keeps one unconvertible entry from aborting the entire stream; the failure is logged at most once per request.
+    */
+   private CacheEntry<Object, Object> applyWithHexFallback(EncoderEntryMapper<Object, Object, CacheEntry<Object, Object>> mapper, InternalEntryFactory ief, String cacheName, boolean keysAreJson,
+         boolean valuesAreJson, AtomicBoolean fallbackLogged, CacheEntry<Object, Object> entry) {
+      try {
+         return mapper.apply(entry);
+      } catch (Exception e) {
+         if (fallbackLogged.compareAndSet(false, true)) Log.REST.entryConversionFailed(cacheName, e);
+         return hexFallbackEntry(mapper, ief, entry, keysAreJson, valuesAreJson);
+      }
+   }
+
+   private static CacheEntry<Object, Object> hexFallbackEntry(EncoderEntryMapper<Object, Object, CacheEntry<Object, Object>> mapper, InternalEntryFactory ief, CacheEntry<?, ?> raw,
+         boolean keysAreJson, boolean valuesAreJson) {
+      // Metadata can be null for entries loaded through RemoteStore (Hot Rod migration)
+      EntryVersion version = raw.getMetadata() == null ? null : raw.getMetadata().version();
+      return ief.create(convertOrHex(mapper.getKeyDataConversion(), raw.getKey(), keysAreJson),
+            convertOrHex(mapper.getValueDataConversion(), raw.getValue(), valuesAreJson),
+            version, raw.getCreated(), raw.getLifespan(), raw.getLastUsed(), raw.getMaxIdle());
+   }
+
+   /**
+    * Converts the content, falling back to the hex representation of the raw content when the conversion fails
+    */
+   private static Object convertOrHex(DataConversion conversion, Object content, boolean json) {
+      try {
+         return conversion.fromStorage(content);
+      } catch (Exception e) {
+         return toHex(content, json);
+      }
+   }
+
+   /** The hex representation of the content as produced by a media type with {@code encoding=hex}; pre-quoted when it will be embedded in a JSON stream */
+   private static Object toHex(Object content, boolean json) {
+      String hex = Base16Codec.encode(content == null ? new byte[0] : CacheChunkedStream.readContentAsBytes(content));
+      return json ? "\"" + hex + "\"" : hex;
    }
 
    private static DeliveryGuarantee deliveryGuarantee(RestRequest request) {
