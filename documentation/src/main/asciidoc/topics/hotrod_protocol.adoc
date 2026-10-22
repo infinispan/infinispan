@@ -21,6 +21,7 @@ the custom TCP client/server Hot Rod protocol.
 * link:#hot_rod_protocol_3_1[Hot Rod Protocol 3.1 (Infinispan 12.0)]
 * link:#hot_rod_protocol_4_0[Hot Rod Protocol 4.0 (Infinispan 14.0)]
 * link:#hot_rod_protocol_4_1[Hot Rod Protocol 4.1 (Infinispan 15.1)]
+* link:#hot_rod_protocol_4_2[Hot Rod Protocol 4.2 (Infinispan 16.4)]
 
 == Hot Rod Protocol 1.0
 
@@ -117,6 +118,7 @@ In this particular case, this is +10+
 +0x37+ = getStream (since 2.6) +
 +0x39+ = putStream (since 2.6) +
 +0x43+ = addBloomFilterClientListener (since 3.1) +
++0x47+ = addPrimaryNearCacheListener (since 4.2) +
 | Cache Name Length   | vInt       | Length of cache name. If the passed
 length is +0+ (followed by no cache name), the operation will interact with
 the default cache.
@@ -196,6 +198,8 @@ for which the response is sent.
 +0x36+ = iterationEnd (since 2.3) +
 +0x38+ = getStream (since 2.6) +
 +0x3A+ = putStream (since 2.6) +
++0x48+ = addPrimaryNearCacheListener (since 4.2) +
++0x4A+ = cacheTopologyChangedEvent (since 4.2) +
 +0x50+ = error (since 1.0) +
 | Status                 | 1 byte     | Status of the response, possible values: +
 +0x00+ = No error +
@@ -3574,3 +3578,57 @@ Response (0xEA):
 
 | Header              | variable   | Response header
 |==============================================================================
+
+== Hot Rod Protocol 4.2
+
+.Infinispan Versions
+TIP: This version of the protocol is implemented since Infinispan 16.4
+
+This version introduces the `AddPrimaryNearCacheListener` operation and the `CacheTopologyChangedEvent` event.
+
+.AddPrimaryNearCacheListener
+
+Registers a primary-only near cache client listener with the target server.
+The server sends cache modification, removal, and expiration events only for keys where that server is the primary owner.
+
+Request (0x47):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Request header
+| Listener ID         | byte array | Unique identifier for the client listener (ranged byte array).
+| Bloom Filter Bits   | vInt       | Number of bits to configure for the server-side Bloom filter, or +0+ if Bloom filters are disabled.
+|==============================================================================
+
+Response (0x48):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Response header
+| Response status     | 1 byte     |
++0x00+ = success +
++0x01+ = error +
+|==============================================================================
+
+.CacheTopologyChangedEvent
+
+Sent after primary near cache listener registration and when the cache topology changes.
+
+Event (0x4A):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Event header (messageId=0, op=0x4A)
+| Listener ID         | byte array | Unique identifier for the client listener (ranged byte array).
+| Topology Sequence   | vInt       | Incrementing cache topology sequence.
+| Base Sequence       | vInt       | The sequence of the last topology that the server sent on this connection, plus one. +0+ means that the connection has no earlier history.
+| Changed Segments    | byte array | Bitmap (ranged byte array, as produced by +java.util.BitSet.toByteArray()+) of the segments whose primary owner changed since the base sequence, including segments whose owner changed and was restored.
+| Topology Response   | variable   | Hash topology response containing the consistent hash code, cluster members, and segment ownership mappings.
+|==============================================================================
+

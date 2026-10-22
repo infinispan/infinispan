@@ -38,6 +38,12 @@ public class UpdateBloomFilterOperation extends AbstractCacheOperation<Void> {
    }
 
    @Override
+   public boolean supportRetry() {
+      // Bloom filters belong to the listener on the target owner.
+      return false;
+   }
+
+   @Override
    public DataFormat getDataFormat() {
       // No data format sent for updating bloom filter as nothing to use format
       return null;

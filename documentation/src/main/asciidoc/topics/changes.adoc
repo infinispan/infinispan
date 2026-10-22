@@ -1,3 +1,5 @@
+include::{topics}/changes/changes_16_4.adoc[leveloffset=+0]
+
 include::{topics}/changes/changes_16_3.adoc[leveloffset=+0]
 
 include::{topics}/changes/changes_16_2.adoc[leveloffset=+0]

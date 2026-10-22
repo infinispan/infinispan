@@ -216,6 +216,7 @@ infinispan:
               externalHost: external
               externalPort: '12345'
               maxContentLength: '1027'
+              maxBloomFilterBits: '1234567'
               topologyStateTransfer:
                 awaitInitialRetrieval: false
                 lockTimeout: '12'

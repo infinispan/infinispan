@@ -1,0 +1,17 @@
+== Upgrading from 16.3 to 16.4
+
+=== Hot Rod server limits the size of near cache Bloom filters
+
+The Hot Rod connector now rejects registrations of near cache listeners that request a Bloom filter larger than `max-bloom-filter-bits`.
+It defaults to 64,000,000 bits, which supports clients with `maxEntries` up to 16,000,000 at the default client multiplier of 4.
+Each listener at the maximum size uses approximately 8 MB of backing storage on the server.
+The limit applies to each registration and is not an aggregate memory bound for all listeners.
+
+If your clients use a larger `maxEntries`, or Bloom filters sized with a larger `infinispan.bloom-filter.bit-multiplier`, raise the limit on the Hot Rod connector, for example:
+
+[source,xml]
+----
+<hotrod-connector name="hotrod" max-bloom-filter-bits="128000000"/>
+----
+
+Otherwise the listener registration fails and the client cannot use the near cache.

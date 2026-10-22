@@ -309,6 +309,7 @@
                 "external-host": "external",
                 "external-port": "12345",
                 "max-content-length": "1027",
+                "max-bloom-filter-bits": "1234567",
                 "topology-state-transfer": {
                   "await-initial-retrieval": false,
                   "lock-timeout": "12",

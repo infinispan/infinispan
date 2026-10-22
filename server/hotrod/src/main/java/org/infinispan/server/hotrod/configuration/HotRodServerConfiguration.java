@@ -21,13 +21,15 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration<HotRo
    public static final AttributeDefinition<Integer> LISTENER_BACKPRESSURE_HIGH_WATERMARK = AttributeDefinition.builder(Attribute.LISTENER_BACKPRESSURE_HIGH_WATERMARK, 100).build();
    public static final AttributeDefinition<Integer> LISTENER_BACKPRESSURE_LOW_WATERMARK = AttributeDefinition.builder(Attribute.LISTENER_BACKPRESSURE_LOW_WATERMARK, 50).build();
    public static final AttributeDefinition<Integer> LISTENER_MAX_QUEUE_SIZE = AttributeDefinition.builder(Attribute.LISTENER_MAX_QUEUE_SIZE, 512).build();
+   public static final AttributeDefinition<Integer> MAX_BLOOM_FILTER_BITS = AttributeDefinition.builder(Attribute.MAX_BLOOM_FILTER_BITS, 64_000_000).build();
 
    private final TopologyCacheConfiguration topologyCache;
    private final EncryptionConfiguration encryption;
 
    public static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(HotRodServerConfiguration.class, ProtocolServerConfiguration.attributeDefinitionSet(),
-            PROXY_HOST, PROXY_PORT, LISTENER_BACKPRESSURE_HIGH_WATERMARK, LISTENER_BACKPRESSURE_LOW_WATERMARK, LISTENER_MAX_QUEUE_SIZE);
+            PROXY_HOST, PROXY_PORT, LISTENER_BACKPRESSURE_HIGH_WATERMARK, LISTENER_BACKPRESSURE_LOW_WATERMARK, LISTENER_MAX_QUEUE_SIZE,
+            MAX_BLOOM_FILTER_BITS);
    }
 
    HotRodServerConfiguration(AttributeSet attributes,
@@ -86,6 +88,13 @@ public class HotRodServerConfiguration extends ProtocolServerConfiguration<HotRo
 
    public int listenerMaxQueueSize() {
       return attributes.attribute(LISTENER_MAX_QUEUE_SIZE).get();
+   }
+
+   /**
+    * The largest Bloom filter, in bits, that a client may ask the server to allocate for a near cache listener.
+    */
+   public int maxBloomFilterBits() {
+      return attributes.attribute(MAX_BLOOM_FILTER_BITS).get();
    }
 
    @Override

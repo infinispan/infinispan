@@ -1,6 +1,24 @@
 {
   "compatibility": [
     {
+      "version-from": "[16.0,16.4)",
+      "version-to": "[16.4,)",
+      "exceptions": [
+        {
+          "description": "Primary near-cache listener registration and sequenced topology snapshots require Hot Rod 4.2; older servers use cluster-wide near-cache listeners",
+          "issue": "https://github.com/infinispan/infinispan/issues/18387",
+          "test-failures": [
+            {
+              "test-class": "org.infinispan.server.functional.hotrod.HotRodCacheEvents",
+              "test-methods": [
+                "testPrimaryNearCacheStaysUncachedAfterListenerDisconnect"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version-from": "[16.0,16.1)",
       "version-to": "[16.1,)",
       "properties": {

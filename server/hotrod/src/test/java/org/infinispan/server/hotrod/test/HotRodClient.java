@@ -488,6 +488,22 @@ public class HotRodClient implements Closeable {
       return execute(op);
    }
 
+   public TestResponse addBloomNearCacheListener(TestClientListener listener, int bloomBits) {
+      AddBloomNearCacheListener op = new AddBloomNearCacheListener(0xA0, protocolVersion, defaultCacheName,
+            (byte) 0, 0, listener.getId(), bloomBits);
+      ClientHandler handler = (ClientHandler) ch.pipeline().last();
+      handler.addClientListener(listener);
+      return execute(op);
+   }
+
+   public TestResponse addPrimaryNearCacheListener(TestClientListener listener, int bloomBits) {
+      AddPrimaryNearCacheListenerOp op = new AddPrimaryNearCacheListenerOp(0xA0, protocolVersion, defaultCacheName,
+            (byte) 0, 0, listener.getId(), bloomBits);
+      ClientHandler handler = (ClientHandler) ch.pipeline().last();
+      handler.addClientListener(listener);
+      return execute(op);
+   }
+
    public TestResponse removeClientListener(byte[] listenerId) {
       RemoveClientListenerOp op = new RemoveClientListenerOp(0xA0, protocolVersion, defaultCacheName, (byte) 1, 0, listenerId);
       TestResponse response = execute(op);
@@ -628,6 +644,10 @@ class Encoder extends MessageToByteEncoder<Object> {
             buffer.writeByte(op.useRawData ? 1 : 0);
       } else if (msg instanceof AddBloomNearCacheListener) {
          AddBloomNearCacheListener op = (AddBloomNearCacheListener) msg;
+         writeHeader(op, buffer);
+         writeRangedBytes(op.listenerId, buffer);
+         writeUnsignedInt(op.bloomBits, buffer);
+      } else if (msg instanceof AddPrimaryNearCacheListenerOp op) {
          writeHeader(op, buffer);
          writeRangedBytes(op.listenerId, buffer);
          writeUnsignedInt(op.bloomBits, buffer);
@@ -857,6 +877,16 @@ class Decoder extends ReplayingDecoder<Void> {
 
       TestResponse resp;
       switch (opCode) {
+         case CACHE_TOPOLOGY_CHANGED_EVENT:
+            // Primary-listener pushes are independent of requests and always contain the hash topology.
+            ExtendedByteBuf.readRangedBytes(buf); // listener ID
+            readUnsignedInt(buf); // incrementing topology sequence
+            readUnsignedInt(buf); // sequence the changed segments start after, plus one
+            ExtendedByteBuf.readRangedBytes(buf); // segments whose primary owner changed, as a bitmap
+            int topologyHash = readUnsignedInt(buf);
+            read2xHashDistAwareHeader(buf, topologyHash, null);
+            resp = null;
+            break;
          case STATS:
             int size = readUnsignedInt(buf);
             Map<String, String> stats = new HashMap<>();
@@ -902,6 +932,8 @@ class Decoder extends ReplayingDecoder<Void> {
          case CLEAR:
          case PING:
          case ADD_CLIENT_LISTENER:
+         case ADD_BLOOM_FILTER_CLIENT_LISTENER:
+         case ADD_PRIMARY_NEAR_CACHE_LISTENER:
          case REMOVE_CLIENT_LISTENER:
          case ITERATION_END:
             resp = new TestResponse(op.version, id, op.cacheName, op.clientIntel, opCode,
@@ -1383,7 +1415,19 @@ class AddBloomNearCacheListener extends AbstractOp {
 
    public AddBloomNearCacheListener(int magic, byte version, String cacheName, byte clientIntel, int topologyId,
                                     byte[] listenerId, int bloomBits) {
-      super(magic, version, (byte) 0x25, cacheName, clientIntel, topologyId);
+      super(magic, version, (byte) 0x41, cacheName, clientIntel, topologyId);
+      this.listenerId = listenerId;
+      this.bloomBits = bloomBits;
+   }
+}
+
+class AddPrimaryNearCacheListenerOp extends AbstractOp {
+   final byte[] listenerId;
+   final int bloomBits;
+
+   public AddPrimaryNearCacheListenerOp(int magic, byte version, String cacheName, byte clientIntel, int topologyId,
+                                        byte[] listenerId, int bloomBits) {
+      super(magic, version, (byte) 0x47, cacheName, clientIntel, topologyId);
       this.listenerId = listenerId;
       this.bloomBits = bloomBits;
    }
