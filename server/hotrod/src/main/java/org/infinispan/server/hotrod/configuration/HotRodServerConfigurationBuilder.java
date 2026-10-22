@@ -5,6 +5,7 @@ import static org.infinispan.server.core.configuration.ProtocolServerConfigurati
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.LISTENER_BACKPRESSURE_HIGH_WATERMARK;
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.LISTENER_BACKPRESSURE_LOW_WATERMARK;
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.LISTENER_MAX_QUEUE_SIZE;
+import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.MAX_BLOOM_FILTER_BITS;
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.PROXY_HOST;
 import static org.infinispan.server.hotrod.configuration.HotRodServerConfiguration.PROXY_PORT;
 
@@ -132,6 +133,11 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
       return this;
    }
 
+   public HotRodServerConfigurationBuilder maxBloomFilterBits(int maxBits) {
+      attributes.attribute(MAX_BLOOM_FILTER_BITS).set(maxBits);
+      return this;
+   }
+
    @Override
    public HotRodServerConfigurationBuilder topologyNetworkPrefixOverride(boolean topologyNetworkPrefixOverride) {
       topologyCache.networkPrefixOverride(topologyNetworkPrefixOverride);
@@ -166,6 +172,10 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
       int max = attributes.attribute(LISTENER_MAX_QUEUE_SIZE).get();
       if (low >= high || high >= max) {
          throw Log.CONFIG.invalidListenerEventWatermarks(low, high, max);
+      }
+      int maxBloomBits = attributes.attribute(MAX_BLOOM_FILTER_BITS).get();
+      if (maxBloomBits <= 0) {
+         throw Log.CONFIG.invalidMaxBloomFilterBits(maxBloomBits);
       }
       topologyCache.validate();
       encryption.validate();

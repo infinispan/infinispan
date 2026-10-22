@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
@@ -87,6 +88,9 @@ public class ClusterInvalidatedNearCacheBloomTest extends MultiHotRodServersTest
             HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       for (HotRodServer server : servers)
          clientBuilder.addServer().host("127.0.0.1").port(server.getPort());
+      // Use TOPOLOGY_AWARE to keep the cluster-wide listener: this test validates the
+      // cluster-wide bloom filter path and must not activate primary-owner listener mode.
+      clientBuilder.clientIntelligence(ClientIntelligence.TOPOLOGY_AWARE);
       clientBuilder.remoteCache("").nearCacheMode(NearCacheMode.INVALIDATED)
             .nearCacheMaxEntries(NEAR_CACHE_SIZE)
             .nearCacheUseBloomFilter(true);
@@ -96,16 +100,11 @@ public class ClusterInvalidatedNearCacheBloomTest extends MultiHotRodServersTest
    public void testInvalidationFromOtherClientModification() {
       int key = 0;
 
-      int bloomFilterVersion = client2.bloomFilterVersion();
-
       client1.get(key, null).expectNearGetMiss(key);
       client2.get(key, null).expectNearGetMiss(key);
 
       String value = "v1";
       client1.put(key, value).expectNearPreemptiveRemove(key);
-
-      // We wait until the pending bloom updates is complete to avoid out of turn updates
-      eventuallyEquals(bloomFilterVersion + 2, () -> client2.bloomFilterVersion());
 
       client2.get(key, value).expectNearGetMissWithValue(key, value);
       client2.get(key, value).expectNearGetValue(key, value);

@@ -11,7 +11,6 @@ import javax.transaction.xa.Xid;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.ServerStatistics;
-import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.iteration.KeyTracker;
@@ -60,13 +59,11 @@ public final class DefaultCacheOperationsFactory implements CacheOperationsFacto
    }
 
    @Override
-   public HotRodOperation<Void> newRemoveClientListenerOperation(Object listener) {
-      ClientListenerNotifier cln = remoteCache.getDispatcher().getClientListenerNotifier();
-      byte[] listenerId = cln.findListenerId(listener);
+   public HotRodOperation<Void> newRemoveClientListenerOperation(byte[] listenerId) {
       if (listenerId == null) {
          return NoHotRodOperation.instance();
       }
-      return new RemoveClientListenerOperation(remoteCache, cln, listenerId);
+      return new RemoveClientListenerOperation(remoteCache, remoteCache.getDispatcher().getClientListenerNotifier(), listenerId);
    }
 
    @Override
@@ -184,7 +181,14 @@ public final class DefaultCacheOperationsFactory implements CacheOperationsFacto
 
    @Override
    public ClientListenerOperation newAddNearCacheListenerOperation(Object listener, int bloomBits) {
-      return new AddBloomNearCacheClientListenerOperation(remoteCache, listener, bloomBits);
+      return bloomBits > 0 ?
+            new AddBloomNearCacheClientListenerOperation(remoteCache, listener, bloomBits) :
+            newAddClientListenerOperation(listener);
+   }
+
+   @Override
+   public ClientListenerOperation newAddPrimaryNearCacheListenerOperation(Object listener, byte[] listenerId, int bloomBits) {
+      return new AddPrimaryNearCacheClientListenerOperation(remoteCache, listener, listenerId, bloomBits);
    }
 
    @Override

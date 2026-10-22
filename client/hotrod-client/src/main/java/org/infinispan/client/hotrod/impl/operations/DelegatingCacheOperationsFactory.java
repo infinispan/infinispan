@@ -54,8 +54,8 @@ public abstract class DelegatingCacheOperationsFactory implements CacheOperation
    }
 
    @Override
-   public HotRodOperation<Void> newRemoveClientListenerOperation(Object listener) {
-      return delegate.newRemoveClientListenerOperation(listener);
+   public HotRodOperation<Void> newRemoveClientListenerOperation(byte[] listenerId) {
+      return delegate.newRemoveClientListenerOperation(listenerId);
    }
 
    @Override
@@ -161,6 +161,11 @@ public abstract class DelegatingCacheOperationsFactory implements CacheOperation
    @Override
    public ClientListenerOperation newAddNearCacheListenerOperation(Object listener, int bloomBits) {
       return delegate.newAddNearCacheListenerOperation(listener, bloomBits);
+   }
+
+   @Override
+   public ClientListenerOperation newAddPrimaryNearCacheListenerOperation(Object listener, byte[] listenerId, int bloomBits) {
+      return delegate.newAddPrimaryNearCacheListenerOperation(listener, listenerId, bloomBits);
    }
 
    @Override

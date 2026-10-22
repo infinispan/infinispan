@@ -20,10 +20,15 @@ public class ReconnectTask implements Runnable, Consumer<Void> {
 
    @Override
    public void run() {
+      // A dispatcher stopped by failover address exhaustion must keep retrying, otherwise the listener is lost
+      if (!dispatcher.canReconnect() || !(dispatcher instanceof FailoverEventDispatcher failover)) {
+         accept(null);
+         return;
+      }
       if (log.isTraceEnabled()) {
          log.tracef("Reconnecting client listener with id %s", Util.printArray(dispatcher.listenerId));
       }
-      dispatcher.executeFailover().thenAccept(this);
+      failover.executeFailover().thenAccept(this);
    }
 
    public synchronized void setCancellationFuture(ScheduledFuture<?> cancellationFuture) {

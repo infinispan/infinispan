@@ -157,11 +157,6 @@ public abstract class DelegatingRemoteCache<K, V> extends RemoteCacheSupport<K, 
    }
 
    @Override
-   public Channel addNearCacheListener(Object listener, int bloomBits) {
-      return delegate.addNearCacheListener(listener, bloomBits);
-   }
-
-   @Override
    public <T> T execute(String taskName, Map<String, ?> params) {
       return delegate.execute(taskName, params);
    }

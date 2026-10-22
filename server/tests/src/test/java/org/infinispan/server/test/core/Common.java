@@ -38,6 +38,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.RemoteSchemasAdmin;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
+import org.infinispan.client.hotrod.impl.operations.CachePingOperation;
 import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.security.BasicCallbackHandler;
 import org.infinispan.client.rest.RestResponse;
@@ -304,9 +305,25 @@ public class Common {
 
    public static Integer getIntKeyForServer(RemoteCache<Integer, ?> cache, int server) {
       OperationDispatcher dispatcher = TestingUtil.extractField(cache.getRemoteCacheContainer(), "dispatcher");
+      ConsistentHash ch = dispatcher.getConsistentHash(cache.getName());
+      if (ch == null) {
+         for (InetSocketAddress sa : dispatcher.getServers(cache.getName())) {
+            try {
+               dispatcher.await(dispatcher.executeOnSingleAddress(new CachePingOperation(cache.getName()), sa));
+            } catch (Exception ignored) {
+            }
+            ch = dispatcher.getConsistentHash(cache.getName());
+            // When a newer protocol client connects the server returns an error status which doesn't contain the consistent hash
+            if (ch != null) {
+               break;
+            }
+         }
+      }
+      if (ch == null) {
+         throw new IllegalStateException("Could not obtain ConsistentHash for cache " + cache.getName());
+      }
       InetSocketAddress serverAddress = dispatcher.getServers(cache.getName()).stream().skip(server).findFirst().get();
       DataFormat df = cache.getDataFormat();
-      ConsistentHash ch = dispatcher.getConsistentHash(cache.getName());
       Random r = new Random();
       for (int i = 0; i < 1000; i++) {
          int aInt = r.nextInt();

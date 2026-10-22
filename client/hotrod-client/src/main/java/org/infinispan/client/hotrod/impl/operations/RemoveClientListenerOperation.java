@@ -51,6 +51,12 @@ public class RemoveClientListenerOperation extends AbstractCacheOperation<Void> 
    }
 
    @Override
+   public boolean supportRetry() {
+      // Retrying on another owner could remove a different primary listener with the same ID.
+      return false;
+   }
+
+   @Override
    public DataFormat getDataFormat() {
       // No data format sent for remove client listener op
       return null;
