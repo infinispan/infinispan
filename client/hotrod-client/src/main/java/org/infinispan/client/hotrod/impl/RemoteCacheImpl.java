@@ -675,20 +675,29 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       if (listenerId == null) {
          return;
       }
-      SocketAddress sa = clientListenerNotifier.findAddress(listenerId);
-      if (sa == null) {
+      Set<SocketAddress> addresses = Set.copyOf(clientListenerNotifier.findAddresses(listenerId));
+      if (addresses.isEmpty()) {
          return;
       }
-      HotRodOperation<Void> op = operationsFactory.newRemoveClientListenerOperation(listener);
-      // By registering this here, we are guaranteed this will be ran on the event loop for this listener
-      CompletableFuture<Void> removalStage = op.asCompletableFuture().thenAccept(___ -> {
-         clientListenerNotifier.removeClientListener(listenerId);
-         dispatcher.removeListener(sa, listenerId);
-      });
-      dispatcher.executeOnSingleAddress(op, sa);
-      // This is convoluted but to ensure the caller doesn't return until the listener is completely removed
-      // we have to wait on the other stage
-      dispatcher.await(removalStage);
+      AggregateCompletionStage<Void> aggregate = CompletionStages.aggregateCompletionStage();
+      for (SocketAddress sa : addresses) {
+         HotRodOperation<Void> op = operationsFactory.newRemoveClientListenerOperation(listenerId);
+         CompletableFuture<Void> opFuture = op.asCompletableFuture();
+         CompletableFuture<Void> removalStage = opFuture
+               .handle((ignore, t) -> {
+                  clientListenerNotifier.removeClientListener(listenerId, sa);
+                  dispatcher.removeListener(sa, listenerId);
+                  return null;
+               });
+         aggregate.dependsOn(removalStage);
+         try {
+            dispatcher.executeOnSingleAddress(op, sa);
+         } catch (Exception e) {
+            // Complete the future to trigger cleanup and avoid hang in await()
+            opFuture.completeExceptionally(e);
+         }
+      }
+      dispatcher.await(aggregate.freeze());
    }
 
    @Override

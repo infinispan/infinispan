@@ -26,7 +26,7 @@ public abstract class ClientListenerOperation extends AbstractCacheOperation<Cha
       this.listenerId = listenerId;
    }
 
-   protected static byte[] generateListenerId() {
+   public static byte[] generateListenerId() {
       ThreadLocalRandom random = ThreadLocalRandom.current();
       byte[] listenerId = new byte[16];
       ByteBuffer bb = ByteBuffer.wrap(listenerId);

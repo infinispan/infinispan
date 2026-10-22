@@ -21,6 +21,7 @@ public class InvalidatedFailoverNearCacheBloomTest extends InvalidatedFailoverNe
       for (HotRodServer server : servers)
          clientBuilder.addServer().host("127.0.0.1").port(server.getPort());
 
+      clientBuilder.version(org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_41);
       clientBuilder.connectionPool().maxActive(1);
 
       clientBuilder.remoteCache("")

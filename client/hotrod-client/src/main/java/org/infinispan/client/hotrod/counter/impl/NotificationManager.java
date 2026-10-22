@@ -150,8 +150,7 @@ public class NotificationManager {
                try {
                   if (channel != null) {
                      log.debugf("Creating new counter event dispatcher on %s", channel);
-                     // TODO: figure out counter issue here
-                     dispatcher = new CounterEventDispatcher(listenerId, clientListeners, channel.remoteAddress(), this::failover, null);
+                     dispatcher = new CounterEventDispatcher(listenerId, clientListeners, ChannelRecord.of(channel), this::failover, null);
                      notifier.addDispatcher(dispatcher);
                      notifier.startClientListener(listenerId);
                   }
