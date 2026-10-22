@@ -465,4 +465,16 @@ public interface Log extends BasicLogger {
    @Message(value = "Server error received after operation %s already timed out on %s: this is the actual cause of the timeout", id = 4127)
    void delayedServerError(Object operation, SocketAddress address, @Cause Throwable cause);
 
+   @LogMessage(level = DEBUG)
+   @Message(value = "Downgrading near cache for '%s' to cluster-wide listener: a server running an older protocol version joined the cluster", id = 4130)
+   void nearCacheDowngradedToClusterListener(String cacheName);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error notifying codec change listener", id = 4132)
+   void errorNotifyingCodecChangeListener(@Cause Throwable cause);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error notifying topology listener for cache '%s'", id = 4133)
+   void errorNotifyingTopologyListener(String cacheName, @Cause Throwable cause);
+
 }

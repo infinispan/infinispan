@@ -1,8 +1,17 @@
 package org.infinispan.server.hotrod;
 
+import java.net.InetAddress;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.infinispan.commons.util.Util;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
 
 import io.netty.buffer.ByteBuf;
@@ -153,6 +162,109 @@ class Events {
       void writeEvent(ByteBuf buf) {
          defaultEvent(buf);
          ExtendedByteBuf.writeRangedBytes(eventData, buf);
+      }
+   }
+
+   /**
+    * Complete routing snapshot for a topology, together with the segments whose primary owner changed since
+    * {@code baseSequence}, the sequence of the last topology the listener's connection was sent before this one.
+    * A {@code baseSequence} of {@code -1} means the sender has no earlier history on this connection.
+    */
+   static class TopologyChangedEvent extends Event {
+      private final int topologySequence;
+      private final HashDistAware20Response topologyResponse;
+      private final ConsistentHash ch;
+      private final InetAddress localAddress;
+      private final int baseSequence;
+      private final BitSet changedSegments;
+
+      protected TopologyChangedEvent(byte version, long messageId, byte[] listenerId,
+                                     int topologySequence,
+                                     HashDistAware20Response topologyResponse,
+                                     ConsistentHash ch,
+                                     InetAddress localAddress,
+                                     int baseSequence,
+                                     BitSet changedSegments) {
+         super(version, messageId, HotRodOperation.CACHE_TOPOLOGY_CHANGED_EVENT, listenerId, false, (byte) 0, null);
+         this.topologySequence = topologySequence;
+         this.topologyResponse = topologyResponse;
+         this.ch = ch;
+         this.localAddress = localAddress;
+         this.baseSequence = baseSequence;
+         this.changedSegments = changedSegments;
+      }
+
+      /**
+       * Replaces an older event that was never written with this one. The result carries this event's snapshot and
+       * the history of both, so no primary ownership change is lost.
+       */
+      TopologyChangedEvent coalesce(TopologyChangedEvent older) {
+         BitSet union = (BitSet) older.changedSegments.clone();
+         union.or(changedSegments);
+         return new TopologyChangedEvent(version, messageId, listenerId, topologySequence, topologyResponse, ch,
+               localAddress, older.baseSequence, union);
+      }
+
+      @Override
+      public String toString() {
+         return "TopologyChangedEvent{" +
+               "version=" + version +
+               ", messageId=" + messageId +
+               ", op=" + op +
+               ", listenerId=" + Util.printArray(listenerId, false) +
+               ", sequence=" + topologySequence +
+               ", topologyId=" + (topologyResponse != null ? topologyResponse.topologyId : -1) +
+               ", baseSequence=" + baseSequence +
+               ", changedSegments=" + changedSegments +
+               '}';
+      }
+
+      @Override
+      void writeEvent(ByteBuf buf) {
+         Map<Address, ServerAddress> members = topologyResponse.serverEndpointsMap.entrySet().stream().filter(e ->
+               ch.getMembers().contains(e.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+         ExtendedByteBuf.writeUnsignedInt(topologySequence, buf);
+         // History of primary ownership changes: the sequence it starts after (+1, so that 0 means unknown)
+         // followed by the changed segments as a bitmap bounded by the number of segments
+         ExtendedByteBuf.writeUnsignedInt(baseSequence + 1, buf);
+         ExtendedByteBuf.writeRangedBytes(changedSegments.toByteArray(), buf);
+         ExtendedByteBuf.writeUnsignedInt(topologyResponse.topologyId, buf); // Consistent hash identity
+
+         // Write members
+         AtomicInteger indexCount = new AtomicInteger(-1);
+         ExtendedByteBuf.writeUnsignedInt(members.size(), buf);
+         Map<Address, Integer> indexedMembers = new HashMap<>();
+         members.forEach((addr, serverAddr) -> {
+            ExtendedByteBuf.writeString(serverAddr.getHost(localAddress), buf);
+            ExtendedByteBuf.writeUnsignedShort(serverAddr.getPort(), buf);
+            indexCount.incrementAndGet();
+            indexedMembers.put(addr, indexCount.get()); // easier indexing
+         });
+
+         // Write segment information
+         int numSegments = ch.getNumSegments();
+         buf.writeByte(topologyResponse.hashFunction); // Hash function
+         ExtendedByteBuf.writeUnsignedInt(numSegments, buf);
+
+         for (int segmentId = 0; segmentId < numSegments; ++segmentId) {
+            List<Address> owners = ch.locateOwnersForSegment(segmentId).stream().filter(members::containsKey).collect(Collectors.toList());
+            int ownersSize = owners.size();
+            if (ownersSize == 0) {
+               // When sending partial updates, number of owners could be 0,
+               // in which case just take the first member in the list.
+               buf.writeByte(1);
+               ExtendedByteBuf.writeUnsignedInt(0, buf);
+            } else {
+               buf.writeByte(ownersSize);
+               owners.forEach(ownerAddr -> {
+                  Integer index = indexedMembers.get(ownerAddr);
+                  if (index != null) {
+                     ExtendedByteBuf.writeUnsignedInt(index, buf);
+                  }
+               });
+            }
+         }
       }
    }
 }

@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.impl.operations;
 
 import org.infinispan.client.hotrod.annotation.ClientListener;
-import org.infinispan.client.hotrod.event.impl.ClientEventDispatcher;
+import org.infinispan.client.hotrod.event.impl.AbstractClientEventDispatcher;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
@@ -45,7 +45,7 @@ public class AddClientListenerOperation extends ClientListenerOperation {
       ClientListener clientListener = extractClientListener();
       ByteBufUtil.writeArray(buf, listenerId);
       codec.writeClientListenerParams(buf, clientListener, filterFactoryParams, converterFactoryParams);
-      codec.writeClientListenerInterests(buf, ClientEventDispatcher.findMethods(listener).keySet());
+      codec.writeClientListenerInterests(buf, AbstractClientEventDispatcher.findMethods(listener).keySet());
    }
 
    @Override

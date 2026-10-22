@@ -15,6 +15,7 @@ import java.util.concurrent.Executor;
 import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.BloomFilter;
 import org.infinispan.commons.util.MurmurHash3BloomFilter;
 import org.infinispan.commons.util.Util;
@@ -47,7 +48,10 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    private final ClientListenerRegistry listenerRegistry;
    private final InfinispanTelemetry telemetryService;
 
-   private final ConcurrentMap<String, BloomFilter<byte[]>> bloomFilters = new ConcurrentHashMap<>();
+   private final ConcurrentMap<String, InstalledBloomFilter> bloomFilters = new ConcurrentHashMap<>();
+
+   private record InstalledBloomFilter(WrappedByteArray listenerId, BloomFilter<byte[]> filter) {
+   }
 
    CacheRequestProcessor(Channel channel, Executor executor, HotRodServer server, InfinispanTelemetry telemetryService) {
       super(channel, executor, server);
@@ -105,8 +109,9 @@ class CacheRequestProcessor extends BaseRequestProcessor {
 
    void updateBloomFilter(HotRodHeader header, Subject subject, byte[] bloomArray) {
       try {
-         BloomFilter<byte[]> filter = bloomFilters.get(header.cacheName);
-         if (filter != null) {
+         InstalledBloomFilter installed = bloomFilters.get(header.cacheName);
+         if (installed != null) {
+            BloomFilter<byte[]> filter = installed.filter();
             if (log.isTraceEnabled()) {
                log.tracef("Updating bloom filter %s found for cache %s", filter, header.cacheName);
             }
@@ -137,17 +142,17 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    }
 
    void addToFilter(String cacheName, byte[] key) {
-      BloomFilter<byte[]> bloomFilter = bloomFilters.get(cacheName);
+      InstalledBloomFilter installed = bloomFilters.get(cacheName);
       // TODO: Need to think harder about this because we could have a concurrent write as we are doing our get
       // and we could have just have had an invalidation come through that didn't pass the bloom filter
       // I believe this has to go at the beginning of the get command before we get a value or exception
       // We can fix this by adding a temporary check that if a get is being performed and the listener checks the
       // bloom filter for the key to return a bit saying to not cache the returned value
-      if (bloomFilter != null) {
+      if (installed != null) {
          if (log.isTraceEnabled()) {
             log.tracef("Added key %s to bloom filter for cache %s", Util.toStr(key), cacheName);
          }
-         bloomFilter.addToFilter(key);
+         installed.filter().addToFilter(key);
       }
    }
 
@@ -641,21 +646,19 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       var span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
-         BloomFilter<byte[]> bloomFilter = null;
-         if (bloomBits > 0) {
-            bloomFilter = MurmurHash3BloomFilter.createConcurrentFilter(bloomBits);
-            if (log.isTraceEnabled()) {
-               log.tracef("Installing bloom filter for listener %s on cache %s", Util.toStr(listenerId), header.cacheName);
-            }
-            BloomFilter<byte[]> priorFilter = bloomFilters.putIfAbsent(header.cacheName, bloomFilter);
-            assert priorFilter == null;
+         InstalledBloomFilter installed = installBloomFilter(header, listenerId, bloomBits);
+         CompletionStage<Void> stage;
+         try {
+            stage = listenerRegistry.addClientListener(channel, header, listenerId, cache,
+                  includeCurrentState, filterFactory, filterParams, converterFactory, converterParams, useRawData,
+                  listenerInterests, installed != null ? installed.filter() : null);
+         } catch (Throwable t) {
+            stage = CompletableFuture.failedFuture(t);
          }
-         CompletionStage<Void> stage = listenerRegistry.addClientListener(channel, header, listenerId, cache,
-               includeCurrentState, filterFactory, filterParams, converterFactory, converterParams, useRawData,
-               listenerInterests, bloomFilter);
          stage.whenCompleteAsync((ignore, cause) -> {
             try {
                if (cause != null) {
+                  removeBloomFilter(header.cacheName, installed);
                   log.trace("Failed to add listener", cause);
                   if (cause instanceof CompletionException) {
                      writeException(header, cause.getCause());
@@ -670,10 +673,86 @@ class CacheRequestProcessor extends BaseRequestProcessor {
                span.complete();
             }
          }, channel.eventLoop());
+      } catch (Throwable t) {
+         writeException(header, t);
+         span.recordException(t);
+         span.complete();
+      }
+   }
+
+   void addPrimaryClientListener(HotRodHeader header, Subject subject, byte[] listenerId, int bloomBits) {
+      var cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      var span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
+      try (var ignored = span.makeCurrent()) {
+         InstalledBloomFilter installed = installBloomFilter(header, listenerId, bloomBits);
+         CompletionStage<Void> stage;
+         try {
+            stage = listenerRegistry.addPrimaryClientListener(channel, header, listenerId, cache, 14,
+                  installed != null ? installed.filter() : null, server.getAddressCache());
+         } catch (Throwable t) {
+            stage = CompletableFuture.failedFuture(t);
+         }
+         stage.whenCompleteAsync((ignore, cause) -> {
+            try {
+               if (cause != null) {
+                  removeBloomFilter(header.cacheName, installed);
+                  log.trace("Failed to add primary listener", cause);
+                  if (cause instanceof CompletionException) {
+                     writeException(header, cause.getCause());
+                  } else {
+                     writeException(header, cause);
+                  }
+                  span.recordException(cause);
+               } else {
+                  writeSuccess(header);
+               }
+            } finally {
+               span.complete();
+            }
+         }, channel.eventLoop());
+      } catch (Throwable t) {
+         writeException(header, t);
+         span.recordException(t);
+         span.complete();
+      }
+   }
+
+   /**
+    * Creates a bloom filter for the listener and installs it so that reads and bloom filter updates on this
+    * connection use it. Any filter left behind by a prior listener on the same cache is replaced.
+    */
+   private InstalledBloomFilter installBloomFilter(HotRodHeader header, byte[] listenerId, int bloomBits) {
+      if (bloomBits <= 0) {
+         return null;
+      }
+      int maxBloomBits = server.getConfiguration().maxBloomFilterBits();
+      if (bloomBits > maxBloomBits) {
+         throw log.bloomFilterBitsExceedMax(bloomBits, maxBloomBits);
+      }
+      BloomFilter<byte[]> bloomFilter = MurmurHash3BloomFilter.createConcurrentFilter(bloomBits);
+      if (log.isTraceEnabled()) {
+         log.tracef("Installing bloom filter for listener %s on cache %s", Util.toStr(listenerId), header.cacheName);
+      }
+      InstalledBloomFilter installed = new InstalledBloomFilter(new WrappedByteArray(listenerId), bloomFilter);
+      bloomFilters.put(header.cacheName, installed);
+      return installed;
+   }
+
+   private void removeBloomFilter(String cacheName, InstalledBloomFilter installed) {
+      // Registration failure must not remove a newer registration's filter, even if it reuses the listener ID.
+      if (installed != null && bloomFilters.remove(cacheName, installed)) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Removing bloom filter for listener %s on cache %s", installed.listenerId(), cacheName);
+         }
       }
    }
 
    void removeClientListener(HotRodHeader header, Subject subject, byte[] listenerId) {
+      InstalledBloomFilter installed = bloomFilters.get(header.cacheName);
+      if (installed != null && installed.listenerId().equals(new WrappedByteArray(listenerId))) {
+         removeBloomFilter(header.cacheName, installed);
+      }
       var cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       InfinispanSpan<Boolean> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());

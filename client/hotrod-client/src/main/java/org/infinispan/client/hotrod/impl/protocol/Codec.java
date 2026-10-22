@@ -77,6 +77,10 @@ public interface Codec {
     */
    void writeMultimapSupportDuplicates(ByteBuf buf, boolean supportsDuplicates);
 
+   default boolean isPrimaryNearCacheListenerSupported() {
+      return false;
+   }
+
    /**
     * Returns true if the current codec uses a latest codec version, that could be unsafe for the initial handshake.
     * This is necessary to check interoperability between versions during the protocol negotiation.

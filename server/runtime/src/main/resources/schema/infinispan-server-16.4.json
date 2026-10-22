@@ -1629,6 +1629,11 @@
           "description": "Sets the maximum event queue size for client listeners. Exceeding this limit closes the client connection.",
           "default": "${HotRodServer.listener-max-queue-size}"
         },
+        "max-bloom-filter-bits": {
+          "type": "integer",
+          "description": "Sets the maximum size, in bits, of the Bloom filter that a client near cache listener may request. Larger requests are rejected.",
+          "default": "${HotRodServer.max-bloom-filter-bits}"
+        },
         "ip-filter": {
           "$ref": "#/$defs/IpFilter"
         },

@@ -25,6 +25,7 @@ public enum HotRodVersion {
    HOTROD_31(3, 1), // since 12.0
    HOTROD_40(4, 0), // since 14.0
    HOTROD_41(4, 1), // since 15.1
+   HOTROD_42(4, 2), // since 16.4
    ;
 
    private final byte version;

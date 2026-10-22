@@ -74,15 +74,15 @@ public final class TopologyInfo {
       return caches.values().stream().flatMap(ct -> ct.getServers().stream()).collect(Collectors.toSet());
    }
 
-   public SegmentConsistentHash createConsistentHash(int numSegments, short hashFunctionVersion,
-                                                     SocketAddress[][] segmentOwners) {
+   public SegmentConsistentHash createConsistentHash(short hashFunctionVersion, SocketAddress[][] segmentOwners) {
       SegmentConsistentHash hash = null;
       if (hashFunctionVersion > 0) {
          hash = hashFactory.newConsistentHash(hashFunctionVersion);
          if (hash == null) {
             HOTROD.noHasHFunctionConfigured(hashFunctionVersion);
          } else {
-            hash.init(segmentOwners, numSegments);
+            // A routing topology has one owner row for every segment.
+            hash.init(segmentOwners, segmentOwners.length);
          }
       }
       return hash;

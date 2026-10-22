@@ -4,6 +4,7 @@ import static org.infinispan.client.hotrod.impl.protocol.HotRodConstants.CACHE_E
 import static org.infinispan.client.hotrod.impl.protocol.HotRodConstants.CACHE_ENTRY_EXPIRED_EVENT_RESPONSE;
 import static org.infinispan.client.hotrod.impl.protocol.HotRodConstants.CACHE_ENTRY_MODIFIED_EVENT_RESPONSE;
 import static org.infinispan.client.hotrod.impl.protocol.HotRodConstants.CACHE_ENTRY_REMOVED_EVENT_RESPONSE;
+import static org.infinispan.client.hotrod.impl.protocol.HotRodConstants.CACHE_TOPOLOGY_CHANGED_EVENT_RESPONSE;
 import static org.infinispan.client.hotrod.impl.protocol.HotRodConstants.COUNTER_EVENT_RESPONSE;
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
@@ -12,6 +13,7 @@ import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -244,6 +246,11 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                      // the loop in HintedReplayingDecoder will call decode again
                      return;
                   }
+                  case CACHE_TOPOLOGY_CHANGED_EVENT_RESPONSE -> {
+                     checkpoint(State.READ_TOPOLOGY_EVENT);
+                     // the loop in HintedReplayingDecoder will call decode again
+                     return;
+                  }
                }
                if (receivedMessageId >= 0) {
                   // we can remove the operation at this point since we'll read no more in this state
@@ -352,6 +359,23 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                invokeEvent(counterEvent.getListenerId(), counterEvent);
                checkpoint(State.READ_MESSAGE_ID);
                break;
+            case READ_TOPOLOGY_EVENT:
+               if (log.isTraceEnabled()) {
+                  log.tracef("Decoding topology changed event %s", HotRodConstants.Names.of(receivedOpCode));
+               }
+               status = in.readUnsignedByte();
+               in.readUnsignedByte(); // ignore topology byte (0) in header
+               byte[] topologyListenerId = ByteBufUtil.readArray(in);
+               int topologySequence = ByteBufUtil.readVInt(in);
+               // The sequence the changed segments start after, plus one so that 0 means that there is no history
+               int baseSequence = ByteBufUtil.readVInt(in) - 1;
+               BitSet changedSegments = BitSet.valueOf(ByteBufUtil.readArray(in));
+               // This event is not tied to a request, don't keep a reference to the previously decoded operation
+               operation = null;
+               String topologyCacheName = dispatcher.getClientListenerNotifier().findCacheName(topologyListenerId);
+               readNewTopologyAndHash(in, topologyCacheName, topologyListenerId, topologySequence, baseSequence, changedSegments);
+               checkpoint(State.READ_MESSAGE_ID);
+               break;
          }
       } catch (Exception e) {
          // Don't set the operation to null as we probably want to set it in exceptionCaught
@@ -362,6 +386,11 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    }
 
    private void readNewTopologyAndHash(ByteBuf buf, String cacheName) {
+      readNewTopologyAndHash(buf, cacheName, null, -1, -1, null);
+   }
+
+   private void readNewTopologyAndHash(ByteBuf buf, String cacheName, byte[] listenerId, int sequence,
+                                       int baseSequence, BitSet changedSegments) {
       int newTopologyId = ByteBufUtil.readVInt(buf);
 
       InetSocketAddress[] addresses = readTopology(buf);
@@ -390,9 +419,13 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
 
       // Only update the topology if this channel is fully connected and authenticated
       OperationChannel operationChannel = channel.attr(OperationChannel.OPERATION_CHANNEL_ATTRIBUTE_KEY).get();
-      if (operationChannel != null && operationChannel.isAcceptingRequests()) {
-         dispatcher.updateTopology(cacheName, operation, newTopologyId,
-               addresses, segmentOwners, hashFunctionVersion);
+      if (cacheName != null && operationChannel != null && operationChannel.isAcceptingRequests()) {
+         if (listenerId == null) {
+            dispatcher.updateTopology(cacheName, operation, newTopologyId, addresses, segmentOwners, hashFunctionVersion, channel);
+         } else {
+            dispatcher.updatePrimaryTopology(cacheName, channel, sequence, baseSequence, changedSegments,
+                  newTopologyId, addresses, segmentOwners, hashFunctionVersion);
+         }
       }
    }
 
@@ -415,6 +448,9 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
             this.codec = codec;
          }
          channel.attr(OperationChannel.OPERATION_CHANNEL_ATTRIBUTE_KEY).get().setCodec(codec);
+         // Notify interested parties (e.g. near cache mode selector) that the effective cluster
+         // protocol version may have changed due to this channel's codec negotiation.
+         dispatcher.notifyCodecChanged();
       }
    }
 
@@ -462,8 +498,9 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
    }
 
    void failoverClientListeners() {
+      SocketAddress remoteAddress = ChannelRecord.of(channel);
       for (byte[] listenerId : listeners) {
-         dispatcher.getClientListenerNotifier().failoverClientListener(listenerId);
+         dispatcher.getClientListenerNotifier().failoverClientListener(listenerId, remoteAddress, channel);
       }
    }
 
@@ -495,6 +532,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
          }
       }
       failoverClientListeners();
+      dispatcher.retirePrimaryChannel(ctx.channel());
       incomplete.clear();
    }
 
@@ -544,5 +582,6 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
       READ_TOPOLOGY,
       READ_PAYLOAD,
       READ_CACHE_EVENT, READ_COUNTER_EVENT,
+      READ_TOPOLOGY_EVENT,
    }
 }

@@ -245,7 +245,7 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
 
       // Initialize query-specific stuff
       queryFacade = loadQueryFacade();
-      clientListenerRegistry = new ClientListenerRegistry(gcr.getComponent(EncoderRegistry.class), configuration);
+      clientListenerRegistry = new ClientListenerRegistry(gcr.getComponent(EncoderRegistry.class), configuration, getExecutor());
 
       addKeyValueFilterConverterFactory(ToEmptyBytesKeyValueFilterConverter.class.getName(), new ToEmptyBytesFactory());
 

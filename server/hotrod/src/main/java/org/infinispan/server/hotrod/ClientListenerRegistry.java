@@ -3,9 +3,15 @@ package org.infinispan.server.hotrod;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OBJECT;
 
 import java.lang.annotation.Annotation;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.BitSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
@@ -14,11 +20,15 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.IllegalLifecycleStateException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.TranscoderMarshallerAdapter;
 import org.infinispan.commons.marshall.Marshaller;
@@ -27,6 +37,7 @@ import org.infinispan.commons.util.BloomFilter;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.container.versioning.NumericVersion;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.marshall.core.EncoderRegistry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
@@ -34,10 +45,12 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
+import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
+import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
@@ -45,6 +58,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConvert
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.notifications.cachelistener.filter.KeyValueFilterConverterAsCacheEventFilterConverter;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration;
 import org.infinispan.server.hotrod.logging.Log;
@@ -59,12 +73,17 @@ import io.netty.channel.Channel;
  */
 class ClientListenerRegistry {
    private final EncoderRegistry encoderRegistry;
+   private final HotRodServerConfiguration configuration;
+   private final Executor blockingExecutor;
    volatile int highWaterMark;
    volatile int lowWaterMark;
    volatile int maxSize;
 
-   ClientListenerRegistry(EncoderRegistry encoderRegistry, HotRodServerConfiguration configuration) {
+   ClientListenerRegistry(EncoderRegistry encoderRegistry, HotRodServerConfiguration configuration,
+                          Executor blockingExecutor) {
       this.encoderRegistry = encoderRegistry;
+      this.configuration = configuration;
+      this.blockingExecutor = blockingExecutor;
       this.highWaterMark = configuration.listenerBackpressureHighWatermark();
       this.lowWaterMark = configuration.listenerBackpressureLowWatermark();
       this.maxSize = configuration.listenerMaxQueueSize();
@@ -191,15 +210,50 @@ class ClientListenerRegistry {
       BaseClientEventSender clientEventSender = getClientEventSender(includeState, ch, h.encoder(), h.version, cache,
                                                                      listenerId, eventType, h.messageId, bloomFilter);
 
-      eventSenders.put(new WrappedByteArray(listenerId), clientEventSender);
+      WrappedByteArray key = new WrappedByteArray(listenerId);
+      eventSenders.put(key, clientEventSender);
 
-      return addCacheListener(cache, clientEventSender, filter, converter, listenerInterests, useRawData)
-            .whenComplete((__, t) -> {
-               if (t != null) {
-                  // Don't try to remove the listener when
-                  eventSenders.remove(new WrappedByteArray(listenerId));
-               }
-            });
+      CompletionStage<Void> stage;
+      try {
+         stage = addCacheListener(cache, clientEventSender, filter, converter, listenerInterests, useRawData);
+      } catch (Throwable t) {
+         stage = CompletableFuture.failedFuture(t);
+      }
+      return stage.whenComplete((__, t) -> {
+         if (t != null) {
+            eventSenders.remove(key, clientEventSender);
+         }
+      });
+   }
+
+   CompletionStage<Void> addPrimaryClientListener(Channel ch, HotRodHeader h, byte[] listenerId,
+                                                  AdvancedCache<byte[], byte[]> cache, int listenerInterests,
+                                                  BloomFilter<byte[]> bloomFilter,
+                                                  Cache<Address, ServerAddress> addressCache) {
+      ClientEventType eventType = ClientEventType.createType(false, false, h.version);
+
+      PrimaryStatelessClientEventSender clientEventSender = bloomFilter != null
+            ? new BloomAwarePrimaryStatelessClientEventSender(cache, ch, h.encoder(), listenerId, h.version, eventType, bloomFilter, addressCache)
+            : new PrimaryStatelessClientEventSender(cache, ch, h.encoder(), listenerId, h.version, eventType, addressCache);
+
+      clientEventSender.init();
+      CacheEventConverter<byte[], byte[], byte[]> converter = new KeyValueFilterConverterAsCacheEventFilterConverter<>(
+            HotRodServer.ToEmptyBytesKeyValueFilterConverter.INSTANCE, cache.getKeyDataConversion().getRequestMediaType());
+
+      WrappedByteArray key = new WrappedByteArray(listenerId);
+      eventSenders.put(key, clientEventSender);
+      CompletionStage<Void> stage;
+      try {
+         stage = addCacheListener(cache, clientEventSender, null, converter, listenerInterests, false)
+               .thenRun(() -> blockingExecutor.execute(clientEventSender::sendCurrentTopology));
+      } catch (Throwable t) {
+         stage = CompletableFuture.failedFuture(t);
+      }
+      return stage.whenComplete((__, t) -> {
+         if (t != null) {
+            eventSenders.remove(key, clientEventSender);
+         }
+      });
    }
 
    private CompletionStage<Void> addCacheListener(AdvancedCache<byte[], byte[]> cache, Object clientEventSender,
@@ -342,6 +396,149 @@ class ClientListenerRegistry {
       }
    }
 
+   @Listener(clustered = false, primaryOnly = true)
+   private class PrimaryStatelessClientEventSender extends BaseClientEventSender {
+      private final Cache<Address, ServerAddress> addressCache;
+      private volatile int pendingTopologyId = -1;
+      private volatile ConsistentHash pendingConsistentHash;
+      private final AtomicInteger topologyRetryCount = new AtomicInteger();
+      // The following are guarded by this. They track the primary ownership changes between the topologies queued
+      // for this connection, so superseded topologies never lose a change that the client has to fence.
+      private ConsistentHash lastQueuedConsistentHash;
+      private BitSet pendingChangedSegments = new BitSet();
+      private int lastSentSequence = -1;
+
+      PrimaryStatelessClientEventSender(Cache cache, Channel ch, VersionedEncoder encoder, byte[] listenerId,
+                                        byte version, ClientEventType targetEventType,
+                                        Cache<Address, ServerAddress> addressCache) {
+         super(cache, ch, encoder, listenerId, version, targetEventType);
+         this.addressCache = Objects.requireNonNull(addressCache);
+      }
+
+      @TopologyChanged
+      public void onTopologyChange(TopologyChangedEvent<?, ?> event) {
+         if (event.isPre() || isChannelDisconnected()) {
+            return;
+         }
+         ConsistentHash consistentHash = event.getReadConsistentHashAtEnd();
+         if (consistentHash != null) {
+            queueTopology(event.getNewTopologyId(), consistentHash);
+         }
+      }
+
+      void sendCurrentTopology() {
+         var distributionManager = cache.getAdvancedCache().getDistributionManager();
+         if (distributionManager != null) {
+            var topology = distributionManager.getCacheTopology();
+            queueTopology(topology.getTopologyId(), topology.getReadConsistentHash());
+         }
+      }
+
+      private synchronized void queueTopology(int topologyId, ConsistentHash consistentHash) {
+         // Registration's snapshot can race a topology notification. Never replace a newer pending update.
+         if (topologyId <= pendingTopologyId || consistentHash == null) {
+            return;
+         }
+         // Record the changes before the previous snapshot is superseded, so A -> B -> A is not lost
+         if (lastQueuedConsistentHash != null) {
+            addPrimaryChanges(pendingChangedSegments, lastQueuedConsistentHash, consistentHash);
+         }
+         lastQueuedConsistentHash = consistentHash;
+         pendingTopologyId = topologyId;
+         pendingConsistentHash = consistentHash;
+         topologyRetryCount.set(0);
+         blockingExecutor.execute(() -> trySendTopology(topologyId, consistentHash));
+      }
+
+      private static void addPrimaryChanges(BitSet changed, ConsistentHash previous, ConsistentHash current) {
+         int numSegments = current.getNumSegments();
+         if (previous.getNumSegments() != numSegments) {
+            changed.set(0, numSegments);
+            return;
+         }
+         for (int segment = 0; segment < numSegments; ++segment) {
+            if (!Objects.equals(previous.locatePrimaryOwnerForSegment(segment), current.locatePrimaryOwnerForSegment(segment))) {
+               changed.set(segment);
+            }
+         }
+      }
+
+      private void trySendTopology(int topologyId, ConsistentHash consistentHash) {
+         if (isChannelDisconnected() || pendingTopologyId != topologyId || pendingConsistentHash != consistentHash) {
+            return;
+         }
+         Map<Address, ServerAddress> serverEndpoints;
+         try {
+            serverEndpoints = new HashMap<>(addressCache);
+         } catch (IllegalLifecycleStateException e) {
+            // The server is stopping. Close the connection, so the client retires it rather than wait for a snapshot.
+            if (log.isTraceEnabled()) {
+               log.tracef(e, "Closing %s as the address cache is stopping", this.ch);
+            }
+            this.ch.close();
+            return;
+         }
+         if (!serverEndpoints.keySet().containsAll(consistentHash.getMembers())) {
+            // Never send a partial topology, as missing owners would be written as the wrong owner.
+            // Keep retrying until the address cache is complete, this is cancelled when a newer topology
+            // arrives or the channel is disconnected. Back off after the initial attempts.
+            int attempt = topologyRetryCount.incrementAndGet();
+            long delayMillis = attempt <= 20 ? 50 : 1000;
+            if (log.isTraceEnabled()) {
+               log.tracef("Delaying topology update (attempt %d) as addressCache does not contain all members: %s vs %s",
+                     attempt, serverEndpoints.keySet(), consistentHash.getMembers());
+            }
+            // The timer fires on the event loop, but reading addressCache is blocking, so hand off to the blocking executor
+            this.ch.eventLoop().schedule(() -> blockingExecutor.execute(() -> trySendTopology(topologyId, consistentHash)),
+                  delayMillis, TimeUnit.MILLISECONDS);
+            return;
+         }
+         int clientTopologyId = consistentHash.hashCode();
+         HashDistAware20Response topologyResponse = new HashDistAware20Response(clientTopologyId, serverEndpoints, consistentHash.getNumSegments(), Constants.DEFAULT_CONSISTENT_HASH_VERSION);
+         InetAddress localAddress = ((InetSocketAddress) this.ch.localAddress()).getAddress();
+         synchronized (this) {
+            // The address-cache read above can block while a newer topology is queued.
+            if (isChannelDisconnected() || pendingTopologyId != topologyId || pendingConsistentHash != consistentHash) {
+               return;
+            }
+            BitSet changedSegments = pendingChangedSegments;
+            pendingChangedSegments = new BitSet();
+            Events.TopologyChangedEvent tce = new Events.TopologyChangedEvent(version, 0, listenerId, topologyId,
+                  topologyResponse, consistentHash, localAddress, lastSentSequence, changedSegments);
+            lastSentSequence = topologyId;
+            pendingConsistentHash = null;
+            sendTopologyEvent(tce);
+         }
+      }
+   }
+
+   @Listener(clustered = false, primaryOnly = true)
+   private class BloomAwarePrimaryStatelessClientEventSender extends PrimaryStatelessClientEventSender {
+      private final BloomFilter<byte[]> bloomFilter;
+
+      BloomAwarePrimaryStatelessClientEventSender(Cache cache, Channel ch, VersionedEncoder encoder, byte[] listenerId,
+                                                  byte version, ClientEventType targetEventType, BloomFilter<byte[]> bloomFilter,
+                                                  Cache<Address, ServerAddress> addressCache) {
+         super(cache, ch, encoder, listenerId, version, targetEventType, addressCache);
+         this.bloomFilter = bloomFilter;
+      }
+
+      @Override
+      boolean isSendEvent(CacheEntryEvent<byte[], byte[]> event) {
+         if (super.isSendEvent(event)) {
+            if (bloomFilter.possiblyPresent(event.getKey())) {
+               if (log.isTraceEnabled()) {
+                  log.tracef("Event %s passed bloom filter", event);
+               }
+               return true;
+            } else if (log.isTraceEnabled()) {
+               log.tracef("Event %s didn't pass bloom filter", event);
+            }
+         }
+         return false;
+      }
+   }
+
    private abstract class BaseClientEventSender {
       protected final Channel ch;
       protected final VersionedEncoder encoder;
@@ -352,6 +549,8 @@ class ClientListenerRegistry {
 
       final AtomicInteger eventSize = new AtomicInteger();
       final Queue<Events.Event> eventQueue = new ConcurrentLinkedQueue<>();
+      // At most one topology event waits to be written. A newer one replaces it and keeps its changed segments.
+      final AtomicReference<Events.TopologyChangedEvent> pendingTopology = new AtomicReference<>();
 
       private final Runnable writeEventsIfPossible = this::writeEventsIfPossible;
       private volatile LockManager lockManager;
@@ -393,9 +592,15 @@ class ClientListenerRegistry {
 
       void writeEventsIfPossible() {
          boolean written = false;
-         while (!eventQueue.isEmpty() && ch.isWritable()) {
-            eventSize.decrementAndGet();
-            Events.Event event = eventQueue.remove();
+         while (ch.isWritable()) {
+            Events.Event event = pendingTopology.getAndSet(null);
+            if (event == null) {
+               event = eventQueue.poll();
+               if (event == null) {
+                  break;
+               }
+               eventSize.decrementAndGet();
+            }
             if (log.isTraceEnabled()) log.tracef("Write event: %s to channel %s", event, ch);
             ByteBuf buf = ch.alloc().ioBuffer();
             encoder.writeEvent(event, buf);
@@ -488,6 +693,20 @@ class ClientListenerRegistry {
          if (log.isTraceEnabled())
             log.tracef("Queue event %s, before queuing event queue size is %d", remoteEvent, size - 1);
          eventQueue.add(remoteEvent);
+
+         if (ch.isWritable()) {
+            ch.eventLoop().submit(writeEventsIfPossible);
+         }
+      }
+
+      void sendTopologyEvent(Events.TopologyChangedEvent tce) {
+         // Topology events intentionally bypass the maxSize overflow check and the event queue. Closing the channel
+         // because a topology event didn't fit would force the client to fail over for a rare, mandatory event.
+         // An event that was not written yet is replaced by the newest snapshot, which also carries the segments
+         // changed by the replaced one, so the pending state remains bounded when the channel is not writable.
+         pendingTopology.accumulateAndGet(tce, (older, newer) -> older == null ? newer : newer.coalesce(older));
+         if (log.isTraceEnabled())
+            log.tracef("Queue topology event %s", tce);
 
          if (ch.isWritable()) {
             ch.eventLoop().submit(writeEventsIfPossible);

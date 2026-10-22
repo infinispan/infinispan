@@ -111,4 +111,10 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Listener event watermarks are invalid: low-water-mark (%d) must be less than high-water-mark (%d), and high-water-mark must be less than max-size (%d)", id = 6029)
    CacheConfigurationException invalidListenerEventWatermarks(int lowWaterMark, int highWaterMark, int maxSize);
+
+   @Message(value = "Bloom filter bit size %d exceeds configured maximum of %d", id = 6030)
+   IllegalArgumentException bloomFilterBitsExceedMax(int requested, int max);
+
+   @Message(value = "Listener Bloom filter limit is invalid: max-bloom-filter-bits (%d) must be positive", id = 6032)
+   CacheConfigurationException invalidMaxBloomFilterBits(int maxBits);
 }
