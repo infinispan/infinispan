@@ -98,6 +98,11 @@ jobs:
       REMOTE_BASE: /downloads_htdocs/infinispan/packages
       DOWNLOAD_BASE: https://download.jboss.org/infinispan/packages
     steps:
+      # Only needed for the pinned host keys; see filemgmt-known-hosts.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+        with:
+          sparse-checkout: .github/workflows/filemgmt-known-hosts
+
       - name: Install tools
         run: sudo apt-get update && sudo apt-get install -y createrepo-c dpkg-dev apt-utils
 
@@ -112,7 +117,9 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.FILEMGMT_JBOSS_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "$SFTP_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          # ${SFTP_HOST} is behind a load balancer whose backends present different host keys, so the
+          # full set of valid keys is pinned in filemgmt-known-hosts instead of using ssh-keyscan.
+          cp .github/workflows/filemgmt-known-hosts ~/.ssh/known_hosts
 
       - name: Sync existing repo from server
         run: |

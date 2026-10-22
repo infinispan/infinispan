@@ -1,0 +1,20 @@
+# Pinned SSH host keys for filemgmt.jboss.org (SFTP upload target of release_cli_packages.yml).
+#
+# DO NOT replace with `ssh-keyscan` output: the server sits behind a load balancer whose
+# backends present different host keys, and ssh-keyscan opens one connection per key type,
+# so its output is an unpredictable mix. Pin every distinct key observed instead.
+# Regenerate by scanning repeatedly until no new keys appear (e.g. 20 attempts), then keep the unique set:
+#   for i in $(seq 1 20); do ssh-keyscan filemgmt.jboss.org; sleep 1; done | grep -v '^#' | sort -u
+
+# HqAtNUvhMybkEFubneHegmnkLxFi5LU3m2Y1xt7/KOw (ecdsa-sha2-nistp256)
+filemgmt.jboss.org ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBC6eaH60JKdFI7gPNvTLhoFgK3/mtcNjk7OXfh21bxsC3rRuF4Mwk59qM/rwZjwA4E2yWdH9Phsm5z1nnsZmqlc=
+# 1PStc2bWCkOV9lNagL2/38htqcT+cpFlqNvjUtQFBuY (ecdsa-sha2-nistp256)
+filemgmt.jboss.org ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBE13d2SBu17l08QHkkULc9cPLWKtSOuI5ZFaCuyUAPzVHPvrqStBxsdmA9DROgIkPuK+eRD/UGmpu1ip5A8RQik=
+# yD0wRKF068n/xnY9B687qiM22WnAodBgEz37OHiDKrU (ssh-ed25519)
+filemgmt.jboss.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKvglmSBnvSuAvmbtA0Y2mSzqJwnxR2gJwqWUK8kbvlW
+# 225vI9gbHAInWdnux6Rzu3X9ajwOmb+kLHadV5VNvxw (ssh-ed25519)
+filemgmt.jboss.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPtTkx0TSBLAR/81kaPXwvmWc7Ti2ola4Jf0lFq1R/Lu
+# 0BEAg1N1DEF8oejM5XtDhvEBzkGnCemDbnBc44Yluno (ssh-rsa)
+filemgmt.jboss.org ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC6s8iiJ3cB5tU820WQ4I/aBbYbW4pRqEelG1Pptior9bNmxfSuX83H2F23hr2Uu1CyKIftRjiwwKYML1uXG0Af3ZpuCyn2F0tA8tW++mABWptItdLgLZhtrO0vWdYIUYN38l5Cz3kYVAMivimrORUka2R7dwJUf3kxjzC14takcqr8ptiKgyWfGpHg3YX6DbG3yZ5iqaGSYuJu2rxa4EwKT0NFS7jAuV0w0mTTj6jZER+/CyO3aPGMM7EojJC5KxJdiEGLn/924MT9jlv3uFPNBsfzfhglqCWe8sZCYrdWuPLBwjknjxNSW4N5EyXjEyL+esheDjoDRzTFJI6O6gT2u8nAeRePUzwjY2ZlOVZWcStwgUv9BNusyk4ED9uwCMthSR5baL6ZMbVowR/wYGif7dddeFUNhxm53ztQmVd5xM61iZ84XsnP1l1cYBFxcpoZixHEQ9zH3kX+zs02a5M9IZqeEDBnTR7GBcl3BVbbyg1jK1MrYLyfbN+L+xzktGs=
+# QmPImpblSTmT7R4NZ7MDCBsPlOorTDdx6p3wL7Ad0RM (ssh-rsa)
+filemgmt.jboss.org ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCrUfOD1wY5ATk3r4R39RQbz/fBWdetRdi+3LvjdL2T89+KpvR4sGS/Hf9p2vWk7ZC9dqEIVj75u+C0RUq4Br9NvMqV0Ls1Ms1iGwyh2YFm1EEv3UjWJ+tXApjovPAbw5Uy/AQfDkSXpqD1obXdpGqlInV81KK696Bdmm+jSCiZw7f1NcHDjB4mZcr9fwtTC0/03ROe8VzYeihEenpd68RzOudbFXZhyWHnkkheFAbqnLbELVRYlQ57jp8JooL54b4F7DUKms9QaIrnPzEhspo0w39gPddvpFr47CQz6ARxvUZThnEE1vOnSpbxxFLSXg5FHkPxQZOMPq7hO89nTqakrKXLjhHPd4Hc49viqL1nCkXVoc0U/FTP4jy7QwDJF0QeCdsCG1IhCQXQO1+fNFCAvhLLcprs3XX0fZ6MZQHNtcO3PpK27G/iWsvcAMaeuYwoxhsjpVo3Pd2owvmPUPRzAGUzaK50JMTXAgdMbYMiQhaSu6lgpEVKdqPhI5mxyxM=
