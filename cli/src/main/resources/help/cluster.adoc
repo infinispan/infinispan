@@ -1,0 +1,27 @@
+CLUSTER(1)
+==========
+:doctype: manpage
+
+
+NAME
+----
+cluster - obtain information about a cluster
+
+
+DESCRIPTION
+-----------
+The *cluster* command is used to obtain information about clusters, such as individual members, versions and
+whether the cluster is in the middle of a rolling upgrade.
+
+
+SYNOPSIS
+--------
+*cluster membership*
+
+
+EXAMPLES
+--------
+
+`cluster membership` +
+Obtains cluster membership information, including per-node version, address, physical cluster addresses and global
+rolling upgrade and managed information.
