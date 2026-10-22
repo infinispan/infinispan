@@ -10,6 +10,7 @@ import org.infinispan.cli.commands.rest.Availability;
 import org.infinispan.cli.commands.rest.Backup;
 import org.infinispan.cli.commands.rest.Cas;
 import org.infinispan.cli.commands.rest.ClearCache;
+import org.infinispan.cli.commands.rest.Cluster;
 import org.infinispan.cli.commands.rest.Create;
 import org.infinispan.cli.commands.rest.Drop;
 import org.infinispan.cli.commands.rest.Get;
@@ -47,6 +48,7 @@ import org.infinispan.cli.impl.ExitCodeResultHandler;
             Cas.class,
             Cd.class,
             ClearCache.class,
+            Cluster.class,
             Config.class,
             Connect.class,
             Container.class,
