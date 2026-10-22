@@ -675,20 +675,19 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> implements I
       if (listenerId == null) {
          return;
       }
-      SocketAddress sa = clientListenerNotifier.findAddress(listenerId);
-      if (sa == null) {
-         return;
+      Set<SocketAddress> addresses = clientListenerNotifier.findAddresses(listenerId);
+      for (SocketAddress sa : addresses) {
+         HotRodOperation<Void> op = operationsFactory.newRemoveClientListenerOperation(listener);
+         // By registering this here, we are guaranteed this will be ran on the event loop for this listener
+         CompletableFuture<Void> removalStage = op.asCompletableFuture().thenAccept(___ -> {
+            clientListenerNotifier.removeClientListener(listenerId, sa);
+            dispatcher.removeListener(sa, listenerId);
+         });
+         dispatcher.executeOnSingleAddress(op, sa);
+         // This is convoluted but to ensure the caller doesn't return until the listener is completely removed
+         // we have to wait on the other stage
+         dispatcher.await(removalStage);
       }
-      HotRodOperation<Void> op = operationsFactory.newRemoveClientListenerOperation(listener);
-      // By registering this here, we are guaranteed this will be ran on the event loop for this listener
-      CompletableFuture<Void> removalStage = op.asCompletableFuture().thenAccept(___ -> {
-         clientListenerNotifier.removeClientListener(listenerId);
-         dispatcher.removeListener(sa, listenerId);
-      });
-      dispatcher.executeOnSingleAddress(op, sa);
-      // This is convoluted but to ensure the caller doesn't return until the listener is completely removed
-      // we have to wait on the other stage
-      dispatcher.await(removalStage);
    }
 
    @Override

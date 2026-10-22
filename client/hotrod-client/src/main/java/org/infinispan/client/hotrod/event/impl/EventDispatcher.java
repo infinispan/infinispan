@@ -1,7 +1,11 @@
 package org.infinispan.client.hotrod.event.impl;
 
 import java.net.SocketAddress;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.infinispan.client.hotrod.logging.Log;
@@ -14,7 +18,7 @@ public abstract class EventDispatcher<T> {
 
    final Object listener;
    final byte[] listenerId;
-   final SocketAddress address;
+   final Set<SocketAddress> addresses = ConcurrentHashMap.newKeySet();
    final String cacheName;
    final Runnable cleanup;
    private volatile DispatcherStatus status = DispatcherStatus.STOPPED;
@@ -22,9 +26,15 @@ public abstract class EventDispatcher<T> {
    EventDispatcher(String cacheName, Object listener, byte[] listenerId, SocketAddress address, Runnable cleanup) {
       this.listener = listener;
       this.listenerId = listenerId;
-      this.address = address;
+      if (address != null) {
+         this.addresses.add(address);
+      }
       this.cacheName = cacheName;
       this.cleanup = cleanup;
+   }
+
+   EventDispatcher(String cacheName, Object listener, byte[] listenerId, Runnable cleanup) {
+      this(cacheName, listener, listenerId, null, cleanup);
    }
 
    public boolean start() {
@@ -33,8 +43,11 @@ public abstract class EventDispatcher<T> {
 
    public boolean stop() {
       boolean stopped = statusUpdater.compareAndSet(this, DispatcherStatus.RUNNING, DispatcherStatus.STOPPED);
-      if (stopped && cleanup != null) {
-         cleanup.run();
+      if (stopped) {
+         addresses.clear();
+         if (cleanup != null) {
+            cleanup.run();
+         }
       }
       return stopped;
    }
@@ -43,15 +56,47 @@ public abstract class EventDispatcher<T> {
       return status == DispatcherStatus.RUNNING;
    }
 
-   public abstract CompletableFuture<Void> executeFailover();
+   public void addAddress(SocketAddress address) {
+      if (address != null) {
+         addresses.add(address);
+      }
+   }
+
+   public boolean removeAddress(SocketAddress address) {
+      return addresses.remove(address);
+   }
+
+   public void replaceAddress(SocketAddress oldAddress, SocketAddress newAddress) {
+      if (oldAddress != null) {
+         removeAddress(oldAddress);
+      }
+      if (newAddress != null) {
+         addAddress(newAddress);
+      }
+   }
+
+   public Set<SocketAddress> addresses() {
+      return Collections.unmodifiableSet(addresses);
+   }
+
+   public SocketAddress address() {
+      Iterator<SocketAddress> it = addresses.iterator();
+      return it.hasNext() ? it.next() : null;
+   }
+
+   public CompletableFuture<Void> executeFailover() {
+      return executeFailover(address());
+   }
+
+   public abstract CompletableFuture<Void> executeFailover(SocketAddress failedAddress);
 
    protected abstract void invokeEvent(T event);
 
-   protected void invokeFailoverEvent() {}
-
-   public SocketAddress address() {
-      return address;
+   protected void invokeFailoverEvent() {
+      invokeFailoverEvent(address());
    }
+
+   protected void invokeFailoverEvent(SocketAddress failedAddress) {}
 
    enum DispatcherStatus {
       STOPPED,

@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.event.impl;
 
+import java.net.SocketAddress;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Consumer;
 
@@ -11,19 +12,25 @@ public class ReconnectTask implements Runnable, Consumer<Void> {
    private static final Log log = LogFactory.getLog(ReconnectTask.class);
 
    private final EventDispatcher<?> dispatcher;
+   private final SocketAddress failedAddress;
    private ScheduledFuture<?> cancellationFuture;
    private boolean completed = false;
 
-   public ReconnectTask(EventDispatcher<?> dispatcher) {
+   public ReconnectTask(EventDispatcher<?> dispatcher, SocketAddress failedAddress) {
       this.dispatcher = dispatcher;
+      this.failedAddress = failedAddress;
    }
 
    @Override
    public void run() {
-      if (log.isTraceEnabled()) {
-         log.tracef("Reconnecting client listener with id %s", Util.printArray(dispatcher.listenerId));
+      if (!dispatcher.isRunning()) {
+         accept(null);
+         return;
       }
-      dispatcher.executeFailover().thenAccept(this);
+      if (log.isTraceEnabled()) {
+         log.tracef("Reconnecting client listener with id %s on %s", Util.printArray(dispatcher.listenerId), failedAddress);
+      }
+      dispatcher.executeFailover(failedAddress).thenAccept(this);
    }
 
    public synchronized void setCancellationFuture(ScheduledFuture<?> cancellationFuture) {

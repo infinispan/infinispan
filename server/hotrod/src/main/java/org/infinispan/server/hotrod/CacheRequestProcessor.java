@@ -15,6 +15,7 @@ import java.util.concurrent.Executor;
 import javax.security.auth.Subject;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.commons.util.BloomFilter;
 import org.infinispan.commons.util.MurmurHash3BloomFilter;
 import org.infinispan.commons.util.Util;
@@ -48,6 +49,12 @@ class CacheRequestProcessor extends BaseRequestProcessor {
    private final InfinispanTelemetry telemetryService;
 
    private final ConcurrentMap<String, BloomFilter<byte[]>> bloomFilters = new ConcurrentHashMap<>();
+   // Tracks the bloom filter each listener installed, so the filter is only removed from bloomFilters when the
+   // listener that owns it is removed (and not a newer listener's filter for the same cache)
+   private final ConcurrentMap<WrappedByteArray, InstalledBloomFilter> bloomFilterListeners = new ConcurrentHashMap<>();
+
+   private record InstalledBloomFilter(String cacheName, BloomFilter<byte[]> filter) {
+   }
 
    CacheRequestProcessor(Channel channel, Executor executor, HotRodServer server, InfinispanTelemetry telemetryService) {
       super(channel, executor, server);
@@ -641,21 +648,14 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       var span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
       try (var ignored = span.makeCurrent()) {
-         BloomFilter<byte[]> bloomFilter = null;
-         if (bloomBits > 0) {
-            bloomFilter = MurmurHash3BloomFilter.createConcurrentFilter(bloomBits);
-            if (log.isTraceEnabled()) {
-               log.tracef("Installing bloom filter for listener %s on cache %s", Util.toStr(listenerId), header.cacheName);
-            }
-            BloomFilter<byte[]> priorFilter = bloomFilters.putIfAbsent(header.cacheName, bloomFilter);
-            assert priorFilter == null;
-         }
+         BloomFilter<byte[]> bloomFilter = installBloomFilter(header, listenerId, bloomBits);
          CompletionStage<Void> stage = listenerRegistry.addClientListener(channel, header, listenerId, cache,
                includeCurrentState, filterFactory, filterParams, converterFactory, converterParams, useRawData,
                listenerInterests, bloomFilter);
          stage.whenCompleteAsync((ignore, cause) -> {
             try {
                if (cause != null) {
+                  removeBloomFilter(listenerId);
                   log.trace("Failed to add listener", cause);
                   if (cause instanceof CompletionException) {
                      writeException(header, cause.getCause());
@@ -673,7 +673,63 @@ class CacheRequestProcessor extends BaseRequestProcessor {
       }
    }
 
+   void addPrimaryClientListener(HotRodHeader header, Subject subject, byte[] listenerId, int bloomBits) {
+      var cacheInfo = server.getCacheInfo(header);
+      AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
+      var span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());
+      try (var ignored = span.makeCurrent()) {
+         BloomFilter<byte[]> bloomFilter = installBloomFilter(header, listenerId, bloomBits);
+         CompletionStage<Void> stage = listenerRegistry.addPrimaryClientListener(channel, header, listenerId, cache, 14, bloomFilter, server.getAddressCache());
+         stage.whenCompleteAsync((ignore, cause) -> {
+            try {
+               if (cause != null) {
+                  removeBloomFilter(listenerId);
+                  log.trace("Failed to add primary listener", cause);
+                  if (cause instanceof CompletionException) {
+                     writeException(header, cause.getCause());
+                  } else {
+                     writeException(header, cause);
+                  }
+                  span.recordException(cause);
+               } else {
+                  writeSuccess(header);
+               }
+            } finally {
+               span.complete();
+            }
+         }, channel.eventLoop());
+      }
+   }
+
+   /**
+    * Creates a bloom filter for the listener and installs it so that reads and bloom filter updates on this
+    * connection use it. Any filter left behind by a prior listener on the same cache is replaced.
+    */
+   private BloomFilter<byte[]> installBloomFilter(HotRodHeader header, byte[] listenerId, int bloomBits) {
+      if (bloomBits <= 0) {
+         return null;
+      }
+      BloomFilter<byte[]> bloomFilter = MurmurHash3BloomFilter.createConcurrentFilter(bloomBits);
+      if (log.isTraceEnabled()) {
+         log.tracef("Installing bloom filter for listener %s on cache %s", Util.toStr(listenerId), header.cacheName);
+      }
+      bloomFilters.put(header.cacheName, bloomFilter);
+      bloomFilterListeners.put(new WrappedByteArray(listenerId), new InstalledBloomFilter(header.cacheName, bloomFilter));
+      return bloomFilter;
+   }
+
+   private void removeBloomFilter(byte[] listenerId) {
+      InstalledBloomFilter installed = bloomFilterListeners.remove(new WrappedByteArray(listenerId));
+      if (installed != null) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Removing bloom filter for listener %s on cache %s", Util.toStr(listenerId), installed.cacheName());
+         }
+         bloomFilters.remove(installed.cacheName(), installed.filter());
+      }
+   }
+
    void removeClientListener(HotRodHeader header, Subject subject, byte[] listenerId) {
+      removeBloomFilter(listenerId);
       var cacheInfo = server.getCacheInfo(header);
       AdvancedCache<byte[], byte[]> cache = server.cache(cacheInfo, header, subject);
       InfinispanSpan<Boolean> span = requestStart(header, cacheInfo.getInfinispanSpanAttributes());

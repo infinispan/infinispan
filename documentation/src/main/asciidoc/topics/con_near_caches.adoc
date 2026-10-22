@@ -37,4 +37,31 @@ Bloom filters:
 * Reside on {brandname} Server and keep track of the entries that the client has requested.
 * Cannot be used with unbounded near caches.
 
+.Primary mode
+
+When a Hot Rod client uses `HASH_DISTRIBUTION_AWARE` intelligence and connects to a {brandname} Server cluster running Hot Rod protocol 4.2 or later, the client automatically operates in _primary mode_ for near caches.
+
+[IMPORTANT]
+====
+Primary mode is an internal near-cache optimization managed entirely by the client library.
+You cannot register a primary-owner listener directly using `@ClientListener` or `addClientListener()`.
+No change to application code is required to benefit from primary mode.
+====
+
+In primary mode, the client registers a separate listener on each cluster member that is a primary owner of at least one cache segment.
+Each server sends invalidation events only for keys it owns as the primary owner, so no inter-node forwarding is required.
+The client reads cached entries directly from the primary-owner channel, which eliminates the latency of a round-trip to a non-primary node.
+
+When the cluster topology changes — for example because a node joins or leaves — the server sends a `CACHE_TOPOLOGY_CHANGED_EVENT` (op `0x4A`) to each registered listener.
+The client uses this event to update its consistent hash, invalidate entries whose primary owner changed, and install or remove per-node listeners accordingly, all without clearing the entire near cache.
+
+Bloom filters work the same way in primary mode as in the standard cluster-listener mode.
+Each primary-owner server maintains its own bloom filter for the keys that the client has cached from that server's segments.
+
+.Fallback to cluster-wide listener
+
+If the cluster or any individual server does not support Hot Rod protocol 4.2, or if the client cannot establish primary-owner listeners on enough servers, the client falls back automatically to the standard cluster-wide listener.
+The fallback is logged at `WARN` level.
+Once primary mode is disabled for a cache manager session, the client remains in fallback mode until it is restarted.
+
 //-

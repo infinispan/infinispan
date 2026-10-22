@@ -465,4 +465,12 @@ public interface Log extends BasicLogger {
    @Message(value = "Server error received after operation %s already timed out on %s: this is the actual cause of the timeout", id = 4127)
    void delayedServerError(Object operation, SocketAddress address, @Cause Throwable cause);
 
+   @LogMessage(level = WARN)
+   @Message(value = "No primary listeners could be established for cache '%s'; falling back to cluster-wide listener", id = 4128)
+   void noPrimaryListenersEstablished(String cacheName);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Failed to register primary listeners for cache '%s'; falling back to cluster-wide listener", id = 4129)
+   void primaryListenerRegistrationFailed(String cacheName, @Cause Throwable cause);
+
 }

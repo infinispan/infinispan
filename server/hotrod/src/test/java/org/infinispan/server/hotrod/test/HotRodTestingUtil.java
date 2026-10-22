@@ -313,7 +313,7 @@ public class HotRodTestingUtil {
 
    public static int getServerTopologyId(EmbeddedCacheManager cm, String cacheName) {
       return TestingUtil.extractComponent(cm.getCache(cacheName), DistributionManager.class).getCacheTopology()
-            .getReadConsistentHash().hashCode();
+            .getTopologyId();
    }
 
    public static void killClient(HotRodClient client) {

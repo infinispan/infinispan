@@ -34,7 +34,7 @@ import org.infinispan.commons.util.Util;
 
 import io.netty.channel.Channel;
 
-public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
+public class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
 
    private static final ClientCacheFailoverEvent FAILOVER_EVENT_SINGLETON = () -> ClientEvent.Type.CLIENT_CACHE_FAILOVER;
 
@@ -48,10 +48,10 @@ public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
       allowedListeners.put(ClientCacheFailover.class, new Class[]{ClientCacheFailoverEvent.class});
    }
 
-   private final Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables;
+   final Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables;
 
-   private final ClientListenerOperation op;
-   private final InternalRemoteCache<?, ?> remoteCache;
+   final ClientListenerOperation op;
+   final InternalRemoteCache<?, ?> remoteCache;
 
    ClientEventDispatcher(ClientListenerOperation op, SocketAddress address, Map<Class<? extends Annotation>,
          List<ClientListenerInvocation>> invocables, String cacheName, Runnable cleanup, InternalRemoteCache<?, ?> remoteCache) {
@@ -65,6 +65,15 @@ public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
                                               InternalRemoteCache<?, ?> remoteCache) {
       Map<Class<? extends Annotation>, List<ClientEventDispatcher.ClientListenerInvocation>> invocables = findMethods(op.listener);
       return new ClientEventDispatcher(op, address, invocables, remoteCache.getName(), cleanup, remoteCache);
+   }
+
+   public static ClientEventDispatcher create(ClientListenerOperation op, Runnable cleanup) {
+      return create(op, null, cleanup, op.getRemoteCache());
+   }
+
+   public static ClientEventDispatcher create(ClientListenerOperation op, Runnable cleanup,
+                                              InternalRemoteCache<?, ?> remoteCache) {
+      return create(op, null, cleanup, remoteCache);
    }
 
    public static Map<Class<? extends Annotation>, List<ClientEventDispatcher.ClientListenerInvocation>> findMethods(Object listener) {
@@ -133,12 +142,17 @@ public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
 
    @Override
    public CompletableFuture<Void> executeFailover() {
+      return executeFailover(address());
+   }
+
+   @Override
+   public CompletableFuture<Void> executeFailover(SocketAddress failedAddress) {
       OperationDispatcher dispatcher = remoteCache.getDispatcher();
       CompletableFuture<Channel> future = dispatcher.executeAddListener(op.copy())
             .toCompletableFuture();
-      if (remoteCache instanceof InvalidatedNearRemoteCache) {
+      if (remoteCache instanceof InvalidatedNearRemoteCache<?, ?> inrc) {
          future = future.thenApply(channel -> {
-            ((InvalidatedNearRemoteCache<?, ?>) remoteCache).setBloomListenerAddress(channel);
+            inrc.setBloomListenerAddress(channel);
             return channel;
          });
       }
@@ -147,6 +161,11 @@ public final class ClientEventDispatcher extends EventDispatcher<ClientEvent> {
 
    @Override
    protected void invokeFailoverEvent() {
+      invokeFailoverEvent(address());
+   }
+
+   @Override
+   protected void invokeFailoverEvent(SocketAddress failedAddress) {
       List<ClientListenerInvocation> callbacks = invocables.get(ClientCacheFailover.class);
       if (callbacks != null) {
          for (ClientListenerInvocation callback : callbacks) {

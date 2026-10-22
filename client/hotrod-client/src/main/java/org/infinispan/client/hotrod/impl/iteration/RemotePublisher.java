@@ -193,7 +193,7 @@ public class RemotePublisher<K, E> implements Publisher<Map.Entry<K, E>> {
       HotRodOperation<IterationStartResponse> op = operationsFactory.newIterationStartOperation(filterConverterFactory,
             filterParams, segments, batchSize, metadata);
       if (address == null) {
-         return dispatcher.execute(op);
+         return dispatcher.execute(op, failedServers);
       }
       return dispatcher.executeOnSingleAddress(op, address);
    }
