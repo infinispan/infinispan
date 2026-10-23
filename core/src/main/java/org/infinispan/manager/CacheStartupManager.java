@@ -1,6 +1,5 @@
 package org.infinispan.manager;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -143,6 +142,27 @@ public class CacheStartupManager {
    }
 
    /**
+    * Signals that a cache completed the startup successfully.
+    *
+    * <p>
+    * Invoked by {@link DefaultCacheManager} after the cache started and before the cache is handed over to any thread
+    * waiting for it. A cache started concurrently by another thread, for example, with
+    * {@link EmbeddedCacheManager#getCache(String)}, is only visible after the state is updated. Therefore, a cache is
+    * never observed as {@link CacheStartupState#STARTING} after it is available for use.
+    * </p>
+    *
+    * <p>
+    * Caches not tracked by this manager, such as internal caches and caches created after the container started, are
+    * ignored.
+    * </p>
+    *
+    * @param name the name of the cache which completed the startup. Must not be {@code null}.
+    */
+   public void cacheStarted(String name) {
+      states.computeIfPresent(name, (ignore, state) -> CacheStartupState.READY);
+   }
+
+   /**
     * Returns the startup state of a specific cache.
     *
     * @param name the cache name to query. Must not be {@code null}.
@@ -158,7 +178,7 @@ public class CacheStartupManager {
     * @return a map from cache name to {@link CacheStartupState}. Never {@code null}.
     */
    public Map<String, CacheStartupState> getAllStates() {
-      return Collections.unmodifiableMap(states);
+      return Map.copyOf(states);
    }
 
    /**
@@ -204,7 +224,9 @@ public class CacheStartupManager {
    }
 
    private void taskCompleted(String name, CacheStartupState state) {
-      states.put(name, state);
+      // The cache might already be marked as ready by the thread which effectively started it, see #cacheStarted(String).
+      // A running cache is never downgraded to failed, another thread might have started it concurrently.
+      states.merge(name, state, (current, next) -> current == CacheStartupState.READY ? current : next);
       progressTracker.removeTasks(1);
       if (progressTracker.pendingTasks() == 0) {
          progressTracker.finishedAllTasks();
