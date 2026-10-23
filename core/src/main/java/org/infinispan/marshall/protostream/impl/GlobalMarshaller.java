@@ -2,6 +2,7 @@ package org.infinispan.marshall.protostream.impl;
 
 import static org.infinispan.util.logging.Log.CONTAINER;
 
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.ImmutableProtoStreamMarshaller;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -22,9 +23,15 @@ public class GlobalMarshaller extends AbstractInternalProtoStreamMarshaller {
    GlobalComponentRegistry gcr;
 
    private ClassLoader classLoader;
+   private volatile ClassAllowList classAllowList;
 
    public GlobalMarshaller() {
       super(CONTAINER);
+   }
+
+   @Override
+   public void initialize(ClassAllowList classAllowList) {
+      this.classAllowList = classAllowList;
    }
 
    @Override
@@ -110,9 +117,12 @@ public class GlobalMarshaller extends AbstractInternalProtoStreamMarshaller {
    protected Object unwrapAndInit(Object o) {
       if (o instanceof MarshallableLambda) {
          return ((MarshallableLambda) o).unwrap(classLoader);
-      } else if (o instanceof MarshallableThrowable) {
-         return ((MarshallableThrowable) o).get();
-      }
+      } else if (o instanceof MarshallableThrowable mt) {
+          if (classAllowList != null) {
+             mt.setClassAllowList(classAllowList);
+          }
+          return mt.get();
+       }
 
       return super.unwrapAndInit(o);
    }

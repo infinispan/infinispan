@@ -9,6 +9,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.configuration.ClassAllowList;
 import org.infinispan.commons.marshall.MarshallingException;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.WrappedMessage;
@@ -30,6 +31,7 @@ public class MarshallableThrowable {
    private static final StackTraceElement[] EMPTY_STACK_TRACE = {};
 
     private volatile Throwable throwable;
+    private volatile ClassAllowList classAllowList;
 
     private static final Set<Class<?>> MARSHALLABLE_EXCEPTIONS = new HashSet<>();
     static {
@@ -78,15 +80,29 @@ public class MarshallableThrowable {
 
     public Throwable get() {
         if (throwable == null) {
-            throwable = recreateGenericThrowable(impl, msg, cause);
-            if (suppressed != null) suppressed.forEach(s -> throwable.addSuppressed(s.get()));
+            Throwable t = recreateGenericThrowable(impl, msg, cause);
+            if (suppressed != null) {
+                suppressed.forEach(s -> t.addSuppressed(s.get()));
+            }
+            throwable = t;
         }
         return throwable;
+    }
+
+    void setClassAllowList(ClassAllowList classAllowList) {
+        this.classAllowList = classAllowList;
+        if (cause != null) cause.setClassAllowList(classAllowList);
+        if (suppressed != null) suppressed.forEach(s -> s.setClassAllowList(classAllowList));
     }
 
     private Throwable recreateGenericThrowable(String impl, String msg, MarshallableThrowable t) {
         Throwable cause = t == null ? null : t.get();
         try {
+            ClassAllowList allowList = classAllowList;
+            if (allowList != null && !isKnownSafeThrowablePackage(impl) && !allowList.isSafeClass(impl)) {
+                return new RemoteException(impl + ": " + msg, cause);
+            }
+
             Class<?> clazz = Class.forName(impl, false, Thread.currentThread().getContextClassLoader());
             if (!Throwable.class.isAssignableFrom(clazz)) {
                 return new RemoteException(impl + ": " + msg, cause);
@@ -111,6 +127,13 @@ public class MarshallableThrowable {
         } catch (ClassNotFoundException e) {
             return new RemoteException(impl + ": " + msg, cause);
         }
+    }
+
+    private static boolean isKnownSafeThrowablePackage(String className) {
+        return className.startsWith("java.lang.")
+              || className.startsWith("java.util.")
+              || className.startsWith("java.io.")
+              || className.startsWith("org.infinispan.");
     }
 
     private Object create(Class<?> clazz, Function<Constructor<?>, ?> builder, Class<?>... args) {

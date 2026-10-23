@@ -108,6 +108,7 @@ public class ClassAllowList {
       // Infinispan classes
       // Used by client listeners
       SYS_ALLOWED_CLASSES.add(KeyValueWithPrevious.class.getName());
+
       String regexps = System.getProperty(REGEXPS_PROPERTY_NAME);
       if (regexps != null) {
          SYS_ALLOWED_REGEXP.addAll(asList(regexps.trim().split(",")));
