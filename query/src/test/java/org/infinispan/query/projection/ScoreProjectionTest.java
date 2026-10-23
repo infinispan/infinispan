@@ -13,10 +13,10 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.sampledomain.Game;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.query.mapper.scope.SearchScope;
 import org.infinispan.query.mapper.session.SearchSession;
-import org.infinispan.query.model.Game;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
@@ -54,7 +54,7 @@ public class ScoreProjectionTest extends SingleCacheManagerTest {
       List<Object[]> games;
 
       // order by field to not enforce score!
-      query = cache.query("select g from org.infinispan.query.model.Game g where g.description : 'description'~2 order by g.name desc");
+      query = cache.query(String.format("select g from %s g where g.description : 'description'~2 order by g.name desc", Game.class.getName()));
       games = query.list();
       assertThat(games).extracting(objects -> objects[0]).extracting("name").containsExactly("4", "3", "2", "1");
    }
@@ -64,7 +64,7 @@ public class ScoreProjectionTest extends SingleCacheManagerTest {
       Query<Object[]> query;
       List<Object[]> games;
 
-      query = cache.query("select g, score(g) from org.infinispan.query.model.Game g where g.description : 'description'~2");
+      query = cache.query(String.format("select g, score(g) from %s g where g.description : 'description'~2", Game.class.getName()));
       games = query.list();
       assertThat(games).extracting(objects -> objects[0]).extracting("name").containsExactly("1", "2", "3", "4");
       assertThat(games).extracting(objects -> objects[1]).hasOnlyElementsOfType(Float.class).isNotNull().allMatch(o -> !o.equals(Float.NaN));
@@ -75,7 +75,7 @@ public class ScoreProjectionTest extends SingleCacheManagerTest {
       Query<Object[]> query;
       List<Object[]> games;
 
-      query = cache.query("select score(g), g.name from org.infinispan.query.model.Game g where g.description : 'description'~2");
+      query = cache.query(String.format("select score(g), g.name from %s g where g.description : 'description'~2", Game.class.getName()));
       games = query.list();
       assertThat(games).extracting(objects -> objects[1]).containsExactly("1", "2", "3", "4");
       assertThat(games).extracting(objects -> objects[0]).hasOnlyElementsOfType(Float.class).isNotNull().allMatch(o -> !o.equals(Float.NaN));
@@ -86,7 +86,7 @@ public class ScoreProjectionTest extends SingleCacheManagerTest {
       Query<Object[]> query;
       List<Object[]> games;
 
-      query = cache.query("select g.name, score(g), g from org.infinispan.query.model.Game g where g.description : 'description'~2");
+      query = cache.query(String.format("select g.name, score(g), g from %s g where g.description : 'description'~2", Game.class.getName()));
       games = query.list();
       assertThat(games).extracting(objects -> objects[0]).containsExactly("1", "2", "3", "4");
       assertThat(games).extracting(objects -> objects[1]).hasOnlyElementsOfType(Float.class).isNotNull().allMatch(o -> !o.equals(Float.NaN));

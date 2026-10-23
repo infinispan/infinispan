@@ -3,7 +3,9 @@ package org.infinispan.query.core.stats;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.dataconversion.internal.JsonSerialization;
+import org.infinispan.query.impl.ComponentRegistryUtils;
 
 /**
  * A snapshot of {@link SearchStatistics}.
@@ -29,4 +31,12 @@ public interface SearchStatisticsSnapshot extends SearchStatistics, JsonSerializ
     * @return self.
     */
    SearchStatisticsSnapshot merge(SearchStatisticsSnapshot other);
+
+
+   /**
+    * Returns aggregated search statistics for all nodes in the cluster.
+    */
+   static CompletionStage<SearchStatisticsSnapshot> of(Cache<?, ?> cache) {
+      return ComponentRegistryUtils.getSearchStatsRetriever(cache).getDistributedSearchStatistics();
+   }
 }

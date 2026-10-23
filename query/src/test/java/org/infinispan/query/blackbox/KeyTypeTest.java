@@ -7,12 +7,12 @@ import java.util.List;
 
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.TransactionMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.test.CustomKey;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
 /**
@@ -35,7 +35,7 @@ public class KeyTypeTest extends SingleCacheManagerTest {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
       cfg
             .transaction()
-            .transactionMode(TransactionMode.TRANSACTIONAL)
+            .mode(TransactionMode.NON_XA)
             .indexing().enable()
             .storage(LOCAL_HEAP)
             .addIndexedEntity(Person.class);
@@ -70,7 +70,7 @@ public class KeyTypeTest extends SingleCacheManagerTest {
       cache.put(key9, person1);
 
       // Going to search the 'blurb' field for 'owns'
-      Query cacheQuery = cache.query(getQuery());
+      Query<Person> cacheQuery = cache.query(getQuery());
       assertEquals(9, cacheQuery.execute().count().value());
 
       List<Person> found = cacheQuery.list();
@@ -92,7 +92,7 @@ public class KeyTypeTest extends SingleCacheManagerTest {
       cache.put(key2, person1);
       cache.put(key3, person1);
 
-      Query cacheQuery = cache.query(getQuery());
+      Query<Person> cacheQuery = cache.query(getQuery());
       assertEquals(3, cacheQuery.execute().count().value());
    }
 }

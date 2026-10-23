@@ -9,11 +9,11 @@ import java.util.Map;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexingMode;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.sampledomain.Game;
 import org.infinispan.query.Indexer;
-import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.IndexInfo;
 import org.infinispan.query.core.stats.IndexStatistics;
-import org.infinispan.query.model.Game;
+import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -47,11 +47,11 @@ public class ReindexPressureTest extends SingleCacheManagerTest {
          cache.put(i, new Game("name " + i, "description " + i));
       }
 
-      IndexStatistics indexStatistics = Search.getSearchStatistics(cache).getIndexStatistics();
+      IndexStatistics indexStatistics = SearchStatistics.of(cache).getIndexStatistics();
       Map<String, IndexInfo> indexInfos = join(indexStatistics.computeIndexInfos());
       assertThat(indexInfos.get(Game.class.getName())).extracting(IndexInfo::count).isEqualTo(0L);
 
-      Indexer indexer = Search.getIndexer(cache);
+      Indexer indexer = Indexer.of(cache);
       join(indexer.runLocal());
 
       indexInfos = join(indexStatistics.computeIndexInfos());

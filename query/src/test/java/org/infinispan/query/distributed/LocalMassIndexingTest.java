@@ -10,11 +10,10 @@ import java.util.stream.IntStream;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.sampledomain.Car;
 import org.infinispan.query.Indexer;
-import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.IndexInfo;
 import org.infinispan.query.core.stats.SearchStatistics;
-import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -47,9 +46,9 @@ public class LocalMassIndexingTest extends MultipleCacheManagersTest {
    }
 
    public void testReindexing() {
-      final Indexer indexer0 = Search.getIndexer(cache(0));
-      final Indexer indexer1 = Search.getIndexer(cache(1));
-      final Indexer indexer2 = Search.getIndexer(cache(2));
+      final Indexer indexer0 = Indexer.of(cache(0));
+      final Indexer indexer1 = Indexer.of(cache(1));
+      final Indexer indexer2 = Indexer.of(cache(2));
 
       join(indexer0.run());
       assertAllIndexed();
@@ -72,13 +71,13 @@ public class LocalMassIndexingTest extends MultipleCacheManagersTest {
    }
 
    void clearIndexes() {
-      join(Search.getIndexer(cache(0)).remove());
+      join(Indexer.of(cache(0)).remove());
    }
 
    private void assertIndexState(BiConsumer<IndexInfo, Integer> cacheIndexInfo) {
       IntStream.range(0, NUM_NODES).forEach(i -> {
          Cache<?, ?> cache = cache(i);
-         SearchStatistics searchStatistics = Search.getSearchStatistics(cache);
+         SearchStatistics searchStatistics = SearchStatistics.of(cache);
          Map<String, IndexInfo> indexInfo = join(searchStatistics.getIndexStatistics().computeIndexInfos());
          cacheIndexInfo.accept(indexInfo.get(Car.class.getName()), i);
       });

@@ -29,7 +29,7 @@ For remote caches you can also rebuild indexes from {brandname} Console.
 +
 [source,java]
 ----
-Indexer indexer = Search.getIndexer(cache);
+Indexer indexer = Indexer.of(cache);
 CompletionStage<Void> future = index.run();
 ----
 ** Check the status of reindexing operation with the `reindexing` attribute of the index statistics.

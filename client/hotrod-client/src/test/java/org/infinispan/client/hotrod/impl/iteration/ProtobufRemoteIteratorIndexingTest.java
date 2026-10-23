@@ -14,14 +14,13 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.dsl.embedded.testdomain.Account;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
+import org.infinispan.protostream.sampledomain.bank.Account;
 import org.testng.annotations.Test;
 
 /**
@@ -38,7 +37,7 @@ public class ProtobufRemoteIteratorIndexingTest extends MultiHotRodServersTest {
       ConfigurationBuilder cfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       cfg.indexing().enable()
             .storage(LOCAL_HEAP)
-            .addIndexedEntity("sample_bank_account.Account");
+            .addIndexedEntity(Account.ENTITY_NAME);
       createHotRodServers(NUM_NODES, hotRodCacheConfiguration(cfg));
       waitForClusterToForm();
    }
@@ -49,23 +48,23 @@ public class ProtobufRemoteIteratorIndexingTest extends MultiHotRodServersTest {
    }
 
    public void testSimpleIteration() {
-      RemoteCache<Integer, AccountPB> cache = clients.get(0).getCache();
+      RemoteCache<Integer, Account> cache = clients.get(0).getCache();
 
-      populateCache(CACHE_SIZE, Util::newAccountPB, cache);
+      populateCache(CACHE_SIZE, Util::newAccount, cache);
 
-      List<AccountPB> results = new ArrayList<>();
-      cache.retrieveEntries(null, null, CACHE_SIZE).forEachRemaining(e -> results.add((AccountPB) e.getValue()));
+      List<Account> results = new ArrayList<>();
+      cache.retrieveEntries(null, null, CACHE_SIZE).forEachRemaining(e -> results.add((Account) e.getValue()));
 
       assertEquals(CACHE_SIZE, results.size());
    }
 
    public void testFilteredIterationWithQuery() {
-      RemoteCache<Integer, AccountPB> remoteCache = clients.get(0).getCache();
-      populateCache(CACHE_SIZE, Util::newAccountPB, remoteCache);
+      RemoteCache<Integer, Account> remoteCache = clients.get(0).getCache();
+      populateCache(CACHE_SIZE, Util::newAccount, remoteCache);
 
       int lowerId = 5;
       int higherId = 8;
-      Query<Account> simpleQuery = remoteCache.query("FROM sample_bank_account.Account WHERE id BETWEEN :lowerId AND :higherId");
+      Query<Account> simpleQuery = remoteCache.query("FROM sample_domain.Account WHERE id BETWEEN :lowerId AND :higherId");
       simpleQuery
             .setParameter("lowerId", lowerId)
             .setParameter("higherId", higherId);
@@ -74,9 +73,9 @@ public class ProtobufRemoteIteratorIndexingTest extends MultiHotRodServersTest {
 
       assertEquals(4, keys.size());
       assertForAll(keys, key -> key >= lowerId && key <= higherId);
-      assertForAll(entries, e -> e.getValue() instanceof AccountPB);
+      assertForAll(entries, e -> e.getValue() instanceof Account);
 
-      Query<Object[]> projectionsQuery = remoteCache.query("SELECT id, description FROM sample_bank_account.Account WHERE id BETWEEN :lowerId AND :higherId");
+      Query<Object[]> projectionsQuery = remoteCache.query("SELECT id, description FROM sample_domain.Account WHERE id BETWEEN :lowerId AND :higherId");
       projectionsQuery
             .setParameter("lowerId", lowerId)
             .setParameter("higherId", higherId);

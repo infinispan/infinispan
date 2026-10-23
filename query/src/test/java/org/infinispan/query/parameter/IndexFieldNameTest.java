@@ -7,7 +7,7 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.model.Book;
+import org.infinispan.protostream.sampledomain.Book;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
@@ -28,19 +28,15 @@ public class IndexFieldNameTest extends SingleCacheManagerTest {
 
    @BeforeMethod(alwaysRun = true)
    public void beforeMethod() {
-      Book book1 = new Book();
-      book1.setTitle("is*and");
-      book1.setDescription("A pl*ce surrounded by the sea.");
+      Book book1 = new Book("is*and", "A pl*ce surrounded by the sea.");
       cache.put(1, book1);
 
-      Book book2 = new Book();
-      book2.setTitle("home");
-      book2.setDescription("The pl*ce where I'm staying.");
+      Book book2 = new Book("home", "The pl*ce where I'm staying.");
       cache.put(2, book2);
    }
 
    public void useDifferentIndexFieldNames() {
-      Query<Book> query = cache.query("from org.infinispan.query.model.Book where naming : 'pl*ce' order by label");
+      Query<Book> query = cache.query(String.format("from %s where naming : 'pl*ce' order by label", Book.class.getName()));
       QueryResult<Book> result = query.execute();
 
       assertThat(result.count().exact()).isTrue();
