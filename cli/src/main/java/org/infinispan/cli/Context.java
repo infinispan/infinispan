@@ -67,7 +67,25 @@ public interface Context extends AeshContext {
    void setRegistry(CommandRegistry<? extends CommandInvocation> registry);
 
    /**
-    * Returns the current {@link Connection}
+    * Store connection parameters for lazy connection
+    *
+    * @param shell
+    * @param connectionString
+    */
+   void setPendingConnection(Shell shell, String connectionString);
+
+   /**
+    * Store connection parameters with credentials for lazy connection
+    *
+    * @param shell
+    * @param connectionString
+    * @param username
+    * @param password
+    */
+   void setPendingConnection(Shell shell, String connectionString, String username, String password);
+
+   /**
+    * Returns the current {@link Connection}, establishing it lazily if needed
     *
     * @return
     */
@@ -89,6 +107,8 @@ public interface Context extends AeshContext {
    void refreshPrompt();
 
    CommandResult changeResource(Class<? extends Resource> fromResource, String resourceType, String name) throws CommandException;
+
+   String readPassword(String prompt, String confirmPrompt) throws InterruptedException;
 
    enum Property {
       TRUSTALL,

@@ -11,6 +11,7 @@ import org.aesh.command.CommandResult;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
 import org.aesh.command.option.OptionList;
+import org.infinispan.cli.Context;
 import org.infinispan.cli.commands.rest.Roles;
 import org.infinispan.cli.completers.EncryptionAlgorithmCompleter;
 import org.infinispan.cli.impl.ContextAwareCommandInvocation;
@@ -80,6 +81,7 @@ public class User extends CliCommand {
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
          UserTool userTool = new UserTool(serverRoot, usersFile, groupsFile);
+         Context context = invocation.getContext();
          try {
             while (username == null || username.isEmpty()) {
                if (random) {
@@ -107,7 +109,7 @@ public class User extends CliCommand {
                } else {
                   password = System.getenv("ISPN_PASSWORD");
                   if (password == null || password.isEmpty()) {
-                     password = invocation.getPasswordInteractively(MSG.userToolPassword(), MSG.userToolPasswordConfirm());
+                     password = context.readPassword(MSG.userToolPassword(), MSG.userToolPasswordConfirm());
                   }
                }
             } catch (InterruptedException e) {
@@ -194,9 +196,10 @@ public class User extends CliCommand {
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) {
+         Context context = invocation.getContext();
          if (password == null) { // Get the password interactively
             try {
-               password = invocation.getPasswordInteractively(MSG.userToolPassword(), MSG.userToolPasswordConfirm());
+               password = context.readPassword(MSG.userToolPassword(), MSG.userToolPasswordConfirm());
             } catch (InterruptedException e) {
                return CommandResult.FAILURE;
             }
