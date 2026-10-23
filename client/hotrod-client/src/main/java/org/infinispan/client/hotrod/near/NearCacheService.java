@@ -21,9 +21,8 @@ import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
-import org.infinispan.commons.util.BloomFilter;
-import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.MurmurHash3BloomFilter;
+import org.infinispan.commons.util.CountingBloomFilter;
+import org.infinispan.commons.util.MurmurHash3CountingBloomFilter;
 import org.infinispan.commons.util.Util;
 
 import io.netty.channel.Channel;
@@ -44,7 +43,11 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    private Runnable invalidationCallback;
    private final int bloomFilterBits;
    private final int bloomFilterUpdateThreshold;
-   private final AtomicInteger nearCacheRemovals;
+   // Mirrors the keys held in the near cache, so the bits to send to the server are known without having to walk
+   // the near cache and hash every key again. Null when the bloom filter is not in use.
+   private final CountingBloomFilter<byte[]> bloomFilter;
+   // Bits the near cache no longer needs but the server still has set, that is how stale the server filter is
+   private final AtomicInteger staleBloomFilterBits;
    private InternalRemoteCache<K, V> remote;
 
    private Channel channelUsed;
@@ -54,21 +57,28 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
       this.listenerNotifier = listenerNotifier;
 
       int maxEntries = config.maxEntries();
-      if (maxEntries > 0 && config.bloomFilter()) {
-         bloomFilterBits = determineBloomFilterBits(maxEntries);
+      int bits = maxEntries > 0 && config.bloomFilter() ? determineBloomFilterBits(maxEntries) : -1;
+      if (bits > 0) {
+         bloomFilterBits = bits;
          // We want to scale the update frequency of the bloom filter to be based on the number of max entries
          // This number along with default values of 3 hash algorithms and 4x bit size we end up with
          // between 14.689 and 16.573 percent hits per entry.
+         // The threshold counts the bits a removal actually frees in the filter, as a removal which frees no bit
+         // leaves the server with the very same filter it already has.
          bloomFilterUpdateThreshold = maxEntries / 16 + 3;
-         nearCacheRemovals = new AtomicInteger();
+         bloomFilter = MurmurHash3CountingBloomFilter.createFilter(bloomFilterBits);
+         staleBloomFilterBits = new AtomicInteger();
       } else {
          bloomFilterBits = -1;
          bloomFilterUpdateThreshold = -1;
-         nearCacheRemovals = null;
+         bloomFilter = null;
+         staleBloomFilterBits = null;
       }
    }
 
    public Channel start(InternalRemoteCache<K, V> remote) {
+      // Has to be set before the near cache exists, the bloom filter needs it to marshall the keys
+      this.remote = remote;
       if (cache == null) {
          // Create near cache
          cache = createNearCache(config, this::entryRemovedFromNearCache);
@@ -82,7 +92,6 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
          // Get the listener ID for faster listener connected lookups
          listenerId = listenerNotifier.findListenerId(listener);
       }
-      this.remote = remote;
       return channelUsed;
    }
 
@@ -92,21 +101,55 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    }
 
    void entryRemovedFromNearCache(K key, MetadataValue<V> value) {
-      if (nearCacheRemovals == null) {
+      removeFromBloomFilter(key);
+   }
+
+   /**
+    * Adds the key to the client side bloom filter, if one is in use.
+    * <p>
+    * This has to be done before the key is visible in the near cache. A concurrent
+    * {@link #calculateBloomBits()} that does not see the key would otherwise install a filter on the server which
+    * does not match it, and the near cache would never be told that the entry changed.
+    *
+    * @return whether the key was added to the filter
+    */
+   private boolean addToBloomFilter(K key) {
+      if (bloomFilter == null) {
+         return false;
+      }
+      bloomFilter.addToFilter(remote.keyToBytes(key));
+      return true;
+   }
+
+   /**
+    * Removes a key that is no longer in the near cache from the client side bloom filter and asks the server for an
+    * update once enough of its bits have become stale.
+    */
+   private void removeFromBloomFilter(K key) {
+      if (bloomFilter == null) {
+         return;
+      }
+
+      int clearedBits = bloomFilter.removeFromFilter(remote.keyToBytes(key));
+      if (clearedBits == 0) {
+         // The keys still in the near cache need every bit this key was using, the server filter is unaffected
+         log.tracef("Removal of key=%s did not clear any bloom filter bit for %s", key, remote.getName());
          return;
       }
 
       while (true) {
-         int removals = nearCacheRemovals.get();
-         if (removals >= bloomFilterUpdateThreshold) {
-            if (nearCacheRemovals.compareAndSet(removals, 0)) {
-               log.tracef("Updating bloom filter due to reaching update threshold with %d for %s", removals, remote.getName());
+         int staleBits = staleBloomFilterBits.get();
+         int newStaleBits = staleBits + clearedBits;
+         if (newStaleBits >= bloomFilterUpdateThreshold) {
+            if (staleBloomFilterBits.compareAndSet(staleBits, 0)) {
+               log.tracef("Updating bloom filter due to reaching update threshold with %d stale bits for %s",
+                     newStaleBits, remote.getName());
                remote.updateBloomFilter();
-               break;
+               return;
             }
-         } else if (nearCacheRemovals.compareAndSet(removals, removals + 1)) {
-            log.tracef("Incremented nearCacheRemovals to %d for %s", removals + 1, remote.getName());
-            break;
+         } else if (staleBloomFilterBits.compareAndSet(staleBits, newStaleBits)) {
+            log.tracef("Incremented stale bloom filter bits to %d for %s", newStaleBits, remote.getName());
+            return;
          }
       }
    }
@@ -142,7 +185,12 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
 
    @Override
    public boolean putIfAbsent(K key, MetadataValue<V> value) {
+      boolean addedToFilter = addToBloomFilter(key);
       boolean inserted = cache.putIfAbsent(key, value);
+      if (addedToFilter && !inserted) {
+         // Another entry for this key is already in the near cache and is already accounted for in the filter
+         removeFromBloomFilter(key);
+      }
 
       if (log.isTraceEnabled())
          log.tracef("Conditionally put %s if absent in near cache (listenerId=%s): %s", value,
@@ -160,9 +208,9 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
          if (log.isTraceEnabled())
             log.tracef("Removed key=%s from near cache (listenedId=%s)", key, Util.printArray(listenerId));
       } else {
+         // A false positive leaves the near cache, and so the bits the server needs, exactly as they were. Sending
+         // the filter again would not drop a single bit, so it must not count towards the update threshold.
          log.tracef("Received false positive remove for key=%s from near cache (listenedId=%s)", key, Util.printArray(listenerId));
-         // There was a false positive, add that to the removal
-         entryRemovedFromNearCache(key, null);
       }
 
       return removed;
@@ -196,9 +244,10 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
 
    @Override
    public void clear() {
+      // The near cache notifies the removal of every entry it drops, which is what empties the bloom filter
       cache.clear();
-      if (nearCacheRemovals != null) {
-         nearCacheRemovals.set(0);
+      if (staleBloomFilterBits != null) {
+         staleBloomFilterBits.set(0);
       }
       if (log.isTraceEnabled()) log.tracef("Cleared near cache (listenerId=%s)", Util.printArray(listenerId));
    }
@@ -234,19 +283,17 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    }
 
    public byte[] calculateBloomBits() {
-      if (bloomFilterBits <= 0) {
+      if (bloomFilter == null) {
          return null;
       }
-      BloomFilter<byte[]> bloomFilter = MurmurHash3BloomFilter.createFilter(bloomFilterBits);
-      for (Map.Entry<K, MetadataValue<V>> entry : cache) {
-         bloomFilter.addToFilter(remote.keyToBytes(entry.getKey()));
-      }
-
-      IntSet intSet = bloomFilter.getIntSet();
-      return intSet.toBitSet();
+      // Whatever the server has is about to be replaced with the bits below, so nothing is stale anymore. Resetting
+      // before taking the bits means a concurrent removal is counted twice at worst, never missed.
+      staleBloomFilterBits.set(0);
+      // The filter is kept up to date as entries come and go, so there is no need to walk the near cache
+      return bloomFilter.toBitSet();
    }
 
-      @ClientListener
+   @ClientListener
    private static class InvalidatedNearCacheListener<K, V> {
       private static final Log log = LogFactory.getLog(InvalidatedNearCacheListener.class);
       private final NearCache<K, V> cache;

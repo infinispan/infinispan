@@ -46,6 +46,8 @@ public class ClusterInvalidatedNearCacheBloomTest extends MultiHotRodServersTest
    void beforeMethod() {
       assertClients.forEach(AssertsNearCache::expectNoNearEvents);
       assertClients.forEach(ac -> CompletionStages.join(ac.remote.updateBloomFilter()));
+      // A get overlapping a bloom filter update does not cache, make sure none is left in flight
+      assertClients.forEach(ac -> eventually(() -> !ac.hasPendingBloomUpdate()));
    }
 
    @AfterMethod
@@ -96,16 +98,12 @@ public class ClusterInvalidatedNearCacheBloomTest extends MultiHotRodServersTest
    public void testInvalidationFromOtherClientModification() {
       int key = 0;
 
-      int bloomFilterVersion = client2.bloomFilterVersion();
-
       client1.get(key, null).expectNearGetMiss(key);
       client2.get(key, null).expectNearGetMiss(key);
 
       String value = "v1";
+      // This is a create thus no remove is sent
       client1.put(key, value).expectNearPreemptiveRemove(key);
-
-      // We wait until the pending bloom updates is complete to avoid out of turn updates
-      eventuallyEquals(bloomFilterVersion + 2, () -> client2.bloomFilterVersion());
 
       client2.get(key, value).expectNearGetMissWithValue(key, value);
       client2.get(key, value).expectNearGetValue(key, value);
