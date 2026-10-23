@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.marshall.JavaSerializationMarshaller;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.BaseMarshallerDelegate;
 import org.infinispan.protostream.GeneratedMarshallerBase;
@@ -123,19 +123,19 @@ public class MapSessionProtoAdapter {
    }
 
    /**
-    * Generated with protostream-processor and then adapted to use {@code JavaSerializationMarshaller}.
+    * Generated with protostream-processor and then adapted to use a fallback marshaller.
     *
-    * <p>A raw marshaller is necessary because we need a {@code JavaSerializationMarshaller} instance,
+    * <p>A raw marshaller is necessary because we need a {@code Marshaller} instance,
     * and {@link MapSessionProtoAdapter} must be stateless.</p>
     */
    public static final class SessionAttributeRawMarshaller extends GeneratedMarshallerBase
          implements ProtobufTagMarshaller<SessionAttribute> {
 
-      private final JavaSerializationMarshaller javaSerializationMarshaller;
+      private final Marshaller fallbackMarshaller;
       private BaseMarshallerDelegate<WrappedMessage> wrappedMessageDelegate;
 
-      public SessionAttributeRawMarshaller(JavaSerializationMarshaller javaSerializationMarshaller) {
-         this.javaSerializationMarshaller = javaSerializationMarshaller;
+      public SessionAttributeRawMarshaller(Marshaller fallbackMarshaller) {
+         this.fallbackMarshaller = fallbackMarshaller;
       }
 
       @Override
@@ -215,7 +215,7 @@ public class MapSessionProtoAdapter {
       private byte[] serializeValue(Object value) throws IOException {
          final byte[] serializedBytes;
          try {
-            serializedBytes = javaSerializationMarshaller.objectToByteBuffer(value);
+            serializedBytes = fallbackMarshaller.objectToByteBuffer(value);
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new CacheException(e);
@@ -225,7 +225,7 @@ public class MapSessionProtoAdapter {
 
       private Object deserializeValue(byte[] serializedBytes) {
          try {
-            return javaSerializationMarshaller.objectFromByteBuffer(serializedBytes);
+            return fallbackMarshaller.objectFromByteBuffer(serializedBytes);
          } catch (IOException | ClassNotFoundException e) {
             throw new CacheException(e);
          }
