@@ -54,6 +54,11 @@ release:
 
 distributions:
   infinispan-cli:
+    # Must stay a ZIP-aware type. FLAT_BINARY treats the artifact as the
+    # executable itself, which makes JReleaser emit `:using => :nounzip` in the
+    # Homebrew formula; brew then never extracts the ZIP and the install fails
+    # with "No such file or directory - infinispan-cli-<version>-<platform>"
+    # (see #18260).
     type: BINARY
     stereotype: CLI
     executable:
@@ -66,6 +71,8 @@ distributions:
         platform: linux-aarch_64
       - path: artifacts/infinispan-cli-{{projectVersion}}-osx-aarch_64.zip
         platform: osx-aarch_64
+      - path: artifacts/infinispan-cli-{{projectVersion}}-osx-x86_64.zip
+        platform: osx-x86_64
       - path: artifacts/infinispan-cli-{{projectVersion}}-windows-x86_64.zip
         platform: windows-x86_64
 

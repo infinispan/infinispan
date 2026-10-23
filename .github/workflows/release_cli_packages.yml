@@ -224,10 +224,14 @@ jobs:
       - name: Download all native CLI artifacts
         run: |
           mkdir -p artifacts
+          # Every platform below is declared in jreleaser.yml, so a missing asset
+          # must fail here rather than silently drop a platform from the Homebrew
+          # formula and the Scoop manifest.
           for platform in linux-x86_64 linux-aarch_64 osx-aarch_64 osx-x86_64 windows-x86_64; do
             gh release download ${{ inputs.version }} \
               --pattern "infinispan-cli-${{ inputs.version }}-${platform}.zip" \
-              --dir artifacts/ || echo "::warning::${platform} artifact not found, skipping"
+              --dir artifacts/ \
+              || { echo "::error::${platform} artifact missing from release ${{ inputs.version }}"; exit 1; }
           done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

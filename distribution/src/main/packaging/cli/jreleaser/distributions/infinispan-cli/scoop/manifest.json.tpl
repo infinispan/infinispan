@@ -9,7 +9,7 @@
     "bin": "{{distributionExecutableWindows}}",
     "checkver": {
         "url": "{{scoopCheckverUrl}}",
-        "re": "v([\\d.]+).zip"
+        "re": "releases/tag/([\\d.]+)"
     },
     "autoupdate": {
         "url": "{{scoopAutoupdateUrl}}",
