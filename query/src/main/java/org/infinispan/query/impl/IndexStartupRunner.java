@@ -89,7 +89,10 @@ public final class IndexStartupRunner {
          }
       } else if (IndexStartupMode.REINDEX.equals(startupMode)) {
          Indexer indexer = ComponentRegistry.of(cache).getComponent(Indexer.class);
-         indexer.runLocal();
+         indexer.runLocal().whenComplete((ignore, t) -> {
+            if (t != null)
+               log.startupReindexFailed(cache.getName(), t);
+         });
       }
    }
 

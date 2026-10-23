@@ -10,11 +10,13 @@ import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.PublisherManagerFactory;
 import org.infinispan.query.Indexer;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.core.stats.impl.SearchStatsRetriever;
 import org.infinispan.query.mapper.mapping.SearchMapping;
+import org.infinispan.reactive.publisher.impl.ClusterPublisherManager;
 import org.infinispan.security.actions.SecurityActions;
 
 /**
@@ -76,6 +78,17 @@ public final class ComponentRegistryUtils {
 
    public static ScheduledExecutorService getTimeoutScheduledExecutor(Cache<?, ?> cache) {
       return getRequiredComponent(cache, ScheduledExecutorService.class, TIMEOUT_SCHEDULE_EXECUTOR);
+   }
+
+   /**
+    * Extract the {@link ClusterPublisherManager} that only publishes the entries held by this node.
+    *
+    * @param cache The cache to extract the publisher from.
+    * @return The {@link ClusterPublisherManager} associated with the given cache.
+    */
+   @SuppressWarnings("unchecked")
+   public static ClusterPublisherManager<Object, Object> getLocalClusterPublisherManager(Cache<?, ?> cache) {
+      return getRequiredComponent(cache, ClusterPublisherManager.class, PublisherManagerFactory.LOCAL_CLUSTER_PUBLISHER);
    }
 
    public static Indexer getIndexer(AdvancedCache<?, ?> cache) {
