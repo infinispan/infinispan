@@ -59,6 +59,14 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-commons-graalvm</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>io.smallrye</groupId>
+         <artifactId>jandex</artifactId>
+      </dependency>
+      <dependency>
          <groupId>org.graalvm.sdk</groupId>
          <artifactId>graal-sdk</artifactId>
       </dependency>
@@ -111,18 +119,61 @@
       </dependency>
    </dependencies>
 
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>graalvm-meta</id>
+                  <phase>process-classes</phase>
+                  <goals>
+                     <goal>exec</goal>
+                  </goals>
+                  <configuration>
+                     <executable>${env.JAVA_HOME}/bin/java</executable>
+                     <workingDirectory>target</workingDirectory>
+                     <arguments>
+                        <argument>-cp</argument>
+                        <classpath/>
+                        <argument>org.infinispan.commons.graalvm.NativeMetadataWriter</argument>
+                        <argument>org.infinispan.cli.graalvm.NativeMetadataProvider</argument>
+                        <!--
+                           Written to its own directory: GraalVM ignores the legacy reflect-config.json and
+                           resource-config.json when a reachability-metadata.json sits in the same directory.
+                        -->
+                        <argument>classes/META-INF/native-image/org.infinispan/infinispan-graalvm-cli-generated</argument>
+                     </arguments>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+   </build>
+
    <profiles>
       <profile>
          <id>native</id>
          <dependencies>
+            <!--
+               The Kubernetes client logs through SLF4J, so the native image needs a complete SLF4J binding:
+               without log4j-api and log4j-core the binding fails to initialize with a NoClassDefFoundError.
+            -->
             <dependency>
                <groupId>org.apache.logging.log4j</groupId>
-               <artifactId>log4j-slf4j-impl</artifactId>
+               <artifactId>log4j-slf4j2-impl</artifactId>
                <scope>compile</scope>
             </dependency>
             <dependency>
-               <groupId>org.infinispan</groupId>
-               <artifactId>infinispan-commons-graalvm</artifactId>
+               <groupId>org.apache.logging.log4j</groupId>
+               <artifactId>log4j-api</artifactId>
+               <scope>compile</scope>
+            </dependency>
+            <dependency>
+               <groupId>org.apache.logging.log4j</groupId>
+               <artifactId>log4j-core</artifactId>
+               <scope>compile</scope>
             </dependency>
          </dependencies>
          <build>
