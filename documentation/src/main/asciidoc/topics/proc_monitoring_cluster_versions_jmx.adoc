@@ -1,0 +1,28 @@
+[id='monitoring-cluster-versions-jmx_{context}']
+= Monitoring {brandname} versions across the cluster
+
+The Cache Manager MBean exposes the {brandname} version that each cluster member runs.
+Use these attributes to verify that every expected member is present and runs the target version, for example before you continue an in-place rolling upgrade.
+
+.Procedure
+. Connect to {brandname} with any JMX capable tool, such as JConsole, and navigate to the following object:
++
+[source,text,options="nowrap",subs="attributes+"]
+----
+org.infinispan:type=CacheManager,name="default",component=CacheManager
+----
++
+. Read the `clusterMemberVersions` attribute to get the version of each member.
++
+The attribute contains a flat array of pairs where each member address is followed by the version that the member runs.
+{brandname} reports `unknown` for a member that does not answer the version query, for example because the member is still starting or is unreachable.
++
+. Read the `rollingUpgrade` attribute to find out whether the members run different versions.
++
+The attribute is `true` when the members of the cluster do not all run the same version.
+
+[NOTE]
+====
+{brandname} collects the versions in the background when the cluster view changes and when the collected values expire.
+Reading the attributes therefore does not send a cluster wide request each time.
+====

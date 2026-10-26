@@ -81,6 +81,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.impl.ClusterExecutors;
+import org.infinispan.manager.impl.ClusterMemberVersions;
 import org.infinispan.manager.impl.InternalCacheManager;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.registry.InternalCacheRegistry;
@@ -313,6 +314,7 @@ public class DefaultCacheManager extends InternalCacheManager {
          health = new HealthImpl(this, internalCacheRegistry);
          cacheManagerInfo = new CacheManagerInfo(this, getConfigurationManager(), internalCacheRegistry, globalComponentRegistry.getComponent(LocalTopologyManager.class));
          globalComponentRegistry.registerComponent(new HealthJMXExposerImpl(health), HealthJMXExposer.class);
+         globalComponentRegistry.registerComponent(new ClusterMemberVersions(this), ClusterMemberVersions.class);
          authorizer = new Authorizer(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.cacheManagerName(), null);
          globalComponentRegistry.registerComponent(authorizer, Authorizer.class);
          cacheManagerAdmin = new DefaultCacheManagerAdmin(this, authorizer, EnumSet.noneOf(CacheContainerAdmin.AdminFlag.class),
@@ -1237,6 +1239,25 @@ public class DefaultCacheManager extends InternalCacheManager {
    @ManagedAttribute(description = "Size of the cluster in number of nodes", displayName = "Cluster size")
    public int getClusterSize() {
       return cacheManagerInfo.getClusterSize();
+   }
+
+   @ManagedAttribute(description = "The Infinispan version of each member of the cluster, as a flat array of address and version pairs. Members which did not answer the version query are reported as 'unknown'.",
+         displayName = "Cluster member versions", dataType = DataType.TRAIT)
+   public String[] getClusterMemberVersions() {
+      Map<String, String> memberVersions = cacheManagerInfo.getClusterMemberVersions();
+      String[] addressesAndVersions = new String[memberVersions.size() * 2];
+      int i = 0;
+      for (Map.Entry<String, String> memberVersion : memberVersions.entrySet()) {
+         addressesAndVersions[i++] = memberVersion.getKey();
+         addressesAndVersions[i++] = memberVersion.getValue();
+      }
+      return addressesAndVersions;
+   }
+
+   @ManagedAttribute(description = "Indicates whether the members of the cluster run different Infinispan versions",
+         displayName = "Is rolling upgrade in progress?", dataType = DataType.TRAIT)
+   public boolean isRollingUpgrade() {
+      return cacheManagerInfo.isRollingUpgrade();
    }
 
    /**

@@ -3,6 +3,7 @@ package org.infinispan.manager;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -20,6 +21,7 @@ import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.manager.impl.ClusterMemberVersions;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.security.actions.SecurityActions;
@@ -149,6 +151,35 @@ public class CacheManagerInfo implements JsonSerialization {
       Transport transport = getTransport();
       if (transport == null) return 1;
       return transport.getMembers().size();
+   }
+
+   /**
+    * Returns the Infinispan version running on each cluster member, keyed by the member's logical address. Members
+    * that did not answer the version query are reported as {@link ClusterMemberVersions#UNKNOWN_VERSION}.
+    * <p>
+    * The versions are aggregated across the cluster and cached, see {@link ClusterMemberVersions}. This method must
+    * not be called from {@link #toJson()}, which is itself evaluated on every member to collect this information.
+    *
+    * @return an immutable map of member address to Infinispan version.
+    */
+   public Map<String, String> getClusterMemberVersions() {
+      ClusterMemberVersions clusterMemberVersions = getClusterMemberVersionsComponent();
+      return clusterMemberVersions == null
+            ? Map.of(getNodeAddress(), getVersion())
+            : clusterMemberVersions.getClusterMemberVersions();
+   }
+
+   /**
+    * @return {@code true} if the cluster members do not all run the same Infinispan version, i.e. an in-place rolling
+    * upgrade is in progress.
+    */
+   public boolean isRollingUpgrade() {
+      ClusterMemberVersions clusterMemberVersions = getClusterMemberVersionsComponent();
+      return clusterMemberVersions != null && clusterMemberVersions.isRollingUpgrade();
+   }
+
+   private ClusterMemberVersions getClusterMemberVersionsComponent() {
+      return SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(ClusterMemberVersions.class);
    }
 
    public String getClusterName() {

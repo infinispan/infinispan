@@ -6,6 +6,7 @@ import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -24,6 +25,7 @@ import javax.management.ServiceNotFoundException;
 import org.infinispan.commons.jmx.MBeanServerLookup;
 import org.infinispan.commons.jmx.TestMBeanServerLookup;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.Version;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
@@ -96,6 +98,13 @@ public class CacheManagerMBeanTest extends SingleCacheManagerTest {
 
    public void testJmxOperationMetadata() throws Exception {
       checkMBeanOperationParameterNaming(mBeanServerLookup.getMBeanServer(), name);
+   }
+
+   public void testClusterMemberVersions() throws Exception {
+      // a cache manager without a transport only reports itself and is never upgrading
+      assertArrayEquals(new String[]{"local", Version.getVersion()},
+            (String[]) server.getAttribute(name, "clusterMemberVersions"));
+      assertEquals(Boolean.FALSE, server.getAttribute(name, "rollingUpgrade"));
    }
 
    public void testInvokeJmxOperationNotExposed() {
