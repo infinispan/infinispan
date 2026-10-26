@@ -23,6 +23,7 @@ public class ClusterView {
 
    private final int viewId;
    private final Map<Address, ExtendedUUID> view;
+   private final Map<Address, NodeVersion> memberVersions;
    private final boolean isCoordinator;
    private final Address coordinator;
    private final NodeVersion oldestMember;
@@ -34,10 +35,12 @@ public class ClusterView {
       var mixedVersionCluster = false;
       if (members.isEmpty()) {
          view = Map.of();
+         memberVersions = Map.of();
          isCoordinator = false;
          coordinator = null;
       } else {
          this.view = new LinkedHashMap<>();
+         var versions = new LinkedHashMap<Address, NodeVersion>();
          isCoordinator = Objects.equals(self, members.get(0));
          coordinator = AddressCache.fromExtendedUUID(members.get(0));
 
@@ -46,6 +49,7 @@ public class ClusterView {
             view.put(address, member);
 
             var v = address.getVersion();
+            versions.put(address, v);
             if (!v.equals(version)) {
                mixedVersionCluster = true;
 
@@ -53,6 +57,7 @@ public class ClusterView {
                   oldestVersion = v;
             }
          }
+         this.memberVersions = Collections.unmodifiableMap(versions);
       }
       this.oldestMember = oldestVersion;
       this.mixedVersionCluster = mixedVersionCluster;
@@ -88,6 +93,14 @@ public class ClusterView {
 
    public NodeVersion getOldestMember() {
       return oldestMember;
+   }
+
+   /**
+    * @return An immutable mapping of each member of this view to the {@link NodeVersion} it advertises in its
+    * {@link Address}, in view order.
+    */
+   public Map<Address, NodeVersion> getMemberVersions() {
+      return memberVersions;
    }
 
    public boolean isMixedVersionCluster() {
