@@ -204,4 +204,14 @@ public abstract class AbstractDelegatingTransport implements Transport {
    public NodeVersion getOldestMember() {
       return actual.getOldestMember();
    }
+
+   @Override
+   public Map<Address, NodeVersion> getMemberVersions() {
+      return actual.getMemberVersions();
+   }
+
+   @Override
+   public boolean isMixedVersionCluster() {
+      return actual.isMixedVersionCluster();
+   }
 }

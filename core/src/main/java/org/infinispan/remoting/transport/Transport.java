@@ -2,6 +2,7 @@ package org.infinispan.remoting.transport;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -82,6 +83,39 @@ public interface Transport extends Lifecycle {
     * @return Provides the version of the oldest member in the current cluster
     */
    NodeVersion getOldestMember();
+
+   /**
+    * Provides the {@link NodeVersion} each member of the current cluster is running.
+    * <p>
+    * Since 16.0 every {@link Address} advertises the version of the node it identifies, so the mapping is resolved
+    * locally from the current view and no remote invocation is performed.
+    * </p>
+    *
+    * @return An immutable mapping of member to version, in view order.
+    * @since 16.4
+    */
+   default Map<Address, NodeVersion> getMemberVersions() {
+      Map<Address, NodeVersion> versions = new LinkedHashMap<>();
+      for (Address member : getMembers()) {
+         versions.put(member, member.getVersion());
+      }
+      return Collections.unmodifiableMap(versions);
+   }
+
+   /**
+    * Checks whether the members of the current cluster are running different {@link NodeVersion}s, which is the case
+    * while an in-place rolling upgrade is in progress.
+    * <p>
+    * Note this is not the same as comparing {@link #getOldestMember()} with {@link NodeVersion#INSTANCE}: on the
+    * oldest member of a mixed cluster the oldest version is the local one, so that comparison reports no upgrade.
+    * </p>
+    *
+    * @return {@code true} if at least one member runs a version other than the local one.
+    * @since 16.4
+    */
+   default boolean isMixedVersionCluster() {
+      return false;
+   }
 
    /**
     * Sends a cross-site request to a remote site.

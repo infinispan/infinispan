@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -63,6 +64,9 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.CacheManagerJmxRegistration;
 import org.infinispan.jmx.ObjectNameKeys;
+import org.infinispan.jmx.annotations.DataType;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
@@ -145,7 +149,9 @@ import org.jgroups.util.SocketFactory;
  */
 @Scope(Scopes.GLOBAL)
 @JGroupsProtocolComponent("JGroupsMetricsMetadata")
+@MBean(objectName = JGroupsTransport.OBJECT_NAME, description = "Provides the cluster membership and the version each member runs.")
 public class JGroupsTransport implements Transport {
+   public static final String OBJECT_NAME = "Transport";
    public static final String CONFIGURATION_STRING = "configurationString";
    public static final String CONFIGURATION_XML = "configurationXml";
    public static final String CONFIGURATION_FILE = "configurationFile";
@@ -321,6 +327,12 @@ public class JGroupsTransport implements Transport {
       }
    }
 
+   @Override
+   @ManagedAttribute(
+         description = "Whether the members of the cluster run different versions, which is the case while an " +
+               "in-place rolling upgrade is in progress.",
+         displayName = "Is mixed version cluster?",
+         dataType = DataType.TRAIT)
    public boolean isMixedVersionCluster() {
       return clusterView.isMixedVersionCluster();
    }
@@ -330,6 +342,26 @@ public class JGroupsTransport implements Transport {
       return clusterView.getOldestMember();
    }
 
+   @Override
+   public Map<Address, NodeVersion> getMemberVersions() {
+      return clusterView.getMemberVersions();
+   }
+
+   /**
+    * The same mapping as {@link #getMemberVersions()}, rendered as strings so that remote JMX clients do not need
+    * {@link Address} and {@link NodeVersion} on their classpath to read the attribute.
+    */
+   @ManagedAttribute(
+         description = "The version each member of the cluster runs, keyed by the logical address of the member.",
+         displayName = "Cluster member versions",
+         dataType = DataType.TRAIT)
+   public Map<String, String> getClusterMemberVersions() {
+      Map<String, String> memberVersions = new LinkedHashMap<>();
+      for (Map.Entry<Address, NodeVersion> memberVersion : clusterView.getMemberVersions().entrySet()) {
+         memberVersions.put(memberVersion.getKey().toString(), memberVersion.getValue().toString());
+      }
+      return memberVersions;
+   }
 
    private boolean isCommandUnsupported(ReplicableCommand cmd) {
       return isMixedVersionCluster() && getOldestMember().lessThan(cmd.supportedSince());
