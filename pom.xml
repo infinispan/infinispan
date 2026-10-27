@@ -211,7 +211,7 @@
       <versionx.org.apache.commons.commons-math>2.2</versionx.org.apache.commons.commons-math>
       <versionx.org.apache.directory.server.apacheds>2.0.0.AM27</versionx.org.apache.directory.server.apacheds>
       <versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>3.15.2</versionx.org.apache.maven.plugin-tools.maven-plugin-annotations>
-      <versionx.org.aspectj.aspectjweaver>1.9.25.1</versionx.org.aspectj.aspectjweaver>
+      <versionx.org.aspectj.aspectjweaver>1.9.26</versionx.org.aspectj.aspectjweaver>
       <versionx.org.assertj.assertj-core>3.27.7</versionx.org.assertj.assertj-core>
       <versionx.org.apache.mina.mina>2.2.9</versionx.org.apache.mina.mina>
       <versionx.org.codehaus.mojo.versions-maven-plugin>2.22.0</versionx.org.codehaus.mojo.versions-maven-plugin>
@@ -225,7 +225,7 @@
       <versionx.org.jboss.weld.se.weld-se-core>5.1.7.Final</versionx.org.jboss.weld.se.weld-se-core>
       <versionx.org.jboss.weld.weld-core-impl>5.1.7.Final</versionx.org.jboss.weld.weld-core-impl>
       <versionx.org.jboss.weld.weld-api>5.0.SP3</versionx.org.jboss.weld.weld-api>
-      <versionx.org.mariadb.jdbc>3.5.10</versionx.org.mariadb.jdbc>
+      <versionx.org.mariadb.jdbc>3.5.11</versionx.org.mariadb.jdbc>
       <versionx.org.postgresql>42.7.14</versionx.org.postgresql>
       <versionx.org.testcontainers.testcontainers>2.0.5</versionx.org.testcontainers.testcontainers>
       <!-- Test dependency. Careful about GraalVM metadata repository -->
