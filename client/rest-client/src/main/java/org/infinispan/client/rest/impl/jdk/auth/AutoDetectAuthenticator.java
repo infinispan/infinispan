@@ -9,11 +9,12 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.configuration.AuthenticationConfiguration;
+import org.infinispan.client.rest.logging.Log;
 
 public class AutoDetectAuthenticator extends HttpAuthenticator {
    private final Map<String, HttpAuthenticator> authenticatorMap;
    // Tracks the authenticator that completed a successful exchange, so we only
-   // preauthenticate with the mechanism the server actually supports.
+   // pre-authenticate with the mechanism the server actually supports.
    private volatile HttpAuthenticator activeAuthenticator;
 
    public AutoDetectAuthenticator(HttpClient client, AuthenticationConfiguration configuration) {
@@ -52,15 +53,21 @@ public class AutoDetectAuthenticator extends HttpAuthenticator {
          String mech = space >= 0 ? header.substring(0, space) : header;
          HttpAuthenticator authenticator = authenticatorMap.get(mech);
          if (authenticator != null) {
-            return authenticator.authenticate(response, bodyHandler)
-                  .thenApply(r -> {
-                     if (r.statusCode() != 401) {
-                        activeAuthenticator = authenticator;
-                     }
-                     return r;
-                  });
+            CompletionStage<HttpResponse<T>> auth = authenticator.authenticate(response, bodyHandler);
+            if (auth != null) {
+               return auth
+                     .thenApply(r -> {
+                        if (r.statusCode() != 401) {
+                           activeAuthenticator = authenticator;
+                        }
+                        return r;
+                     });
+            } else {
+               Log.REST.warnf("Skipping %s", mech);
+            }
          }
       }
+      Log.REST.warnf("No authenticators found in %s for headers: %s", authenticatorMap, headers);
       return null;
    }
 }

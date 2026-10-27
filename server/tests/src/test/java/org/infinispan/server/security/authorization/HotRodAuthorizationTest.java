@@ -57,10 +57,11 @@ abstract class HotRodAuthorizationTest {
    protected final Map<String, String> bulkData;
 
    public HotRodAuthorizationTest(InfinispanServerExtension ext) {
-      this (ext, TestUser::getUser, user -> {
+      this(ext, TestUser::getUser, user -> {
          ConfigurationBuilder hotRodBuilder = new ConfigurationBuilder();
          hotRodBuilder.security().authentication()
-               .saslMechanism(System.getProperty(HOTROD_CLIENT_SASL_MECHANISM, "SCRAM-SHA-256"))
+               .saslMechanism(ext.getServerDriver().getConfiguration().properties().getProperty(HOTROD_CLIENT_SASL_MECHANISM, "SCRAM-SHA-256"))
+               .saslProperties(Map.of("wildfly.sasl.scram.max-iteration-count", "262144"))
                .serverName("infinispan")
                .realm("default")
                .username(user.getUser())
@@ -77,7 +78,7 @@ abstract class HotRodAuthorizationTest {
 
       this.bulkData = IntStream.range(0, 10)
             .boxed()
-            .collect(Collectors.toMap(i -> "k"+i, i -> "v"+i));
+            .collect(Collectors.toMap(i -> "k" + i, i -> "v" + i));
    }
 
    @Test

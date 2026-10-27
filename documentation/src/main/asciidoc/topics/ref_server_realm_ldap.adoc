@@ -1,9 +1,8 @@
 [id='ldap-security-realms_{context}']
 = LDAP realms
 
-LDAP realms connect to LDAP servers, such as OpenLDAP, Red Hat Directory
-Server, Apache Directory Server, or Microsoft Active Directory, to authenticate
-users and obtain membership information.
+LDAP realms connect to LDAP servers, such as OpenLDAP, 389DS, Apache Directory Server, or Microsoft Active Directory,
+to authenticate users and obtain membership information.
 
 [NOTE]
 ====
@@ -44,14 +43,11 @@ The LDAP realm can authenticate users in two ways:
 [horizontal]
 Hashed password comparison:: by comparing the hashed password stored in a user's password attribute (usually `userPassword`)
 Direct verification:: by authenticating against the LDAP server using the supplied credentials
-+
-Direct verification is the only approach that works with Active Directory, because access to the `password` attribute is forbidden.
 
 [IMPORTANT]
 ====
 You cannot use endpoint authentication mechanisms that performs hashing with the `direct-verification` attribute, since this method requires having the password in clear text.
-As a result you must use the `BASIC` authentication mechanism with the REST endpoint and `PLAIN` with the Hot Rod endpoint to integrate with Active Directory Server.
-A more secure alternative is to use Kerberos, which allows the `SPNEGO`, `GSSAPI`, and `GS2-KRB5` authentication mechanisms.
+See link:#microsoft_active_directory_{context}[Microsoft Active Directory] and link:#ds389_{context}[389 Directory Server] for provider-specific authentication guidance.
 ====
 
 The LDAP realm searches the directory to find the entry which corresponds to the authenticated user.
@@ -66,11 +62,64 @@ In the LDAP realm configuration, specify the `attribute-mapping` element to retr
 The membership information is stored typically in two ways:
 
 * Under group entries that usually have class `groupOfNames` or `groupOfUniqueNames` in the `member` attribute. This is the default behavior in most LDAP installations, except for Active Directory. In this case, you can use an attribute filter. This filter searches for entries that match the supplied filter, which locates groups with a `member` attribute equal to the user's DN. The filter then extracts the group entry's CN as specified by `from`, and adds it to the user's `Roles`.
-* In the user entry in the `memberOf` attribute. This is typically the case for Active Directory. In this case you should use an attribute reference such as the following:
+* In the user entry in the `memberOf` attribute. This is typically the case for link:#microsoft_active_directory_{context}[Microsoft Active Directory]. In this case you should use an attribute reference such as the following:
 +
 `<attribute-reference reference="memberOf" from="cn" to="Roles" />`
 +
 This reference gets all `memberOf` attributes from the user's entry, extracts the CN as specified by `from`, and adds them to the user's groups (`Roles` is the internal name used to map the groups).
+
+[id='microsoft_active_directory_{context}']
+== Microsoft Active Directory
+{brandname} also supports integration with https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/get-started/virtual-dc/active-directory-domain-services-overview[Microsoft Active Directory].
+
+Access to user passwords is restricted in Microsoft Active Directory, so you must configure the realm for direct verification instead of hash comparison.
+Since this method requires having the password in clear text, you cannot use endpoint authentication mechanisms that perform hashing against it:
+
+[IMPORTANT]
+====
+You must use the `BASIC` mechanism with the REST endpoint and the `PLAIN` mechanism with the Hot Rod endpoint to integrate with Microsoft Active Directory.
+A more secure alternative is Kerberos, which allows the `SPNEGO`, `GSSAPI`, and `GS2-KRB5` authentication mechanisms.
+====
+
+The following example configures a realm for direct verification against Microsoft Active Directory.
+Set the `rdn-identifier` attribute to an LDAP attribute that identifies users by their login name; this is typically `sAMAccountName`.
+Group membership is stored on user entries as `memberOf` attributes, so use an attribute reference such as the one in the example below:
+
+[source,xml,options="nowrap",subs="attributes+"]
+----
+include::xml/server_ldap_realm_ad.xml[]
+----
+
+[id='ds389_{context}']
+== 389 Directory Server
+{brandname} also supports integration with a https://www.port389.org/[389 Directory Server].
+
+A 389 Directory Server stores hashed values in the `userPassword` attribute where privileged accounts can read them.
+For this reason you should configure the realm to verify credentials by comparing against the stored hash (hash comparison) instead of using direct verification.
+Bind as a privileged account such as `cn=Directory Manager`, and add a `<user-password-mapper from="userPassword" />` element to the identity mapping:
+
+[source,xml,options="nowrap",subs="attributes+"]
+----
+<ldap-realm name="389ds" url="ldaps://directory.example.com:636" principal="cn=Directory Manager" credential="${secret}">
+   <identity-mapping rdn-identifier="uid" search-dn="dc=infinispan,dc=org" search-recursive="true">
+      <user-password-mapper from="userPassword"/>
+   </identity-mapping>
+</ldap-realm>
+----
+
+Unlike with Active Directory, this approach can also satisfy the `+SCRAM-*+` endpoint authentication mechanisms (`SCRAM-SHA-256`, `SCRAM-SHA-384`, and `SCRAM-SHA-512`).
+The `+DIGEST-*+` mechanisms cannot be satisfied against 389 Directory Server's default PBKDF2 password storage.
+
+[NOTE]
+====
+The official `389ds/dirsrv` container image re-hashes every written value in the `userPassword` attribute with PBKDF2-SHA512 and stores it by default with 100,000 iterations.
+Elytron's SCRAM implementation enforces a maximum iteration count on both the server side (when verifying against the stored hash) and the client side (when processing the server challenge).
+The directory's default of 100,000 iterations therefore exceeds that property's effective default value (`32768` for `wildfly.sasl.scram.max-iteration-count`).
+To use a `+SCRAM-*+` mechanism against such a directory, raise that property to at least as high as the PBKDF2 iteration count configured on the directory server:
+
+* In each SASL-enabled endpoint connector of the {brandname} Server configuration:: add `<property name="wildfly.sasl.scram.max-iteration-count">1048576</property>` inside the `<sasl>` element.
+* In Hot Rod clients:: set the same property through `AuthenticationConfigurationBuilder#saslProperties`, because a client with the default maximum rejects any server whose challenge echoes a higher iteration count, even if the server-side limit was raised.
+====
 
 == LDAP realm configuration reference
 
