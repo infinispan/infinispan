@@ -4,6 +4,7 @@ import java.util.Locale;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.ldap.ApacheLdapServer;
+import org.infinispan.server.test.core.ldap.Ds389LdapServer;
 import org.infinispan.server.test.core.ldap.LdapServer;
 import org.infinispan.server.test.core.ldap.RemoteLdapServer;
 import org.infinispan.server.test.core.ldap.SambaLdapServer;
@@ -30,6 +31,12 @@ public class LdapServerListener implements InfinispanServerListener {
          @Override
          LdapServer ldapServer(boolean withKdc) {
             return new SambaLdapServer();
+         }
+      },
+      DS389 {
+         @Override
+         LdapServer ldapServer(boolean withKdc) {
+            return new Ds389LdapServer();
          }
       },
       REMOTE {

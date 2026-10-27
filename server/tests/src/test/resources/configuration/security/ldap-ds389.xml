@@ -1,0 +1,23 @@
+<security xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="urn:infinispan:server:16.4 https://infinispan.org/schemas/infinispan-server-16.4.xsd"
+          xmlns="urn:infinispan:server:16.4">
+   <security-realms>
+      <!-- 389 Directory Server hashes every written userPassword (PBKDF2-SHA512 in the official container image) and only
+           exposes it to privileged accounts, so the realm binds as cn=Directory Manager and verifies credentials against
+           the stored hash. That supports PLAIN and SCRAM; DIGEST mechanisms are not possible because they require the raw
+           password material which 389 Directory Server never stores. -->
+      <security-realm name="default">
+
+         <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389"
+                     principal="cn=Directory Manager" credential="strongPassword" connection-timeout="15s">
+            <identity-mapping rdn-identifier="uid" search-dn="dc=infinispan,dc=org" search-recursive="true">
+               <attribute-mapping>
+                  <attribute from="cn" to="Roles" filter="(&amp;(objectClass=groupOfNames)(member={1}))"
+                             filter-dn="ou=Roles,dc=infinispan,dc=org"/>
+               </attribute-mapping>
+               <user-password-mapper from="userPassword"/>
+            </identity-mapping>
+         </ldap-realm>
+      </security-realm>
+   </security-realms>
+</security>
