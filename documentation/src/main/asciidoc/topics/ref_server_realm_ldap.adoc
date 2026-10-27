@@ -60,6 +60,36 @@ Add `search-recursive="true"` to the configuration to search the directory recur
 By default, the search for the user entry uses the `(rdn_identifier={0})` filter.
 You can specify a different filter using the `filter-name` attribute.
 
+== 389 Directory Server
+{brandname} also supports integration with a 389 Directory Server, the open source LDAP server which is upstream of Red Hat Directory Server.
+
+A 389 Directory Server stores hashed values in the `userPassword` attribute where privileged accounts can read them.
+For this reason you should configure the realm to verify credentials by comparing against the stored hash (hash comparison) instead of using direct verification.
+Bind as a privileged account such as `cn=Directory Manager`, and add a `<user-password-mapper from="userPassword" />` element to the identity mapping:
+
+[source,xml,options="nowrap",subs="attributes+"]
+----
+<ldap-realm name="389ds" url="ldaps://directory.example.com:636" principal="cn=Directory Manager" credential="${secret}">
+   <identity-mapping rdn-identifier="uid" search-dn="dc=infinispan,dc=org" search-recursive="true">
+      <user-password-mapper from="userPassword"/>
+   </identity-mapping>
+</ldap-realm>
+----
+
+Unlike with Active Directory, this approach can also satisfy the `+SCRAM-*+` endpoint authentication mechanisms (`SCRAM-SHA-256`, `SCRAM-SHA-384`, and `SCRAM-SHA-512`).
+The `+DIGEST-*+` mechanisms cannot be satisfied against 389 Directory Server's default PBKDF2 password storage.
+
+[NOTE]
+====
+The official `docker.io/389ds/dirsrv` container image re-hashes every written value in the `userPassword` attribute with PBKDF2-SHA512 and stores it by default with 100,000 iterations.
+Elytron's SCRAM implementation enforces a maximum iteration count on both the server side (when verifying against the stored hash) and the client side (when processing the server challenge).
+The directory's default of 100,000 iterations therefore exceeds that property's effective default value (`32768` for `wildfly.sasl.scram.max-iteration-count`).
+To use a `+SCRAM-*+` mechanism against such a directory, raise that property to at least as high as the PBKDF2 iteration count configured on the directory server:
+
+* In each SASL-enabled endpoint connector of the {brandname} Server configuration:: add `<property name="wildfly.sasl.scram.max-iteration-count">1048576</property>` inside the `<sasl>` element.
+* In Hot Rod clients:: set the same property through `AuthenticationConfigurationBuilder#saslProperties`, because a client with the default maximum rejects any server whose challenge echoes a higher iteration count, even if the server-side limit was raised.
+====
+
 == Mapping user entries to their associated groups
 In the LDAP realm configuration, specify the `attribute-mapping` element to retrieve and associate all groups that a user is a member of.
 

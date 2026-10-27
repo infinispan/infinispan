@@ -1,0 +1,26 @@
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xi="http://www.w3.org/2001/XInclude"
+        xsi:schemaLocation="urn:infinispan:config:16.4 https://infinispan.org/schemas/infinispan-config-16.4.xsd
+                            urn:infinispan:server:16.4 https://infinispan.org/schemas/infinispan-server-16.4.xsd"
+        xmlns="urn:infinispan:config:16.4"
+        xmlns:server="urn:infinispan:server:16.4">
+
+   <xi:include href="jgroups/stacks.xml"/>
+
+   <xi:include href="cache-container/clustered.xml"/>
+
+   <server xmlns="urn:infinispan:server:16.4">
+
+      <xi:include href="interfaces/default.xml"/>
+
+      <xi:include href="socket-bindings/default.xml"/>
+
+      <xi:include href="security/ldap-threeeightnineds.xml"/>
+
+      <endpoints>
+         <!-- 389 Directory Server stores userPassword as PBKDF2-SHA512 with the image's default of 100,000 iterations, which exceeds Elytron's SCRAM server-side maximum (wildfly.sasl.scram.max-iteration-count, default 32768), so use an endpoint configuration that raises it. -->
+         <xi:include href="endpoints/auth-explicit-scram-iterations.xml"/>
+      </endpoints>
+   </server>
+</infinispan>
