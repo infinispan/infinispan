@@ -91,20 +91,18 @@ public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
    }
 
    private Map<String, String> getMechProperties() {
-      if (mechProperties.isEmpty()) {
-         mechProperties = new HashMap<>();
-         List<QOP> qops = attributes.attribute(SaslConfiguration.QOP).get();
-         if (!qops.isEmpty()) {
-            String qopsValue = qops.stream().map(QOP::toString).collect(Collectors.joining(","));
-            mechProperties.put(Sasl.QOP, qopsValue);
-         }
-         List<Strength> strengths = attributes.attribute(SaslConfiguration.STRENGTH).get();
-         if (!strengths.isEmpty()) {
-            String strengthsValue = strengths.stream().map(Strength::toString).collect(Collectors.joining(","));
-            mechProperties.put(Sasl.STRENGTH, strengthsValue);
-         }
-         mechProperties.putAll(attributes.attribute(SaslConfiguration.SASL_PROPERTIES).get());
+      List<QOP> qops = attributes.attribute(SaslConfiguration.QOP).get();
+      if (!qops.isEmpty()) {
+         String qopsValue = qops.stream().map(QOP::toString).collect(Collectors.joining(","));
+         mechProperties.putIfAbsent(Sasl.QOP, qopsValue);
       }
+      List<Strength> strengths = attributes.attribute(SaslConfiguration.STRENGTH).get();
+      if (!strengths.isEmpty()) {
+         String strengthsValue = strengths.stream().map(Strength::toString).collect(Collectors.joining(","));
+         mechProperties.putIfAbsent(Sasl.STRENGTH, strengthsValue);
+      }
+      // XML-supplied properties must always be merged in: programmatic additions (e.g. the DIGEST realm list added by the parser) can precede them
+      mechProperties.putAll(attributes.attribute(SaslConfiguration.SASL_PROPERTIES).get());
       return mechProperties;
    }
 
@@ -129,6 +127,16 @@ public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
 
    public Set<String> mechanisms() {
       return attributes.attribute(SaslConfiguration.MECHANISMS).get();
+   }
+
+   public SaslConfigurationBuilder addMechProperty(String key, String value) {
+      mechProperties.put(key, value);
+      return this;
+   }
+
+   public SaslConfigurationBuilder mechProperties(Map<String, String> mechProperties) {
+      this.mechProperties = mechProperties;
+      return this;
    }
 
    @Override
@@ -163,17 +171,6 @@ public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
       attributes.read(template.attributes(), combine);
       mechProperties = template.mechProperties();
       saslAuthenticator = template.authenticator();
-      return this;
-   }
-
-
-   public SaslConfigurationBuilder addMechProperty(String key, String value) {
-      mechProperties.put(key, value);
-      return this;
-   }
-
-   public SaslConfigurationBuilder mechProperties(Map<String, String> mechProperties) {
-      this.mechProperties = mechProperties;
       return this;
    }
 }
