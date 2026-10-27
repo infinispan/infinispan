@@ -2,6 +2,7 @@ package org.infinispan.transaction.impl;
 
 import static org.infinispan.commons.util.Util.toStr;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -308,36 +309,63 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    }
 
    @Override
-   public synchronized void cleanupBackupLocks() {
-      if (backupKeyLocks != null) {
+   public void cleanupBackupLocks() {
+      List<CompletableFuture<Void>> released;
+      synchronized (this) {
+         if (backupKeyLocks == null || backupKeyLocks.isEmpty())
+            return;
+
          if (log.isTraceEnabled()) log.tracef("Transaction %s removing all backup locks: %s", tx, toStr(backupKeyLocks.keySet()));
-         for (CompletableFuture<Void> cf : backupKeyLocks.values()) {
-            cf.complete(null);
-         }
+         released = new ArrayList<>(backupKeyLocks.values());
          backupKeyLocks.clear();
+      }
+
+      // Complete outside the intrinsic lock.
+      for (CompletableFuture<Void> cf : released) {
+         cf.complete(null);
       }
    }
 
    @Override
-   public synchronized void removeBackupLocks(Collection<?> keys) {
-      if (backupKeyLocks != null) {
+   public void removeBackupLocks(Collection<?> keys) {
+      List<CompletableFuture<Void>> released;
+      synchronized (this) {
+         if (backupKeyLocks == null)
+            return;
+
+         released = new ArrayList<>(keys.size());
          for (Object key : keys) {
             CompletableFuture<Void> cf = backupKeyLocks.remove(key);
             if (cf != null) {
-               if (log.isTraceEnabled()) log.tracef("Transaction %s removed backup lock: %s", tx, toStr(key));
-               cf.complete(null);
+               if (log.isTraceEnabled())
+                  log.tracef("Transaction %s removed backup lock: %s", tx, toStr(key));
+               released.add(cf);
             }
          }
       }
+
+      // Complete the futures outside the intrinsic lock.
+      // The future complete inline and could try to acquire other locks.
+      for (CompletableFuture<Void> cf : released) {
+         cf.complete(null);
+      }
    }
 
-   public synchronized void removeBackupLock(Object key) {
-      if (backupKeyLocks != null) {
-         CompletableFuture<Void> cf = backupKeyLocks.remove(key);
-         if (cf != null) {
-            if (log.isTraceEnabled()) log.tracef("Transaction %s removed backup lock: %s", tx, toStr(key));
-            cf.complete(null);
-         }
+   @Override
+   public void removeBackupLock(Object key) {
+      CompletableFuture<Void> cf;
+      synchronized (this) {
+         if (backupKeyLocks == null)
+            return;
+
+         cf = backupKeyLocks.remove(key);
+      }
+
+      if (cf != null) {
+         if (log.isTraceEnabled())
+            log.tracef("Transaction %s removed backup lock: %s", tx, toStr(key));
+         // Complete outside the intrinsic lock.
+         cf.complete(null);
       }
    }
 
