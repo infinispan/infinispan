@@ -75,9 +75,9 @@
       <version.antlr4>4.13.2</version.antlr4>
       <version.arquillian>1.10.2.Final</version.arquillian>
       <version.awaitility>4.3.0</version.awaitility>
-      <version.blockhound>1.0.17.RELEASE</version.blockhound>
+      <version.blockhound>1.0.18.RELEASE</version.blockhound>
       <version.bouncycastle>1.86</version.bouncycastle>
-      <version.byteman>4.0.27</version.byteman>
+      <version.byteman>4.0.28.1</version.byteman>
       <version.caffeine>3.3.1</version.caffeine>
       <version.checker-qual>3.55.1</version.checker-qual>
       <version.commons.compress>1.28.0</version.commons.compress>
@@ -88,7 +88,7 @@
       <version.gdx-jnigen-loader>2.5.2</version.gdx-jnigen-loader>
       <version.glassfish.jaxb>4.0.9</version.glassfish.jaxb>
       <version.hamcrest>2.2</version.hamcrest>
-      <version.hibernate.core>6.6.58.Final</version.hibernate.core>
+      <version.hibernate.core>6.6.59.Final</version.hibernate.core>
       <version.hibernate.search>8.4.0.Final</version.hibernate.search>
       <version.hibernate.models>1.3.4</version.hibernate.models>
       <version.infinispan>16.4.0-SNAPSHOT</version.infinispan>
@@ -99,9 +99,9 @@
       <version.io.lettuce>6.8.2.RELEASE</version.io.lettuce>
       <version.vertx>4.5.35</version.vertx>
       <version.io.mashona>1.1.0</version.io.mashona>
-      <version.jackson>2.22.3</version.jackson>
+      <version.jackson>2.22.4</version.jackson>
       <version.jackson.annotations>2.22</version.jackson.annotations>
-      <version.jackson.databind>2.22.3</version.jackson.databind>
+      <version.jackson.databind>2.22.4</version.jackson.databind>
       <version.jacoco>0.8.15</version.jacoco>
       <version.jakarta.annotation-api>2.1.1</version.jakarta.annotation-api>
       <version.jakarta.json>2.0.1</version.jakarta.json>
@@ -118,8 +118,8 @@
       <version.jboss.shrinkwrap>1.2.6</version.jboss.shrinkwrap>
       <version.jboss.shrinkwrap.descriptors>2.0.0</version.jboss.shrinkwrap.descriptors>
       <version.jboss.shrinkwrap.resolver>3.3.7</version.jboss.shrinkwrap.resolver>
-      <version.jboss.threads>3.11.0</version.jboss.threads>
-      <version.jgroups>5.5.7.Final</version.jgroups>
+      <version.jboss.threads>3.11.1</version.jboss.threads>
+      <version.jgroups>5.5.8.Final</version.jgroups>
       <version.jgroups.raft>1.1.4.Final</version.jgroups.raft>
       <version.json-path>2.10.0</version.json-path>
       <version.json-smart>2.6.0</version.json-smart>
@@ -130,7 +130,7 @@
       <version.lucene9>9.12.3</version.lucene9>
       <version.lucene10>10.4.0</version.lucene10>
       <version.metainf-services>1.11</version.metainf-services>
-      <version.micrometer>1.17.1</version.micrometer>
+      <version.micrometer>1.17.2</version.micrometer>
       <version.mockito>5.24.0</version.mockito>
       <version.nashorn>15.7</version.nashorn>
       <version.netty>4.1.139.Final</version.netty>
@@ -169,7 +169,7 @@
       <version.spring.boot3>3.5.14</version.spring.boot3>
       <!-- Spring 7, Spring Boot 4 versions -->
       <version.spring7>7.0.7</version.spring7>
-      <version.spring.boot4>4.1.1</version.spring.boot4>
+      <version.spring.boot4>4.1.2</version.spring.boot4>
       <version.spring.session4>4.0.3</version.spring.session4>
 
       <version.swagger-ui-dist>5.33.1</version.swagger-ui-dist>
@@ -201,7 +201,7 @@
       <version.maven.help>3.5.2</version.maven.help>
       <version.maven.install>3.2.0</version.maven.install>
       <version.maven.invoker>3.10.1</version.maven.invoker>
-      <version.maven.japicmp>0.26.3</version.maven.japicmp>
+      <version.maven.japicmp>0.26.5</version.maven.japicmp>
       <version.maven.jar>3.5.1</version.maven.jar>
       <version.maven-plugin-plugin>3.16.0</version.maven-plugin-plugin>
       <version.maven.project-info-reports>3.9.0</version.maven.project-info-reports>
@@ -218,7 +218,7 @@
       <version.pmd.plugin>3.28.0</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>9.2.0</version.owasp-dependency-check-plugin>
       <version.spotbugs.plugin>4.10.4.0</version.spotbugs.plugin>
-      <version.spotbugs.plugin>4.10.4.1</version.spotbugs.plugin>
+      <version.spotbugs.plugin>4.10.5.0</version.spotbugs.plugin>
       <version.jazzer>0.30.0</version.jazzer>
       <version.openapi.generator>7.26.0</version.openapi.generator>
       <version.weld-servlet>5.1.7.Final</version.weld-servlet>
