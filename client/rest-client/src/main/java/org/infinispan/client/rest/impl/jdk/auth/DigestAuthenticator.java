@@ -24,6 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.infinispan.client.rest.configuration.AuthenticationConfiguration;
+import org.infinispan.client.rest.logging.Log;
 
 public class DigestAuthenticator extends HttpAuthenticator {
    private static final Pattern HEADER_REGEX = Pattern.compile("\\s([a-z]+)=\"?([\\p{Alnum}\\s\\t!#$%&'()*+\\-./:;<=>?@\\[\\\\\\]^_`{|}~]+)\"?");
@@ -70,6 +71,7 @@ public class DigestAuthenticator extends HttpAuthenticator {
    @Override
    public <T> CompletionStage<HttpResponse<T>> authenticate(HttpResponse<T> response, HttpResponse.BodyHandler<?> bodyHandler) {
       if (configuration.username() == null || configuration.password() == null) {
+         Log.REST.warn("No username and password provided for authentication");
          return null;
       }
       String header = findHeader(response, WWW_AUTH, "Digest");
@@ -84,7 +86,7 @@ public class DigestAuthenticator extends HttpAuthenticator {
       }
       String realm = parameters.get("realm");
       if (realm == null) {
-         return null;
+         throw new AuthenticationException("Missing nonce in challenge header: " + header);
       }
       boolean isStale = Boolean.parseBoolean(parameters.get("stale"));
       HttpRequest request = response.request();
@@ -93,6 +95,7 @@ public class DigestAuthenticator extends HttpAuthenticator {
          // Clear the cache and retry with the fresh challenge.
          cachedParameters = null;
       } else if (havePreviousDigestAuthorizationAndShouldAbort(request, isStale)) {
+         Log.REST.error("Previous digest authorization failed");
          return null;
       }
       parameters.put("methodname", request.method());
