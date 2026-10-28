@@ -21,6 +21,8 @@ public class ClassAdapterTest extends AbstractAdapterTest {
     */
    public void testUntrustedClassNameDoesNotRunStaticInitializer() throws Exception {
       String name = ClinitGadget.class.getName();
+      // clear in case test-framework class scanning already initialized the gadget
+      System.clearProperty(CLINIT_PROP);
 
       Class<?> clazz = new ClassAdapter().create(name);
 

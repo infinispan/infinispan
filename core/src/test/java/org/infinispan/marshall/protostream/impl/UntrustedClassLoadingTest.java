@@ -12,9 +12,8 @@ import org.testng.annotations.Test;
  * Verifies that untrusted class names supplied during unmarshalling are loaded without triggering their static
  * initializers (CWE-470). The fixtures set a system property from their {@code <clinit>}, so any execution of the
  * initializer is observable. Only class literals ({@code X.class}) may be used to obtain fixture names; active use
- * would initialize the class and defeat the test. Each fixture uses its own unique property name that nothing else in
- * the build references, so results do not depend on which forked JVM instance runs this class or what other tests ran
- * before it.
+ * would initialize the class and defeat the test. Each property is cleared immediately before the operation under test
+ * so that prior initialization by test-framework class scanning does not cause false failures.
  */
 @Test(groups = "unit", testName = "marshall.protostream.UntrustedClassLoadingTest")
 public class UntrustedClassLoadingTest extends AbstractInfinispanTest {
@@ -23,13 +22,16 @@ public class UntrustedClassLoadingTest extends AbstractInfinispanTest {
 
    public void testGenericThrowableRecreateDoesNotRunStaticInitializer() throws Exception {
       String name = ThrowableGadget.class.getName();
+      // clear in case test-framework class scanning already initialized the gadget
+      String prop = CLINIT_PROP_PREFIX + "throwable";
+      System.clearProperty(prop);
       MarshallableThrowable throwable = new MarshallableThrowable(null, name, "boom", null, null);
 
       Throwable result = throwable.get();
 
       // the fixture is not a Throwable and must be rejected without being initialized
       assertInstanceOf(RemoteException.class, result);
-      assertNull(System.getProperty(CLINIT_PROP_PREFIX + "throwable"),
+      assertNull(System.getProperty(prop),
             "static initializer of an untrusted class must not run during unmarshalling");
    }
 
@@ -43,6 +45,9 @@ public class UntrustedClassLoadingTest extends AbstractInfinispanTest {
 
    public void testLambdaUnwrapDoesNotRunStaticInitializer() throws Exception {
       String name = LambdaGadget.class.getName();
+      // clear in case test-framework class scanning already initialized the gadget
+      String prop = CLINIT_PROP_PREFIX + "lambda";
+      System.clearProperty(prop);
       MarshallableLambda lambda = new MarshallableLambda(name, "java.util.function.Supplier", "get",
             "()Ljava/lang/Object;", 0, name, "lambda$test", "(LX;)V", null, (MarshallableArray<Object>) null);
 
@@ -53,7 +58,7 @@ public class UntrustedClassLoadingTest extends AbstractInfinispanTest {
       } catch (Throwable expected) {
       }
 
-      assertNull(System.getProperty(CLINIT_PROP_PREFIX + "lambda"),
+      assertNull(System.getProperty(prop),
             "static initializer of an untrusted class must not run during unmarshalling");
    }
 
