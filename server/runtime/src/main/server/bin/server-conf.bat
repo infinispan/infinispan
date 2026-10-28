@@ -28,7 +28,7 @@ if "%JAVA_OPTS_MEMORY%" == "" (
    set "JAVA_OPTS_MEMORY=-XX:MetaspaceSize=64M -Xms64m -Xmx512m"
 )
 if "%JAVA_OPTS%" == "" (
-   set "JAVA_OPTS=%JAVA_OPTS_BASE% %JAVA_OPTS_NETWORK% %JAVA_OPTS_MEMORY% %JAVA_OPTIONS%"
+   set "JAVA_OPTS=%JAVA_OPTS_BASE% %JAVA_OPTS_NETWORK% %JAVA_OPTS_MEMORY% %JAVA_OPTS_GC% %JAVA_OPTIONS%"
 ) else (
    echo "JAVA_OPTS already set in environment; overriding default settings with values: %JAVA_OPTS%"
 )
