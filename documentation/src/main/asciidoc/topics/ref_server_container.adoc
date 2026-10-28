@@ -65,6 +65,87 @@ include::cmd_examples/server_podman_user.adoc[]
 ====
 > It is recommended to use the auto-generated credentials or USER & PASS env variables for initial development only. Providing authentication and authorization configuration via an [Identities Batch file](#identities-batch) allows for much greater control.
 
+== Environment Variables
+
+The following table lists the environment variables supported by the {brandname} Server container image:
+
+[cols="2,1,4", options="header"]
+|===
+| Variable | Default | Description
+
+| `USER`
+|
+| Administrator username. If not set, a random username is generated at startup.
+
+| `PASS`
+|
+| Administrator password. If not set, a random password is generated at startup.
+
+| `IDENTITIES_BATCH`
+|
+| Path to a CLI batch file for creating user identities and roles.
+
+| `JAVA_OPTS`
+|
+| Overrides all JVM options. When set, all `JAVA_OPTS_*` category variables are ignored.
+
+| `JAVA_OPTS_BASE`
+| `-Djava.awt.headless=true -XX:+ExitOnOutOfMemoryError --add-modules jdk.incubator.vector`
+| Essential JVM flags.
+
+| `JAVA_OPTS_NETWORK`
+| `-Djava.net.preferIPv4Stack=true`
+| Network-related JVM settings.
+
+| `JAVA_OPTS_MEMORY`
+| `-XX:MetaspaceSize=64M -XX:InitialRAMPercentage=50 -XX:MinRAMPercentage=70 -XX:MaxRAMPercentage=70 -XX:+UseCompressedOops`
+| Memory configuration including heap size and RAM percentages.
+
+| `JAVA_OPTS_GC`
+| `-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational`
+| Garbage collector selection. Set to a single space (`" "`) to use JVM defaults instead.
+
+| `JAVA_OPTS_DEBUG`
+|
+| Debug options. Only applied when debug mode is enabled with the `--debug` flag or `DEBUG=true`.
+
+| `JAVA_OPTIONS`
+|
+| Additional JVM options appended after all other `JAVA_OPTS_*` variables.
+
+| `SERVER_LIBS`
+|
+| Space-separated list of artifacts (URLs or Maven coordinates) to deploy to the server lib directory.
+
+| `SERVER_LIBS_DIR`
+|
+| Custom server root directory for artifact deployment.
+
+| `GC_LOG`
+| `true`
+| Enables GC logging to the server log directory. Set to `false` to disable.
+
+| `HEAP_DUMP`
+| `true`
+| Enables heap dumps on `OutOfMemoryError`. Set to `false` to disable.
+
+| `DEBUG`
+| `false`
+| Enables JPDA remote debugging.
+
+| `MANAGED_ENV`
+| `false`
+| Set to `true` when the container is managed by an operator. Disables automatic identity generation.
+
+| `INIT_CONTAINER`
+| `false`
+| Set to `true` to run only CLI initialization scripts without starting the server.
+
+| `RUN_IN_CONTAINER`
+| `false`
+| Forces container-aware JVM defaults when container detection markers (`/.dockerenv`, `/run/.containerenv`) are not present.
+|===
+
 == Hot Rod Clients
 When connecting a Hot Rod client to the image, the following SASL properties must be configured on your client (with the username and password properties changed as required):
 
@@ -182,7 +263,7 @@ include::cmd_examples/server_podman_jvm_properties.adoc[]
 
 ====
 NOTE: Using `JAVA_OPTIONS` appends options to those determined by the server launch script.
-You can override specific categories of JVM settings by setting `JAVA_OPTS_BASE`, `JAVA_OPTS_NETWORK`, or `JAVA_OPTS_MEMORY`.
+You can override specific categories of JVM settings by setting `JAVA_OPTS_BASE`, `JAVA_OPTS_NETWORK`, `JAVA_OPTS_MEMORY`, or `JAVA_OPTS_GC`.
 Setting `JAVA_OPTS` completely overrides all default JVM settings.
 
 === Deploying artifacts to the server lib directory
