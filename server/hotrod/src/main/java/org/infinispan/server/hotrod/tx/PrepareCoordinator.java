@@ -16,6 +16,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -102,8 +103,7 @@ public class PrepareCoordinator {
       CommandsFactory factory = componentRegistry.getCommandsFactory();
       try {
          RollbackCommand rollbackCommand = factory.buildRollbackCommand(gtx);
-         TxCommandInvoker.invokeInCluster(componentRegistry, rollbackCommand, rpcManager.getTopologyId())
-               .toCompletableFuture().join();
+         CompletionStages.join(TxCommandInvoker.invokeInCluster(componentRegistry, rollbackCommand, rpcManager.getTopologyId()));
       } catch (Throwable throwable) {
          throw Util.rewrapAsCacheException(CompletableFutures.extractException(throwable));
       } finally {
@@ -210,8 +210,7 @@ public class PrepareCoordinator {
       try {
          //only pessimistic tx are committed in 1PC and it doesn't use versions.
          PrepareCommand command = factory.buildPrepareCommand(gtx, modifications, true);
-         TxCommandInvoker.invokeInCluster(componentRegistry, command, rpcManager.getTopologyId())
-               .toCompletableFuture().join();
+         CompletionStages.join(TxCommandInvoker.invokeInCluster(componentRegistry, command, rpcManager.getTopologyId()));
          forgetTransaction(gtx, rpcManager, factory);
          return loggingCompleted(true) == Status.OK ?
                 XAResource.XA_OK :

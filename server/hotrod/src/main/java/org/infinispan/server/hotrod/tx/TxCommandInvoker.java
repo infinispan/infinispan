@@ -6,13 +6,11 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.responses.UnsureResponse;
-import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.rpc.RpcManager;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.ResponseCollectors;
-import org.infinispan.remoting.transport.ValidResponseCollector;
+import org.infinispan.remoting.transport.impl.MapResponseCollector;
 import org.infinispan.server.hotrod.logging.Log;
 import org.infinispan.topology.CacheTopology;
 
@@ -49,7 +47,8 @@ public final class TxCommandInvoker {
       RpcManager rpcManager = registry.getComponent(RpcManager.class);
       CompletionStage<Boolean> remoteStage = rpcManager == null ?
             CompletableFutures.completedFalse() :
-            rpcManager.invokeCommandOnAll(command, new OutdatedTopologyCollector(), rpcManager.getSyncRpcOptions());
+            rpcManager.invokeCommandOnAll(command, MapResponseCollector.validOnly(), rpcManager.getSyncRpcOptions())
+                  .thenApply(responses -> responses.containsValue(UnsureResponse.INSTANCE));
       CompletionStage<Boolean> localStage = invokeLocally(registry, command);
       return remoteStage.thenCombine(localStage, Boolean::logicalOr)
             .thenCompose(outdatedTopology -> outdatedTopology ?
@@ -83,56 +82,8 @@ public final class TxCommandInvoker {
    }
 
    private static int currentTopologyId(ComponentRegistry registry) {
-      var distributionManager = registry.getDistributionManager();
+      DistributionManager distributionManager = registry.getDistributionManager();
       CacheTopology topology = distributionManager == null ? null : distributionManager.getCacheTopology();
       return topology == null ? -1 : topology.getTopologyId();
-   }
-
-   /**
-    * It collects the responses and returns {@code true} if, at least, one member was not able to apply the command.
-    */
-   private static final class OutdatedTopologyCollector extends ValidResponseCollector<Boolean> {
-
-      private Exception exception;
-      private boolean outdatedTopology;
-
-      @Override
-      protected Boolean addValidResponse(Address sender, ValidResponse<?> response) {
-         if (response == UnsureResponse.INSTANCE) {
-            if (log.isTraceEnabled()) {
-               log.tracef("Node %s has a newer topology installed.", sender);
-            }
-            outdatedTopology = true;
-         }
-         return null;
-      }
-
-      @Override
-      protected Boolean addTargetNotFound(Address sender) {
-         recordException(ResponseCollectors.remoteNodeSuspected(sender));
-         return null;
-      }
-
-      @Override
-      protected Boolean addException(Address sender, Exception exception) {
-         recordException(ResponseCollectors.wrapRemoteException(sender, exception));
-         return null;
-      }
-
-      @Override
-      public Boolean finish() {
-         if (exception != null) {
-            throw CompletableFutures.asCompletionException(exception);
-         }
-         return outdatedTopology;
-      }
-
-      private void recordException(Exception e) {
-         if (exception == null) {
-            exception = e;
-         } else {
-            exception.addSuppressed(e);
-         }
-      }
    }
 }

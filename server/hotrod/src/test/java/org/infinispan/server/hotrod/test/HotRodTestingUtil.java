@@ -13,14 +13,17 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -225,6 +228,31 @@ public class HotRodTestingUtil {
 
    public static byte[] v(Method m) {
       return v(m, "v-");
+   }
+
+   /**
+    * @return A key whose primary owner is {@code primary}.
+    */
+   public static byte[] getKeyForCache(Cache<?, ?> primary) {
+      LocalizedCacheTopology topology = primary.getAdvancedCache().getDistributionManager().getCacheTopology();
+      return IntStream.generate(ThreadLocalRandom.current()::nextInt)
+            .mapToObj(i -> ("k-" + i).getBytes(StandardCharsets.UTF_8))
+            .filter(key -> topology.getDistribution(key).isPrimary())
+            .findAny()
+            .orElseThrow();
+   }
+
+   /**
+    * @return A key that {@code notOwner} does not own.
+    */
+   public static byte[] getKeyNotOwnedBy(Cache<?, ?> notOwner) {
+      LocalizedCacheTopology topology = notOwner.getAdvancedCache().getDistributionManager().getCacheTopology();
+      Address address = notOwner.getAdvancedCache().getRpcManager().getAddress();
+      return IntStream.generate(ThreadLocalRandom.current()::nextInt)
+            .mapToObj(i -> ("k-" + i).getBytes(StandardCharsets.UTF_8))
+            .filter(key -> !topology.getDistribution(key).writeOwners().contains(address))
+            .findAny()
+            .orElseThrow();
    }
 
    public static void assertStatus(TestResponse resp, OperationStatus expected) {
