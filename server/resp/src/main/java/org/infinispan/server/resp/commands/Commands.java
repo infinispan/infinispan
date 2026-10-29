@@ -235,6 +235,7 @@ import org.infinispan.server.resp.commands.string.SETRANGE;
 import org.infinispan.server.resp.commands.string.STRALGO;
 import org.infinispan.server.resp.commands.string.STRLEN;
 import org.infinispan.server.resp.commands.string.SUBSTR;
+import org.infinispan.server.resp.commands.string.UNLINK;
 import org.infinispan.server.resp.commands.topk.TOPKADD;
 import org.infinispan.server.resp.commands.topk.TOPKCOUNT;
 import org.infinispan.server.resp.commands.topk.TOPKINCRBY;
@@ -287,7 +288,7 @@ public final class Commands {
             new SDIFFSTORE(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SSCAN(), new SETRANGE(),
             new SORT(), new SORT_RO(), new SUBSTR(), new SCRIPT(), new SETBIT()};
       ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE(), new TOUCH(), new TIME(), new TOPKRESERVE(), new TOPKADD(), new TOPKINCRBY(), new TOPKQUERY(), new TOPKLIST(), new TOPKINFO(), new TOPKCOUNT()};
-      ALL_COMMANDS[20] = new RespCommand[]{new UNSUBSCRIBE(), new UNWATCH()};
+      ALL_COMMANDS[20] = new RespCommand[]{new UNLINK(), new UNSUBSCRIBE(), new UNWATCH()};
       ALL_COMMANDS[22] = new RespCommand[]{new WATCH()};
       ALL_COMMANDS[25] = new RespCommand[]{new ZADD(), new ZCARD(), new ZCOUNT(), new ZLEXCOUNT(), new ZDIFF(),
             new ZDIFFSTORE(), new ZINCRBY(), new ZINTER(), new ZINTERCARD(), new ZINTERSTORE(), new ZMPOP(),

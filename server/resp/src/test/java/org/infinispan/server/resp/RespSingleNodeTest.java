@@ -47,6 +47,7 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.SetArgs;
 import io.lettuce.core.SortArgs;
+import io.lettuce.core.TransactionResult;
 import io.lettuce.core.ZAddArgs;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.RedisCodec;
@@ -190,6 +191,37 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       redis.sadd("set1", "v1", "v2", "v3");
       c = redis.del("set1", "non-existent");
       assertThat(c).isEqualTo(1);
+   }
+
+   @Test
+   public void testUnlink() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // Removes existing keys and returns the count, like DEL
+      redis.set("unlink-k1", "v1");
+      redis.set("unlink-k2", "v2");
+      assertThat(redis.unlink("unlink-k1", "unlink-k2")).isEqualTo(2);
+      assertThat(redis.exists("unlink-k1", "unlink-k2")).isEqualTo(0);
+
+      // Returns 0 when no key exists
+      assertThat(redis.unlink("unlink-none-1", "unlink-none-2")).isEqualTo(0);
+
+      // Counts only the keys that existed
+      redis.set("unlink-k3", "v3");
+      assertThat(redis.unlink("unlink-k3", "unlink-none")).isEqualTo(1);
+   }
+
+   @Test
+   public void testUnlinkInTransaction() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.set("unlink-tx-1", "v1");
+      redis.set("unlink-tx-2", "v2");
+
+      assertThat(redis.multi()).isEqualTo(OK);
+      redis.unlink("unlink-tx-1", "unlink-tx-2");
+      TransactionResult result = redis.exec();
+
+      assertThat((Long) result.get(0)).isEqualTo(2L);
+      assertThat(redis.exists("unlink-tx-1", "unlink-tx-2")).isEqualTo(0);
    }
 
    public void testPingNoArg() {
