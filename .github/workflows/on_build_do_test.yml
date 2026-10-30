@@ -461,14 +461,16 @@ jobs:
       matrix:
         targets:
           # The name here should match the reporting side in the on_test_publish_surefire_report workflow
+          # 'previous' resolves to the newest release below the version being built,
+          # falling back to the 'latest' tag when that line has no release yet.
           - name: 'latest'
-            args: '-Dorg.infinispan.test.server.rolling.upgrade.from=latest'
+            from: 'previous'
           - name: 'first-version'
-            args: '-Dorg.infinispan.test.server.rolling.upgrade.from=16.0.1'
+            from: '16.0.1'
     uses: ./.github/workflows/rolling-upgrade-test.yml
     with:
       name: ${{ matrix.targets.name }}
-      maven-args: ${{ matrix.targets.args }}
+      from: ${{ matrix.targets.from }}
       run-id: ${{ github.event.workflow_run.id }}
       source-head-sha: ${{ needs.get-info.outputs.source-head-sha }}
     secrets:

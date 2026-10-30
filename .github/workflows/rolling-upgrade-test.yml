@@ -10,6 +10,12 @@ on:
       name:
         required: true
         type: string
+      # The version the upgrade starts from: either a literal version or image tag
+      # (e.g., '16.0.1'), or the sentinel 'previous' for the newest release below the
+      # version being built (e.g., 16.0.6 for a 16.0.7-SNAPSHOT build)
+      from:
+        required: true
+        type: string
       # The extra arguments to pass to the test (e.g., '-DcustomProperty=true')
       maven-args:
         required: false
@@ -49,6 +55,42 @@ jobs:
         with:
           run-id: ${{ inputs.run-id }}
           github-token: ${{ github.token }}
+
+      # The 'previous' sentinel resolves to the newest release below the version being
+      # built, by counting the micro down from the build version until a published tag
+      # is found (16.0.7-SNAPSHOT -> 16.0.6). Deriving it from the build keeps the FROM
+      # side strictly older than the TO side, which the floating 'major.minor' and
+      # 'latest' tags cannot guarantee: workflow_run always runs the default branch copy
+      # of this workflow, so a hardcoded tag downgrades every maintenance branch.
+      - name: Resolve Rolling Upgrade From Version
+        id: from
+        env:
+          REQUESTED_FROM: ${{ inputs.from }}
+          SERVER_VERSION: ${{ steps.dis.outputs.server-version }}
+        run: |
+          if [ "$REQUESTED_FROM" != "previous" ]; then
+            FROM="$REQUESTED_FROM"
+          else
+            BASE="${SERVER_VERSION%%-*}"  # 16.0.7-SNAPSHOT -> 16.0.7
+            LINE="${BASE%.*}"             # 16.0.7 -> 16.0
+            MICRO="${BASE##*.}"           # 16.0.7 -> 7
+            case "$MICRO" in ''|*[!0-9]*) MICRO=0 ;; esac
+            FROM=''
+            while [ "$MICRO" -gt 0 ]; do
+              MICRO=$((MICRO - 1))
+              if docker manifest inspect "quay.io/infinispan/server:$LINE.$MICRO" > /dev/null 2>&1; then
+                FROM="$LINE.$MICRO"
+                break
+              fi
+            done
+            if [ -z "$FROM" ]; then
+              # Nothing released on this line yet (a X.Y.0-SNAPSHOT development branch),
+              # so start from the newest release of the previous line
+              FROM='latest'
+            fi
+          fi
+          echo "Rolling upgrade from version: $FROM"
+          echo "from=$FROM" >> "$GITHUB_OUTPUT"
 
       - name: Extract Infinispan Server
         working-directory: /tmp
@@ -91,6 +133,7 @@ jobs:
             -Dansi.strip=true \
             -DskipRollingUpgradeTests=false \
             -Dorg.infinispan.test.server.dir=/tmp/infinispan-server-${{ steps.dis.outputs.server-version }} \
+            -Dorg.infinispan.test.server.rolling.upgrade.from=${{ steps.from.outputs.from }} \
             -Pcoverage ${{ inputs.maven-args }}
 
       # Update Check Run Status
