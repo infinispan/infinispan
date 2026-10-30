@@ -167,8 +167,6 @@ import org.wildfly.security.keystore.KeyStoreUtil;
       }, resultHandler = ExitCodeResultHandler.class)
 public class CLI extends CliCommand {
 
-   private Context context;
-
    @Option(completer = FileOptionCompleter.class, shortName = 't', name = "truststore", description = "A truststore to use when connecting to SSL/TLS-enabled servers")
    String truststore;
 
@@ -211,8 +209,57 @@ public class CLI extends CliCommand {
    @Option(description = "Whether to echo commands to the output", hasValue = false)
    boolean echo;
 
-
    private OnErrorCompleter.OnError oe;
+
+   @Override
+   public void afterParse() {
+      if (propertyMap != null) {
+         propertyMap.forEach(context.properties()::putIfAbsent);
+      }
+      if (properties != null) {
+         try (Reader r = Files.newBufferedReader(Paths.get(properties))) {
+            Properties loaded = new Properties();
+            loaded.load(r);
+            loaded.forEach(context.properties()::putIfAbsent);
+         } catch (IOException e) {
+            throw new IllegalArgumentException(e);
+         }
+      }
+      try {
+         configureSslContext(context, truststore, truststorePassword, keystore, keystorePassword, provider, hostnameVerifier, trustAll);
+      } catch (Exception e) {
+         throw new RuntimeException(Messages.MSG.keyStoreError(e));
+      }
+      String connectionString = connect != null ? connect : context.getProperty(Context.Property.AUTOCONNECT_URL);
+
+      if (connectionString != null) {
+         // If it doesn't look like a URL, try to resolve it as a bookmark
+         if (!connectionString.contains("://")) {
+            try {
+               Bookmark.ResolvedBookmark bookmark = Bookmark.resolve(context, connectionString);
+               if (bookmark != null) {
+                  // Reconfigure SSL if the bookmark has SSL settings
+                  String bmTruststore = bookmark.truststore();
+                  String bmKeystore = bookmark.keystore();
+                  if (bmTruststore != null || bmKeystore != null || bookmark.trustAll()) {
+                     configureSslContext(context, bmTruststore, bookmark.truststorePassword(), bmKeystore, bookmark.keystorePassword(), provider, bookmark.hostnameVerifier(), bookmark.trustAll());
+                  }
+                  if (bookmark.username() != null) {
+                     context.setPendingConnection(null, bookmark.url(), bookmark.username(), bookmark.password());
+                  } else {
+                     context.setPendingConnection(null, bookmark.url());
+                  }
+                  connectionString = null; // bookmark resolved
+               }
+            } catch (Exception e) {
+               throw new RuntimeException(Messages.MSG.keyStoreError(e));
+            }
+         }
+         if (connectionString != null) {
+            context.setPendingConnection(null, connectionString);
+         }
+      }
+   }
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) {
@@ -225,62 +272,15 @@ public class CLI extends CliCommand {
          invocation.printf("License Apache License, v. 2.0. https://www.apache.org/licenses/LICENSE-2.0\n");
          return CommandResult.SUCCESS;
       }
-      oe = onError != null ? OnErrorCompleter.OnError.valueOf(onError) : OnErrorCompleter.OnError.FAIL_FAST;
-
       context = invocation.getContext();
-
-      if (propertyMap != null) {
-         propertyMap.forEach(context.properties()::putIfAbsent);
-      }
-
-      if (properties != null) {
-         try (Reader r = Files.newBufferedReader(Paths.get(properties))) {
-            Properties loaded = new Properties();
-            loaded.load(r);
-            loaded.forEach(context.properties()::putIfAbsent);
-         } catch (IOException e) {
-            throw new IllegalArgumentException(e);
-         }
-      }
-
       try {
-         configureSslContext(context, truststore, truststorePassword, keystore, keystorePassword, provider, hostnameVerifier, trustAll);
+         context.connection(); // connects in case of a pending connection
       } catch (Exception e) {
-         invocation.getShell().writeln(Messages.MSG.keyStoreError(e));
-         return CommandResult.FAILURE;
+         // if an error occurs, leave in disconnected state
+         context.disconnect();
+         invocation.errorln(e.getMessage());
       }
-
-      String connectionString = connect != null ? connect : context.getProperty(Context.Property.AUTOCONNECT_URL);
-
-      if (connectionString != null) {
-         // If it doesn't look like a URL, try to resolve it as a bookmark
-         if (!connectionString.contains("://")) {
-            try {
-               Bookmark.ResolvedBookmark bookmark = Bookmark.resolve(invocation, connectionString);
-               if (bookmark != null) {
-                  // Reconfigure SSL if the bookmark has SSL settings
-                  String bmTruststore = bookmark.truststore();
-                  String bmKeystore = bookmark.keystore();
-                  if (bmTruststore != null || bmKeystore != null || bookmark.trustAll()) {
-                     configureSslContext(context, bmTruststore, bookmark.truststorePassword(), bmKeystore, bookmark.keystorePassword(), provider, bookmark.hostnameVerifier(), bookmark.trustAll());
-                  }
-                  if (bookmark.username() != null) {
-                     context.connect(null, bookmark.url(), bookmark.username(), bookmark.password());
-                  } else {
-                     context.connect(null, bookmark.url());
-                  }
-                  connectionString = null; // already connected
-               }
-            } catch (Exception e) {
-               invocation.getShell().writeln(Messages.MSG.keyStoreError(e));
-               return CommandResult.FAILURE;
-            }
-         }
-         if (connectionString != null) {
-            context.connect(null, connectionString);
-         }
-      }
-
+      oe = onError != null ? OnErrorCompleter.OnError.valueOf(onError) : OnErrorCompleter.OnError.FAIL_FAST;
       if (file != null) {
          return batch(file, invocation.getShell());
       } else {
@@ -423,7 +423,7 @@ public class CLI extends CliCommand {
          context = new KubernetesContext(properties);
          registryBuilder.command(Kube.class);
       } else {
-         context = new ContextImpl(properties);
+         context = new ContextImpl(properties, shell);
          registryBuilder.command(CLI.class);
       }
       AeshCommandRuntimeBuilder<CommandInvocation> runtimeBuilder = AeshCommandRuntimeBuilder.builder();

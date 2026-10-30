@@ -74,7 +74,7 @@ public class Connect extends CliCommand {
 
       // If the connection string doesn't look like a URL, try to resolve it as a bookmark
       if (connectionString != null && !connectionString.contains("://")) {
-         Bookmark.ResolvedBookmark bookmark = Bookmark.resolve(invocation, connectionString);
+         Bookmark.ResolvedBookmark bookmark = Bookmark.resolve(invocation.getContext(), connectionString);
          if (bookmark != null) {
             resolvedUrl = bookmark.url();
             if (resolvedUsername == null) {
