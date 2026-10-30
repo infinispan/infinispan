@@ -42,7 +42,9 @@ public class CacheInfo {
       this.balancer = balancer;
       this.cacheName = cacheName;
       this.numSegments = -1;
-      this.clientTopology = new ClientTopology(HotRodConstants.DEFAULT_CACHE_TOPOLOGY, intelligence);
+      // For AUTO mode, start with the effective intelligence (HASH_DISTRIBUTION_AWARE)
+      ClientIntelligence effectiveIntelligence = intelligence.getEffectiveIntelligence();
+      this.clientTopology = new ClientTopology(HotRodConstants.DEFAULT_CACHE_TOPOLOGY, effectiveIntelligence);
       this.consistentHash = null;
 
       this.servers = List.copyOf(servers);
