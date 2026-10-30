@@ -44,7 +44,7 @@ public class Get extends CliCommand {
       @Option(shortName = 'n', description = "Specifies the namespace where the cluster is running. Uses the default namespace if you do not specify one.")
       String namespace;
 
-      @Option(name = "all-namespaces", shortName = 'A', description = "Displays the requested object(s) across all namespaces.")
+      @Option(name = "all-namespaces", shortName = 'A', hasValue = false, description = "Displays the requested object(s) across all namespaces.")
       boolean allNamespaces;
 
       @Option(shortName = 's', hasValue = false, description = "Displays all secrets that the cluster uses.")
