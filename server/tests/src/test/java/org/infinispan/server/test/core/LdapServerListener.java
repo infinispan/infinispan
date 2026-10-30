@@ -7,6 +7,7 @@ import org.infinispan.server.test.core.ldap.ApacheLdapServer;
 import org.infinispan.server.test.core.ldap.LdapServer;
 import org.infinispan.server.test.core.ldap.RemoteLdapServer;
 import org.infinispan.server.test.core.ldap.SambaLdapServer;
+import org.infinispan.server.test.core.ldap.ThreeEightNineDSLdapServer;
 import org.infinispan.testing.Exceptions;
 import org.infinispan.testing.ThreadLeakChecker;
 
@@ -30,6 +31,12 @@ public class LdapServerListener implements InfinispanServerListener {
          @Override
          LdapServer ldapServer(boolean withKdc) {
             return new SambaLdapServer();
+         }
+      },
+      THREEEIGHTNINEDS {
+         @Override
+         LdapServer ldapServer(boolean withKdc) {
+            return new ThreeEightNineDSLdapServer();
          }
       },
       REMOTE {
