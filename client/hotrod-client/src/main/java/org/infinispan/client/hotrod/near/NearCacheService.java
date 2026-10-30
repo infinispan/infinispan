@@ -43,7 +43,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    private final NearCacheConfiguration config;
    private final ClientListenerNotifier listenerNotifier;
    private Object listener;
-   private byte[] listenerId;
+   private volatile byte[] listenerId;
    private NearCache<K, V> cache;
    private Runnable invalidationCallback;
    private final int bloomFilterBits;
@@ -239,7 +239,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
       return cache.iterator();
    }
 
-   boolean isConnected() {
+   public boolean isConnected() {
       if (remote instanceof InvalidatedNearRemoteCache && ((InvalidatedNearRemoteCache<?, ?>) remote).isPrimaryMode()) {
          return ((InvalidatedNearRemoteCache<?, ?>) remote).hasActivePrimaryListeners();
       }
@@ -248,6 +248,14 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
 
    public void setInvalidationCallback(Runnable r) {
       this.invalidationCallback = r;
+   }
+
+   /**
+    * Updates the listener ID tracked by this service. Used when the near cache switches between
+    * primary-owner and cluster-wide listener mode without a full stop/start cycle.
+    */
+   public void updateListenerId(byte[] newListenerId) {
+      this.listenerId = newListenerId;
    }
 
    public int getBloomFilterBits() {

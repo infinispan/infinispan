@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.near;
 
+import java.util.Objects;
+
 import org.infinispan.client.hotrod.MetadataValue;
 
 public final class EpochMetadataValue<V> implements MetadataValue<V> {
@@ -8,7 +10,7 @@ public final class EpochMetadataValue<V> implements MetadataValue<V> {
    private final int segment;
 
    public EpochMetadataValue(MetadataValue<V> delegate, int epoch, int segment) {
-      this.delegate = delegate;
+      this.delegate = Objects.requireNonNull(delegate, "delegate");
       this.epoch = epoch;
       this.segment = segment;
    }
@@ -27,32 +29,32 @@ public final class EpochMetadataValue<V> implements MetadataValue<V> {
 
    @Override
    public long getCreated() {
-      return delegate != null ? delegate.getCreated() : -1;
+      return delegate.getCreated();
    }
 
    @Override
    public int getLifespan() {
-      return delegate != null ? delegate.getLifespan() : -1;
+      return delegate.getLifespan();
    }
 
    @Override
    public long getLastUsed() {
-      return delegate != null ? delegate.getLastUsed() : -1;
+      return delegate.getLastUsed();
    }
 
    @Override
    public int getMaxIdle() {
-      return delegate != null ? delegate.getMaxIdle() : -1;
+      return delegate.getMaxIdle();
    }
 
    @Override
    public long getVersion() {
-      return delegate != null ? delegate.getVersion() : -1;
+      return delegate.getVersion();
    }
 
    @Override
    public V getValue() {
-      return delegate != null ? delegate.getValue() : null;
+      return delegate.getValue();
    }
 
    @Override

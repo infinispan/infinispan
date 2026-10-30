@@ -152,6 +152,22 @@ public class ClientListenerNotifierTest extends AbstractInfinispanTest {
       assertEquals(0, dispatcher.failoverInvocations.get());
    }
 
+   public void testAddAddressById() {
+      byte[] listenerId = new byte[]{13, 14, 15};
+      Object listener = new Object();
+      SocketAddress addr1 = InetSocketAddress.createUnresolved("127.0.0.1", 11222);
+      SocketAddress addr2 = InetSocketAddress.createUnresolved("127.0.0.1", 11223);
+
+      notifier.addDispatcher(listenerId, addr1, listener, (id, l) -> new TestDispatcher(id, l));
+
+      // addAddress by listener-id should add the address to the existing dispatcher
+      notifier.addAddress(listenerId, addr2);
+      assertEquals(Set.of(addr1, addr2), notifier.findAddresses(listenerId));
+
+      // addAddress for an unknown listener id is a no-op (no exception thrown)
+      notifier.addAddress(new byte[]{99}, addr1);
+   }
+
    private static class TestDispatcher extends EventDispatcher<Object> {
       final AtomicInteger failoverInvocations = new AtomicInteger();
       TestDispatcher(byte[] listenerId, Object listener) {

@@ -473,4 +473,12 @@ public interface Log extends BasicLogger {
    @Message(value = "Failed to register primary listeners for cache '%s'; falling back to cluster-wide listener", id = 4129)
    void primaryListenerRegistrationFailed(String cacheName, @Cause Throwable cause);
 
+   @LogMessage(level = INFO)
+   @Message(value = "Downgrading near cache for '%s' to cluster-wide listener: a server running an older protocol version joined the cluster", id = 4130)
+   void nearCacheDowngradedToClusterListener(String cacheName);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Upgrading near cache for '%s' to primary-owner listeners: all servers now support Hot Rod 4.2+", id = 4131)
+   void nearCacheUpgradedToPrimaryListeners(String cacheName);
+
 }

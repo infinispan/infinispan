@@ -111,6 +111,7 @@ public class OperationDispatcher {
    private final ChannelHandler channelHandler;
    private final ExecutorService executorService;
    private final ConcurrentMap<String, List<BiConsumer<CacheInfo, CacheInfo>>> topologyListeners = new ConcurrentHashMap<>();
+   private final CopyOnWriteArrayList<Runnable> codecChangeListeners = new CopyOnWriteArrayList<>();
    private final Configuration configuration;
    private final TimeService timeService;
 
@@ -431,7 +432,23 @@ public class OperationDispatcher {
       if (getClientIntelligence() != ClientIntelligence.HASH_DISTRIBUTION_AWARE) {
          return false;
       }
-      return getCodec().isPrimaryNearCacheListenerSupported();
+      // If any connected channel has explicitly negotiated an older protocol version that does not support
+      // primary near cache listeners (e.g. Hot Rod 4.1 during a rolling upgrade), the mode is unavailable.
+      // Channels whose codec is null have not yet completed the handshake and are treated as neutral:
+      // they do not disqualify primary mode on their own, but at least one connected (non-null) channel
+      // must be present.
+      Collection<OperationChannel> channels = channelHandler.getChannels();
+      boolean anyConnected = false;
+      for (OperationChannel ch : channels) {
+         Codec codec = ch.codec;
+         if (codec != null) {
+            if (!codec.isPrimaryNearCacheListenerSupported()) {
+               return false; // explicit older-protocol server present
+            }
+            anyConnected = true;
+         }
+      }
+      return anyConnected;
    }
 
    public Codec getCodec() {
@@ -446,6 +463,32 @@ public class OperationDispatcher {
    public Map<SocketAddress, Set<Integer>> getPrimarySegmentsByAddress(String cacheName) {
       CacheInfo cacheInfo = getCacheInfo(cacheName);
       return cacheInfo != null ? cacheInfo.getPrimarySegments() : null;
+   }
+
+   /**
+    * Registers a listener that is notified whenever any channel's protocol codec is negotiated or changed.
+    * This can be used to react to rolling upgrade scenarios where the effective cluster protocol version changes.
+    */
+   public void addCodecChangeListener(Runnable listener) {
+      codecChangeListeners.add(listener);
+   }
+
+   public void removeCodecChangeListener(Runnable listener) {
+      codecChangeListeners.remove(listener);
+   }
+
+   /**
+    * Called by {@link org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder} whenever a channel
+    * finishes protocol negotiation and its codec is set.
+    */
+   public void notifyCodecChanged() {
+      for (Runnable listener : codecChangeListeners) {
+         try {
+            listener.run();
+         } catch (Throwable t) {
+            log.errorf(t, "Error notifying codec change listener");
+         }
+      }
    }
 
    public void addTopologyListener(String cacheName, BiConsumer<CacheInfo, CacheInfo> listener) {
@@ -1095,6 +1138,10 @@ public class OperationDispatcher {
 
    public void addCacheTopologyInfoIfAbsent(String cacheName) {
       topologyInfo.getOrCreateCacheInfo(cacheName);
+   }
+
+   public ExecutorService getExecutorService() {
+      return executorService;
    }
 
    public Set<SocketAddress> getConnectionFailedServers() {

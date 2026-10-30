@@ -34,10 +34,6 @@ public final class PrimaryNearCacheEventDispatcher extends ClientEventDispatcher
       return new PrimaryNearCacheEventDispatcher(op, address, invocables, cleanup, inrc);
    }
 
-   public static PrimaryNearCacheEventDispatcher create(AddPrimaryNearCacheClientListenerOperation op, Runnable cleanup) {
-      return create(op, null, cleanup, (InvalidatedNearRemoteCache<?, ?>) op.getRemoteCache());
-   }
-
    public static PrimaryNearCacheEventDispatcher create(AddPrimaryNearCacheClientListenerOperation op,
                                                         InvalidatedNearRemoteCache<?, ?> inrc) {
       return create(op, null, null, inrc);

@@ -432,6 +432,9 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
             this.codec = codec;
          }
          channel.attr(OperationChannel.OPERATION_CHANNEL_ATTRIBUTE_KEY).get().setCodec(codec);
+         // Notify interested parties (e.g. near cache mode selector) that the effective cluster
+         // protocol version may have changed due to this channel's codec negotiation.
+         dispatcher.notifyCodecChanged();
       }
    }
 
