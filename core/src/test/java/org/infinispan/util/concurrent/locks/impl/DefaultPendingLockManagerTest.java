@@ -20,6 +20,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 
 import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.time.ControlledTimeService;
@@ -28,6 +29,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -51,7 +53,6 @@ public class DefaultPendingLockManagerTest extends AbstractInfinispanTest {
 
    @BeforeMethod
    public void setUp() {
-      manager = new DefaultPendingLockManager();
       timeService = new ControlledTimeService();
       transactions = new ArrayList<>();
       scheduledTimeouts = new ConcurrentLinkedDeque<>();
@@ -60,17 +61,7 @@ public class DefaultPendingLockManagerTest extends AbstractInfinispanTest {
       when(transactionTable.getMinTopologyId()).thenReturn(OLD_TOPOLOGY);
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.emptyList());
       when(transactionTable.getRemoteTransactions()).thenAnswer(inv -> transactions);
-
-      LocalizedCacheTopology cacheTopology = mock(LocalizedCacheTopology.class);
-      when(cacheTopology.getTopologyId()).thenReturn(CURRENT_TOPOLOGY);
-      DistributionManager distributionManager = mock(DistributionManager.class);
-      when(distributionManager.getCacheTopology()).thenReturn(cacheTopology);
-
-      TestingUtil.inject(manager,
-            transactionTable,
-            timeService,
-            distributionManager,
-            TestingUtil.named(TIMEOUT_SCHEDULE_EXECUTOR, createMockTimeoutExecutor()));
+      manager = createManager(transactionTable);
    }
 
    @AfterMethod
@@ -531,6 +522,93 @@ public class DefaultPendingLockManagerTest extends AbstractInfinispanTest {
       manager.checkPendingTransactionsForKey(
             context(newGlobalTransaction()), "key-2", LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
       assertThat(scheduledTimeouts).hasSize(initialCount + 2);
+   }
+
+   public void testRemoveBackupLocksDuringScanOfCollidingKey() {
+      assertBackupLockReleaseDoesNotDeadlockWithScan((tx, key) -> tx.removeBackupLocks(List.of(key)));
+   }
+
+   public void testRemoveBackupLockDuringScanOfCollidingKey() {
+      assertBackupLockReleaseDoesNotDeadlockWithScan(RemoteTransaction::removeBackupLock);
+   }
+
+   public void testCleanupBackupLocksDuringScanOfCollidingKey() {
+      assertBackupLockReleaseDoesNotDeadlockWithScan((tx, key) -> tx.cleanupBackupLocks());
+   }
+
+   /**
+    * Asserts that releasing a backup lock does not deadlock with a concurrent pending-transaction check on another key.
+    * <p>
+    * The release completes the shared signal of one key, which removes it from the manager. At the same time, the check
+    * on another key scans the same transaction. Both keys have the same hash code, so they share the manager's internal
+    * map bin, which is what happened under a hot key during failover.
+    * </p>
+    *
+    * @param releaseBackupLock releases the backup lock of the given key in the given transaction.
+    */
+   private void assertBackupLockReleaseDoesNotDeadlockWithScan(BiConsumer<RemoteTransaction, Object> releaseBackupLock) {
+      // Same hash code: both keys end up in the same bin.
+      String releasedKey = "Aa";
+      String scannedKey = "BB";
+      assertThat(releasedKey.hashCode()).isEqualTo(scannedKey.hashCode());
+
+      RemoteTransaction blocker = new RemoteTransaction(newGlobalTransaction(), OLD_TOPOLOGY, 0);
+      blocker.addBackupLockForKey(releasedKey);
+
+      CompletableFuture<Void> scanning = new CompletableFuture<>();
+      CompletableFuture<Void> releasing = new CompletableFuture<>();
+
+      // Every check reads the remote transactions once, while scanning.
+      // The first read is the waiter's and returns at once.
+      // The second read is the colliding check's and pauses inside the scan, until the release is in progress.
+      TransactionTable transactionTable = mock(TransactionTable.class);
+      when(transactionTable.getMinTopologyId()).thenReturn(OLD_TOPOLOGY);
+      when(transactionTable.getLocalTransactions()).thenReturn(Collections.emptyList());
+      when(transactionTable.getRemoteTransactions())
+            .thenAnswer(inv -> List.of(blocker))
+            .thenAnswer(inv -> {
+               scanning.complete(null);
+               assertThat(releasing).succeedsWithin(10, TimeUnit.SECONDS);
+               return List.of(blocker);
+            });
+      DefaultPendingLockManager pendingLockManager = createManager(transactionTable);
+
+      // A waiter on releasedKey installs its shared signal, which removes itself from the manager once released.
+      PendingLockPromise waiter = pendingLockManager.checkPendingTransactionsForKey(
+            context(newGlobalTransaction()), releasedKey, LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
+      assertThat(waiter.isReady()).isFalse();
+
+      // The releasing thread completes the waiter before the signal removes itself from the manager.
+      // It pauses there, until the scan is in progress.
+      waiter.addListener(() -> {
+         releasing.complete(null);
+         assertThat(scanning).succeedsWithin(10, TimeUnit.SECONDS);
+      });
+
+      Future<PendingLockPromise> scan = fork(() -> pendingLockManager.checkPendingTransactionsForKey(
+            context(newGlobalTransaction()), scannedKey, LOCK_TIMEOUT, TimeUnit.MILLISECONDS));
+      Future<Void> release = fork(() -> releaseBackupLock.accept(blocker, releasedKey));
+
+      // On a deadlock both threads stay blocked and these time out.
+      assertThat(release).succeedsWithin(10, TimeUnit.SECONDS);
+      assertThat(scan).succeedsWithin(10, TimeUnit.SECONDS).isSameAs(PendingLockPromise.NO_OP);
+      assertThat(waiter.isReady()).isTrue();
+      assertThat(waiter.hasTimedOut()).isFalse();
+   }
+
+   private DefaultPendingLockManager createManager(TransactionTable transactionTable) {
+      LocalizedCacheTopology cacheTopology = mock(LocalizedCacheTopology.class);
+      when(cacheTopology.getTopologyId()).thenReturn(CURRENT_TOPOLOGY);
+      DistributionManager distributionManager = mock(DistributionManager.class);
+      when(distributionManager.getCacheTopology()).thenReturn(cacheTopology);
+
+      DefaultPendingLockManager pendingLockManager = new DefaultPendingLockManager();
+      TestingUtil.inject(pendingLockManager,
+            transactionTable,
+            timeService,
+            distributionManager,
+            TestingUtil.named(TIMEOUT_SCHEDULE_EXECUTOR, createMockTimeoutExecutor()));
+      return pendingLockManager;
    }
 
    private void fireLastScheduledTimeout() {
