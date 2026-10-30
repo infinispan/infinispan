@@ -1,6 +1,5 @@
 package org.infinispan.server.functional.hotrod;
 
-import static org.infinispan.server.functional.hotrod.HotRodCacheQueries.ENTITY_USER;
 import static org.infinispan.server.test.core.Common.createQueryableCache;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -28,9 +27,9 @@ import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
-import org.infinispan.protostream.sampledomain.User;
+import org.infinispan.protostream.sampledomain.bank.Address;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.test.api.TestClientDriver;
@@ -51,7 +50,7 @@ public class HotRodListenerWithDslFilter {
 
    @Test
    public void testEventFilter() {
-      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, true, TestDomainSCI.INSTANCE, ENTITY_USER);
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, true, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
       User user1 = new User();
       user1.setId(1);
       user1.setName("John");
@@ -97,7 +96,7 @@ public class HotRodListenerWithDslFilter {
 
       SerializationContext serCtx = MarshallerUtil.getSerializationContext(remoteCache.getRemoteCacheManager());
 
-      Query<User> query = remoteCache.query("SELECT age FROM sample_bank_account.User WHERE age <= :ageParam");
+      Query<User> query = remoteCache.query("SELECT age FROM sample_domain.User WHERE age <= :ageParam");
       query.setParameter("ageParam", 32);
 
       ClientEntryListener listener = new ClientEntryListener(serCtx);

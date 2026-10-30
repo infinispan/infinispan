@@ -7,8 +7,8 @@ import org.infinispan.Cache;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.protostream.sampledomain.Car;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
-import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.QueryTestSCI;
 import org.testng.annotations.Test;
 

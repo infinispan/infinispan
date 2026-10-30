@@ -10,9 +10,6 @@ import java.util.Date;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -20,6 +17,9 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
+import org.infinispan.protostream.sampledomain.bank.Account;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.query.Indexer;
 import org.testng.annotations.Test;
 
@@ -35,15 +35,15 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
    private static final int NODES = 3;
    private static final int NUM_ENTRIES = 50;
 
-   private RemoteCache<Integer, UserPB> userCache;
-   private RemoteCache<Integer, AccountPB> accountCache;
+   private RemoteCache<Integer, User> userCache;
+   private RemoteCache<Integer, Account> accountCache;
 
    public Configuration buildIndexedConfig() {
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.indexing().enable()
             .storage(LOCAL_HEAP)
-            .addIndexedEntity("sample_bank_account.User")
-            .addIndexedEntity("sample_bank_account.Account");
+            .addIndexedEntity(User.ENTITY_NAME)
+            .addIndexedEntity(Account.ENTITY_NAME);
       return builder.build();
    }
 
@@ -73,13 +73,13 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
       userCache = client(0).getCache(USER_CACHE);
       accountCache = client(0).getCache(ACCOUNT_CACHE);
       for (int i = 0; i < NUM_ENTRIES; i++) {
-         AccountPB account = new AccountPB();
+         Account account = new Account();
          account.setId(i);
          account.setDescription("account" + i);
          account.setCreationDate(new Date());
          accountCache.put(account.getId(), account);
 
-         UserPB user = new UserPB();
+         User user = new User();
          user.setId(i);
          user.setName("name" + i);
          user.setSurname("surname" + i);
@@ -95,23 +95,23 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
 
    @Test
    public void testMassIndexing() {
-      assertEquals(1, query("sample_bank_account.Account", accountCache, "description", "'account1'"));
-      assertEquals(1, query("sample_bank_account.User", userCache, "name", "'name1'"));
+      assertEquals(1, query(Account.ENTITY_NAME, accountCache, "description", "'account1'"));
+      assertEquals(1, query(User.ENTITY_NAME, userCache, "name", "'name1'"));
 
       reindex(ACCOUNT_CACHE);
 
-      assertEquals(1, query("sample_bank_account.Account", accountCache, "description", "'account1'"));
-      assertEquals(1, query("sample_bank_account.User", userCache, "name", "'name1'"));
+      assertEquals(1, query(Account.ENTITY_NAME, accountCache, "description", "'account1'"));
+      assertEquals(1, query(User.ENTITY_NAME, userCache, "name", "'name1'"));
 
       reindex(USER_CACHE);
 
-      assertEquals(1, query("sample_bank_account.Account", accountCache, "description", "'account1'"));
-      assertEquals(1, query("sample_bank_account.User", userCache, "name", "'name1'"));
+      assertEquals(1, query(Account.ENTITY_NAME, accountCache, "description", "'account1'"));
+      assertEquals(1, query(User.ENTITY_NAME, userCache, "name", "'name1'"));
    }
 
    @Test
    public void testLocalQueries() {
-      Query<?> matchAll = userCache.query("FROM  sample_bank_account.User");
+      Query<?> matchAll = userCache.query("FROM  sample_domain.User");
       long totalUsers = matchAll.execute().count().value();
       assertEquals(NUM_ENTRIES, totalUsers);
 
@@ -121,7 +121,7 @@ public class MultipleIndexedCacheTest extends MultiHotRodServersTest {
 
    private void reindex(String cacheName) {
       Cache<?, ?> cache = cacheManagers.get(0).getCache(cacheName);
-      Indexer indexer = org.infinispan.query.Search.getIndexer(cache);
+      Indexer indexer = org.infinispan.query.Indexer.of(cache);
       CompletionStages.join(indexer.run());
    }
 

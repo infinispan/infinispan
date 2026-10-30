@@ -12,9 +12,9 @@ import java.util.stream.Collectors;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.Search;
 import org.infinispan.query.core.stats.IndexInfo;
 import org.infinispan.query.core.stats.IndexStatistics;
+import org.infinispan.query.core.stats.SearchStatistics;
 import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.query.test.QueryTestSCI;
@@ -47,7 +47,7 @@ public class LocalIndexSyncStateTransferTest extends MultipleCacheManagersTest {
    }
 
    private Map<String, Long> getIndexCountPerEntity(Cache<Integer, Object> cache) {
-      IndexStatistics indexStatistics = Search.getSearchStatistics(cache).getIndexStatistics();
+      IndexStatistics indexStatistics = SearchStatistics.of(cache).getIndexStatistics();
       Map<String, IndexInfo> stringIndexInfoMap = await(indexStatistics.computeIndexInfos().toCompletableFuture());
       return stringIndexInfoMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().count()));
    }

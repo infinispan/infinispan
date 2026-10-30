@@ -11,7 +11,7 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.model.Game;
+import org.infinispan.protostream.sampledomain.Game;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
@@ -20,7 +20,7 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.core.tests.UpdateQueryCoreTest")
 public class UpdateQueryCoreTest extends SingleCacheManagerTest {
 
-   private static final String ENTITY = "org.infinispan.query.model.Game";
+   private static final String ENTITY = Game.class.getName();
 
    private Cache<String, Game> gameCache;
 
@@ -41,9 +41,7 @@ public class UpdateQueryCoreTest extends SingleCacheManagerTest {
    @BeforeMethod
    public void populateCache() {
       gameCache.clear();
-      gameCache.put("g1", new Game("Civilization", "The best strategy game"));
-      gameCache.put("g2", new Game("Doom", "First person shooter classic"));
-      gameCache.put("g3", new Game("Tetris", "Puzzle game with blocks"));
+      gameCache.putAll(Game.data());
    }
 
    @Test
