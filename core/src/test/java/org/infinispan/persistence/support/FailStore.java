@@ -11,7 +11,6 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.MarshallableEntry;
@@ -22,12 +21,15 @@ import org.infinispan.util.logging.LogFactory;
 import io.reactivex.rxjava3.core.Flowable;
 
 /**
- * Test store that can fail store operations
+ * Test store that can fail store operations.
+ * <p>
+ * It extends {@link DelayStore}, so a single store can delay and fail operations.
+ * </p>
  *
  * @author Dan Berindei
  * @since 13.0
  */
-public class FailStore extends DummyInMemoryStore {
+public class FailStore extends DelayStore {
    private static final Log log = LogFactory.getLog(FailStore.class);
 
    private final AtomicInteger failModificationCount = new AtomicInteger();
