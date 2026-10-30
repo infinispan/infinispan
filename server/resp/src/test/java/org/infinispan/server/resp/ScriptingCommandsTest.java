@@ -23,9 +23,9 @@ public class ScriptingCommandsTest extends SingleNodeRespBaseTest {
 
    @Override
    public Object[] factory() {
-      return new Object[] {
-         new ScriptingCommandsTest(),
-         new ScriptingCommandsTest().withAuthorization()
+      return new Object[]{
+            new ScriptingCommandsTest(),
+            new ScriptingCommandsTest().withAuthorization()
       };
    }
 
@@ -81,6 +81,106 @@ public class ScriptingCommandsTest extends SingleNodeRespBaseTest {
             redis.evalshaReadOnly(sha, ScriptOutputType.STATUS, new String[]{k(0)}, v(0)))
             .hasMessageContaining("ERR This Redis command is not allowed from script");
    }
+
+   @Test
+   public void testOsLibraryOnlyExposesOsClock() {
+      // The os library is available but only exposes os.clock() - all other operations are not available
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      // os.clock() should be available and return a number
+      String clockResult = redis.eval("return tostring(os.clock())", ScriptOutputType.VALUE);
+      assertThat(clockResult).isNotNull();
+      assertThat(clockResult).matches("\\d+\\.?\\d*"); // Should be a number like "0.123" or "123"
+
+      // Verify os.clock is actually a function
+      String clockType = redis.eval("return type(os.clock)", ScriptOutputType.VALUE);
+      assertThat(clockType).isEqualTo("function");
+
+      // os.execute() should NOT be available
+      assertThatThrownBy(() ->
+            redis.eval("return os.execute('id > /tmp/pwn')", ScriptOutputType.STATUS))
+            .hasMessageContaining("attempt to call")
+            .hasMessageContaining("nil value");
+
+      // os.exit() should NOT be available
+      assertThatThrownBy(() ->
+            redis.eval("return os.exit()", ScriptOutputType.STATUS))
+            .hasMessageContaining("attempt to call")
+            .hasMessageContaining("nil value");
+
+      // os.getenv() should NOT be available
+      assertThatThrownBy(() ->
+            redis.eval("return os.getenv('PATH')", ScriptOutputType.STATUS))
+            .hasMessageContaining("attempt to call")
+            .hasMessageContaining("nil value");
+
+      // os.remove() should NOT be available
+      assertThatThrownBy(() ->
+            redis.eval("return os.remove('/tmp/test')", ScriptOutputType.STATUS))
+            .hasMessageContaining("attempt to call")
+            .hasMessageContaining("nil value");
+
+      // os.rename() should NOT be available
+      assertThatThrownBy(() ->
+            redis.eval("return os.rename('/tmp/a', '/tmp/b')", ScriptOutputType.STATUS))
+            .hasMessageContaining("attempt to call")
+            .hasMessageContaining("nil value");
+   }
+
+   @Test
+   public void testDangerousLibrariesAreNotAvailable() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // os is available (but only with os.clock), so we only check io and package
+      List<Object> out = redis.eval("""
+            local r = {} for _, n in ipairs({'io', 'package'}) do
+               local ok = pcall(function() return _G[n] end) table.insert(r, (not ok) and 1 or 0)
+            end; return {r[1], r[2]}
+            """, ScriptOutputType.MULTI);
+      assertThat(out).containsExactly(1L, 1L);
+
+      // Verify os IS available by checking its type
+      String osType = redis.eval("return type(os)", ScriptOutputType.VALUE);
+      assertThat(osType).isEqualTo("table");
+   }
+
+   @Test
+   public void testMissingGlobalRaisesError() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThatThrownBy(() ->
+            redis.eval("return definitely_missing_global_xyz", ScriptOutputType.STATUS))
+            .hasMessageContaining("Script attempted to access nonexistent global variable 'definitely_missing_global_xyz'");
+   }
+
+   @Test
+   public void testGlobalsProtectionIsRestoredBetweenScripts() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // A malicious script strips the _G protection and plants a global for other users of this context to find.
+      // Stripping is only effective within its own execution: the protection is re-installed before every subsequent script.
+      assertEquals("stripped", redis.eval("""
+            setmetatable(_G, nil)
+            planted_secret_xyz = 42
+            return 'stripped'
+            """, ScriptOutputType.STATUS));
+      // The pool may serve a stripped context on any following invocation; probe enough times to cover every slot.
+      for (int i = 0; i < 8; i++) {
+         assertThatThrownBy(() -> redis.eval("return planted_secret_xyz", ScriptOutputType.STATUS))
+               .hasMessageContaining("Script attempted to access nonexistent global variable 'planted_secret_xyz'");
+      }
+   }
+
+   @Test
+   public void testCorruptedGlobalsAreRestoredBetweenScripts() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // A script can overwrite existing (allow-listed) globals; their pristine values are restored before every subsequent script.
+      assertEquals("corrupted", redis.eval("""
+            tostring = nil; error = 99; return 'corrupted'
+            """, ScriptOutputType.STATUS));
+      for (int i = 0; i < 8; i++) {
+         List<Object> out = redis.eval("return {type(tostring), type(error)}", ScriptOutputType.MULTI);
+         assertThat(out).containsExactly("function", "function");
+      }
+   }
+
 
    @Test
    public void testCallError() {
@@ -345,12 +445,12 @@ public class ScriptingCommandsTest extends SingleNodeRespBaseTest {
    @Test
    public void testInvalidSHA1() {
       RedisCommands<String, String> redis = redisConnection.sync();
-      assertThatThrownBy(() ->  redis.evalsha("NotValidShaSUM", ScriptOutputType.OBJECT)).hasMessageContaining("NOSCRIPT");
+      assertThatThrownBy(() -> redis.evalsha("NotValidShaSUM", ScriptOutputType.OBJECT)).hasMessageContaining("NOSCRIPT");
    }
 
    @Test
    public void testNonDefinedSHA1() {
       RedisCommands<String, String> redis = redisConnection.sync();
-      assertThatThrownBy(() ->  redis.evalsha("ffd632c7d33e571e9f24556ebed26c3479a87130", ScriptOutputType.OBJECT)).hasMessageContaining("NOSCRIPT");
+      assertThatThrownBy(() -> redis.evalsha("ffd632c7d33e571e9f24556ebed26c3479a87130", ScriptOutputType.OBJECT)).hasMessageContaining("NOSCRIPT");
    }
 }

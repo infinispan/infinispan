@@ -1,7 +1,6 @@
 package org.infinispan.server.resp.scripting;
 
 import static org.infinispan.server.resp.scripting.LuaTaskEngine.fName;
-import static party.iroiro.luajava.lua51.Lua51Consts.LUA_GLOBALSINDEX;
 
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
@@ -45,12 +44,10 @@ public class LuaContext implements AutoCloseable {
 
    private static final String REDIS_API_NAME = "redis";
 
-   private static final Set<String> LIBRARIES_ALLOW_LIST = Set.of("string", "math", "table", "os"); // bit, cjson, cmsgpack, struct are not available in luajava
-   private static final Set<String> REDIS_API_ALLOW_LIST = Set.of("redis", "__redis__err__handler");
+   private static final Set<String> LIBRARIES_ALLOW_LIST = Set.of("string", "math", "table", "os");
+   private static final Set<String> REDIS_API_ALLOW_LIST = Set.of("redis", "__redis__err__handler", "KEYS", "ARGV");
    private static final Set<String> LUA_BUILTINS_ALLOW_LIST = Set.of("xpcall", "tostring", "setmetatable", "next", "assert", "tonumber", "rawequal", "collectgarbage", "getmetatable", "rawset", "pcall", "coroutine", "type", "_G", "select", "unpack", "gcinfo", "pairs", "rawget", "loadstring", "ipairs", "_VERSION", "load", "error");
-   private static final Set<String> LUA_BUILTINS_REMOVED_AFTER_INITIALIZATION_ALLOW_LIST = Set.of("debug");
    private static final Set<String> ALLOW_LISTS;
-   private static final Set<String> DENY_LIST = Set.of("dofile", "loadfile", "print");
 
    public static final int LOG_DEBUG = 0; // TRACE
    public static final int LOG_VERBOSE = 1; // DEBUG
@@ -68,8 +65,13 @@ public class LuaContext implements AutoCloseable {
       ALLOW_LISTS.addAll(LIBRARIES_ALLOW_LIST);
       ALLOW_LISTS.addAll(REDIS_API_ALLOW_LIST);
       ALLOW_LISTS.addAll(LUA_BUILTINS_ALLOW_LIST);
-      ALLOW_LISTS.addAll(LUA_BUILTINS_REMOVED_AFTER_INITIALIZATION_ALLOW_LIST);
    }
+
+   // Temporary global used to move the re-arm function into the registry during initialization
+   private static final String REARM_TEMP_GLOBAL = "___ispn_rearm";
+   // Registry key under which the globals protection re-arm function is stored
+   private static final String REARM_FN_KEY = "_g_protection_rearm";
+
 
    final Lua lua;
 
@@ -89,12 +91,10 @@ public class LuaContext implements AutoCloseable {
       installMathRandom();
       installErrorHandler();
       installRedisAPI();
-      luaSetErrorMetatable();
+      luaSetGlobalsProtection();
    }
 
    private void installRedisAPI() {
-      luaSetAllowListProtection();
-
       lua.newTable();
 
       // redis.sha1hex(string)
@@ -240,6 +240,9 @@ public class LuaContext implements AutoCloseable {
             -- copy the `debug` global to a local, and nil it so it cannot be used by user scripts
             local dbg = debug
             debug = nil
+            -- Capture these builtins as upvalues: if a script overwrites them (e.g. tostring = nil), this handler must keep working, otherwise the
+            -- error would bypass the error path and be returned to the client as a regular response value
+            local _type, _tostring = type, tostring
             function __redis__err__handler(err)
               -- get debug information for the previous call (type, source and line)
               local i = dbg.getinfo(2,'nSl')
@@ -247,8 +250,8 @@ public class LuaContext implements AutoCloseable {
               if i and i.what == 'C' then
                 i = dbg.getinfo(3,'nSl')
               end
-              if type(err) ~= 'table' then
-                err = {err='ERR ' .. tostring(err)}
+              if _type(err) ~= 'table' then
+                err = {err='ERR ' .. _tostring(err)}
               end
               if i then
                 err['source'] = i.source
@@ -273,7 +276,7 @@ public class LuaContext implements AutoCloseable {
          return -1;
       }
       long commandMask = respCommand.aclMask();
-      if (AclCategory.CONNECTION.matches(commandMask)){
+      if (AclCategory.CONNECTION.matches(commandMask)) {
          l.push("This Redis command is not allowed from script");
          return -1;
       }
@@ -386,55 +389,59 @@ public class LuaContext implements AutoCloseable {
       tableAdd(lua, "err", msg);
    }
 
-   private static int luaProtectedTableError(Lua lua) {
-      int argc = lua.getTop();
-      if (argc != 2) {
-         lua.error("Wrong number of arguments to luaProtectedTableError");
+   private void luaSetGlobalsProtection() {
+      StringBuilder sb = new StringBuilder();
+      // Capture the builtins as upvalues so that neither the protection nor the re-arm function can be defeated by a script overwriting globals
+      sb.append("local _rawset, _rawget, _error, _tostring, _next, _setmetatable = rawset, rawget, error, tostring, next, setmetatable\n");
+      sb.append("local allowed = {");
+      for (String name : ALLOW_LISTS) {
+         sb.append("['").append(name).append("']=true,");
       }
-      if (!lua.isString(-1) && !lua.isNumber(-1)) {
-         lua.error("Second argument to luaProtectedTableError must be a string or number");
-      }
-      String variableName = lua.toString(-1);
-      lua.error("Script attempted to access nonexistent global variable '" + variableName + "'");
-      return 0;
+      // Snapshot the pristine top-level globals so that a script cannot permanently corrupt or remove an allow-listed global for other users of this context.
+      // The snapshot must be taken before the re-arm function is installed below, otherwise it would capture itself.
+      sb.append("}\nlocal pristine = {}\ndo\n  local k = _next(_G)\n");
+      sb.append("  while k ~= nil do\n    pristine[k] = _rawget(_G, k)\n    k = _next(_G, k)\n  end\nend\n");
+      // The __index guard for '__jthrowable__' is required because luajava reads that global through the C API when a protected call fails;
+      // raising an error from within its native error handling would abort the JVM.
+      sb.append("local mt = {\n");
+      sb.append("  __newindex = function(t, k, v)\n    if allowed[k] then _rawset(t, k, v) end\n  end,\n");
+      sb.append("  __index = function(t, k)\n");
+      sb.append("    if k == \"__jthrowable__\" then return nil end\n");
+      sb.append("    _error('Script attempted to access nonexistent global variable \\'' .. _tostring(k) .. '\\'')\n");
+      sb.append("  end\n}\n");
+      // The re-arm function restores the metatable, removes any globals planted by a previous script (which may have stripped this protection),
+      // and resets the values of allow-listed globals to their pristine ones. All references are captured as upvalues so it cannot be defeated from a script.
+      sb.append(REARM_TEMP_GLOBAL + " = function()\n");
+      sb.append("  _setmetatable(_G, mt)\n");
+      sb.append("  local k2 = _next(_G)\nwhile k2 ~= nil do\nlocal nk = _next(_G, k2)\nif not allowed[k2] then _rawset(_G, k2, nil) end\nk2 = nk\nend\n");
+      sb.append("local pk = _next(pristine)\nwhile pk ~= nil do\nif allowed[pk] and pristine[pk] ~= nil then _rawset(_G, pk, pristine[pk]) end\npk = _next(pristine, pk)\nend\nend\n");
+      // Install the protection last so that the temporary global assignment above does not go through __newindex
+      sb.append("_setmetatable(_G, mt)\n");
+      String code = sb.toString();
+      byte[] bytes = code.getBytes(StandardCharsets.US_ASCII);
+      ByteBuffer buffer = ByteBuffer.allocateDirect(bytes.length);
+      buffer.put(bytes);
+      lua.load(buffer, "@globals_protection");
+      lua.pCall(0, 0);
+      // Move the re-arm function from its temporary global into the registry (raw C-level operations) and clear the temp slot
+      lua.getGlobal(REARM_TEMP_GLOBAL);
+      lua.setField(Lua51Consts.LUA_REGISTRYINDEX, REARM_FN_KEY);
+      lua.pushNil();
+      lua.setGlobal(REARM_TEMP_GLOBAL);
    }
 
-   private void luaSetErrorMetatable() {
-      lua.push(LUA_GLOBALSINDEX);
-      lua.newTable();
-      lua.push(LuaContext::luaProtectedTableError);
-      lua.setField(-2, "__index");
-      lua.setMetatable(-2);
-      lua.pop(1);
-   }
-
-   private static int luaNewIndexAllowList(Lua lua) {
-      int argc = lua.getTop();
-      if (argc != 3) {
-         lua.error("Wrong number of arguments to luaNewIndexAllowList"); // Same error Redis reports
+   /**
+    * Reinstalls the _G protection before each script execution. A script can strip the metatable (both {@code setmetatable} and
+    * {@code _G} are on the allow list) or plant arbitrary globals; this restores a clean state for the next user of this pooled context.
+    */
+   void reinstallGlobalsProtection() {
+      lua.getField(Lua51Consts.LUA_REGISTRYINDEX, REARM_FN_KEY);
+      int rc = lua.getLuaNatives().lua_pcall(lua.getPointer(), 0, 0, 0); // returns 0 on success in the Lua C API
+      if (rc != 0) {
+         // Fail closed: never run a script without the protection in place
+         lua.pop(1);
+         throw new IllegalStateException("Unable to reinstall RESP Lua globals protection");
       }
-      if (!lua.isTable(-3)) {
-         lua.error("first argument to luaNewIndexAllowList must be a table");
-      }
-      if (!lua.isString(-2) && !lua.isNumber(-2)) {
-         lua.error("Second argument to luaNewIndexAllowList must be a string or number");
-      }
-      String variableName = lua.toString(-2);
-      if (ALLOW_LISTS.contains(variableName)) {
-         lua.rawSet(-3);
-      } else if (!DENY_LIST.contains(variableName)) {
-         Log.SERVER.warnf("A key '%s' was added to Lua globals which is not on the globals allow list nor listed on the deny list.", variableName);
-      }
-      return 0;
-   }
-
-   private void luaSetAllowListProtection() {
-      lua.push(LUA_GLOBALSINDEX);
-      lua.newTable();
-      lua.push(LuaContext::luaNewIndexAllowList);
-      lua.setField(-2, "__newindex");
-      lua.setMetatable(-2);
-      lua.pop(1);
    }
 
    void registerScript(LuaCode code) {

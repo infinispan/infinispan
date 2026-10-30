@@ -14,6 +14,7 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.scripting.impl.ScriptMetadata;
 import org.infinispan.scripting.impl.ScriptWithMetadata;
+import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.server.resp.Resp3Handler;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.server.resp.serialization.SerializationHint;
@@ -46,6 +47,7 @@ public class LuaTaskEngine implements TaskEngine {
    }
 
    public CompletionStage<Void> eval(Resp3Handler handler, ChannelHandlerContext ctx, String code, String[] keys, String[] args, long flags) {
+      handler.checkPermission(AuthorizationPermission.EXEC);
       return handler.getBlockingManager().supplyBlocking(() -> {
          LuaContext luaCtx = pool.borrow();
          try {
@@ -75,6 +77,7 @@ public class LuaTaskEngine implements TaskEngine {
    }
 
    public CompletionStage<Void> evalSha(Resp3Handler handler, ChannelHandlerContext ctx, String sha, String[] keys, String[] args, long flags) {
+      handler.checkPermission(AuthorizationPermission.EXEC);
       return handler.getBlockingManager().supplyBlocking(() -> {
          LuaContext luaCtx = pool.borrow();
          ScriptWithMetadata script;
@@ -114,6 +117,9 @@ public class LuaTaskEngine implements TaskEngine {
       luaCtx.flags = flags;
       luaCtx.flags |= script.flags();
       ResponseWriter oldWriter = handler.writer(new LuaResponseWriter(luaCtx.lua));
+      // A previous user of this pooled context may have stripped the _G protection or planted globals; restore a clean state first.
+      // This must happen outside the try block below: on failure we fail closed without touching the transaction context.
+      luaCtx.reinstallGlobalsProtection();
       try {
          TransactionContext.startTransactionContext(ctx);
          runScript(luaCtx.lua, script, keys, args);
