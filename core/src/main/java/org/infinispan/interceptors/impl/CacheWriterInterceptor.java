@@ -188,7 +188,7 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
                !isProperWriter(rCtx, removeCommand, removeCommand.getKey())) {
             return rv;
          }
-         return delayedValue(removeEntry(rCtx, removeCommand.getKey(), removeCommand.getSegment(), removeCommand), rv);
+         return removeEntryAndReturn(rCtx, removeCommand, rv);
       });
    }
 
@@ -220,7 +220,9 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
          if (!isProperWriter(rCtx, cmd, key))
             return rv;
 
-         return delayedValue(cmd.isRemove() ? removeEntry(rCtx, key, cmd.getSegment(), cmd) : storeEntry(rCtx, key, cmd), rv);
+         return cmd.isRemove()
+               ? removeEntryAndReturn(rCtx, cmd, rv)
+               : delayedValue(storeEntry(rCtx, key, cmd), rv);
       });
    }
 
@@ -505,6 +507,18 @@ public class CacheWriterInterceptor extends JmxStatsCommandInterceptor {
       return stage;
    }
 
+   /**
+    * Removes the key targeted by {@code command} from the cache stores.
+    *
+    * @param ctx     the invocation context of {@code command}.
+    * @param command the command removing the key.
+    * @param rv      the return value of {@code command}.
+    * @return {@code rv}, or an {@link org.infinispan.interceptors.InvocationStage} that completes with {@code rv} once
+    *         the key is removed from the stores, or with the failure if the removal fails.
+    */
+   Object removeEntryAndReturn(InvocationContext ctx, DataWriteCommand command, Object rv) {
+      return delayedValue(removeEntry(ctx, command.getKey(), command.getSegment(), command), rv);
+   }
 
    MarshallableEntry<Object, Object> marshalledEntry(InvocationContext ctx, Object key) {
       InternalCacheValue<?> sv = entryFactory.getValueFromCtx(key, ctx);

@@ -106,8 +106,15 @@ public class RemoveCommand extends AbstractDataWriteCommand implements MetadataA
       // If skip cache load is set we don't know if the store had a null value for remove so we have to replicate still
       // Also if this is a backup write then we can't skip replication to stores
       // Also if the caller says we must replicte on remote, make sure we are local
-      return (!nonExistent || hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP |
-            FlagBitSets.SKIP_CACHE_LOAD) || (requireReplicateIfRemote && (ctx == null || !ctx.isOriginLocal())));
+      if (!nonExistent)
+         return true;
+
+      if (hasAnyFlag(FlagBitSets.SKIP_XSITE_BACKUP
+            | FlagBitSets.SKIP_CACHE_LOAD
+            | FlagBitSets.COMMAND_RETRY))
+         return true;
+
+      return requireReplicateIfRemote && (ctx == null || !ctx.isOriginLocal());
    }
 
    @Override
