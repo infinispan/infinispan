@@ -290,7 +290,7 @@ jobs:
   operator-main:
     needs: [images, release]
     if: ${{ !contains(needs.release.outputs.version, '.Dev') }}
-    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@cb6825409f7bfec682e3000acd7fe7bc4f83dfa1 # main
+    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@425d4247992296ba8ec024c6293e3468cb12a464 # main
     secrets: inherit
     with:
       image: quay.io/infinispan/server:${{ needs.release.outputs.version }}
