@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -26,6 +27,10 @@ import org.infinispan.util.function.TriConsumer;
  * @since 9.0
  */
 class LocalClusterExecutor implements ClusterExecutor {
+
+   // Numbers the traceId of every invocation dispatched.
+   private static final AtomicLong INVOCATION_ID = new AtomicLong();
+
    protected final Predicate<? super Address> predicate;
    protected final EmbeddedCacheManager manager;
    protected final long time;
@@ -53,13 +58,23 @@ class LocalClusterExecutor implements ClusterExecutor {
    @Override
    public void execute(Runnable command) {
       // We ignore time out since user can't ever even respond to it, so no reason to create extra fluff
-      blockingManager.runBlocking(command, getClass().getSimpleName() + "-execute");
+      Subject subject = Security.getSubject();
+      // Always hand the command to another blocking thread, even if this is already blocking.
+      blockingManager.dispatchBlocking(() -> {
+         Security.doAs(subject, command);
+         return null;
+      }, traceId("execute"));
    }
 
    @Override
    public CompletableFuture<Void> submit(Runnable command) {
       CompletableFuture<Void> future = new CompletableFuture<>();
-      blockingManager.runBlocking(command, getClass().getSimpleName() + "-submit")
+      Subject subject = Security.getSubject();
+      // Always hand the command to another blocking thread, even if this is already blocking.
+      blockingManager.dispatchBlocking(() -> {
+            Security.doAs(subject, command);
+            return null;
+         }, traceId("submit"))
             .whenComplete((ignore, t) -> {
                if (t != null) future.completeExceptionally(CompletableFutures.extractException(t));
                else future.complete(null);
@@ -90,8 +105,14 @@ class LocalClusterExecutor implements ClusterExecutor {
 
    <T> CompletableFuture<T> localInvocation(Function<? super EmbeddedCacheManager, ? extends T> function) {
       Subject subject = Security.getSubject();
-      return blockingManager.supplyBlocking(() -> (T) Security.doAs(subject, function, manager), getClass().getSimpleName() + "local-invocation")
-            .toCompletableFuture();
+      // Always hand the function to another blocking thread, even when this is already blocking.
+      return blockingManager.dispatchBlocking(() -> (T) Security.doAs(subject, function, manager),
+            traceId("local-invocation")).toCompletableFuture();
+   }
+
+   private String traceId(String operation) {
+      long id = INVOCATION_ID.incrementAndGet();
+      return getClass().getSimpleName() + "-" + operation + "-" + id;
    }
 
    protected ClusterExecutor sameClusterExecutor(Predicate<? super Address> predicate,
