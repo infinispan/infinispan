@@ -58,6 +58,7 @@ import org.infinispan.context.impl.FlagBitSets;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.Ownership;
+import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -72,6 +73,7 @@ import org.infinispan.metrics.impl.CustomMetricsSupplier;
 import org.infinispan.metrics.impl.helper.KeyMetrics;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManager.AccessMode;
+import org.infinispan.stats.HotKeyTracker;
 import org.infinispan.topology.CacheTopology;
 
 /**
@@ -91,6 +93,8 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
    @Inject GlobalConfiguration globalConfiguration;
    @Inject ComponentRef<PersistenceManager> persistenceManager;
    @Inject DistributionManager distributionManager;
+   @Inject KeyPartitioner keyPartitioner;
+   @Inject HotKeyTracker hotKeyTracker;
 
    private final AtomicLong startNanoseconds = new AtomicLong(0);
    private final AtomicLong resetNanoseconds = new AtomicLong(0);
@@ -122,6 +126,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
 
+      hotKeyTracker.recordRead(command.getKey(), command.getSegment());
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command,
             (rCtx, rCommand, rv, t) -> addDataRead(rv != null, start, getReadOwnership(rCommand.getSegment())));
@@ -133,6 +138,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
 
+      hotKeyTracker.recordRead(command.getKey(), command.getSegment());
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command,
             (rCtx, rCommand, rv, t) -> addDataRead(rv != null, start, getReadOwnership(rCommand.getSegment())));
@@ -151,6 +157,10 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       boolean statisticsEnabled = collectStatisticsForCommand(command);
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
+
+      for (Object key : command.getKeys()) {
+         hotKeyTracker.recordRead(key, keyPartitioner.getSegment(key));
+      }
 
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
@@ -181,6 +191,10 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
 
+      for (Object key : command.getMap().keySet()) {
+         hotKeyTracker.recordWrite(key, keyPartitioner.getSegment(key));
+      }
+
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          final long intervalNanos = timeService.timeDuration(start, TimeUnit.NANOSECONDS);
@@ -199,6 +213,10 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       boolean statisticsEnabled = collectStatisticsForCommand(command);
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
+
+      for (Object key : command.getKeys()) {
+         hotKeyTracker.recordWrite(key, keyPartitioner.getSegment(key));
+      }
 
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
@@ -233,6 +251,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
 
+      hotKeyTracker.recordWrite(command.getKey(), command.getSegment());
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          if (rv == null && rCommand.isSuccessful()) {
@@ -253,6 +272,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
 
+      hotKeyTracker.recordWrite(command.getKey(), command.getSegment());
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          if (rCommand.isSuccessful()) {
@@ -269,6 +289,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!getStatisticsEnabled())
          return invokeNextThenApply(ctx, command, StatsEnvelope::unpack);
 
+      hotKeyTracker.recordRead(command.getKey(), command.getSegment());
       long start = timeService.time();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          var envelope = (StatsEnvelope<?>) rv;
@@ -288,6 +309,10 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
 
       if (!getStatisticsEnabled())
          return invokeNextThenApply(ctx, command, StatsEnvelope::unpackStream);
+
+      for (Object key : command.getKeys()) {
+         hotKeyTracker.recordRead(key, keyPartitioner.getSegment(key));
+      }
 
       long start = timeService.time();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
@@ -323,6 +348,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!getStatisticsEnabled())
          return invokeNextThenApply(ctx, command, StatsEnvelope::unpack);
 
+      hotKeyTracker.recordWrite(command.getKey(), command.getSegment());
       long start = timeService.time();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          if (!(rv instanceof StatsEnvelope<?> envelope)) {
@@ -351,6 +377,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!getStatisticsEnabled())
          return invokeNextThenApply(ctx, command, StatsEnvelope::unpack);
 
+      hotKeyTracker.recordWrite(command.getKey(), command.getSegment());
       long start = timeService.time();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
          // FAIL_SILENTLY makes the return value null
@@ -399,6 +426,10 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
 
       if (!getStatisticsEnabled())
          return invokeNextThenApply(ctx, command, StatsEnvelope::unpackCollection);
+
+      for (Object key : command.getAffectedKeys()) {
+         hotKeyTracker.recordWrite(key, keyPartitioner.getSegment(key));
+      }
 
       long start = timeService.time();
       return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
@@ -462,6 +493,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       if (!statisticsEnabled || !ctx.isOriginLocal())
          return invokeNext(ctx, command);
 
+      hotKeyTracker.recordWrite(command.getKey(), command.getSegment());
       long start = timeService.time();
       return invokeNextAndFinally(ctx, command, (rCtx, rCommand, rv, t) -> {
          if (rCommand.isConditional()) {
@@ -879,6 +911,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       counters.reset(StripeB.removeTimesFieldUpdater);
       counters.reset(StripeB.removeMissesFieldUpdater);
       resetNanoseconds.set(timeService.time());
+      hotKeyTracker.reset();
 
       //todo [anistor] how do we reset Micrometer metrics ?
    }

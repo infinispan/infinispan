@@ -2498,4 +2498,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Creating cache '%s' in a mixed-version cluster (oldest member %s); " +
          "newer configuration elements may be omitted from the configuration replicated to older nodes and some features might be disabled", id = 730)
    void possibleConfigurationOmissionInMixedCluster(String cacheName, NodeVersion oldestMember);
+
+   @LogMessage(level = WARN)
+   @Message(value = "In cache %s, tracking %d keys occupies too much memory. Limiting the tracker size, the estimates might not be effective", id = 731)
+   void topKeysToTrackTooLarge(String cacheName, int k);
 }

@@ -399,10 +399,38 @@ public class CacheParser implements ConfigurationParser {
             this.parseCacheSecurity(reader, builder);
             break;
          }
+         case STATISTICS: {
+            this.parseStatistics(reader, holder);
+            break;
+         }
          default: {
             reader.handleAny(holder);
          }
       }
+   }
+
+   private void parseStatistics(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case ENABLED -> builder.statistics().enabled(ParseUtils.parseBoolean(reader, i, reader.getAttributeValue(i)));
+            default -> throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+
+      while (reader.inTag()) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case HOT_KEYS -> parseHotKeys(reader, builder);
+            default -> throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+   }
+
+   private void parseHotKeys(ConfigurationReader reader, ConfigurationBuilder builder) {
+      ParseUtils.parseAttributes(reader, builder.statistics().hotKeys());
+      ParseUtils.requireNoContent(reader);
    }
 
    private void parseMemory(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {

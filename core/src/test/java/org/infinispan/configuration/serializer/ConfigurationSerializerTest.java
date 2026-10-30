@@ -85,6 +85,64 @@ public class ConfigurationSerializerTest extends AbstractConfigurationSerializer
       assertThat(after.aliases()).isEmpty();
    }
 
+   public void testVersionedConversionWritesStatisticsAsAttributeBefore164() {
+      String name = "some-name";
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.LOCAL);
+      cb.statistics().enable().hotKeys().enabled(true).topK(250);
+      Configuration before = cb.build();
+
+      // A 16.3 node knows statistics only as a cache attribute.
+      // The <statistics> element and <hot-keys> arrived in 16.4.
+      String converted = before.toStringConfiguration(name, MediaType.APPLICATION_XML, true, new Schema("urn:infinispan:test:16.3", 16, 3));
+      assertThat(converted).doesNotContain("<statistics").doesNotContain("hot-keys");
+
+      ParserRegistry registry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
+      ConfigurationBuilderHolder holder = registry.parse(converted, MediaType.APPLICATION_XML);
+      Configuration after = holder.getNamedConfigurationBuilders().get(name).build();
+      assertThat(after.statistics().enabled()).isTrue();
+      assertThat(after.statistics().hotKeys().enabled()).isFalse();
+   }
+
+   public void testStatisticsWithoutHotKeysWrittenAsAttribute() {
+      String name = "some-name";
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.LOCAL);
+      cb.statistics().enable();
+      Configuration before = cb.build();
+
+      // Clients serialise without a target version and may send the result to an older server.
+      // Without hot-keys there is nothing that needs the 16.4 element, so the attribute form is kept.
+      String converted = before.toStringConfiguration(name);
+      assertThat(converted).doesNotContain("<statistics").contains("statistics=\"true\"");
+
+      ParserRegistry registry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
+      ConfigurationBuilderHolder holder = registry.parse(converted, MediaType.APPLICATION_XML);
+      Configuration after = holder.getNamedConfigurationBuilders().get(name).build();
+      assertThat(after.statistics().enabled()).isTrue();
+      assertThat(after.statistics().hotKeys().enabled()).isFalse();
+   }
+
+   public void testHotKeysWithUnsafeAttributesRoundTrip() {
+      String name = "some-name";
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.LOCAL);
+      cb.statistics().enable().hotKeys().enabled(true).topK(250);
+      // Written as an attribute of the cache element, it must not end up after the <statistics> child element.
+      cb.unsafe().unreliableReturnValues(true);
+      Configuration before = cb.build();
+
+      String converted = before.toStringConfiguration(name);
+
+      ParserRegistry registry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
+      ConfigurationBuilderHolder holder = registry.parse(converted, MediaType.APPLICATION_XML);
+      Configuration after = holder.getNamedConfigurationBuilders().get(name).build();
+      assertThat(after.unsafe().unreliableReturnValues()).isTrue();
+      assertThat(after.statistics().enabled()).isTrue();
+      assertThat(after.statistics().hotKeys().enabled()).isTrue();
+      assertThat(after.statistics().hotKeys().topK()).isEqualTo(250);
+   }
+
    @Override
    protected void compareExtraGlobalConfiguration(GlobalConfiguration before, GlobalConfiguration after) {
       for (var stackBefore : before.transport().jgroups().stacks()) {
