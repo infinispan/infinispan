@@ -30,6 +30,14 @@ In non-container environments, defaults to `-XX:MetaspaceSize=64M -Xms64m -Xmx51
 +
 In container environments, defaults to `-XX:MetaspaceSize=64M -XX:InitialRAMPercentage=50 -XX:MinRAMPercentage=70 -XX:MaxRAMPercentage=70 -XX:+UseCompressedOops`.
 
+`JAVA_OPTS_GC`::
+Garbage collector selection.
++
+In non-container environments, this variable is not set and the JVM uses its default garbage collector selection.
++
+In container environments, defaults to `-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational`.
+Generational Shenandoah provides low-latency concurrent garbage collection with support for compressed oops, which is better suited to CPU-constrained containers than the JVM's default selection.
+
 `JAVA_OPTS_DEBUG`::
 Debug options such as JPDA settings.
 This variable is only applied when you enable debug mode with the `--debug` flag or the `DEBUG` environment variable.
@@ -114,7 +122,10 @@ if [ "$JAVA_OPTS" = "" ]; then
    if [ "$JAVA_OPTS_MEMORY" = "" ]; then
      JAVA_OPTS_MEMORY="..."
    fi
-   JAVA_OPTS="$JAVA_OPTS_BASE $JAVA_OPTS_NETWORK $JAVA_OPTS_MEMORY $JAVA_OPTIONS"
+   if [ "$JAVA_OPTS_GC" = "" ]; then
+     # In containers, defaults to Generational Shenandoah
+   fi
+   JAVA_OPTS="$JAVA_OPTS_BASE $JAVA_OPTS_NETWORK $JAVA_OPTS_MEMORY $JAVA_OPTS_GC $JAVA_OPTIONS"
 else
    echo "JAVA_OPTS already set in environment; overriding default settings with values: $JAVA_OPTS"
 fi
@@ -146,11 +157,12 @@ bin/server.sh --debug 9797 --debug-client
 == Garbage collector selection
 
 The JVM includes several garbage collectors suited to different workloads.
-You can select a garbage collector by including the appropriate flag in `JAVA_OPTS_MEMORY`.
+In container environments, {brandname} defaults to Generational Shenandoah via the `JAVA_OPTS_GC` variable.
+You can override this by setting `JAVA_OPTS_GC` to select a different collector.
 
-=== G1GC (default)
+=== G1GC
 
-G1 is the default garbage collector and provides a good balance of throughput and latency for most workloads.
+G1 provides a good balance of throughput and latency for most workloads.
 It targets pause times under 200ms by default, which you can adjust with `-XX:MaxGCPauseMillis`.
 G1 is a generational collector that works well for heaps up to tens of gigabytes.
 
@@ -160,14 +172,14 @@ Linux::
 +
 [source,shell,options="nowrap",subs="attributes+"]
 ----
-export JAVA_OPTS_MEMORY="-XX:+UseG1GC -XX:MaxGCPauseMillis=150 -XX:MetaspaceSize=64M -Xms512m -Xmx4g"
+export JAVA_OPTS_GC="-XX:+UseG1GC -XX:MaxGCPauseMillis=150"
 ----
 
 Windows::
 +
 [source,shell,options="nowrap",subs="attributes+"]
 ----
-set "JAVA_OPTS_MEMORY=-XX:+UseG1GC -XX:MaxGCPauseMillis=150 -XX:MetaspaceSize=64M -Xms512m -Xmx4g"
+set "JAVA_OPTS_GC=-XX:+UseG1GC -XX:MaxGCPauseMillis=150"
 ----
 
 ====
@@ -186,14 +198,14 @@ Linux::
 +
 [source,shell,options="nowrap",subs="attributes+"]
 ----
-export JAVA_OPTS_MEMORY="-XX:+UseZGC -XX:MetaspaceSize=64M -Xms1g -Xmx8g"
+export JAVA_OPTS_GC="-XX:+UseZGC"
 ----
 
 Windows::
 +
 [source,shell,options="nowrap",subs="attributes+"]
 ----
-set "JAVA_OPTS_MEMORY=-XX:+UseZGC -XX:MetaspaceSize=64M -Xms1g -Xmx8g"
+set "JAVA_OPTS_GC=-XX:+UseZGC"
 ----
 
 ====
@@ -204,6 +216,7 @@ As of JDK 25 (https://openjdk.org/jeps/521[JEP 521]), generational Shenandoah is
 Generational mode reduces memory footprint and improves sustained throughput compared to the default non-generational mode.
 
 Choose Shenandoah for low-latency workloads, particularly on OpenJDK-based distributions.
+In container environments, {brandname} defaults to Generational Shenandoah.
 
 [NOTE]
 ====
@@ -216,14 +229,14 @@ Linux::
 +
 [source,shell,options="nowrap",subs="attributes+"]
 ----
-export JAVA_OPTS_MEMORY="-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational -XX:MetaspaceSize=64M -Xms1g -Xmx8g"
+export JAVA_OPTS_GC="-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational"
 ----
 
 Windows::
 +
 [source,shell,options="nowrap",subs="attributes+"]
 ----
-set "JAVA_OPTS_MEMORY=-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational -XX:MetaspaceSize=64M -Xms1g -Xmx8g"
+set "JAVA_OPTS_GC=-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational"
 ----
 
 ====
