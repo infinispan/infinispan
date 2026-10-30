@@ -84,7 +84,9 @@ public class UnlockFunction implements Function<EntryView.ReadWriteEntryView<Clu
             log.tracef("Lock[%s] Unlocked by reqId [%s] requestors %s", entryView.key().getName(), requestId, requesters);
          }
 
-         entryView.set(ClusteredLockValue.INITIAL_STATE);
+         // The waiters are kept in the released value so that the nodes that are waiting for this lock can be
+         // notified. They are discarded by the next acquisition, which starts a new ownership epoch.
+         entryView.set(lockValue.release());
          return Boolean.TRUE;
       }
 

@@ -7,6 +7,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.Lifecycle;
+import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
@@ -24,13 +25,25 @@ import org.infinispan.lock.impl.ClusteredLockModuleLifecycle;
 import org.infinispan.lock.impl.entries.ClusteredLockKey;
 import org.infinispan.lock.impl.entries.ClusteredLockState;
 import org.infinispan.lock.impl.entries.ClusteredLockValue;
+import org.infinispan.lock.impl.lock.ClusteredLockFilter;
 import org.infinispan.lock.impl.lock.ClusteredLockImpl;
 import org.infinispan.lock.logging.Log;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
+import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
+import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.util.ByteString;
 
 /**
  * The Embedded version for the lock cluster manager
+ * <p>
+ * A single cluster listener is registered per node, no matter how many locks the node uses. The listener is filtered
+ * with the identifier of the local node, see {@link ClusteredLockValue#waiterId(org.infinispan.remoting.transport.Address)},
+ * so that it only receives the events of the locks this node is waiting for. Those events are then routed to the
+ * corresponding {@link ClusteredLockImpl}. This keeps the lock notification traffic linear with the number of nodes
+ * instead of broadcasting a listener registration and a removal for every lock instance.
  *
  * @author Katia Aresti, karesti@redhat.com
  * @since 9.2
@@ -45,9 +58,11 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager, Lifec
    public static final String IS_DEFINED = "isDefined";
    public static final String IS_LOCKED = "isLocked";
 
-   private final ConcurrentHashMap<String, ClusteredLock> locks = new ConcurrentHashMap<>();
+   private final ConcurrentHashMap<String, ClusteredLockImpl> locks = new ConcurrentHashMap<>();
    private final ClusteredLockManagerConfiguration config;
+   private final ClusteredLockNotificationListener notificationListener = new ClusteredLockNotificationListener();
    private volatile boolean started = false;
+   private volatile boolean notificationListenerRegistered = false;
 
    @Inject
    EmbeddedCacheManager cacheManager;
@@ -78,6 +93,14 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager, Lifec
          log.trace("Stopping EmbeddedClusteredLockManager");
 
       started = false;
+      synchronized (this) {
+         if (notificationListenerRegistered) {
+            cache.removeListener(notificationListener);
+            notificationListenerRegistered = false;
+         }
+      }
+      locks.values().forEach(ClusteredLockImpl::stop);
+      locks.clear();
       cache = null;
    }
 
@@ -104,7 +127,8 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager, Lifec
 
       ClusteredLockKey key = new ClusteredLockKey(ByteString.fromString(name));
       ClusteredLockValue clv = cache().putIfAbsent(key, ClusteredLockValue.INITIAL_STATE);
-      locks.putIfAbsent(name, new ClusteredLockImpl(name, key, cache, this));
+      registerNotificationListener();
+      locks.putIfAbsent(name, new ClusteredLockImpl(name, key, cache(), this));
       return clv == null;
    }
 
@@ -123,8 +147,30 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager, Lifec
       }
       ClusteredLockKey key = new ClusteredLockKey(ByteString.fromString(lockName));
       cache().putIfAbsent(key, ClusteredLockValue.INITIAL_STATE);
-      ClusteredLockImpl lock = new ClusteredLockImpl(lockName, key, cache(), this);
-      return lock;
+      registerNotificationListener();
+      return new ClusteredLockImpl(lockName, key, cache(), this);
+   }
+
+   /**
+    * Registers, the first time a lock is used in this node, the single cluster listener that notifies all the locks
+    * this node is waiting for.
+    */
+   private void registerNotificationListener() {
+      if (notificationListenerRegistered)
+         return;
+
+      synchronized (this) {
+         if (notificationListenerRegistered)
+            return;
+
+         ClusteredLockFilter filter = new ClusteredLockFilter(ClusteredLockValue.waiterId(cacheManager.getAddress()));
+         if (log.isTraceEnabled())
+            log.tracef("Registering the clustered lock listener with %s", filter);
+
+         cache().addFilteredListener(notificationListener, filter, null,
+               Util.asSet(CacheEntryModified.class, CacheEntryRemoved.class));
+         notificationListenerRegistered = true;
+      }
    }
 
    @Override
@@ -159,10 +205,9 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager, Lifec
       if (log.isTraceEnabled())
          log.tracef("LOCK[%s] remove has been called", name);
 
-      ClusteredLockImpl clusteredLock = (ClusteredLockImpl) locks.get(name);
+      ClusteredLockImpl clusteredLock = locks.remove(name);
       if (clusteredLock != null) {
          clusteredLock.stop();
-         locks.remove(name);
       }
 
       return cache()
@@ -179,10 +224,9 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager, Lifec
       if (log.isTraceEnabled())
          log.tracef("LOCK[%s] remove sync has been called", name);
 
-      ClusteredLockImpl clusteredLock = (ClusteredLockImpl) locks.get(name);
+      ClusteredLockImpl clusteredLock = locks.remove(name);
       if (clusteredLock != null) {
          clusteredLock.stop();
-         locks.remove(name);
       }
 
       return cache().remove(new ClusteredLockKey(ByteString.fromString(name))) != null;
@@ -193,8 +237,9 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager, Lifec
          log.tracef("LOCK[%s] forceRelease has been called", name);
 
       ClusteredLockKey lockLey = new ClusteredLockKey(ByteString.fromString(name));
+      // The waiters are kept so that the nodes waiting for the lock are notified of the forced release
       return cache()
-            .computeIfPresentAsync(lockLey, (k, v) -> ClusteredLockValue.INITIAL_STATE)
+            .computeIfPresentAsync(lockLey, (k, v) -> v.release())
             .thenApply(clv -> clv != null && clv.getState() == ClusteredLockState.RELEASED);
    }
 
@@ -225,6 +270,34 @@ public class EmbeddedClusteredLockManager implements ClusteredLockManager, Lifec
 
    public ScheduledExecutorService getScheduledExecutorService() {
       return scheduledExecutorService;
+   }
+
+   private ClusteredLockImpl lockFor(ClusteredLockKey key) {
+      return locks.get(key.getName().toString());
+   }
+
+   /**
+    * Single cluster listener of this node. It is filtered with the local node identifier, so it only receives the
+    * events of the locks this node is waiting for.
+    */
+   @Listener(clustered = true)
+   class ClusteredLockNotificationListener {
+
+      @CacheEntryModified
+      public void entryModified(CacheEntryModifiedEvent<ClusteredLockKey, ClusteredLockValue> event) {
+         ClusteredLockImpl lock = lockFor(event.getKey());
+         if (lock != null) {
+            lock.handleLockReleased(event.getValue());
+         }
+      }
+
+      @CacheEntryRemoved
+      public void entryRemoved(CacheEntryRemovedEvent<ClusteredLockKey, ClusteredLockValue> event) {
+         ClusteredLockImpl lock = lockFor(event.getKey());
+         if (lock != null) {
+            lock.handleLockRemoved();
+         }
+      }
    }
 
    @Override
