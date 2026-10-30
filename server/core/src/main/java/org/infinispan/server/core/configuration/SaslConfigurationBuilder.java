@@ -91,20 +91,19 @@ public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
    }
 
    private Map<String, String> getMechProperties() {
-      if (mechProperties.isEmpty()) {
-         mechProperties = new HashMap<>();
-         List<QOP> qops = attributes.attribute(SaslConfiguration.QOP).get();
-         if (!qops.isEmpty()) {
-            String qopsValue = qops.stream().map(QOP::toString).collect(Collectors.joining(","));
-            mechProperties.put(Sasl.QOP, qopsValue);
-         }
-         List<Strength> strengths = attributes.attribute(SaslConfiguration.STRENGTH).get();
-         if (!strengths.isEmpty()) {
-            String strengthsValue = strengths.stream().map(Strength::toString).collect(Collectors.joining(","));
-            mechProperties.put(Sasl.STRENGTH, strengthsValue);
-         }
-         mechProperties.putAll(attributes.attribute(SaslConfiguration.SASL_PROPERTIES).get());
+      Map<String, String> properties = new HashMap<>(mechProperties);
+      List<QOP> qops = attributes.attribute(SaslConfiguration.QOP).get();
+      if (!qops.isEmpty()) {
+         String qopsValue = qops.stream().map(QOP::toString).collect(Collectors.joining(","));
+         properties.put(Sasl.QOP, qopsValue);
       }
+      List<Strength> strengths = attributes.attribute(SaslConfiguration.STRENGTH).get();
+      if (!strengths.isEmpty()) {
+         String strengthsValue = strengths.stream().map(Strength::toString).collect(Collectors.joining(","));
+         properties.put(Sasl.STRENGTH, strengthsValue);
+      }
+      properties.putAll(attributes.attribute(SaslConfiguration.SASL_PROPERTIES).get());
+      mechProperties = properties;
       return mechProperties;
    }
 
@@ -136,9 +135,10 @@ public class SaslConfigurationBuilder implements Builder<SaslConfiguration> {
       if (saslAuthenticator == null) {
          throw Log.CONFIG.saslAuthenticationProvider();
       }
+      Map<String, String> props = getMechProperties();
       Set<String> allMechs = new LinkedHashSet<>(Arrays.asList(ExternalSaslServerFactory.NAMES));
       for (SaslServerFactory factory : SaslUtils.getSaslServerFactories(this.getClass().getClassLoader(), null, true)) {
-         allMechs.addAll(Arrays.asList(factory.getMechanismNames(mechProperties)));
+         allMechs.addAll(Arrays.asList(factory.getMechanismNames(props)));
       }
       Attribute<Set<String>> mechanismAttr = attributes.attribute(SaslConfiguration.MECHANISMS);
       Set<String> allowedMechs = mechanismAttr.get();
