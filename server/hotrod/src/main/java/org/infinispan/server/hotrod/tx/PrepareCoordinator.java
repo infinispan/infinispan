@@ -1,11 +1,8 @@
 package org.infinispan.server.hotrod.tx;
 
-import static org.infinispan.remoting.transport.impl.VoidResponseCollector.validOnly;
-
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletionStage;
 
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
@@ -19,6 +16,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.tx.XidImpl;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -105,11 +103,7 @@ public class PrepareCoordinator {
       CommandsFactory factory = componentRegistry.getCommandsFactory();
       try {
          RollbackCommand rollbackCommand = factory.buildRollbackCommand(gtx);
-         rollbackCommand.setTopologyId(rpcManager.getTopologyId());
-         CompletionStage<Void> cs = rpcManager
-               .invokeCommandOnAll(rollbackCommand, validOnly(), rpcManager.getSyncRpcOptions());
-         rollbackCommand.invokeAsync(componentRegistry).toCompletableFuture().join();
-         cs.toCompletableFuture().join();
+         CompletionStages.join(TxCommandInvoker.invokeInCluster(componentRegistry, rollbackCommand, rpcManager.getTopologyId()));
       } catch (Throwable throwable) {
          throw Util.rewrapAsCacheException(CompletableFutures.extractException(throwable));
       } finally {
@@ -216,9 +210,7 @@ public class PrepareCoordinator {
       try {
          //only pessimistic tx are committed in 1PC and it doesn't use versions.
          PrepareCommand command = factory.buildPrepareCommand(gtx, modifications, true);
-         CompletionStage<Void> cs = rpcManager.invokeCommandOnAll(command, validOnly(), rpcManager.getSyncRpcOptions());
-         command.invokeAsync(componentRegistry).toCompletableFuture().join();
-         cs.toCompletableFuture().join();
+         CompletionStages.join(TxCommandInvoker.invokeInCluster(componentRegistry, command, rpcManager.getTopologyId()));
          forgetTransaction(gtx, rpcManager, factory);
          return loggingCompleted(true) == Status.OK ?
                 XAResource.XA_OK :
