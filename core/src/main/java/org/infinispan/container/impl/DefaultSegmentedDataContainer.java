@@ -211,7 +211,9 @@ public class DefaultSegmentedDataContainer<K, V> extends AbstractInternalDataCon
    public int sizeIncludingExpired(IntSet segment) {
       int size = 0;
       for (PrimitiveIterator.OfInt iter = segment.iterator(); iter.hasNext(); ) {
-         ConcurrentMap<K, InternalCacheEntry<K, V>> map = maps.get(iter.nextInt());
+         int segmentId = iter.nextInt();
+         // The segments can be all the configured ones, even if this container was created with fewer
+         ConcurrentMap<K, InternalCacheEntry<K, V>> map = segmentId < maps.length() ? maps.get(segmentId) : null;
          size += map != null ? map.size() : 0;
          // Overflow
          if (size < 0) {
