@@ -28,6 +28,11 @@ public class CounterEventDispatcher extends EventDispatcher<HotRodCounterEvent> 
    }
 
    @Override
+   public CompletableFuture<Void> executeFailover(SocketAddress failedAddress) {
+      return failover.get();
+   }
+
+   @Override
    protected void invokeEvent(HotRodCounterEvent event) {
       if (log.isTraceEnabled()) {
          log.tracef("Received counter event %s", event);

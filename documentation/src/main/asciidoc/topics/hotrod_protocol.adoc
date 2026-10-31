@@ -21,6 +21,7 @@ the custom TCP client/server Hot Rod protocol.
 * link:#hot_rod_protocol_3_1[Hot Rod Protocol 3.1 (Infinispan 12.0)]
 * link:#hot_rod_protocol_4_0[Hot Rod Protocol 4.0 (Infinispan 14.0)]
 * link:#hot_rod_protocol_4_1[Hot Rod Protocol 4.1 (Infinispan 15.1)]
+* link:#hot_rod_protocol_4_2[Hot Rod Protocol 4.2 (Infinispan 16.4)]
 
 == Hot Rod Protocol 1.0
 
@@ -117,6 +118,7 @@ In this particular case, this is +10+
 +0x37+ = getStream (since 2.6) +
 +0x39+ = putStream (since 2.6) +
 +0x43+ = addBloomFilterClientListener (since 3.1) +
++0x47+ = addPrimaryNearCacheListener (since 4.2) +
 | Cache Name Length   | vInt       | Length of cache name. If the passed
 length is +0+ (followed by no cache name), the operation will interact with
 the default cache.
@@ -196,6 +198,8 @@ for which the response is sent.
 +0x36+ = iterationEnd (since 2.3) +
 +0x38+ = getStream (since 2.6) +
 +0x3A+ = putStream (since 2.6) +
++0x48+ = addPrimaryNearCacheListener (since 4.2) +
++0x4A+ = cacheTopologyChangedEvent (since 4.2) +
 +0x50+ = error (since 1.0) +
 | Status                 | 1 byte     | Status of the response, possible values: +
 +0x00+ = No error +
@@ -3574,3 +3578,60 @@ Response (0xEA):
 
 | Header              | variable   | Response header
 |==============================================================================
+
+== Hot Rod Protocol 4.2
+
+.Infinispan Versions
+TIP: This version of the protocol is implemented since Infinispan 16.4
+
+This version introduces per-node primary listeners for near caches. Rather than establishing a single dedicated cluster-wide listener connection where the receiving server must forward listener events across inter-node cluster RPCs, Hot Rod 4.2 allows clients with hash-distribution awareness to register listeners directly with each primary server for its owned segments. This eliminates inter-node event forwarding overhead and avoids cluster-wide near cache flushes during topology changes.
+
+.AddPrimaryNearCacheListener
+
+[NOTE]
+====
+This operation is used internally by the {brandname} Hot Rod client to implement near-cache primary mode.
+It is not exposed as a user-facing listener type and cannot be used directly with `@ClientListener` or `addClientListener()`.
+====
+
+Registers a primary-only near cache client listener with the target server.
+The server sends cache modification, removal, and expiration events only for keys where that server is the primary owner.
+
+Request (0x47):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Request header
+| Listener ID         | byte array | Unique identifier for the client listener (ranged byte array).
+| Bloom Filter Bits   | vInt       | Number of bits to configure for the server-side Bloom filter, or +0+ if Bloom filters are disabled.
+|==============================================================================
+
+Response (0x48):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Response header
+| Response status     | 1 byte     |
++0x00+ = success +
++0x01+ = error +
+|==============================================================================
+
+.CacheTopologyChangedEvent
+
+Sent from the server to registered primary near cache listeners when the cache topology changes (such as node join or leave), providing updated hash topology information without tearing down established connections.
+
+Event (0x4A):
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Event header (messageId=0, op=0x4A)
+| Listener ID         | byte array | Unique identifier for the client listener (ranged byte array).
+| Topology Response   | variable   | Hash topology response containing the new topology ID, cluster members, and segment ownership mappings.
+|==============================================================================
+

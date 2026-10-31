@@ -54,6 +54,7 @@ public class InvalidatedFailoverNearCacheTest extends MultiHotRodServersTest {
             HotRodClientTestingUtil.newRemoteConfigurationBuilder();
       for (HotRodServer server : servers)
          clientBuilder.addServer().host(server.getHost()).port(server.getPort());
+      clientBuilder.version(org.infinispan.client.hotrod.ProtocolVersion.PROTOCOL_VERSION_41);
       clientBuilder.balancingStrategy(StickyServerLoadBalancingStrategy.class);
       clientBuilder.remoteCache("").nearCacheMode(getNearCacheMode());
       return AssertsNearCache.create(this.cache(0), clientBuilder);
