@@ -73,7 +73,10 @@ public class IracExecutor implements Runnable {
       public CompletionStage<Void> apply(Void unused) {
          hasPendingRunnable.set(false);
          try {
-            return runnable.get();
+            return runnable.get().exceptionally(e -> {
+               log.warnFailedIracTask(e);
+               return null;
+            });
          } catch (Throwable e) {
             log.unexpectedErrorFromIrac(e);
             return CompletableFutures.completedNull();

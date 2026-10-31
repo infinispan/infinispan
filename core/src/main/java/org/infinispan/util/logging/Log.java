@@ -2078,6 +2078,11 @@ public interface Log extends BasicLogger {
    @Description("During conflict resolution for cross-site replication an unexpected error occurred. To ensure data consistency between backup locations you should initiate state transfer to synchronize data between clusters.")
    void unexpectedErrorFromIrac(@Cause Throwable t);
 
+   @LogMessage(level = WARN)
+   @Message(value = "[IRAC] Background task failed; subsequent tasks will continue.", id = 731)
+   @Description("An asynchronous cross-site replication task failed. The executor will continue with the next scheduled task.")
+   void warnFailedIracTask(@Cause Throwable t);
+
    @LogMessage(level = DEBUG)
    @Message(value = "Cannot obtain cache '%s' as it is in FAILED state. Please check the configuration", id = 609)
    void cannotObtainFailedCache(String name, @Cause Throwable t);

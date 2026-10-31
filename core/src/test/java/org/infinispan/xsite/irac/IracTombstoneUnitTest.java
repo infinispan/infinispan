@@ -1,6 +1,7 @@
 package org.infinispan.xsite.irac;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Arrays;
@@ -8,11 +9,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Queue;
 import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -272,6 +275,24 @@ public class IracTombstoneUnitTest extends AbstractInfinispanTest {
       assertEquals(32, data.delay);
 
       manager.stop();
+   }
+
+   public void testExecutorContinuesAfterFailedTask() {
+      AtomicInteger invocationCount = new AtomicInteger();
+      CompletableFuture<Void> firstTask = new CompletableFuture<>();
+      IracExecutor executor = new IracExecutor(() -> invocationCount.incrementAndGet() == 1
+            ? firstTask
+            : CompletableFutures.completedNull());
+      executor.setExecutor(new WithinThreadExecutor());
+
+      executor.run();
+      executor.run();
+      assertEquals(1, invocationCount.get());
+
+      firstTask.completeExceptionally(new IllegalStateException("simulated RPC failure"));
+
+      assertEquals(2, invocationCount.get());
+      assertFalse(executor.hasPendingRunnable.get());
    }
 
    private static void insertTombstones(int targetSize, DefaultIracTombstoneManager manager, IracMetadata metadata) {
