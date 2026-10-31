@@ -141,6 +141,9 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    private Runnable codecChangeListener;
    // Guards concurrent calls to switchToClusterListenerMode / switchToPrimaryListenerMode.
    private final AtomicBoolean modeSwitch = new AtomicBoolean(false);
+   // Set when a mode transition was requested while another one was in progress, so that the transition is
+   // re-evaluated once the in-progress one completes instead of being dropped.
+   private final AtomicBoolean modeCheckPending = new AtomicBoolean(false);
 
    InvalidatedNearRemoteCache(InternalRemoteCache<K, V> remoteCache, ClientStatistics clientStatistics,
                               NearCacheService<K, V> nearcache) {
@@ -445,6 +448,15 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
       if (v == null || v.value() == null) {
          return false;
       }
+      if (isPrimaryMode()) {
+         // Switched to primary mode while this cluster read was in flight; the near cache was cleared during
+         // the switch and this value could be stale.
+         if (trace) {
+            log.tracef("Unable to cache returned value for key %s as the near cache switched to primary mode",
+                  Util.toStr(key));
+         }
+         return false;
+      }
       if (prevVersion != getCurrentVersion()) {
          if (trace) {
             log.tracef("Unable to cache returned value for key %s as operation was performed during a bloom filter update",
@@ -565,7 +577,16 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
 
    @Override
    public void removeClientListener(Object listener) {
-      if (isPrimaryMode() && Objects.equals(listener, this.nearListener)) {
+      boolean removingNearListener = Objects.equals(listener, this.nearListener);
+      if (removingNearListener) {
+         // Forget the listener regardless of the current mode so a later codec change cannot re-install it
+         this.nearListener = null;
+         if (codecChangeListener != null) {
+            getDispatcher().removeCodecChangeListener(codecChangeListener);
+            codecChangeListener = null;
+         }
+      }
+      if (removingNearListener && isPrimaryMode()) {
          inPrimaryMode.set(false);
          getDispatcher().removeTopologyListener(getName(), topologyListener);
          byte[] lid = this.nearListenerId;
@@ -587,7 +608,6 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
          }
          serverListenerStates.clear();
          lastSeenTopologyId.set(-1);
-         this.nearListener = null;
          this.nearListenerId = null;
          return;
       }
@@ -638,21 +658,29 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
          return CompletableFutures.completedNull();
       }
       if (isPrimaryMode()) {
-         byte[] bloomFilterBits = nearcache.calculateBloomBits();
-         List<CompletableFuture<Void>> stages = new ArrayList<>();
-         CacheOperationsFactory operationsFactory = getOperationsFactory();
+         // Make the versions odd first so reads cannot populate the near cache while the bits are calculated
+         List<ServerListenerState> toUpdate = new ArrayList<>();
+         List<SocketAddress> addresses = new ArrayList<>();
          for (Map.Entry<SocketAddress, ServerListenerState> entry : serverListenerStates.entrySet()) {
             ServerListenerState state = entry.getValue();
             if (state.isActive() && state.incrementVersionIfEven()) {
-               HotRodOperation<Void> op = operationsFactory.newUpdateBloomFilterOperation(bloomFilterBits);
-               CompletionStage<Void> stage = getDispatcher().executeOnSingleAddress(op, entry.getKey())
-                     .whenComplete((ignore, t) -> state.incrementVersion());
-               stages.add(stage.toCompletableFuture());
+               toUpdate.add(state);
+               addresses.add(entry.getKey());
             } else if (trace && state.isActive()) {
                log.tracef("Already have a concurrent bloom filter update for server %s - skipping", entry.getKey());
             }
          }
-         return CompletableFuture.allOf(stages.toArray(new CompletableFuture[0]));
+         if (toUpdate.isEmpty()) {
+            return CompletableFutures.completedNull();
+         }
+         // Calculating the bloom bits iterates the whole near cache, so don't do it on the (possibly event loop) caller thread
+         CompletableFuture<byte[]> bloomBits = CompletableFuture.supplyAsync(nearcache::calculateBloomBits,
+               getDispatcher().getExecutorService());
+         bloomBits.exceptionally(t -> {
+            toUpdate.forEach(ServerListenerState::incrementVersion);
+            return null;
+         });
+         return bloomBits.thenCompose(bits -> sendPrimaryBloomFilters(bits, toUpdate, addresses));
       }
       // Not being able to increment the even version means we have a concurrent update - so skip
       if (!incrementBloomVersionIfEven()) {
@@ -662,16 +690,32 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
          }
          return CompletableFuture.completedFuture(null);
       }
-      byte[] bloomFilterBits = nearcache.calculateBloomBits();
+      // The version is odd at this point, so reads cannot populate the near cache while the bits are calculated
+      CompletionStage<Void> update = CompletableFuture.supplyAsync(nearcache::calculateBloomBits, getDispatcher().getExecutorService())
+            .thenCompose(bloomFilterBits -> {
+               if (trace) {
+                  log.tracef("Sending bloom filter bits(%s) update to %s for listenerId(%s)",
+                        Util.printArray(bloomFilterBits), listenerChannel,
+                        Util.printArray(nearcache.getListenerId()));
+               }
+               HotRodOperation<Void> op = getOperationsFactory().newUpdateBloomFilterOperation(bloomFilterBits);
+               return getDispatcher().executeOnSingleAddress(op, ChannelRecord.of(listenerChannel));
+            });
+      return incrementBloomVersionUponCompletion(update);
+   }
 
-      if (trace) {
-         log.tracef("Sending bloom filter bits(%s) update to %s for listenerId(%s)",
-               Util.printArray(bloomFilterBits), listenerChannel,
-               Util.printArray(nearcache.getListenerId()));
-      }
+   private CompletionStage<Void> sendPrimaryBloomFilters(byte[] bloomFilterBits, List<ServerListenerState> states,
+                                                         List<SocketAddress> addresses) {
+      List<CompletableFuture<Void>> stages = new ArrayList<>();
       CacheOperationsFactory operationsFactory = getOperationsFactory();
-      HotRodOperation<Void> op = operationsFactory.newUpdateBloomFilterOperation(bloomFilterBits);
-      return incrementBloomVersionUponCompletion(getDispatcher().executeOnSingleAddress(op, ChannelRecord.of(listenerChannel)));
+      for (int i = 0; i < states.size(); i++) {
+         ServerListenerState state = states.get(i);
+         HotRodOperation<Void> op = operationsFactory.newUpdateBloomFilterOperation(bloomFilterBits);
+         CompletionStage<Void> stage = getDispatcher().executeOnSingleAddress(op, addresses.get(i))
+               .whenComplete((ignore, t) -> state.incrementVersion());
+         stages.add(stage.toCompletableFuture());
+      }
+      return CompletableFuture.allOf(stages.toArray(new CompletableFuture[0]));
    }
 
    public SocketAddress getBloomListenerAddress() {
@@ -703,8 +747,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
       // Use compareAndSet so that a concurrent call (e.g. from a reconnect) does not proceed
       // into setup simultaneously; the second caller simply falls back to the cluster listener.
       if (!modeSwitch.compareAndSet(false, true)) {
-         Channel channel = installClusterListener(listener, bloomBits);
-         return bloomBits > 0 ? channel : null;
+         return installClusterListener(listener, bloomBits);
       }
       try {
          if (canUsePrimaryMode()) {
@@ -713,23 +756,37 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
                   getOperationsFactory().newAddPrimaryNearCacheListenerOperation(listener, nearListenerId, bloomBits), this);
             getDispatcher().getClientListenerNotifier().addDispatcher(nearDispatcher);
             getDispatcher().addTopologyListener(getName(), topologyListener);
+            Channel primaryChannel = null;
             try {
                Channel channel = registerPrimaryListeners(listener, nearListenerId, bloomBits);
                if (channel != null && hasActivePrimaryListeners()) {
-                  inPrimaryMode.set(true);
-                  return channel;
+                  primaryChannel = channel;
+               } else {
+                  log.noPrimaryListenersEstablished(getName());
                }
-               log.noPrimaryListenersEstablished(getName());
             } catch (Throwable t) {
                log.primaryListenerRegistrationFailed(getName(), t);
             }
-            // Have to fallback to regular listener mode (permanent disable — initial setup failed)
-            cleanupPrimaryMode();
+            if (primaryChannel != null) {
+               // An older-protocol server may have connected while registering. The codec change callback ignored it
+               // as we were not in primary mode yet, so verify before enabling primary mode.
+               if (canUsePrimaryMode()) {
+                  inPrimaryMode.set(true);
+                  return primaryChannel;
+               }
+               // Not a permanent failure: primary mode can be re-entered once all servers support it
+               tearDownPrimaryListeners();
+            } else {
+               // Have to fallback to regular listener mode (permanent disable — initial setup failed)
+               cleanupPrimaryMode();
+            }
          }
-         Channel channel = installClusterListener(listener, bloomBits);
-         return bloomBits > 0 ? channel : null;
+         return installClusterListener(listener, bloomBits);
       } finally {
+         modeCheckPending.set(false);
          modeSwitch.set(false);
+         // Reconcile with any codec change that happened while the initial setup was in progress
+         onCodecChange();
       }
    }
 
@@ -751,13 +808,15 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
 
    /**
     * Registers a cluster-wide (non-primary) near cache listener and updates the tracked listener ID.
+    *
+    * @return the channel holding the listener if bloom filters are enabled (updates and reads must use it), otherwise {@code null}
     */
    private Channel installClusterListener(Object listener, int bloomBits) {
       ClientListenerOperation op = getOperationsFactory().newAddNearCacheListenerOperation(listener, bloomBits);
       Channel channel = getDispatcher().await(getDispatcher().executeAddListener(op));
       this.nearListenerId = op.listenerId;
       nearcache.updateListenerId(op.listenerId);
-      return channel;
+      return bloomBits > 0 ? channel : null;
    }
 
    /**
@@ -818,22 +877,18 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
       ClientListenerOperation op = getOperationsFactory().newAddPrimaryNearCacheListenerOperation(listener, listenerId, bloomBits);
       return getDispatcher().executeAddListener(op, server).thenCompose(ch -> {
          if (bloomBits > 0) {
-            byte[] currentBloomBits = nearcache.calculateBloomBits();
-            if (currentBloomBits != null) {
-               HotRodOperation<Void> updateOp = getOperationsFactory().newUpdateBloomFilterOperation(currentBloomBits);
-               return getDispatcher().executeOnSingleAddress(updateOp, ChannelRecord.of(ch))
-                     .thenApply(ignore -> {
-                        state.setChannel(ch);
-                        state.setActive(true);
-                        state.stopRegistering();
-                        return ch;
-                     });
-            }
+            // This runs on the event loop, so calculate the bloom bits (iterates the whole near cache) elsewhere
+            return CompletableFuture.supplyAsync(nearcache::calculateBloomBits, getDispatcher().getExecutorService())
+                  .thenCompose(currentBloomBits -> {
+                     if (currentBloomBits == null) {
+                        return CompletableFuture.completedFuture(markListenerActive(state, ch));
+                     }
+                     HotRodOperation<Void> updateOp = getOperationsFactory().newUpdateBloomFilterOperation(currentBloomBits);
+                     return getDispatcher().executeOnSingleAddress(updateOp, ChannelRecord.of(ch))
+                           .thenApply(ignore -> markListenerActive(state, ch));
+                  });
          }
-         state.setChannel(ch);
-         state.setActive(true);
-         state.stopRegistering();
-         return CompletableFuture.completedFuture(ch);
+         return CompletableFuture.completedFuture(markListenerActive(state, ch));
       }).whenComplete((ch, t) -> {
          if (t != null) {
             state.setActive(false);
@@ -844,6 +899,37 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
             }
          }
       });
+   }
+
+   private static Channel markListenerActive(ServerListenerState state, Channel ch) {
+      state.setChannel(ch);
+      state.setActive(true);
+      state.stopRegistering();
+      return ch;
+   }
+
+   /**
+    * Attempts to acquire the mode switch guard. If it is held, records that a transition was requested so
+    * it is re-evaluated by {@link #releaseModeSwitch()} instead of being dropped.
+    */
+   private boolean acquireModeSwitch() {
+      if (modeSwitch.compareAndSet(false, true)) {
+         return true;
+      }
+      modeCheckPending.set(true);
+      // The holder may have released between the failed CAS and setting the flag
+      if (modeSwitch.compareAndSet(false, true)) {
+         modeCheckPending.set(false);
+         return true;
+      }
+      return false;
+   }
+
+   private void releaseModeSwitch() {
+      modeSwitch.set(false);
+      if (modeCheckPending.compareAndSet(true, false)) {
+         onCodecChange();
+      }
    }
 
    /**
@@ -876,7 +962,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
     * The near cache is cleared to ensure no stale entries remain from the transition window.
     */
    private void switchToClusterListenerMode() {
-      if (!modeSwitch.compareAndSet(false, true)) {
+      if (!acquireModeSwitch()) {
          return;
       }
       try {
@@ -892,10 +978,10 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
          nearcache.clear();
          // Install a fresh cluster-wide listener.
          if (listener != null) {
-            installClusterListener(listener, bloomBits);
+            this.listenerChannel = installClusterListener(listener, bloomBits);
          }
       } finally {
-         modeSwitch.set(false);
+         releaseModeSwitch();
       }
    }
 
@@ -905,7 +991,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
     * The near cache is cleared to ensure correctness after the transition window.
     */
    private void switchToPrimaryListenerMode() {
-      if (!modeSwitch.compareAndSet(false, true)) {
+      if (!acquireModeSwitch()) {
          return;
       }
       try {
@@ -962,10 +1048,10 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
             getDispatcher().removeTopologyListener(getName(), topologyListener);
             getDispatcher().getClientListenerNotifier().removeClientListener(newListenerId);
             // Re-install the cluster listener
-            installClusterListener(listener, bloomBits);
+            this.listenerChannel = installClusterListener(listener, bloomBits);
          }
       } finally {
-         modeSwitch.set(false);
+         releaseModeSwitch();
       }
    }
 

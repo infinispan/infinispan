@@ -107,8 +107,8 @@ public class HotRodPrimaryNearCacheTopologyRetryTest extends HotRodMultiNodeTest
          Object pending = TestingUtil.extractField(sender, "pendingConsistentHash");
          assertNotNull(pending, "pendingConsistentHash must still be set while address cache is incomplete");
 
-         // Restore server 1 in the address cache: the scheduled retry on the event loop
-         // will eventually see all members present and send the topology event.
+         // Restore server 1 in the address cache: the scheduled retry (timer on the event loop, address cache
+         // read on the blocking executor) will eventually see all members present and send the topology event.
          // The end-to-end effect (client receiving the complete topology) is already verified
          // by PrimaryNearCacheNodeJoinTest, so we only assert the guard here.
          addressCache.put(server1ClusterAddr, server1ServerAddr);

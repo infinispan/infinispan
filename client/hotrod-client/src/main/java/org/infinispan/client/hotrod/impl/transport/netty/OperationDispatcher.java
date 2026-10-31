@@ -486,7 +486,7 @@ public class OperationDispatcher {
          try {
             listener.run();
          } catch (Throwable t) {
-            log.errorf(t, "Error notifying codec change listener");
+            log.errorNotifyingCodecChangeListener(t);
          }
       }
    }
@@ -568,7 +568,7 @@ public class OperationDispatcher {
             try {
                listener.accept(oldCacheInfo, newCacheInfo);
             } catch (Throwable t) {
-               log.errorf(t, "Error notifying topology listener for cache %s", cacheName);
+               log.errorNotifyingTopologyListener(cacheName, t);
             }
          }
       }

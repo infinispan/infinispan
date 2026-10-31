@@ -18,6 +18,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -69,13 +70,16 @@ import io.netty.channel.Channel;
 class ClientListenerRegistry {
    private final EncoderRegistry encoderRegistry;
    private final HotRodServerConfiguration configuration;
+   private final Executor blockingExecutor;
    volatile int highWaterMark;
    volatile int lowWaterMark;
    volatile int maxSize;
 
-   ClientListenerRegistry(EncoderRegistry encoderRegistry, HotRodServerConfiguration configuration) {
+   ClientListenerRegistry(EncoderRegistry encoderRegistry, HotRodServerConfiguration configuration,
+                          Executor blockingExecutor) {
       this.encoderRegistry = encoderRegistry;
       this.configuration = configuration;
+      this.blockingExecutor = blockingExecutor;
       this.highWaterMark = configuration.listenerBackpressureHighWatermark();
       this.lowWaterMark = configuration.listenerBackpressureLowWatermark();
       this.maxSize = configuration.listenerMaxQueueSize();
@@ -426,7 +430,9 @@ class ClientListenerRegistry {
                log.tracef("Delaying topology update (attempt %d) as addressCache does not contain all members: %s vs %s",
                      attempt, serverEndpoints.keySet(), consistentHash.getMembers());
             }
-            this.ch.eventLoop().schedule(() -> trySendTopology(topologyId, consistentHash), delayMillis, TimeUnit.MILLISECONDS);
+            // The timer fires on the event loop, but reading addressCache is blocking, so hand off to the blocking executor
+            this.ch.eventLoop().schedule(() -> blockingExecutor.execute(() -> trySendTopology(topologyId, consistentHash)),
+                  delayMillis, TimeUnit.MILLISECONDS);
             return;
          }
          pendingConsistentHash = null;

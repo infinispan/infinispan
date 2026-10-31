@@ -119,6 +119,10 @@ public class ClientListenerNotifier {
       if (dispatcher == null) {
          return;
       }
+      if (!dispatcher.isRunning()) {
+         // Removing the failed address left the dispatcher without addresses so it was stopped; a reconnect must still be attempted
+         dispatcher.markStoppedByFailover();
+      }
       // Invoke failover event callback, if presents
       dispatcher.invokeFailoverEvent(address);
       // Re-execute adding client listener in one of the remaining nodes

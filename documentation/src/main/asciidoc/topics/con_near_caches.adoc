@@ -62,6 +62,10 @@ Each primary-owner server maintains its own bloom filter for the keys that the c
 
 If the cluster or any individual server does not support Hot Rod protocol 4.2, or if the client cannot establish primary-owner listeners on enough servers, the client falls back automatically to the standard cluster-wide listener.
 The fallback is logged at `WARN` level.
-Once primary mode is disabled for a cache manager session, the client remains in fallback mode until it is restarted.
+If the initial registration of primary-owner listeners fails, the client remains in fallback mode until it is restarted.
+
+During a rolling upgrade the client switches modes dynamically.
+When a server running an older protocol version joins the cluster, the client downgrades to the cluster-wide listener and clears the near cache.
+Once all servers support Hot Rod protocol 4.2 again, the client upgrades back to primary-owner listeners and clears the near cache.
 
 //-

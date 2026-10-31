@@ -22,6 +22,9 @@ public abstract class EventDispatcher<T> {
    final String cacheName;
    final Runnable cleanup;
    private volatile DispatcherStatus status = DispatcherStatus.STOPPED;
+   // Set when this dispatcher was stopped only because failover removed its last address, as opposed to the
+   // listener being removed by the user. A pending ReconnectTask must keep retrying in that case.
+   private volatile boolean stoppedByFailover;
 
    EventDispatcher(String cacheName, Object listener, byte[] listenerId, SocketAddress address, Runnable cleanup) {
       this.listener = listener;
@@ -54,6 +57,14 @@ public abstract class EventDispatcher<T> {
 
    public boolean isRunning() {
       return status == DispatcherStatus.RUNNING;
+   }
+
+   void markStoppedByFailover() {
+      stoppedByFailover = true;
+   }
+
+   boolean isStoppedByFailover() {
+      return stoppedByFailover;
    }
 
    public void addAddress(SocketAddress address) {

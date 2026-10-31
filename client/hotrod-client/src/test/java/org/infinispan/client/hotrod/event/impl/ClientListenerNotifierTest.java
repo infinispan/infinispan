@@ -152,6 +152,25 @@ public class ClientListenerNotifierTest extends AbstractInfinispanTest {
       assertEquals(0, dispatcher.failoverInvocations.get());
    }
 
+   public void testReconnectTaskContinuesWhenDispatcherStoppedByFailover() {
+      byte[] listenerId = new byte[]{20, 21, 22};
+      Object listener = new Object();
+      SocketAddress addr1 = InetSocketAddress.createUnresolved("127.0.0.1", 11222);
+
+      TestDispatcher dispatcher = new TestDispatcher(listenerId, listener);
+      notifier.addDispatcher(listenerId, addr1, listener, (id, l) -> dispatcher);
+      notifier.startClientListener(listenerId);
+
+      // Failing over the only address stops the dispatcher; the reconnect must still be attempted
+      notifier.failoverClientListener(listenerId, addr1);
+      assertFalse(dispatcher.isRunning());
+      assertEquals(1, dispatcher.failoverInvocations.get());
+
+      ReconnectTask task = new ReconnectTask(dispatcher, addr1);
+      task.run();
+      assertEquals(2, dispatcher.failoverInvocations.get());
+   }
+
    public void testAddAddressById() {
       byte[] listenerId = new byte[]{13, 14, 15};
       Object listener = new Object();

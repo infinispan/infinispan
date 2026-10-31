@@ -3,15 +3,26 @@ package org.infinispan.client.hotrod.near;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
+import org.infinispan.client.hotrod.impl.operations.CacheOperationsFactory;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationChannel;
+import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
@@ -120,37 +131,69 @@ public class PrimaryNearCachePermanentFallbackTest extends MultiHotRodServersTes
 
    /**
     * Verifies {@code switchToPrimaryListenerMode()} failure-and-fallback semantics: when primary
-    * listener registration fails (here: forced by passing a null primary topology), the method
-    * must not permanently disable primary mode and must re-install the cluster-wide listener.
+    * listener registration fails during the re-upgrade, the method must not permanently disable
+    * primary mode and must re-install the cluster-wide listener.
+    *
+    * <p>The client uses {@code HASH_DISTRIBUTION_AWARE} so that {@code canUsePrimaryMode()} is true and
+    * the registration (and its failure handling) is actually executed.</p>
     */
    public void testSwitchToPrimaryModeFailureReinstallsClusterListener() throws Exception {
-      // Start in cluster-wide mode (TOPOLOGY_AWARE → canUsePrimaryMode() = false)
-      RemoteCacheManager clientManager = createNearClient(ClientIntelligence.TOPOLOGY_AWARE);
+      RemoteCacheManager clientManager = createNearClient(ClientIntelligence.HASH_DISTRIBUTION_AWARE);
       RemoteCache<Integer, String> cache = clientManager.getCache();
       InvalidatedNearRemoteCache<Integer, String> inrc = (InvalidatedNearRemoteCache<Integer, String>) cache;
-      assertThat(inrc.isPrimaryMode()).isFalse();
-      assertThat(inrc.getNearCacheService().isConnected()).isTrue();
-      assertThat((Boolean) TestingUtil.extractField(inrc, "primaryModeDisabled"))
-            .as("primaryModeDisabled must be false for TOPOLOGY_AWARE")
-            .isFalse();
+      assertThat(inrc.isPrimaryMode()).isTrue();
 
-      // Directly invoke switchToPrimaryListenerMode() via reflection.
-      // Because canUsePrimaryMode() returns false (TOPOLOGY_AWARE), it will return early
-      // without modifying any state.
-      Method switchMethod = InvalidatedNearRemoteCache.class.getDeclaredMethod("switchToPrimaryListenerMode");
-      switchMethod.setAccessible(true);
-      switchMethod.invoke(inrc);
+      OperationDispatcher dispatcher = inrc.getDispatcher();
+      SocketAddress server0Addr = InetSocketAddress.createUnresolved(server(0).getHost(), server(0).getPort());
+      OperationChannel targetChannel = dispatcher.getHandlerForAddress(server0Addr);
+      assertThat(targetChannel).isNotNull();
+      Codec originalCodec = TestingUtil.extractField(targetChannel, "codec");
+      Codec codec41 = ProtocolVersion.PROTOCOL_VERSION_41.getCodec();
 
-      // State must be unchanged: still in cluster mode, not permanently disabled
+      CacheOperationsFactory originalCof = TestingUtil.extractField(inrc, "cacheOperationsFactory");
+      AtomicInteger primaryOps = new AtomicInteger();
+      AtomicBoolean failed = new AtomicBoolean();
+      // The first primary operation creates the event dispatcher; the ones after that are the per-server registrations
+      CacheOperationsFactory failingCof = (CacheOperationsFactory) Proxy.newProxyInstance(
+            CacheOperationsFactory.class.getClassLoader(),
+            new Class<?>[]{CacheOperationsFactory.class},
+            (proxy, method, args) -> {
+               if ("newAddPrimaryNearCacheListenerOperation".equals(method.getName()) && primaryOps.incrementAndGet() > 1) {
+                  failed.set(true);
+                  throw new IllegalStateException("Forced primary listener registration failure");
+               }
+               try {
+                  return method.invoke(originalCof, args);
+               } catch (InvocationTargetException e) {
+                  throw e.getCause();
+               }
+            });
+
+      try {
+         // Downgrade to cluster mode
+         TestingUtil.replaceField(codec41, "codec", targetChannel, OperationChannel.class);
+         dispatcher.notifyCodecChanged();
+         eventually(() -> !inrc.isPrimaryMode() && inrc.getNearCacheService().isConnected());
+
+         // Re-upgrade, but fail the primary registration
+         TestingUtil.replaceField(failingCof, "cacheOperationsFactory", inrc, InvalidatedNearRemoteCache.class);
+         TestingUtil.replaceField(originalCodec, "codec", targetChannel, OperationChannel.class);
+         dispatcher.notifyCodecChanged();
+         eventually(failed::get);
+         // Wait for the (failed) transition to complete, it must have re-installed the cluster listener
+         AtomicBoolean modeSwitch = TestingUtil.extractField(inrc, "modeSwitch");
+         eventually(() -> !modeSwitch.get() && inrc.getNearCacheService().isConnected());
+      } finally {
+         TestingUtil.replaceField(originalCof, "cacheOperationsFactory", inrc, InvalidatedNearRemoteCache.class);
+         TestingUtil.replaceField(originalCodec, "codec", targetChannel, OperationChannel.class);
+      }
+
       assertThat(inrc.isPrimaryMode())
-            .as("isPrimaryMode() must remain false when canUsePrimaryMode() is false")
+            .as("Primary mode must not be entered when primary registration fails")
             .isFalse();
       assertThat((Boolean) TestingUtil.extractField(inrc, "primaryModeDisabled"))
-            .as("primaryModeDisabled must remain false when switchToPrimaryListenerMode() returns early")
+            .as("A failed upgrade must not permanently disable primary mode")
             .isFalse();
-      assertThat(inrc.getNearCacheService().isConnected())
-            .as("cluster listener must remain connected")
-            .isTrue();
 
       // Basic operations must work
       cache.put(2, "world");

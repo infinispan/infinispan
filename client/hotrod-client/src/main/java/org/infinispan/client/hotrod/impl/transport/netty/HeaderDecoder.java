@@ -365,6 +365,8 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
                status = in.readUnsignedByte();
                in.readUnsignedByte(); // ignore topology byte (0) in header
                byte[] topologyListenerId = ByteBufUtil.readArray(in);
+               // This event is not tied to a request, don't keep a reference to the previously decoded operation
+               operation = null;
                String topologyCacheName = dispatcher.getClientListenerNotifier().findCacheName(topologyListenerId);
                readNewTopologyAndHash(in, topologyCacheName);
                checkpoint(State.READ_MESSAGE_ID);

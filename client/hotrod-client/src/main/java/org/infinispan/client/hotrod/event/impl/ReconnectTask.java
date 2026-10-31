@@ -23,7 +23,8 @@ public class ReconnectTask implements Runnable, Consumer<Void> {
 
    @Override
    public void run() {
-      if (!dispatcher.isRunning()) {
+      // A dispatcher stopped by failover address exhaustion must keep retrying, otherwise the listener is lost
+      if (!dispatcher.isRunning() && !dispatcher.isStoppedByFailover()) {
          accept(null);
          return;
       }

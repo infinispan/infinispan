@@ -481,4 +481,12 @@ public interface Log extends BasicLogger {
    @Message(value = "Upgrading near cache for '%s' to primary-owner listeners: all servers now support Hot Rod 4.2+", id = 4131)
    void nearCacheUpgradedToPrimaryListeners(String cacheName);
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Error notifying codec change listener", id = 4132)
+   void errorNotifyingCodecChangeListener(@Cause Throwable cause);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error notifying topology listener for cache '%s'", id = 4133)
+   void errorNotifyingTopologyListener(String cacheName, @Cause Throwable cause);
+
 }
