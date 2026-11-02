@@ -36,8 +36,8 @@ import org.infinispan.functional.FunctionalMap;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.impl.VoidResponseCollector;
 import org.infinispan.server.hotrod.logging.Log;
+import org.infinispan.server.hotrod.tx.TxCommandInvoker;
 import org.infinispan.server.hotrod.tx.table.functions.ConditionalMarkAsRollbackFunction;
 import org.infinispan.server.hotrod.tx.table.functions.SetCompletedTransactionFunction;
 import org.infinispan.server.hotrod.tx.table.functions.SetDecisionFunction;
@@ -272,8 +272,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
    private void rollbackRemote(ComponentRegistry cr, CacheXid cacheXid, TxState state) {
       RollbackCommand rpcCommand = cr.getCommandsFactory().buildRollbackCommand(state.getGlobalTransaction());
       RpcManager rpcManager = cr.getComponent(RpcManager.class);
-      rpcCommand.setTopologyId(rpcManager.getTopologyId());
-      rpcManager.invokeCommandOnAll(rpcCommand, VoidResponseCollector.validOnly(), rpcManager.getSyncRpcOptions())
+      TxCommandInvoker.invokeInCluster(cr, rpcCommand, rpcManager.getTopologyId())
             .thenRun(() -> {
                //ignore exception so the rollback can be retried.
                //if a node doesn't find the remote transaction, it returns null.
@@ -308,8 +307,7 @@ public class GlobalTxTable implements Runnable, Lifecycle {
             } else {
                rpcCommand = cr.getCommandsFactory().buildCommitCommand(state.getGlobalTransaction());
             }
-            rpcCommand.setTopologyId(rpcManager.getTopologyId());
-            rpcManager.invokeCommandOnAll(rpcCommand, VoidResponseCollector.validOnly(), rpcManager.getSyncRpcOptions())
+            TxCommandInvoker.invokeInCluster(cr, rpcCommand, rpcManager.getTopologyId())
                   .handle((aVoid, throwable) -> {
                      //TODO?
                      TxFunction function = new SetCompletedTransactionFunction(true);
