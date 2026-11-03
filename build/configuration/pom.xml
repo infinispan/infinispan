@@ -102,7 +102,7 @@
       <version.jackson>2.22.4</version.jackson>
       <version.jackson.annotations>2.22</version.jackson.annotations>
       <version.jackson.databind>2.22.4</version.jackson.databind>
-      <version.jacoco>0.8.15</version.jacoco>
+      <version.jacoco>0.8.16</version.jacoco>
       <version.jakarta.annotation-api>2.1.1</version.jakarta.annotation-api>
       <version.jakarta.json>2.0.1</version.jakarta.json>
       <version.jakarta.transaction>2.0.1</version.jakarta.transaction>
@@ -144,7 +144,7 @@
       <version.reactivestreams>1.0.4</version.reactivestreams>
       <version.rocksdb>9.11.2</version.rocksdb>
       <version.rxjava>3.1.12</version.rxjava>
-      <version.sshd>2.20.0</version.sshd>
+      <version.sshd>2.20.1</version.sshd>
       <version.testng.engine>1.1.0</version.testng.engine>
 
       <!-- these versions must be kept in sync with ${version.micrometer}: -->
@@ -213,7 +213,7 @@
       <version.maven.source>3.4.0</version.maven.source>
       <version.maven.surefire>3.5.6</version.maven.surefire>
       <version.maven.war>3.5.1</version.maven.war>
-      <version.org.jboss.galleon>7.0.11.Final</version.org.jboss.galleon>
+      <version.org.jboss.galleon>7.0.12.Final</version.org.jboss.galleon>
       <version.org.wildfly.galleon-plugins>7.4.0.Final</version.org.wildfly.galleon-plugins>
       <version.pmd.plugin>3.28.0</version.pmd.plugin>
       <version.owasp-dependency-check-plugin>9.2.0</version.owasp-dependency-check-plugin>
