@@ -97,6 +97,34 @@ generated Jacoco execution files and generates coverage report based on them.
 
 The report is located at {brandname} Home directory's `jacoco-report-aggregator/target/site/jacoco-aggregate/` directory.
 
+=== Running the server tests with Podman
+The server integration tests, such as those in `server/tests` and `server/rollingupgradetests`, run {brandname} Server in containers.
+By default they use Docker.
+To use Podman instead, activate the `podman` Maven profile.
+
+With rootless Podman, containers run on a bridge network in a separate network namespace.
+The tests connect to servers by container IP address, so the host cannot reach them and the tests fail with a `ConnectTimeoutException`.
+To avoid this, run Maven inside the Podman network namespace with the `bin/run-in-podman.sh` script.
+The script adds the `podman` profile for you.
+
+[source,bash,options="nowrap"]
+----
+bin/run-in-podman.sh mvn verify -pl server/tests -Dit.test=MyTestIT
+----
+
+Before you run the script, make sure the Podman API socket is active:
+
+[source,bash,options="nowrap"]
+----
+systemctl --user enable --now podman.socket
+----
+
+[NOTE]
+====
+Wrap the `mvn` command, not the forked test JVM.
+The forked JVM reports back to Maven over a localhost socket that does not exist across network namespaces, and the build hangs.
+====
+
 == Test groups
 Each test should belong to one or more group.
 The group acts as a filter, and is used to select which tests are ran as part of the maven test lifecycle.

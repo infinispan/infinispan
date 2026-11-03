@@ -2607,6 +2607,15 @@
          </modules>
       </profile>
       <profile>
+         <id>podman</id>
+         <activation>
+            <activeByDefault>false</activeByDefault>
+         </activation>
+         <properties>
+            <docker.host>unix://${env.XDG_RUNTIME_DIR}/podman/podman.sock</docker.host>
+         </properties>
+      </profile>
+      <profile>
          <id>java21-test</id>
          <activation>
             <jdk>[21,)</jdk>
