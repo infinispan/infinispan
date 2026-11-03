@@ -62,6 +62,7 @@ import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.core.stats.impl.PersistenceContextInitializerImpl;
 import org.infinispan.query.core.stats.impl.SearchStatsRetriever;
 import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
+import org.infinispan.query.impl.massindex.LocalMassIndexer;
 import org.infinispan.query.mapper.mapping.ProgrammaticSearchMappingProvider;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.query.mapper.mapping.SearchMappingBuilder;
@@ -139,6 +140,7 @@ public class LifecycleManager implements ModuleLifecycle {
 
             createQueryInterceptorIfNeeded(cr, cfg, cache, indexedClasses);
 
+            cr.registerComponent(new LocalMassIndexer((AdvancedCache<Object, Object>) cache), LocalMassIndexer.class);
             Indexer massIndexer = new DistributedExecutorMassIndexer(cache);
             cr.registerComponent(massIndexer, Indexer.class);
             if (searchMapping != null) {

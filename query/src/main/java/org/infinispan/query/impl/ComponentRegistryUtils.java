@@ -14,6 +14,7 @@ import org.infinispan.query.Indexer;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.core.stats.impl.LocalQueryStatistics;
 import org.infinispan.query.core.stats.impl.SearchStatsRetriever;
+import org.infinispan.query.impl.massindex.LocalMassIndexer;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.security.actions.SecurityActions;
 
@@ -81,6 +82,10 @@ public final class ComponentRegistryUtils {
    public static Indexer getIndexer(AdvancedCache<?, ?> cache) {
       ensureIndexed(cache);
       return getRequiredComponent(cache, Indexer.class, null);
+   }
+
+   public static LocalMassIndexer getLocalMassIndexer(Cache<?, ?> cache) {
+      return getRequiredComponent(cache, LocalMassIndexer.class, null);
    }
 
    public static InfinispanQueryStatisticsInfo getQueryStatistics(AdvancedCache<?, ?> cache) {
