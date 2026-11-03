@@ -8,6 +8,8 @@ ifdef::context[:parent-context: {context}]
 //Community content
 ifdef::community[]
 {brandname} artifacts are available from Maven central. See the link:https://search.maven.org/search?q=g:org.infinispan[org.infinispan] group for available {brandname} artifacts.
+
+include::{topics}/proc_verifying_artifact_signatures.adoc[leveloffset=+1]
 endif::community[]
 
 //Downstream content
