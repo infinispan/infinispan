@@ -24,6 +24,10 @@
       "methods": [{"name": "<init>", "parameterTypes": []}]
     },
     {
+      "type": "org.infinispan.commons.logging.log4j.XmlConfigurationFactory",
+      "methods": [{"name": "<init>", "parameterTypes": []}]
+    },
+    {
       "type": "org.wildfly.security.credential.store._private.ElytronMessages_$logger",
       "methods": [{"name": "<init>", "parameterTypes": ["org.jboss.logging.Logger"]}]
     }

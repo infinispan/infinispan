@@ -764,6 +764,13 @@
             <scope>provided</scope>
          </dependency>
          <dependency>
+            <!-- The SLF4J 2.x binding. Use this one instead of log4j-slf4j-impl, which drags in SLF4J 1.7. -->
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j2-impl</artifactId>
+            <version>${version.log4j}</version>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-jul</artifactId>
             <version>${version.log4j}</version>
