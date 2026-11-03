@@ -3,10 +3,12 @@ package org.infinispan.query.impl.massindex;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
@@ -41,6 +43,7 @@ public class DistributedExecutorMassIndexer implements Indexer {
    private final ClusterExecutor executor;
    private final IndexLock lock;
    private final Authorizer authorizer;
+   private final LocalMassIndexer localIndexer;
 
    private volatile boolean isRunning = false;
 
@@ -56,21 +59,25 @@ public class DistributedExecutorMassIndexer implements Indexer {
       this.executor = cache.getCacheManager().executor();
       this.lock = MassIndexerLockFactory.buildLock(cache);
       this.authorizer = ComponentRegistry.componentOf(cache, Authorizer.class);
+      this.localIndexer = ComponentRegistry.componentOf(cache, LocalMassIndexer.class);
    }
 
    @ManagedOperation(description = "Starts rebuilding the index", displayName = "Rebuild index")
    public void start() {
-      CompletionStages.join(executeInternal(false, false));
+      CompletionStages.join(executeInternal(false));
    }
 
    @Override
    public CompletionStage<Void> run() {
-      return executeInternal(false, false).toCompletableFuture();
+      return executeInternal(false).toCompletableFuture();
    }
 
    @Override
    public CompletionStage<Void> runLocal() {
-      return executeInternal(false, true).toCompletableFuture();
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
+      // Only rebuilds this member's index.
+      // Local mass indexer already allows one rebuild per member, so a local run needs no cluster-wide lock.
+      return submit(false, true).toCompletableFuture();
    }
 
    @Override
@@ -99,48 +106,69 @@ public class DistributedExecutorMassIndexer implements Indexer {
 
    @Override
    public CompletionStage<Void> remove() {
-      return executeInternal(true, false).toCompletableFuture();
+      return executeInternal(true).toCompletableFuture();
    }
 
    @Override
    public CompletionStage<Void> remove(Class<?>... entities) {
-      return executeInternal(true, false, entities);
+      return executeInternal(true, entities);
    }
 
    @Override
    public boolean isRunning() {
-      return isRunning;
+      return isRunning || localIndexer.isRunning();
    }
 
-   private CompletionStage<Void> executeInternal(boolean skipIndex, boolean local, Class<?>... entities) {
+   /**
+    * Rebuilds, or only removes, the index of the given entity types on this member only, or on every member of the
+    * cluster.
+    *
+    * <p>
+    * Each targeted member rebuilds its own index from the entries it holds. A member that is already rebuilding its
+    * index fails its part with {@link MassIndexerAlreadyStartedException}, and the other targeted members still
+    * rebuild theirs. This method doesn't take the cluster-wide lock. A caller that needs to exclude other
+    * cluster-wide operations must hold that lock while the returned stage is pending.
+    * </p>
+    *
+    * @param skipIndex {@code true} to only remove the index of the types, {@code false} to also index the entries
+    *                  again.
+    * @param local     {@code true} to target this member only, {@code false} to target every member of the cluster.
+    * @param entities  the entity types whose index to rebuild. Empty means every indexed type of the cache.
+    * @return a stage that completes once every targeted member has finished. It completes exceptionally with a
+    * {@link CacheException} wrapping the cause if any targeted member fails, or with the cause itself if the
+    * operation couldn't be sent. This method never throws.
+    */
+   private CompletionStage<Void> submit(boolean skipIndex, boolean local, Class<?> ... entities) {
+      try {
+         Collection<Class<?>> javaClasses = entities.length == 0
+               ? indexUpdater.allJavaClasses()
+               : Arrays.asList(entities);
+         IndexWorker worker = new IndexWorker(cache.getName(), javaClasses, skipIndex, (Set<Object>) null);
+         ClusterExecutor ce = executor.timeout(Long.MAX_VALUE, TimeUnit.SECONDS);
+         if (local) {
+            ce = ce.filterTargets(a -> Objects.equals(a, cache.getRpcManager().getAddress()));
+         }
+         return ce.submitConsumer(worker, TRI_CONSUMER);
+      } catch (Throwable t) {
+         return CompletableFuture.failedFuture(t);
+      }
+   }
+
+   private CompletionStage<Void> executeInternal(boolean skipIndex, Class<?>... entities) {
       authorizer.checkPermission(AuthorizationPermission.ADMIN);
-      CompletionStage<Boolean> lockStage = lock.lock();
-      return lockStage.thenCompose(acquired -> {
-         if (!acquired) {
+      return lock.lock().thenCompose(acquired -> {
+         if (!acquired)
             return CompletableFuture.failedFuture(new MassIndexerAlreadyStartedException());
-         }
+
          isRunning = true;
-         CompletionStage<Void> work;
-         try {
-            Collection<Class<?>> javaClasses = (entities.length == 0) ?
-                  indexUpdater.allJavaClasses() : Arrays.asList(entities);
-            IndexWorker indexWork = new IndexWorker(cache.getName(), javaClasses, skipIndex, (Set<Object>) null);
-            ClusterExecutor clusterExecutor = executor.timeout(Long.MAX_VALUE, TimeUnit.SECONDS);
-            if (local) {
-               clusterExecutor = clusterExecutor.filterTargets(a -> a.equals(cache.getRpcManager().getAddress()));
-            }
-            work = clusterExecutor.timeout(Long.MAX_VALUE, TimeUnit.SECONDS).submitConsumer(indexWork, TRI_CONSUMER);
-         } catch (Throwable t) {
-            work = CompletableFuture.failedFuture(t);
-         }
-         return work.handle((v, t) -> {
+         return submit(skipIndex, false, entities).handle((v, t) -> {
             isRunning = false;
             CompletionStage<Void> unlocked = lock.unlock();
             if (t != null) {
                return unlocked.thenCompose(unused -> CompletableFuture.<Void>failedFuture(t));
             }
             return unlocked;
-         }).thenCompose(stage -> stage);
+         }).thenCompose(Function.identity());
       });
    }
 }

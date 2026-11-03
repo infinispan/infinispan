@@ -41,7 +41,16 @@ public interface Indexer {
    CompletionStage<Void> remove(Class<?>... entities);
 
    /**
-    * @return true if the indexer process was started on this node and has not finished yet.
+    * Returns whether a mass indexer operation involving this node is in progress.
+    *
+    * <p>
+    * This is {@code true} from the moment an operation started on this node acquires its lock until it finishes, and
+    * while this node's index is being rebuilt or removed, whichever node started the operation. It is
+    * {@code false} otherwise.
+    * </p>
+    *
+    * @return {@code true} if a mass indexer operation started on this node, or a rebuild of this node's index, has
+    * not finished yet; {@code false} otherwise.
     */
    boolean isRunning();
 

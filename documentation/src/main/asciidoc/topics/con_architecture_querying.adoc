@@ -223,5 +223,17 @@ In clustered caches, the filter runs on the node that owns the entry, and matchi
 When an index needs to be rebuilt from scratch (after configuration changes, data import, or corruption), the mass indexer reindexes all cache data in parallel across the cluster.
 
 The `DistributedExecutorMassIndexer` sends `IndexWorker` tasks to each node.
-Each worker iterates over the locally owned cache entries, extracts indexable values, and feeds them to the `SearchIndexer`.
+Each worker hands the rebuild to the node's `LocalMassIndexer`, which iterates over the locally owned cache entries, extracts indexable values, and feeds them to the `SearchIndexer`.
 A `MassIndexerProgressMonitor` tracks progress and reports errors.
+
+Mass indexing operations exclude each other at two levels:
+
+* *Cluster level*: a cluster-wide operation, such as a full reindex or an index removal, holds a cluster-wide lock, so only one runs in the cluster at a time.
+* *Node level*: the `LocalMassIndexer` of each node rebuilds that node's index for one operation at a time.
+
+A local reindex only rebuilds the index of the node where it runs, so it takes only the node-level guard.
+Local reindexes on different nodes run in parallel, for example when a cache with the `REINDEX` startup mode starts on several nodes at once.
+An operation that finds the cluster-wide lock or the guard of a node already taken does not wait.
+It fails with `MassIndexerAlreadyStartedException`.
+When a cluster-wide operation reaches a node that is already rebuilding its index, the operation fails, but the other nodes still complete their part.
+Reindexing specific keys takes neither the lock nor the guard, because it updates the index the same way as a cache write.
