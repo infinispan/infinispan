@@ -1,0 +1,76 @@
+[id='verifying_artifact_signatures_{context}']
+= Verifying {brandname} artifact signatures
+Verify that a downloaded artifact is authentic and has not been altered by checking its OpenPGP signature against the project's signing key.
+
+Release artifacts published by this project are signed with an OpenPGP (GnuPG) key in two places:
+
+* Artifacts under groupId `org.infinispan` on Maven Central, including POM files and JAR files
+* Repository metadata of the {brandname} package repositories at link:https://download.jboss.org/infinispan/packages/[download.jboss.org], namely the YUM repository's `repomd.xml` file and the APT repository's `Release.gpg` and `InRelease` files
+
+== Signing key statement
+
+The table below is an official first-party statement of the signing keys used for {brandname} artifacts.
+It is also published permanently in link:https://github.com/infinispan/infinispan/blob/main/KEYS[the KEYS file] at the root of the {brandname} source repository, and a copy of the public key is available from link:https://download.jboss.org/infinispan/packages/signing.key[`signing.key`].
+
+[%autowidth,options="header"]
+|===
+^|Attribute ^|Value a|
+Full fingerprint a|
+`F5FEBA84EB26C56457B2CF819E31AB27445478DB` a|
+Algorithm and capabilities a|
+RSA 3072-bit, sign and certify (`SC`) a|
+User ID a|
+`Infinispan <infinispan-maven@infinispan.org>` a|
+Valid from a|
+July 6, 2022 a|
+Expires on a|
+July 3, 2032 a|
+|===
+
+This key is the only OpenPGP key used to sign {brandname} artifacts; no rotation has occurred and there are no older keys associated with these coordinates.
+Releases published before July 2022 may not carry an OpenPGP signature at all, in which case they cannot be verified by any means.
+
+== Verifying a Maven Central artifact
+GnuPG must be installed on the system to verify signatures manually.
+
+.Procedure
+
+* Download the artifact and its `.asc` signature file from Maven Central for example `infinispan-bom-16.1.4.pom` and `infinispan-bom-16.1.4.pom.asc`.
++
+[source,bash,options="nowrap"]
+----
+curl -fsSL https://repo1.maven.org/maven2/org/infinispan/infinispan-bom/16.1.4/infinispan-bom-16.1.4.pom \
+  --output infinispan-bom-16.1.4.pom
+curl -fsSL https://repo1.maven.org/maven2/org/infinispan/infinispan-bom/16.1.4/infinispan-bom-16.1.4.pom.asc \
+  --output infinispan-bom-16.1.4.pom.asc
+----
+
+* Import the public part of the signing key from one of its official sources, for example:
++
+[source,bash,options="nowrap"]
+----
+curl -fsSL https://download.jboss.org/infinispan/packages/signing.key | gpg --import
+----
+
+The same public key is also included in link:https://github.com/infinispan/infinispan/blob/main/KEYS[the KEYS file].
+
+* Verify that the signature was made by the documented key and matches the artifact.
++
+[source,bash,options="nowrap"]
+----
+gpg --verify infinispan-bom-16.1.4.pom.asc infinispan-bom-16.1.4.pom
+----
+
+A successful verification displays a message similar to the following output:
+
+[source,text,options="nowrap",subs="attributes+"]
+----
+gpg: Good signature from "Infinispan <infinispan-maven@infinispan.org>" [unknown]
+Primary key fingerprint: F5FE BA84 EB26 C564 57B2 CF81 9E31 AB27 4454 78DB
+----
+
+[NOTE]
+====
+GnuPG reports that the key is not certified with a trusted signature.
+This warning is expected because {brandname} does not use web-of-trust certification; trust in this key comes from its publication in an official channel of the project, as documented above.
+====

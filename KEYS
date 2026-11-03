@@ -1,0 +1,66 @@
+Infinispan OpenPGP Signing Key Statement
+========================================
+
+This file is the official, first-party statement of the OpenPGP keys used by this project to sign its release artifacts. It lives in the root of the infinispan/infinispan source repository so that it can be cited as a permanent reference (https://github.com/infinispan/infinispan/blob/main/KEYS). When signing keys are rotated, an updated version of this file will document both fingerprints and the transition between them. Until such a statement exists, signatures made with any other key should not be trusted for Infinispan artifacts.
+
+Signing Key
+-----------
+
+Full fingerprint : F5FEBA84EB26C56457B2CF819E31AB27445478DB
+Algorithm        : RSA 3072-bit (sign and certify)
+User ID          : Infinispan <infinispan-maven@infinispan.org>
+Valid from       : 2022-07-06
+Expires on       : 2032-07-03
+
+Scope of the Key
+----------------
+
+The key above signs:
+
+* All artifacts published under groupId org.infinispan on Maven Central (https://central.sonatype.com/namespace/org.infinispan), including POM and JAR files. Each signature is published alongside its artifact as a file with an .asc extension; for example, infinispan-bom-16.1.4.pom.asc signs infinispan-bom-16.1.4.pom.
+* Repository metadata of the Infinispan package repositories at https://download.jboss.org/infinispan/packages/ : repodata/repomd.xml for each YUM repository and Release.gpg / InRelease for the APT repository, so that clients can verify the integrity of those repositories (repo_gpgcheck=1 in yum/dnf; built-in verification by apt). Individual RPM and DEB packages are not GPG-signed.
+
+Key Rotation
+------------
+
+No key rotation has occurred to date: this single key is the only OpenPGP key used for these coordinates, including org.infinispan:infinispan-bom releases 14.x through current 16.x. Releases published to Maven Central before July 2022 may carry no OpenPGP signature at all; they cannot be verified with any key and are not covered by this statement.
+
+Verifying a Signature
+---------------------
+
+Import the public part of the signing key (included below, also available from https://download.jboss.org/infinispan/packages/signing.key) and verify an artifact:
+
+  gpg --import KEYS
+  gpg --verify infinispan-bom-16.1.4.pom.asc infinispan-bom-16.1.4.pom
+
+A successful verification reports "Good signature from Infinispan <infinispan-maven@infinispan.org>" and lists the primary key fingerprint F5FE BA84 EB26 C564 57B2 CF81 9E31 AB27 4454 78DB.
+
+Public Key
+----------
+
+The public part of the signing key, identical to https://download.jboss.org/infinispan/packages/signing.key :
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mQGNBGLFUBsBDADA5+ZXKX+8DOgWuJqgfU894pplb/jDl3gxDfieWCOf8l+Ii1/Z
+BYqyiy/JWp5mI5Y+nnLafBSvqv5Voqu5m7E88rmsbRYL06Nuss46I/QV0v8Glsx/
+0NekPjuS6kJVWMYeYT5vZ4u44+T+TR3BEKzlQfLaFxIM2DOCzi0/vzrdPLvjGO32
+COu98t4wBcF8nQdgQicfa85PShzT6uOLTRhG2pGDDMlTe8sLJ1+TbDHClHtdM1C9
+YAMV6U/9UjU03HWvbzcJoefl4IZkg1AkVLCvCQx9rvraKJXq7s7IUjHKkj+7cheh
+55VAeO68r4XlLVPTZCeTsmLvJlJKVpYw/VEyeT5yD0cSoZztD8wzbs3O+ZjzG7Z/
+DIiwAty/ixdwYDOnDdP2AagUIutzi5iIKaWVMkgelADa4AyyEfmzZa//JKrnYVoU
+RRGi9WkUJYQwQxCvDq7x4wz6uG6M+01Rk5UNrAwrWVPA2QDluLJ4/87oZFpWs3vL
+UkHwJryFEsC5fvUAEQEAAbQsSW5maW5pc3BhbiA8aW5maW5pc3Bhbi1tYXZlbkBp
+bmZpbmlzcGFuLm9yZz6JAdQEEwEKAD4CGwMFCwkIBwIGFQoJCAsCBBYCAwECHgEC
+F4AWIQT1/rqE6ybFZFeyz4GeMasnRFR42wUCYsVQyAUJEswDrQAKCRCeMasnRFR4
+2/KqDAC+2Tvd6EElpXikObhnCliOEJOoSYu+ezxDHDnPy63y02mO2Lm+RxcoORQm
+wzIkgTBZNZYv51hNTek1nNNILhoLrRXMJDfp40QL1ygdGMdHqRK2IzzOkT7UvZ1F
+3fYk4xqaajDQmufESYR/2VubYYQ3qKpWR72h4g8gMFl9oOfIlI4Gs52+ZBKOTdYa
+n/iaf9c+UG18i9FqZfQsIR/BpKERMs9LFngqTa6Z9qsVMne2xQ4DNIP2w0oKKMHz
+BspvK3rvbQIn1i1MCjMlFKIvzO8VxkODjHFokPUPFttlIpdGaIzcYl5nVwkut/sh
+cQxIt6mg9w5SDzuDqVvx8fCuckFC4s2E3gMtYLZIXraQnEpISy+vnCSHzT//ZgSa
+Dmu5hJiQ3WCq/ZXv6RECpcA95nX3NQhX7rBFaOyeSL68ab5f2K4wYUvaWPtNieU6
+txfyNMU+jMayDLb2iH2gB5JnOOUCin8zrXD2gEDEkuMFFmaGzMiVqMauoD/Cbvve
+pa5FWgw=
+=ue0B
+-----END PGP PUBLIC KEY BLOCK-----
