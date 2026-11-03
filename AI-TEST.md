@@ -133,8 +133,29 @@ The `TestClient` object provides access to all protocols:
 
 ### Server Run Modes
 
-- **`CONTAINER`** — runs server in Docker (default for CI)
+- **`CONTAINER`** — runs server in Docker or Podman (default for CI; enable Podman via `-Ppodman`, defaults to Docker)
 - **`FORKED`** — runs server in a forked JVM process
+
+#### Running with rootless Podman
+
+The `CONTAINER` driver connects to servers using the container's bridge IP (see `InfinispanGenericContainer.getIpAddress()`), not mapped ports. With rootless Podman the bridge network lives in a separate network namespace, so the host cannot reach those IPs and tests fail with `ConnectTimeoutException` (e.g. `/10.89.0.2:11222`).
+
+Use `bin/run-in-podman.sh` to run the whole Maven build inside Podman's rootless network namespace. It prefixes the command with the needed setup and adds `-Ppodman` unless you already passed it:
+
+```bash
+bin/run-in-podman.sh mvn verify -pl server/tests -Dit.test=MyTestIT
+```
+
+The script is equivalent to:
+
+```bash
+podman unshare --rootless-netns mvn -Dmaven.repo.local=$HOME/.m2/repository -Duser.home=$HOME -Ppodman verify -pl server/tests -Dit.test=MyTestIT
+```
+
+- `-Ppodman` sets `DOCKER_HOST` and `TESTCONTAINERS_RYUK_DISABLED` for Testcontainers.
+- `-Dmaven.repo.local` and `-Duser.home` are required because inside `podman unshare` Maven runs as uid 0 and would otherwise look for `/root/.m2`. The script sets `maven.repo.local` to `~/.m2/repository` unless you pass your own.
+- The Podman API socket must be running (`systemctl --user enable --now podman.socket`).
+- Wrap the `mvn` process, **not** the forked test JVM (e.g. through a custom `-Djvm=` script). The forked JVM reports back to Maven over a localhost socket, which does not exist across namespaces, so the build hangs.
 
 ### Server Test Configuration
 

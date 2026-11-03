@@ -40,6 +40,17 @@ above names. By default, the **CONTAINER** driver will be used.
 mvn -Pcontainer verify
 ```
 
+The **CONTAINER** driver uses Docker by default. To use Podman, activate the `podman` Maven profile. With rootless Podman
+the containers are not reachable from the host, so run Maven through `bin/run-in-podman.sh` (which also adds the
+`podman` profile):
+
+```
+bin/run-in-podman.sh mvn verify -pl server/tests -Dit.test=MyTestIT
+```
+
+See "Running the server tests with Podman" in the [Contributing Guide](https://infinispan.org/docs/dev/titles/contributing/contributing.html)
+for details.
+
 ## JUnit 4.x Rules
 
 The testsuite comes with a number of JUnit 4.x rules which aid in the setup of server clusters.
