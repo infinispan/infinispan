@@ -15,6 +15,7 @@ import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.scripting.impl.ScriptMetadata;
 import org.infinispan.scripting.impl.ScriptWithMetadata;
 import org.infinispan.server.resp.Resp3Handler;
+import org.infinispan.server.resp.exception.RespCommandException;
 import org.infinispan.server.resp.serialization.ResponseWriter;
 import org.infinispan.server.resp.serialization.SerializationHint;
 import org.infinispan.server.resp.serialization.lua.LuaResponseWriter;
@@ -82,7 +83,7 @@ public class LuaTaskEngine implements TaskEngine {
             script = scriptingManager.getScriptWithMetadata(scriptName(sha.toUpperCase()));
          } catch (CacheException e) {
             pool.returnToPool(luaCtx);
-            throw new RuntimeException("NOSCRIPT No matching script. Please use EVAL.");
+            throw new RespCommandException("NOSCRIPT No matching script. Please use EVAL.");
          }
          try {
             LuaCode code = LuaCode.fromScript(script);
