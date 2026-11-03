@@ -15,6 +15,7 @@ import java.util.Map;
 
 import org.testng.annotations.Test;
 
+import io.lettuce.core.RedisNoScriptException;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.sync.RedisCommands;
 
@@ -248,7 +249,9 @@ public class ScriptingCommandsTest extends SingleNodeRespBaseTest {
       String out = redis.evalsha(sha, ScriptOutputType.VALUE, new String[0]);
       assertEquals("testScriptFlush", out);
       redis.scriptFlush();
-      assertThatThrownBy(() -> redis.evalsha(sha, ScriptOutputType.VALUE, new String[0])).hasMessage("ERR NOSCRIPT No matching script. Please use EVAL.");
+      assertThatThrownBy(() -> redis.evalsha(sha, ScriptOutputType.VALUE, new String[0]))
+            .isInstanceOf(RedisNoScriptException.class)
+            .hasMessage("NOSCRIPT No matching script. Please use EVAL.");
    }
 
    @Test
@@ -345,12 +348,24 @@ public class ScriptingCommandsTest extends SingleNodeRespBaseTest {
    @Test
    public void testInvalidSHA1() {
       RedisCommands<String, String> redis = redisConnection.sync();
-      assertThatThrownBy(() ->  redis.evalsha("NotValidShaSUM", ScriptOutputType.OBJECT)).hasMessageContaining("NOSCRIPT");
+      assertThatThrownBy(() -> redis.evalsha("NotValidShaSUM", ScriptOutputType.OBJECT))
+            .isInstanceOf(RedisNoScriptException.class)
+            .hasMessage("NOSCRIPT No matching script. Please use EVAL.");
    }
 
    @Test
    public void testNonDefinedSHA1() {
       RedisCommands<String, String> redis = redisConnection.sync();
-      assertThatThrownBy(() ->  redis.evalsha("ffd632c7d33e571e9f24556ebed26c3479a87130", ScriptOutputType.OBJECT)).hasMessageContaining("NOSCRIPT");
+      assertThatThrownBy(() -> redis.evalsha("ffd632c7d33e571e9f24556ebed26c3479a87130", ScriptOutputType.OBJECT))
+            .isInstanceOf(RedisNoScriptException.class)
+            .hasMessage("NOSCRIPT No matching script. Please use EVAL.");
+   }
+
+   @Test
+   public void testNonDefinedSHA1ReadOnly() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThatThrownBy(() -> redis.evalshaReadOnly("ffd632c7d33e571e9f24556ebed26c3479a87130", ScriptOutputType.OBJECT, new String[0]))
+            .isInstanceOf(RedisNoScriptException.class)
+            .hasMessage("NOSCRIPT No matching script. Please use EVAL.");
    }
 }
