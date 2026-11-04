@@ -114,13 +114,18 @@ public class LuaTaskEngine implements TaskEngine {
       luaCtx.flags = flags;
       luaCtx.flags |= script.flags();
       ResponseWriter oldWriter = handler.writer(new LuaResponseWriter(luaCtx.lua));
+      boolean ownsContext = !TransactionContext.isInTransactionContext(ctx);
       try {
-         TransactionContext.startTransactionContext(ctx);
+         if (ownsContext) {
+            TransactionContext.startTransactionContext(ctx);
+         }
          runScript(luaCtx.lua, script, keys, args);
       } catch (Throwable t) {
          throw new RuntimeException(t);
       } finally {
-         TransactionContext.endTransactionContext(ctx);
+         if (ownsContext) {
+            TransactionContext.endTransactionContext(ctx);
+         }
          handler.writer(oldWriter);
       }
    }

@@ -16,6 +16,7 @@ import org.testng.annotations.Test;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisFuture;
+import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
@@ -405,5 +406,75 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
             .containsExactly(1L, 1L, OK);
 
       assertThat(redis.get(key)).isEqualTo("foo");
+   }
+
+   public void testEvalInTransaction() {
+      String key = getOperationKey(0);
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThat(redis.multi()).isEqualTo(OK);
+      redis.incr(key);
+      redis.eval("return redis.call('incr', KEYS[1])", ScriptOutputType.INTEGER, key);
+      redis.incr(key);
+
+      TransactionResult result = redis.exec();
+      assertThat(result.wasDiscarded()).isFalse();
+      assertThat(result).containsExactly(1L, 2L, 3L);
+      assertThat(redis.get(key)).isEqualTo("3");
+   }
+
+   public void testEvalErrorInTransaction() {
+      String key = getOperationKey(0);
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThat(redis.multi()).isEqualTo(OK);
+      redis.incr(key);
+      redis.eval("return redis.error_reply('MYERR oops')", ScriptOutputType.STATUS);
+      redis.incr(key);
+
+      TransactionResult result = redis.exec();
+      assertThat(result.wasDiscarded()).isFalse();
+      assertThat(result).hasSize(3);
+      assertThat((Object) result.get(0)).isEqualTo(1L);
+      assertThat((Object) result.get(1))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .extracting(e -> ((Throwable) e).getMessage())
+            .isEqualTo("MYERR oops");
+      assertThat((Object) result.get(2)).isEqualTo(2L);
+      assertThat(redis.get(key)).isEqualTo("2");
+   }
+
+   public void testEvalShaInTransaction() {
+      String key = getOperationKey(0);
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String sha = redis.scriptLoad("return redis.call('incr', KEYS[1])");
+
+      assertThat(redis.multi()).isEqualTo(OK);
+      redis.incr(key);
+      redis.evalsha(sha, ScriptOutputType.INTEGER, key);
+      redis.incr(key);
+
+      TransactionResult result = redis.exec();
+      assertThat(result.wasDiscarded()).isFalse();
+      assertThat(result).containsExactly(1L, 2L, 3L);
+      assertThat(redis.get(key)).isEqualTo("3");
+   }
+
+   public void testConnectionUsableAfterEvalInTransaction() {
+      String key = getOperationKey(0);
+      RedisCommands<String, String> redis = redisConnection.sync();
+
+      assertThat(redis.multi()).isEqualTo(OK);
+      redis.eval("return redis.call('set', KEYS[1], 'a')", ScriptOutputType.STATUS, key);
+      assertThat(redis.exec()).containsExactly(OK);
+
+      // A script outside a transaction still creates and removes its own context.
+      assertThat((String) redis.eval("return redis.call('get', KEYS[1])", ScriptOutputType.VALUE, key)).isEqualTo("a");
+
+      // A second transaction on the same connection works normally.
+      assertThat(redis.multi()).isEqualTo(OK);
+      redis.set(key, "b");
+      redis.get(key);
+      assertThat(redis.exec()).containsExactly(OK, "b");
    }
 }
