@@ -28,10 +28,14 @@ No key rotation has occurred to date: this single key is the only OpenPGP key us
 Verifying a Signature
 ---------------------
 
-Import the public part of the signing key (included below, also available from https://download.jboss.org/infinispan/packages/signing.key) and verify an artifact:
+Import the public part of the signing key (included below, also available from https://download.jboss.org/infinispan/packages/signing.key and from a public keyserver) and verify an artifact. For example, using this file itself as the source for the key:
 
   gpg --import KEYS
   gpg --verify infinispan-bom-16.1.4.pom.asc infinispan-bom-16.1.4.pom
+
+Alternatively, fetch the key from a public keyserver and confirm that its fingerprint matches this statement before using it:
+
+  gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys F5FEBA84EB26C56457B2CF819E31AB27445478DB
 
 A successful verification reports "Good signature from Infinispan <infinispan-maven@infinispan.org>" and lists the primary key fingerprint F5FE BA84 EB26 C564 57B2 CF81 9E31 AB27 4454 78DB.
 

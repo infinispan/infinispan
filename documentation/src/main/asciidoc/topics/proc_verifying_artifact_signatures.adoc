@@ -10,7 +10,7 @@ Release artifacts published by this project are signed with an OpenPGP (GnuPG) k
 == Signing key statement
 
 The table below is an official first-party statement of the signing keys used for {brandname} artifacts.
-It is also published permanently in link:https://github.com/infinispan/infinispan/blob/main/KEYS[the KEYS file] at the root of the {brandname} source repository, and a copy of the public key is available from link:https://download.jboss.org/infinispan/packages/signing.key[`signing.key`].
+It is also published permanently in link:https://github.com/infinispan/infinispan/blob/main/KEYS[the KEYS file] at the root of the {brandname} source repository, and a copy of the public key is available from link:https://download.jboss.org/infinispan/packages/signing.key[`signing.key`] or can be fetched from a public keyserver (see below).
 
 [%autowidth,options="header"]
 |===
@@ -52,7 +52,12 @@ curl -fsSL https://repo1.maven.org/maven2/org/infinispan/infinispan-bom/16.1.4/i
 curl -fsSL https://download.jboss.org/infinispan/packages/signing.key | gpg --import
 ----
 
-The same public key is also included in link:https://github.com/infinispan/infinispan/blob/main/KEYS[the KEYS file].
+The same public key is also included in link:https://github.com/infinispan/infinispan/blob/main/KEYS[the KEYS file], or can be fetched from a public keyserver. Because keyservers are not authenticated channels, confirm with `gpg --fingerprint` that an imported key matches the statement above before using it to verify artifacts:
+
+[source,bash,options="nowrap"]
+----
+gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys F5FEBA84EB26C56457B2CF819E31AB27445478DB
+----
 
 * Verify that the signature was made by the documented key and matches the artifact.
 +
