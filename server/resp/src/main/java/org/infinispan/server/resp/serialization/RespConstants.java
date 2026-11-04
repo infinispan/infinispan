@@ -13,6 +13,7 @@ public interface RespConstants {
    byte BIG_NUMBER = '(';
    byte MAP = '%';
    byte SET = '~';
+   byte PUSH = '>';
    String CRLF_STRING = "\r\n";
 
    byte[] CRLF = CRLF_STRING.getBytes(StandardCharsets.US_ASCII);

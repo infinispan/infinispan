@@ -108,6 +108,17 @@ public final class ByteBufResponseWriter implements ResponseWriter {
    }
 
    @Override
+   public void push(Collection<?> collection, Resp3Type contentType) {
+      serialize(collection, ByteBufCollectionSerializer.PushSerializer.INSTANCE, contentType);
+   }
+
+   @SuppressWarnings("unchecked")
+   @Override
+   public <T> void push(Collection<T> collection, JavaObjectSerializer<T> serializer) {
+      serialize(collection, ByteBufCollectionSerializer.PushSerializer.INSTANCE, (o, b) -> serializer.accept((T) o, b));
+   }
+
+   @Override
    public void emptySet() {
       write(Collections.emptySet(), (ignore, writer) -> writer.writeNumericPrefix(RespConstants.SET, 0));
    }

@@ -3,10 +3,18 @@ package org.infinispan.server.resp.pubsub;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.infinispan.server.resp.test.RespTestingUtil.ADMIN;
+import static org.infinispan.server.resp.test.RespTestingUtil.HOST;
 import static org.infinispan.server.resp.test.RespTestingUtil.OK;
+import static org.infinispan.server.resp.test.RespTestingUtil.PASSWORD;
 import static org.infinispan.server.resp.test.RespTestingUtil.PONG;
+import static org.infinispan.server.resp.test.RespTestingUtil.USERNAME;
 import static org.infinispan.test.TestingUtil.getListeners;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -799,6 +807,55 @@ public class PublishSubscribeTest extends SingleNodeRespBaseTest {
       }
    }
 
+   @Test
+   public void testPushFramesForChannel() throws IOException {
+      try (RawRespConnection raw = rawConnection()) {
+         raw.send("SUBSCRIBE push-ch");
+         raw.assertFrame(">3\r\n$9\r\nsubscribe\r\n$7\r\npush-ch\r\n:1\r\n");
+
+         redisConnection.sync().publish("push-ch", "hello");
+         raw.assertFrame(">3\r\n$7\r\nmessage\r\n$7\r\npush-ch\r\n$5\r\nhello\r\n");
+
+         raw.send("UNSUBSCRIBE push-ch");
+         raw.assertFrame(">3\r\n$11\r\nunsubscribe\r\n$7\r\npush-ch\r\n:0\r\n");
+      }
+   }
+
+   @Test
+   public void testPushFramesForPattern() throws IOException {
+      try (RawRespConnection raw = rawConnection()) {
+         raw.send("PSUBSCRIBE push-p*");
+         raw.assertFrame(">3\r\n$10\r\npsubscribe\r\n$7\r\npush-p*\r\n:1\r\n");
+
+         redisConnection.sync().publish("push-p1", "hello");
+         raw.assertFrame(">4\r\n$8\r\npmessage\r\n$7\r\npush-p*\r\n$7\r\npush-p1\r\n$5\r\nhello\r\n");
+
+         raw.send("PUNSUBSCRIBE push-p*");
+         raw.assertFrame(">3\r\n$12\r\npunsubscribe\r\n$7\r\npush-p*\r\n:0\r\n");
+      }
+   }
+
+   @Test
+   public void testRegularReplyWhileSubscribedIsNotPush() throws IOException {
+      try (RawRespConnection raw = rawConnection()) {
+         raw.send("SUBSCRIBE push-reply");
+         raw.assertFrame(">3\r\n$9\r\nsubscribe\r\n$10\r\npush-reply\r\n:1\r\n");
+
+         // A regular command on a subscribed connection must get a regular reply, not a push.
+         raw.send("ECHO hi");
+         raw.assertFrame("$2\r\nhi\r\n");
+      }
+   }
+
+   private RawRespConnection rawConnection() throws IOException {
+      RawRespConnection raw = new RawRespConnection(HOST, server.getPort());
+      raw.send(isAuthorizationEnabled() ? "HELLO 3 AUTH " + USERNAME + " " + PASSWORD : "HELLO 3");
+      // The HELLO reply varies, so skip it by reading up to the reply of a PING.
+      raw.send("PING");
+      raw.readUntil("+PONG\r\n");
+      return raw;
+   }
+
    private static class SimpleCommand implements ProtocolKeyword {
       private final String name;
 
@@ -896,5 +953,54 @@ public class PublishSubscribeTest extends SingleNodeRespBaseTest {
       });
 
       return handOffQueue;
+   }
+
+   /**
+    * A plain socket connection, used to assert on the exact RESP3 bytes the server sends.
+    */
+   private static final class RawRespConnection implements AutoCloseable {
+      private final Socket socket;
+      private final OutputStream out;
+      private final InputStream in;
+
+      RawRespConnection(String host, int port) throws IOException {
+         socket = new Socket(host, port);
+         socket.setSoTimeout(10_000);
+         out = socket.getOutputStream();
+         in = socket.getInputStream();
+      }
+
+      /**
+       * Sends a command encoded as a RESP array of bulk strings. The arguments are separated by spaces.
+       */
+      void send(String command) throws IOException {
+         String[] args = command.split(" ");
+         StringBuilder sb = new StringBuilder().append('*').append(args.length).append("\r\n");
+         for (String arg : args) {
+            sb.append('$').append(arg.getBytes(StandardCharsets.UTF_8).length).append("\r\n").append(arg).append("\r\n");
+         }
+         out.write(sb.toString().getBytes(StandardCharsets.UTF_8));
+         out.flush();
+      }
+
+      void assertFrame(String expected) throws IOException {
+         byte[] read = in.readNBytes(expected.getBytes(StandardCharsets.UTF_8).length);
+         assertThat(new String(read, StandardCharsets.UTF_8)).isEqualTo(expected);
+      }
+
+      String readUntil(String marker) throws IOException {
+         StringBuilder sb = new StringBuilder();
+         while (sb.indexOf(marker) < 0) {
+            int b = in.read();
+            if (b < 0) throw new EOFException("Connection closed before receiving " + marker);
+            sb.append((char) b);
+         }
+         return sb.toString();
+      }
+
+      @Override
+      public void close() throws IOException {
+         socket.close();
+      }
    }
 }
