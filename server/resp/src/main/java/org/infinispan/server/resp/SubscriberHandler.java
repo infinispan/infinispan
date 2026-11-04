@@ -85,14 +85,14 @@ public class SubscriberHandler extends Resp3Handler {
             int byteSize;
 
             if (pattern != null) {
-               // *4\r\n + $8\r\npmessage\r\n + $<patlen>\r\n<pattern>\r\n + $<keylen>\r\n<key>\r\n + $<vallen>\r\n<value>\r\n
+               // >4\r\n + $8\r\npmessage\r\n + $<patlen>\r\n<pattern>\r\n + $<keylen>\r\n<key>\r\n + $<vallen>\r\n<value>\r\n
                elements = List.of(PubSubEvents.PMESSAGE, pattern, key, value);
                byteSize = 2 + 2 + 2 + 2 + 8 + 2
                      + 1 + ByteBufferUtils.stringSize(pattern.length) + 2 + pattern.length + 2
                      + 1 + ByteBufferUtils.stringSize(key.length) + 2 + key.length + 2
                      + 1 + ByteBufferUtils.stringSize(value.length) + 2 + value.length + 2;
             } else {
-               // *3\r\n + $7\r\nmessage\r\n + $<keylen>\r\n<key>\r\n + $<vallen>\r\n<value>\r\n
+               // >3\r\n + $7\r\nmessage\r\n + $<keylen>\r\n<key>\r\n + $<vallen>\r\n<value>\r\n
                elements = List.of(PubSubEvents.MESSAGE, key, value);
                byteSize = 2 + 2 + 2 + 2 + 7 + 2
                      + 1 + ByteBufferUtils.stringSize(key.length) + 2 + key.length + 2
@@ -103,7 +103,7 @@ public class SubscriberHandler extends Resp3Handler {
             ByteBuf byteBuf = channel.alloc().buffer(byteSize, byteSize);
             ByteBufPool allocator = ignore -> byteBuf;
             ByteBufResponseWriter w = new ByteBufResponseWriter(allocator);
-            w.array(elements, Resp3Type.BULK_STRING);
+            w.push(elements, Resp3Type.BULK_STRING);
             assert byteBuf.writerIndex() == byteSize;
             // TODO: add some back pressure? - something like ClientListenerRegistry?
             channel.writeAndFlush(byteBuf, channel.voidPromise());
@@ -299,7 +299,7 @@ public class SubscriberHandler extends Resp3Handler {
          for (byte[] keyChannel : keyChannels) {
             counter = Math.max(0, counter + (isSubscribe ? 1 : -1));
             long c = counter;
-            writer.array(List.of(type, keyChannel, c), (o, w) -> {
+            writer.push(List.of(type, keyChannel, c), (o, w) -> {
                if (o instanceof byte[]) {
                   w.string((byte[]) o);
                } else {

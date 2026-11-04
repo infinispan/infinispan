@@ -163,6 +163,28 @@ public interface ResponseWriter {
     */
    void array(Collection<?> collection, Resp3Type contentType);
 
+   /**
+    * Serializes a collection as RESP3 out-of-band push data ({@code >}), with elements of a specified type.
+    *
+    * @param collection  Collection of heterogeneous values to serialize.
+    * @param contentType The type of elements contained by the sequence.
+    * @throws IllegalStateException in case no serializer is found for the object.
+    */
+   default void push(Collection<?> collection, Resp3Type contentType) {
+      array(collection, contentType);
+   }
+
+   /**
+    * Serializes a collection as RESP3 out-of-band push data ({@code >}), delegating the serialization of the elements
+    * to the provided serializer.
+    *
+    * @param collection Collection of elements to serialize.
+    * @param serializer Serializer for a single element in the collection.
+    * @param <T>        The type of the elements in the collection and the serializer handles.
+    */
+   default <T> void push(Collection<T> collection, JavaObjectSerializer<T> serializer) {
+      array(collection, serializer);
+   }
 
    /**
     * Serializes a set
