@@ -20,10 +20,6 @@
       "methods": [{"name": "<init>", "parameterTypes": []}]
     },
     {
-      "type": "org.infinispan.configuration.parsing.ParserRegistry",
-      "methods": [{"name": "<init>", "parameterTypes": []}]
-    },
-    {
       "type": "org.wildfly.security.credential.store._private.ElytronMessages_$logger",
       "methods": [{"name": "<init>", "parameterTypes": ["org.jboss.logging.Logger"]}]
     }
