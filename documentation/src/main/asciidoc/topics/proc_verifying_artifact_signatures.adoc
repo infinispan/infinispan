@@ -35,14 +35,14 @@ GnuPG must be installed on the system to verify signatures manually.
 
 .Procedure
 
-* Download the artifact and its `.asc` signature file from Maven Central for example `infinispan-bom-16.1.4.pom` and `infinispan-bom-16.1.4.pom.asc`.
+* Download the artifact and its `.asc` signature file from Maven Central for example `infinispan-bom-{signingexampleversion}.pom` and `infinispan-bom-{signingexampleversion}.pom.asc`.
 +
-[source,bash,options="nowrap"]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
-curl -fsSL https://repo1.maven.org/maven2/org/infinispan/infinispan-bom/16.1.4/infinispan-bom-16.1.4.pom \
-  --output infinispan-bom-16.1.4.pom
-curl -fsSL https://repo1.maven.org/maven2/org/infinispan/infinispan-bom/16.1.4/infinispan-bom-16.1.4.pom.asc \
-  --output infinispan-bom-16.1.4.pom.asc
+curl -fsSL https://repo1.maven.org/maven2/org/infinispan/infinispan-bom/{signingexampleversion}/infinispan-bom-{signingexampleversion}.pom \
+  --output infinispan-bom-{signingexampleversion}.pom
+curl -fsSL https://repo1.maven.org/maven2/org/infinispan/infinispan-bom/{signingexampleversion}/infinispan-bom-{signingexampleversion}.pom.asc \
+  --output infinispan-bom-{signingexampleversion}.pom.asc
 ----
 
 * Import the public part of the signing key from one of its official sources, for example:
@@ -56,9 +56,9 @@ The same public key is also included in link:https://github.com/infinispan/infin
 
 * Verify that the signature was made by the documented key and matches the artifact.
 +
-[source,bash,options="nowrap"]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
-gpg --verify infinispan-bom-16.1.4.pom.asc infinispan-bom-16.1.4.pom
+gpg --verify infinispan-bom-{signingexampleversion}.pom.asc infinispan-bom-{signingexampleversion}.pom
 ----
 
 A successful verification displays a message similar to the following output:

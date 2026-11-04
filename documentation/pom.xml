@@ -304,6 +304,8 @@
                                 <experimental>true</experimental>
                                 <infinispanversion>${infinispan.base.version}</infinispanversion>
                                 <infinispancomponentversion>${version.infinispan}</infinispancomponentversion>
+                                <!-- The exact version of this build, so that examples referencing published artifacts always match the release they are shipped with -->
+                                <signingexampleversion>${project.version}</signingexampleversion>
                                 <schemaversion>${schemaVersion}</schemaversion>
                                 <brandname>${infinispan.brand.name}</brandname>
                                 <version_10_x>${version_10.x}</version_10_x>
