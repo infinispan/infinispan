@@ -345,3 +345,31 @@ jobs:
         run: |
           gh variable set RELEASE -b "$(echo ${{ needs.release.outputs.nextVersion }} | cut -f 1 -d '-')" --org infinispan  --visibility all;
           gh variable set "RELEASE_$(echo '${{ needs.release.outputs.version }}' | cut -f 1-2 -d '.' | tr . _)_VERSION" -b "$(echo '${{ needs.release.outputs.version }}' | cut -f 1-2 -d '.').1" --org infinispan --visibility all;
+
+  # Best effort: keeps the example artifact version in KEYS on main current after a latest release.
+  # Runs only once Maven Central publication is confirmed, and never blocks or fails the release itself.
+  update-signing-statement:
+    needs: [published, release]
+    if: ${{ inputs.type == 'latest' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+        with:
+          ref: main
+
+      - name: Update example artifact version in KEYS
+        env:
+          GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+          RELEASE_VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          set -euo pipefail
+          old=$(grep -oE 'infinispan-bom-[0-9]+\.[0-9]+(\.[0-9]+)?' KEYS | head -1 | sed 's/^infinispan-bom-//') || { echo "::warning::No example version found in KEYS; skipping"; exit 0; }
+          if [ "$old" = "$RELEASE_VERSION" ]; then echo "KEYS already references $RELEASE_VERSION; nothing to do"; exit 0; fi
+          sed -i "s/$old/$RELEASE_VERSION/g" KEYS
+          git config user.name 'Infinispan Release'
+          git config user.email 'infinispan-maven@infinispan.org'
+          git add KEYS
+          git commit -m "[#18429] Update signing statement example to $RELEASE_VERSION"
+          # main may have moved since checkout; rebase so we never clobber concurrent changes.
+          git pull --rebase origin main
+          git push origin HEAD:main
