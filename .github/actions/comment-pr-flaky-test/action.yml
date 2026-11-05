@@ -23,6 +23,9 @@ runs:
         if [ "$PR" != "" ]; then
           shopt -s nullglob globstar
 
+          # Shared with track_flaky_tests.sh so lookup keys match issue titles
+          source "${GITHUB_WORKSPACE}/.github/scripts/flaky_test_name.sh"
+
           # Load flaky-test-issues mapping (written by track_flaky_tests.sh)
           declare -A ISSUE_MAP
           declare -A COMMENT_COUNT_MAP
@@ -44,9 +47,8 @@ runs:
               [ -z "$LINE" ] && continue
               # Strip leading/trailing whitespace
               LINE=$(echo "$LINE" | xargs)
-              # Build lookup key by stripping parameters (same logic as track_flaky_tests.sh)
-              LOOKUP_KEY="${LINE%%\[*}"
-              LOOKUP_KEY="${LOOKUP_KEY%%(*}"
+              # Build lookup key with the same normalization as track_flaky_tests.sh
+              LOOKUP_KEY=$(normalizeFlakyTestName "$LINE")
               if [ -n "${ISSUE_MAP[$LOOKUP_KEY]+x}" ]; then
                 ISSUE_NUM="${ISSUE_MAP[$LOOKUP_KEY]}"
                 SEEN_COUNT=$(( ${COMMENT_COUNT_MAP[$LOOKUP_KEY]} + 1 ))

@@ -15,6 +15,7 @@ set -e
 #
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 source "${SCRIPT_DIR}/common.sh"
+source "${SCRIPT_DIR}/flaky_test_name.sh"
 
 requiredEnv GH_JOB_URL FLAKY_TEST_GLOB TARGET_BRANCH GITHUB_REPOSITORY
 
@@ -32,14 +33,10 @@ for TEST in "${TESTS[@]}"; do
     i=$(( i + 1 ))
     TEST_CLASS="${ENTRY%%#*}"
     TEST_NAME="${ENTRY#*#}"
-    # Removing (Flaky Test) text
-    TEST_NAME=${TEST_NAME% (Flaky Test)}
-    # Some tests have arguments with backslash, ie testReplace\[NO_TX, P_TX\]. Removing
-    TEST_NAME=${TEST_NAME%%\[*}
-    # Some tests have it without backslash or have fail counter, ie testContainsAll[1]. Removing
-    TEST_NAME=${TEST_NAME%%[*}
-    # Some tests end with \(. Removing
-    TEST_NAME_NO_PARAMS=${TEST_NAME%%\(*}
+    # Strip the " (Flaky Test)" suffix and parameters/fail counter, collapsing
+    # all parameterized variants of a method to a single title. See
+    # flaky_test_name.sh for why escaped brackets need special handling.
+    TEST_NAME_NO_PARAMS=$(normalizeFlakyTestName "$TEST_NAME")
     STACK_TRACE=$(xmlstarlet sel --template --value-of '/testsuite/testcase['$i']/failure' ${TEST})
 
     # Create Issue for Test Class+TestName
