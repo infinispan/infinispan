@@ -24,6 +24,7 @@ import java.io.Closeable;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.nio.channels.ClosedChannelException;
+import java.nio.channels.spi.SelectorProvider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -80,7 +81,8 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.handler.codec.ReplayingDecoder;
@@ -112,7 +114,7 @@ public class HotRodClient implements Closeable {
 
    final Map<Long, Op> idToOp = new ConcurrentHashMap<>();
    private final EventLoopGroup eventLoopGroup =
-         new NioEventLoopGroup(1, new DefaultThreadFactory(TestResourceTracker.getCurrentTestShortName() + "-Client"));
+         new MultiThreadIoEventLoopGroup(1, new DefaultThreadFactory(TestResourceTracker.getCurrentTestShortName() + "-Client"), NioIoHandler.newFactory(SelectorProvider.provider()));
 
    public HotRodClient(String host, int port, String defaultCacheName, byte protocolVersion) {
       this(host, port, defaultCacheName, DEFAULT_TIMEOUT_SECONDS, protocolVersion, null, true);

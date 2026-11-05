@@ -7,6 +7,7 @@ import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readString;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.readUnsignedLong;
 import static org.infinispan.server.hotrod.transport.ExtendedByteBuf.writeUnsignedLong;
 
+import java.nio.channels.spi.SelectorProvider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -30,8 +31,9 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.MessageToByteEncoder;
 import io.netty.handler.codec.ReplayingDecoder;
@@ -93,7 +95,7 @@ public class HotRodPipeTest extends SingleCacheManagerTest {
       BatchingClient(int port) {
          this.port = port;
          DefaultThreadFactory threadFactory = new DefaultThreadFactory(TestResourceTracker.getCurrentTestShortName());
-         group = new NioEventLoopGroup(0, threadFactory);
+         group = new MultiThreadIoEventLoopGroup(0, threadFactory, NioIoHandler.newFactory(SelectorProvider.provider()));
       }
 
       void start() {
