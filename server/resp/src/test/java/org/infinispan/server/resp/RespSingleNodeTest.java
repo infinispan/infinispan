@@ -249,6 +249,19 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
 
       List<Object> commands = redis.command();
       assertThat(commands.size()).isEqualTo(Commands.all().size());
+      List<Object> names = commands.stream().<Object>map(c -> ((List<?>) c).get(0)).toList();
+      assertThat(names).doesNotHaveDuplicates();
+   }
+
+   public void testCommandsRegisteredOnce() {
+      List<String> names = Commands.all().stream().map(RespCommand::getName).toList();
+      assertThat(names).doesNotHaveDuplicates();
+   }
+
+   public void testCommandCount() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      long distinct = Commands.all().stream().map(RespCommand::getName).distinct().count();
+      assertThat(redis.commandCount()).isEqualTo(distinct);
    }
 
    public void testAuth() {
