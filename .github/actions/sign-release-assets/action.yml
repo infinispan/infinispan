@@ -25,19 +25,8 @@ inputs:
 runs:
   using: composite
   steps:
-    # The windows-2022 runners do not ship GnuPG; install a prebuilt binary from gnupg.org.
-    - name: Install GnuPG on Windows runner
-      if: ${{ runner.os == 'Windows' }}
-      shell: bash
-      run: |
-        url=$(curl -fsSL https://www.gnupg.org/download/index.html \
-          | grep -oE '/ftp/gcrypt/gnupg/gnupg-w32-[0-9][^"]*\.tar\.xz' | head -1)
-        [ -n "$url" ] || { echo "::error::Could not locate the GnuPG Windows tarball URL on gnupg.org"; exit 1; }
-        curl -fsSL "https://gnupg.org$url" --output gpg-w32.tar.xz
-        mkdir -p ./.gnupg-w32
-        tar xf gpg-w32.tar.xz -C ./.gnupg-w32
-        find ./.gnupg-w32 -maxdepth 2 -type d | while read -r dir; do echo "$dir" >> "$GITHUB_PATH"; done
-
+    # Windows runners get GnuPG from the Git Bash they run this action in (Git for Windows >= 2.44.0
+    # ships GnuPG); the availability check below guards against runner image changes.
     # macOS runners usually ship GnuPG already.
     - name: Install GnuPG on macOS runner if missing
       if: ${{ runner.os == 'macOS' }}
