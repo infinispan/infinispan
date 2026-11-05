@@ -16,6 +16,10 @@
       "methods": [{"name": "<init>", "parameterTypes": ["org.jboss.logging.Logger"]}]
     },
     {
+      "type": "org.infinispan.client.rest.logging.Log_$logger",
+      "methods": [{"name": "<init>", "parameterTypes": ["org.jboss.logging.Logger"]}]
+    },
+    {
       "type": "org.wildfly.security.password.impl.PasswordFactorySpiImpl",
       "methods": [{"name": "<init>", "parameterTypes": []}]
     },

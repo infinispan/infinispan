@@ -13,6 +13,7 @@ import java.util.concurrent.Flow;
 
 import org.infinispan.client.rest.RestEventListener;
 import org.infinispan.client.rest.impl.jdk.RestResponseInfoJDK;
+import org.infinispan.client.rest.logging.Log;
 import org.infinispan.commons.dataconversion.MediaType;
 
 import com.google.errorprone.annotations.concurrent.GuardedBy;
@@ -43,6 +44,7 @@ public class EventSubscriber implements Flow.Subscriber<String>, Closeable {
             subscription.cancel();
             return;
          }
+         Log.REST.debug("Server-sent events stream opened");
          listener.onOpen(responseInfo);
       }
       subscription.request(1);
@@ -70,12 +72,14 @@ public class EventSubscriber implements Flow.Subscriber<String>, Closeable {
 
    @Override
    public void onComplete() {
+      Log.REST.debug("Server-sent events stream closed");
       listener.close();
    }
 
    @Override
    public void close() {
       synchronized (this) {
+         Log.REST.debug("Closing server-sent events stream");
          closed = true;
          // The subscription is absent when closing before the response arrives.
          // Subscribe will cancel it.
@@ -89,9 +93,9 @@ public class EventSubscriber implements Flow.Subscriber<String>, Closeable {
       return (responseInfo) -> {
          this.responseInfo = new RestResponseInfoJDK(responseInfo);
          return HttpResponse.BodySubscribers.fromLineSubscriber(this,
-            s -> null,
-            charsetFrom(responseInfo.headers()),
-            null);
+               s -> null,
+               charsetFrom(responseInfo.headers()),
+               null);
       };
    }
 

@@ -25,15 +25,15 @@ public abstract class HttpAuthenticator {
       this.configuration = configuration;
    }
 
-   public  boolean supportsPreauthentication() {
+   public boolean supportsPreauthentication() {
       return false;
    }
 
-   public HttpRequest.Builder preauthenticate(HttpRequest.Builder request) {
+   public HttpRequest.Builder preauthenticate(HttpRequest.Builder request, AuthRequestState state) {
       throw new UnsupportedOperationException();
    }
 
-   public abstract <T> CompletionStage<HttpResponse<T>> authenticate(HttpResponse<T> response, HttpResponse.BodyHandler<?> bodyHandler);
+   public abstract <T> CompletionStage<HttpResponse<T>> authenticate(HttpResponse<T> response, HttpResponse.BodyHandler<?> bodyHandler, AuthRequestState state);
 
    public static HttpRequest.Builder copyRequest(HttpRequest request) {
       return copyRequest(request, (n, v) -> true);

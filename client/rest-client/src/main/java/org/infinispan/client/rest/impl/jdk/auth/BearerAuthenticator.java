@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.configuration.AuthenticationConfiguration;
+import org.infinispan.client.rest.logging.Log;
 
 public class BearerAuthenticator extends HttpAuthenticator {
    private final String authzValue;
@@ -22,16 +23,17 @@ public class BearerAuthenticator extends HttpAuthenticator {
    }
 
    @Override
-   public HttpRequest.Builder preauthenticate(HttpRequest.Builder request) {
+   public HttpRequest.Builder preauthenticate(HttpRequest.Builder request, AuthRequestState state) {
       return request.header(WWW_AUTH_RESP, authzValue);
    }
 
    @Override
-   public <T> CompletionStage<HttpResponse<T>> authenticate(HttpResponse<T> response, HttpResponse.BodyHandler<?> bodyHandler) {
+   public <T> CompletionStage<HttpResponse<T>> authenticate(HttpResponse<T> response, HttpResponse.BodyHandler<?> bodyHandler, AuthRequestState state) {
       HttpRequest request = response.request();
       List<String> authorization = request.headers().allValues(WWW_AUTH_RESP);
       if (!authorization.isEmpty() && authorization.get(0).startsWith("Bearer")) {
          // We have already attempted to authenticate, fail
+         Log.REST.debug("Bearer token already attempted, giving up");
          return null;
       }
       HttpRequest.Builder newRequest = copyRequest(request, (n, v) -> true).header(WWW_AUTH_RESP, authzValue);

@@ -1,6 +1,8 @@
 package org.infinispan.server.security.authorization;
 
+import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.server.functional.ClusteredIT;
+import org.infinispan.server.test.api.TestUser;
 import org.infinispan.server.test.artifacts.Artifacts;
 import org.infinispan.server.test.core.LdapServerListener;
 import org.infinispan.server.test.core.ServerRunMode;
@@ -29,6 +31,7 @@ public class AuthorizationLDAPSambaIT extends InfinispanSuite {
                .mavenArtifacts(ClusteredIT.mavenArtifacts())
                .artifacts(Artifacts.artifacts())
                .property(TestSystemPropertyNames.LDAP_SERVER, "samba")
+               .property(TestSystemPropertyNames.HOTROD_CLIENT_SASL_MECHANISM, "PLAIN")
                .addListener(new LdapServerListener())
                .build();
 
@@ -46,7 +49,16 @@ public class AuthorizationLDAPSambaIT extends InfinispanSuite {
       static InfinispanServerExtension SERVERS = AuthorizationLDAPSambaIT.SERVERS;
 
       public Rest() {
-         super(SERVERS);
+         super(SERVERS, TestUser::getUser, user -> {
+            RestClientConfigurationBuilder restBuilder = new RestClientConfigurationBuilder();
+            if (user.getUser() != null) {
+               restBuilder.security().authentication()
+                     .mechanism("BASIC")
+                     .username(user.getUser())
+                     .password(user.getPassword());
+            }
+            return restBuilder;
+         });
       }
    }
 

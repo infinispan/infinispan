@@ -7,7 +7,6 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Base64;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.atomic.AtomicReference;
 
 import javax.security.auth.Subject;
 
@@ -17,13 +16,13 @@ import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.Oid;
 import org.infinispan.client.rest.configuration.AuthenticationConfiguration;
+import org.infinispan.client.rest.logging.Log;
 
 public class NegotiateAuthenticator extends HttpAuthenticator {
    private static final String SPNEGO_OID = "1.3.6.1.5.5.2";
    public static final byte[] EMPTY = {};
    private final GSSManager gssManager;
    private final Oid oid;
-   private final AtomicReference<String> token = new AtomicReference<>();
    private final String overrideHost;
 
    public NegotiateAuthenticator(HttpClient client, AuthenticationConfiguration configuration) {
@@ -38,14 +37,17 @@ public class NegotiateAuthenticator extends HttpAuthenticator {
    }
 
    @Override
-   public <T> CompletionStage<HttpResponse<T>> authenticate(HttpResponse<T> response, HttpResponse.BodyHandler<?> bodyHandler) {
+   public <T> CompletionStage<HttpResponse<T>> authenticate(HttpResponse<T> response, HttpResponse.BodyHandler<?> bodyHandler, AuthRequestState state) {
       try {
          HttpRequest request = response.request();
          String host = overrideHost == null ? request.uri().getHost() : overrideHost;
-         token.set(generateToken(EMPTY, host));
-         HttpRequest.Builder newRequest = copyRequest(request, (n, v) -> true).header(WWW_AUTH_RESP, "Negotiate " + token.get());
+         String token = generateToken(EMPTY, host);
+         // Strip old Authorization headers to prevent accumulation across retries
+         HttpRequest.Builder newRequest = copyRequest(request, (n, v) -> !n.equalsIgnoreCase(WWW_AUTH_RESP))
+               .header(WWW_AUTH_RESP, "Negotiate " + token);
          return client.sendAsync(newRequest.build(), (HttpResponse.BodyHandler<T>) bodyHandler);
       } catch (GSSException e) {
+         Log.REST.spnegoTokenFailure(e);
          throw new AuthenticationException(e.getMessage(), e);
       }
    }

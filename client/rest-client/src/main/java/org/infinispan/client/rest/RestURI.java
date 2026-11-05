@@ -96,7 +96,7 @@ public class RestURI {
 
    public RestClientConfigurationBuilder toConfigurationBuilder() {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
-      for(InetSocketAddress address : addresses) {
+      for (InetSocketAddress address : addresses) {
          builder.addServer().host(address.getHostString()).port(address.getPort());
       }
       if (ssl) {

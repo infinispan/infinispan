@@ -26,5 +26,9 @@
   {
     "name": "org.infinispan.server.test.jupiter.InfinispanServerExtension",
     "allPublicMethods": true
+  },
+  {
+    "name": "org.infinispan.client.rest.logging.Log_$logger",
+    "methods": [{"name": "<init>", "parameterTypes": ["org.jboss.logging.Logger"]}]
   }
 ]
