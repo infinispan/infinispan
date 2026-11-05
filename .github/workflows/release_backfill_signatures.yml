@@ -1,0 +1,61 @@
+name: Backfill Release Signatures
+
+# Signs the binary assets attached to existing GitHub releases with the project
+# OpenPGP key (see KEYS) and uploads a detached ASCII-armored .asc next to each one.
+#
+# Run with a space- or comma-separated list of release versions, e.g. "16.3.1 16.0.5".
+# Re-running is safe: signatures are uploaded with --clobber and existing .asc files are skipped.
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      versions:
+        description: "Release versions to backfill, space- or comma-separated (e.g. 16.3.1 16.0.5)"
+        required: true
+        type: string
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Import signing key
+        shell: bash
+        env:
+          MAVEN_GPG_KEY: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
+        run: |
+          echo "$MAVEN_GPG_KEY" | gpg --batch --import
+          gpg --list-secret-keys --keyid-format long | grep sec
+
+      - name: Sign and upload missing signatures
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}
+          VERSIONS: ${{ inputs.versions }}
+        run: |
+          set -euo pipefail
+          read -ra VERSIONS <<< "$(printf '%s' "$VERSIONS" | tr ',\t\n' '   ')"
+          for v in "${VERSIONS[@]}"; do
+            [ -n "$v" ] || continue
+            echo "::notice::backfilling signatures for release $v"
+            dir="assets-$v"
+            mkdir -p "$dir"
+            gh release download "$v" --repo infinispan/infinispan --dir "$dir"
+            # Sign every binary artifact present on the release; skip the SBOM (Sigstore track, see KEYS)
+            # and any signatures that already exist.
+            files=$(find "$dir" -maxdepth 1 -type f ! -name '*.asc' ! -name 'bom.json' ! -name '*.cdx.json')
+            [ -n "$files" ] || { echo "::error::No binary assets found on release $v"; exit 1; }
+            asc=()
+            for f in $files; do
+              gpg --batch --yes --pinentry-mode loopback \
+                --passphrase "$MAVEN_GPG_PASSPHRASE" \
+                --detach-sign --armor -o "${f}.asc" "$f" || { echo "::error::Failed to sign $f"; exit 1; }
+              gpg --verify "${f}.asc" "$f" || { echo "::error::Signature verification failed for $f"; exit 1; }
+              asc+=("${f}.asc")
+            done
+            gh release upload "$v" "${asc[@]}" --clobber
+            echo "::notice::uploaded ${#asc[@]} signatures for release $v"
+          done
