@@ -58,8 +58,9 @@ import io.netty.channel.Channel;
  * fails or the server does not support protocol 4.2, it falls back to a single cluster-wide listener.
  * <p>
  * During rolling upgrades the effective cluster protocol version may change at runtime.  The cache
- * automatically downgrades to the cluster-wide listener when an older-protocol server joins and upgrades
- * back to primary mode once all servers are running Hot Rod 4.2+.
+ * automatically downgrades to the cluster-wide listener when an older-protocol server joins. The downgrade
+ * is permanent: the cluster-wide listener works with every protocol version, so primary mode is never
+ * re-entered.
  *
  * @param <K> key type
  * @param <V> value type
@@ -167,17 +168,14 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    private volatile Object nearListener;
    private volatile byte[] nearListenerId;
    private volatile int nearBloomBits;
-   // Permanently disables primary mode when initial setup fails irrecoverably (e.g. proxy port unreachable).
+   // Permanently disables primary mode when initial setup fails or the cache is downgraded to the cluster-wide listener.
    private volatile boolean primaryModeDisabled = false;
    // Tracks whether the near cache is currently operating in primary-owner listener mode.
    private final AtomicBoolean inPrimaryMode = new AtomicBoolean(false);
    // Registered with OperationDispatcher to be notified when any channel's codec is negotiated.
    private Runnable codecChangeListener;
-   // Guards concurrent calls to switchToClusterListenerMode / switchToPrimaryListenerMode.
+   // Guards concurrent calls to addNearCacheListener / switchToClusterListenerMode.
    private final AtomicBoolean modeSwitch = new AtomicBoolean(false);
-   // Set when a mode transition was requested while another one was in progress, so that the transition is
-   // re-evaluated once the in-progress one completes instead of being dropped.
-   private final AtomicBoolean modeCheckPending = new AtomicBoolean(false);
 
    InvalidatedNearRemoteCache(InternalRemoteCache<K, V> remoteCache, ClientStatistics clientStatistics,
                               NearCacheService<K, V> nearcache) {
@@ -246,20 +244,12 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    }
 
    /**
-    * Permanently disables primary mode for this cache session and tears down any active primary listeners.
-    * Called when initial setup fails irrecoverably. Use {@link #tearDownPrimaryListeners()} for the
-    * rolling-upgrade downgrade path, which does not set the permanent disable flag.
+    * Permanently disables primary mode for this cache session, tears down any active primary owner listeners
+    * and resets the primary-mode tracking state. Called when the initial setup fails, or when the cache is
+    * downgraded to the cluster-wide listener.
     */
    private void cleanupPrimaryMode() {
       primaryModeDisabled = true;
-      tearDownPrimaryListeners();
-   }
-
-   /**
-    * Tears down all active primary owner listeners and resets the primary-mode tracking state,
-    * without permanently disabling primary mode. Used for rolling-upgrade downgrade transitions.
-    */
-   private void tearDownPrimaryListeners() {
       inPrimaryMode.set(false);
       getDispatcher().removeTopologyListener(getName(), topologyListener);
       byte[] lid = this.nearListenerId;
@@ -663,7 +653,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    public void removeClientListener(Object listener) {
       boolean removingNearListener = Objects.equals(listener, this.nearListener);
       if (removingNearListener) {
-         // Forget the listener regardless of the current mode so a later codec change cannot re-install it
+         // Forget the listener regardless of the current mode so a later codec change cannot downgrade it
          this.nearListener = null;
          if (codecChangeListener != null) {
             getDispatcher().removeCodecChangeListener(codecChangeListener);
@@ -853,7 +843,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
       this.nearBloomBits = bloomBits;
       lastSeenTopologyId.set(-1);
 
-      // Register codec change listener once — reacts to rolling-upgrade protocol version transitions.
+      // Register codec change listener once — reacts to rolling-upgrade downgrades to an older protocol version.
       if (codecChangeListener == null) {
          codecChangeListener = this::onCodecChange;
          getDispatcher().addCodecChangeListener(codecChangeListener);
@@ -891,16 +881,12 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
                   inPrimaryMode.set(true);
                   return primaryChannel;
                }
-               // Not a permanent failure: primary mode can be re-entered once all servers support it
-               tearDownPrimaryListeners();
-            } else {
-               // Have to fallback to regular listener mode (permanent disable — initial setup failed)
-               cleanupPrimaryMode();
             }
+            // Have to fallback to the cluster-wide listener mode (permanent disable)
+            cleanupPrimaryMode();
          }
          return installClusterListener(listener, bloomBits);
       } finally {
-         modeCheckPending.set(false);
          modeSwitch.set(false);
          // Reconcile with any codec change that happened while the initial setup was in progress
          onCodecChange();
@@ -1032,42 +1018,6 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
       return ch;
    }
 
-   /**
-    * Attempts to acquire the mode switch guard. If it is held, records that a transition was requested so
-    * it is re-evaluated by {@link #releaseModeSwitch()} instead of being dropped.
-    */
-   private boolean acquireModeSwitch() {
-      if (modeSwitch.compareAndSet(false, true)) {
-         return true;
-      }
-      modeCheckPending.set(true);
-      // The holder may have released between the failed CAS and setting the flag
-      if (modeSwitch.compareAndSet(false, true)) {
-         modeCheckPending.set(false);
-         return true;
-      }
-      return false;
-   }
-
-   private void releaseModeSwitch() {
-      modeSwitch.set(false);
-      if (modeCheckPending.compareAndSet(true, false)) {
-         onCodecChange();
-      }
-   }
-
-   /**
-    * Reacts to a codec negotiation event fired by {@code HeaderDecoder} when any channel has its protocol
-    * version finalised.  This is the trigger for rolling-upgrade mode transitions:
-    * <ul>
-    *   <li>If we are currently in primary mode but a channel now reports a codec that does not support
-    *       primary near cache listeners (e.g. a 4.1 server joined), we downgrade to the cluster-wide
-    *       listener and clear the near cache.</li>
-    *   <li>If we are currently in cluster-wide mode and all channels now support primary near cache
-    *       listeners (e.g. the last 4.1 server was upgraded to 4.2), we switch back to primary mode
-    *       and clear the near cache.</li>
-    * </ul>
-    */
    private void submitModeSwitch(Runnable modeSwitchTask) {
       try {
          getDispatcher().getExecutorService().submit(modeSwitchTask);
@@ -1076,25 +1026,27 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
       }
    }
 
+   /**
+    * Reacts to a codec negotiation event fired by {@code HeaderDecoder} when any channel has its protocol
+    * version finalised. If we are currently in primary mode but a channel now reports a codec that does not
+    * support primary near cache listeners (e.g. a 4.1 server joined during a rolling upgrade), we downgrade
+    * to the cluster-wide listener. The downgrade is permanent.
+    */
    private void onCodecChange() {
-      boolean allSupport = getDispatcher().isPrimaryNearCacheListenerSupported();
-      if (inPrimaryMode.get() && !allSupport) {
-         // A lower-version server has connected — downgrade.
+      if (inPrimaryMode.get() && !getDispatcher().isPrimaryNearCacheListenerSupported()) {
          // Submit to the dispatcher executor to avoid blocking the Netty event loop.
          submitModeSwitch(this::switchToClusterListenerMode);
-      } else if (!inPrimaryMode.get() && !primaryModeDisabled && allSupport) {
-         // All servers now support primary mode — try to upgrade.
-         submitModeSwitch(this::switchToPrimaryListenerMode);
       }
    }
 
    /**
-    * Downgrades the near cache from primary-owner listener mode to a single cluster-wide listener.
+    * Permanently downgrades the near cache from primary-owner listener mode to a single cluster-wide listener.
     * Triggered when an older-protocol server joins the cluster during a rolling upgrade.
     * The near cache is cleared to ensure no stale entries remain from the transition window.
     */
    private void switchToClusterListenerMode() {
-      if (!acquireModeSwitch()) {
+      // If the guard is held, addNearCacheListener is running and re-evaluates the codec state when it completes
+      if (!modeSwitch.compareAndSet(false, true)) {
          return;
       }
       try {
@@ -1104,8 +1056,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
          log.nearCacheDowngradedToClusterListener(getName());
          Object listener = this.nearListener;
          int bloomBits = this.nearBloomBits;
-         // Remove primary listeners (without permanently disabling primary mode).
-         tearDownPrimaryListeners();
+         cleanupPrimaryMode();
          // Clear the near cache BEFORE installing the cluster listener to prevent invalidation race:
          // If we install first, mutations between install and clear won't be invalidated.
          nearcache.clear();
@@ -1114,80 +1065,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
             this.listenerChannel = installClusterListener(listener, bloomBits);
          }
       } finally {
-         releaseModeSwitch();
-      }
-   }
-
-   /**
-    * Upgrades the near cache from a cluster-wide listener to primary-owner listener mode.
-    * Triggered when all servers in the cluster have been upgraded to Hot Rod 4.2+.
-    * The near cache is cleared to ensure correctness after the transition window.
-    */
-   private void switchToPrimaryListenerMode() {
-      if (!acquireModeSwitch()) {
-         return;
-      }
-      try {
-         if (inPrimaryMode.get() || primaryModeDisabled) {
-            return;
-         }
-         // Re-check inside the guarded section: another thread may have changed things.
-         if (!canUsePrimaryMode()) {
-            return;
-         }
-         log.nearCacheUpgradedToPrimaryListeners(getName());
-         Object listener = this.nearListener;
-         int bloomBits = this.nearBloomBits;
-
-         // Remove the existing cluster-wide listener via the standard path.
-         if (listener != null) {
-            try {
-               super.removeClientListener(listener);
-            } catch (Exception e) {
-               if (trace) {
-                  log.tracef(e, "Error removing cluster listener during upgrade to primary mode for cache %s", getName());
-               }
-            }
-         }
-         this.nearListenerId = null;
-         listenerChannel = null;
-
-         // Clear the near cache before the switch to avoid stale entries.
-         nearcache.clear();
-
-         // Install primary listeners.
-         lastSeenTopologyId.set(-1);
-         if (listener != null) {
-            byte[] newListenerId = ClientListenerOperation.generateListenerId();
-            this.nearListenerId = newListenerId;
-            PrimaryNearCacheEventDispatcher nearDispatcher = PrimaryNearCacheEventDispatcher.create(
-                  getOperationsFactory().newAddPrimaryNearCacheListenerOperation(listener, newListenerId, bloomBits), this);
-            getDispatcher().getClientListenerNotifier().addDispatcher(nearDispatcher);
-            getDispatcher().addTopologyListener(getName(), topologyListener);
-            try {
-               Channel channel = registerPrimaryListeners(listener, newListenerId, bloomBits);
-               if (channel != null && hasActivePrimaryListeners()) {
-                  // Set primary mode ONLY after successful registration to prevent reads from
-                  // using uninitialized state (segment function not yet set)
-                  inPrimaryMode.set(true);
-                  listenerChannel = channel;
-                  nearcache.updateListenerId(newListenerId);
-                  nearcache.clear();
-                  return;
-               }
-            } catch (Throwable t) {
-               log.errorf(t, "Failed to register primary listeners during upgrade for cache %s", getName());
-            }
-            // Could not establish primary listeners — clean up any established listeners on servers
-            // and revert to cluster mode.
-            inPrimaryMode.set(false);
-            tearDownPrimaryListeners();
-            // Re-install the cluster listener
-            this.listenerChannel = installClusterListener(listener, bloomBits);
-            nearcache.clear();
-         }
-      } finally {
-         releaseModeSwitch();
+         modeSwitch.set(false);
       }
    }
 
@@ -1223,9 +1101,6 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
          lastSeenTopologyId.set(newTopologyId);
       }
       if (!inPrimaryMode.get()) {
-         if (!primaryModeDisabled && canUsePrimaryMode()) {
-            submitModeSwitch(this::switchToPrimaryListenerMode);
-         }
          return;
       }
 

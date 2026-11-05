@@ -30,7 +30,8 @@ import org.testng.annotations.Test;
 /**
  * Tests that the near cache automatically downgrades from primary-owner listener mode to a
  * cluster-wide listener when a server running an older Hot Rod protocol version joins the cluster
- * (simulating a rolling upgrade), and upgrades back to primary mode once all servers are on 4.2+.
+ * (simulating a rolling upgrade). The downgrade is permanent: the near cache never switches back
+ * to primary mode.
  */
 @Test(groups = "functional", testName = "client.hotrod.near.PrimaryNearCacheRollingUpgradeTest")
 public class PrimaryNearCacheRollingUpgradeTest extends MultiHotRodServersTest {
@@ -70,16 +71,16 @@ public class PrimaryNearCacheRollingUpgradeTest extends MultiHotRodServersTest {
       return rcm;
    }
 
-   public void testAutoDowngradeAndUpgradeOnRollingUpgrade() throws Exception {
-      doTestAutoDowngradeAndUpgrade(false);
+   public void testAutoDowngradeOnRollingUpgrade() throws Exception {
+      doTestAutoDowngrade(false);
    }
 
    /**
     * Bloom filters rely on the listener channel in cluster mode, so the downgrade must track the channel
     * of the newly installed cluster listener.
     */
-   public void testAutoDowngradeAndUpgradeOnRollingUpgradeWithBloomFilter() throws Exception {
-      doTestAutoDowngradeAndUpgrade(true);
+   public void testAutoDowngradeOnRollingUpgradeWithBloomFilter() throws Exception {
+      doTestAutoDowngrade(true);
    }
 
    /**
@@ -134,10 +135,10 @@ public class PrimaryNearCacheRollingUpgradeTest extends MultiHotRodServersTest {
     *       other threads concurrently read and write.</li>
     *   <li>Assert that the near cache downgrades to cluster-wide listener mode and clears.</li>
     *   <li>Simulate the server upgrading back to 4.2 by restoring the codec.</li>
-    *   <li>Assert that the near cache upgrades back to primary mode.</li>
+    *   <li>Assert that the near cache stays in cluster-wide listener mode.</li>
     * </ol>
     */
-   private void doTestAutoDowngradeAndUpgrade(boolean bloom) throws Exception {
+   private void doTestAutoDowngrade(boolean bloom) throws Exception {
       RemoteCacheManager clientManager = createNearClient(bloom);
       RemoteCache<Integer, String> cache = clientManager.getCache();
       assertThat(cache).isInstanceOf(InvalidatedNearRemoteCache.class);
@@ -203,41 +204,16 @@ public class PrimaryNearCacheRollingUpgradeTest extends MultiHotRodServersTest {
          assertThat(cache.get(2)).isEqualTo("two");
          eventually(() -> inrc.getNearCacheService().get(2) != null, 5, TimeUnit.SECONDS);
 
-         // Resume concurrent operations for upgrade phase
-         stop.set(false);
-         concurrentOps = fork(() -> {
-            int i = 0;
-            while (!stop.get()) {
-               int key = 100 + (i++ % 20);
-               String value = "v" + i;
-               cache.put(key, value);
-               assertThat(cache.get(key)).isEqualTo(value);
-            }
-            return null;
-         });
-
-         // --- Phase 3: simulate the server upgrading back to 4.2 ---
+         // --- Phase 3: simulate the server upgrading back to 4.2, the downgrade is permanent ---
          TestingUtil.replaceField(originalCodec, "codec", targetChannel, OperationChannel.class);
          dispatcher.notifyCodecChanged();
+         Thread.sleep(500);
+         assertThat(inrc.isPrimaryMode()).as("Must stay in cluster mode after all servers are 4.2 again").isFalse();
 
-         // Near cache should upgrade back to primary mode
-         eventually(() -> inrc.isPrimaryMode(), 5, TimeUnit.SECONDS);
-         assertThat(inrc.isPrimaryMode()).as("Should be back in primary mode after upgrade").isTrue();
-
-         stop.set(true);
-         concurrentOps.get(10, TimeUnit.SECONDS);
-
-         // Near cache is cleared during upgrade; reads should re-populate it
-         cache.put(3, "three");
-         assertThat(cache.get(3)).isEqualTo("three");
-         eventually(() -> inrc.getNearCacheService().get(3) != null, 5, TimeUnit.SECONDS);
-
-         // Invalidation via server still works in primary mode
-         SocketAddress primaryOwner = inrc.getPrimaryOwner(3);
-         assertThat(primaryOwner).as("Primary owner found").isNotNull();
-         server(0).getCacheManager().getCache().put(3, "three-updated");
-         eventually(() -> inrc.getNearCacheService().get(3) == null, 5, TimeUnit.SECONDS);
-         assertThat(cache.get(3)).isEqualTo("three-updated");
+         // Invalidation via the cluster-wide listener still works
+         server(0).getCacheManager().getCache().put(2, "two-updated");
+         eventually(() -> inrc.getNearCacheService().get(2) == null, 5, TimeUnit.SECONDS);
+         assertThat(cache.get(2)).isEqualTo("two-updated");
       } finally {
          stop.set(true);
          // Restore original codec even if test fails
