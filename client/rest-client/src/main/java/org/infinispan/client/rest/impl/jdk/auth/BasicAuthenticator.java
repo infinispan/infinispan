@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.configuration.AuthenticationConfiguration;
+import org.infinispan.client.rest.logging.Log;
 
 public class BasicAuthenticator extends HttpAuthenticator {
    private final String authzValue;
@@ -24,19 +25,22 @@ public class BasicAuthenticator extends HttpAuthenticator {
    }
 
    @Override
-   public HttpRequest.Builder preauthenticate(HttpRequest.Builder request) {
+   public HttpRequest.Builder preauthenticate(HttpRequest.Builder request, AuthRequestState state) {
       return request.header(WWW_AUTH_RESP, authzValue);
    }
 
    @Override
-   public <T> CompletionStage<HttpResponse<T>> authenticate(HttpResponse<T> response, HttpResponse.BodyHandler<?> bodyHandler) {
+   public <T> CompletionStage<HttpResponse<T>> authenticate(HttpResponse<T> response, HttpResponse.BodyHandler<?> bodyHandler, AuthRequestState state) {
       HttpRequest request = response.request();
       List<String> authorization = request.headers().allValues(WWW_AUTH_RESP);
-      if (authzValue == null || !authorization.isEmpty() && authorization.get(0).startsWith("Basic")) {
+      if (authzValue == null || authorization.stream().anyMatch(v -> v.startsWith("Basic"))) {
          // We have already attempted to authenticate, fail
+         Log.REST.debug("Basic authentication already attempted, giving up");
          return null;
       }
-      HttpRequest.Builder newRequest = copyRequest(request, (n, v) -> true).header(WWW_AUTH_RESP, authzValue);
+      // Strip old Authorization headers so the retry carries only this mechanism's credentials
+      HttpRequest.Builder newRequest = copyRequest(request, (n, v) -> !n.equalsIgnoreCase(WWW_AUTH_RESP))
+            .header(WWW_AUTH_RESP, authzValue);
       return client.sendAsync(newRequest.build(), (HttpResponse.BodyHandler<T>) bodyHandler);
    }
 
