@@ -28,6 +28,7 @@ import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -69,6 +70,7 @@ import io.reactivex.rxjava3.core.CompletableObserver;
 import io.reactivex.rxjava3.core.CompletableSource;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.exceptions.CompositeException;
 import io.reactivex.rxjava3.functions.Predicate;
 
 /**
@@ -285,7 +287,18 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
       }
       scheduler.onTaskStarted(tombstoneMap.size());
       return CompletionStages.allOf(checkStaleKeys(), checkStaleTombstones())
+            .whenComplete(this::logRoundFailure)
             .whenComplete(scheduler);
+   }
+
+   private void logRoundFailure(Void unused, Throwable t) {
+      if (t != null && !stopped) {
+         Throwable cause = CompletableFutures.extractException(t);
+         // Composite carries a synthetic exception if trying to access through cause chain.
+         if (cause instanceof CompositeException ce)
+            cause = Util.getRootCause(ce.getExceptions().get(0));
+         log.warnFailedIracTask(commandsFactory.getCacheName(), cause);
+      }
    }
 
    public CompletionStage<Void> checkStaleTombstones() {

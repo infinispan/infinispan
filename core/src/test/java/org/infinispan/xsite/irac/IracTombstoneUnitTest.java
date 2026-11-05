@@ -20,8 +20,10 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.RequestUUID;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstoneRemoteSiteCheckCommand;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
@@ -34,6 +36,7 @@ import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -43,10 +46,11 @@ import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 /**
- * Tests the Scheduler in {@link DefaultIracTombstoneManager}.
+ * Tests the Scheduler in {@link DefaultIracTombstoneManager} and how the cleanup rounds recover from failures.
  *
  * @author Pedro Ruivo
  * @since 14.0
@@ -71,10 +75,15 @@ public class IracTombstoneUnitTest extends AbstractInfinispanTest {
    }
 
    private static DistributionManager createDistributionManager() {
+      return createDistributionManager(true);
+   }
+
+   private static DistributionManager createDistributionManager(boolean primary) {
       DistributionManager dm = Mockito.mock(DistributionManager.class);
 
       DistributionInfo dInfo = Mockito.mock(DistributionInfo.class);
-      Mockito.when(dInfo.isPrimary()).thenReturn(true);
+      Mockito.when(dInfo.isPrimary()).thenReturn(primary);
+      Mockito.when(dInfo.primary()).thenReturn(Mockito.mock(Address.class));
       Mockito.when(dInfo.isWriteOwner()).thenReturn(true);
 
       LocalizedCacheTopology cacheTopology = Mockito.mock(LocalizedCacheTopology.class);
@@ -148,15 +157,20 @@ public class IracTombstoneUnitTest extends AbstractInfinispanTest {
    }
 
    private static DefaultIracTombstoneManager createIracTombstoneManager(Queue<? super RunnableData> queue, int targetSize, long maxDelay, AtomicBoolean keep) {
+      return createIracTombstoneManager(queue, targetSize, maxDelay, createDistributionManager(), createIracManager(keep), createRpcManager());
+   }
+
+   private static DefaultIracTombstoneManager createIracTombstoneManager(Queue<? super RunnableData> queue, int targetSize, long maxDelay,
+                                                                         DistributionManager distributionManager, IracManager iracManager, RpcManager rpcManager) {
       DefaultIracTombstoneManager manager = new DefaultIracTombstoneManager(createConfiguration(targetSize, maxDelay), backups());
       TestingUtil.inject(manager,
-            createDistributionManager(),
+            distributionManager,
             createTakeOfflineManager(),
-            createIracManager(keep),
+            iracManager,
             createBlockingManager(),
             createScheduledExecutorService(queue),
             createCommandFactory(),
-            createRpcManager());
+            rpcManager);
       return manager;
    }
 
@@ -289,10 +303,135 @@ public class IracTombstoneUnitTest extends AbstractInfinispanTest {
       executor.run();
       assertEquals(1, invocationCount.get());
 
-      firstTask.completeExceptionally(new IllegalStateException("simulated RPC failure"));
+      firstTask.completeExceptionally(new IllegalStateException("simulated task failure"));
 
       assertEquals(2, invocationCount.get());
       assertFalse(executor.hasPendingRunnable.get());
+   }
+
+   public void testExecutorRunsTaskAfterIdleFailure() {
+      AtomicInteger invocationCount = new AtomicInteger();
+      IracExecutor executor = new IracExecutor(() -> invocationCount.incrementAndGet() == 1
+            ? CompletableFuture.failedFuture(new IllegalStateException("simulated task failure"))
+            : CompletableFutures.completedNull());
+
+      // The task has already failed and nothing is queued when the next one is requested.
+      executor.run();
+      assertEquals(1, invocationCount.get());
+
+      executor.run();
+      assertEquals(2, invocationCount.get());
+   }
+
+   public void testExecutorSurvivesConsecutiveFailures() {
+      AtomicInteger invocationCount = new AtomicInteger();
+      IracExecutor executor = new IracExecutor(() -> {
+         invocationCount.incrementAndGet();
+         return CompletableFuture.failedFuture(new IllegalStateException("simulated task failure"));
+      });
+
+      for (int expected = 1; expected <= 5; ++expected) {
+         executor.run();
+         assertEquals(expected, invocationCount.get());
+      }
+   }
+
+   public void testRoundRunsAfterFailedTombstoneCleanupCommand() throws InterruptedException {
+      BlockingDeque<RunnableData> queue = new LinkedBlockingDeque<>();
+      RpcManager rpcManager = createRpcManager();
+      Mockito.when(rpcManager.invokeCommand(ArgumentMatchers.anyCollection(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any()))
+            .thenAnswer(failFirstAttempt(new AtomicInteger()));
+      DefaultIracTombstoneManager manager = createIracTombstoneManager(queue, 10, 1000, createDistributionManager(),
+            createIracManager(new AtomicBoolean(false)), rpcManager);
+      manager.start();
+      insertTombstones(1, manager, createIracMetadata());
+
+      // The owners did not confirm the removal, the tombstone stays.
+      nextRound(queue).run();
+      assertEquals(1, manager.size());
+
+      nextRound(queue).run();
+      assertEquals(0, manager.size());
+
+      assertNotNull(nextRound(queue));
+      manager.stop();
+   }
+
+   public void testRoundRunsAfterFailedPrimaryCheck() throws InterruptedException {
+      BlockingDeque<RunnableData> queue = new LinkedBlockingDeque<>();
+      AtomicInteger attempts = new AtomicInteger();
+      DefaultIracTombstoneManager manager = createIracTombstoneManager(queue, 10, 1000, createDistributionManager(false),
+            createIracManager(new AtomicBoolean(false)), createRpcManagerFailingUnicast(attempts));
+      manager.start();
+      insertTombstones(1, manager, createIracMetadata());
+
+      nextRound(queue).run();
+      assertEquals(1, attempts.get());
+
+      nextRound(queue).run();
+      assertEquals(2, attempts.get());
+
+      assertNotNull(nextRound(queue));
+      manager.stop();
+   }
+
+   public void testRoundRunsAfterFailedPendingKeyCheck() throws InterruptedException {
+      BlockingDeque<RunnableData> queue = new LinkedBlockingDeque<>();
+      AtomicInteger attempts = new AtomicInteger();
+      IracManager iracManager = createIracManager(new AtomicBoolean(false));
+      Mockito.when(iracManager.pendingKeys())
+            .thenAnswer(invocationOnMock -> Stream.of(new IracManagerKeyInfo(1, "key", RequestUUID.localOf(1))));
+      DefaultIracTombstoneManager manager = createIracTombstoneManager(queue, 10, 1000, createDistributionManager(false),
+            iracManager, createRpcManagerFailingUnicast(attempts));
+      manager.start();
+
+      nextRound(queue).run();
+      assertEquals(1, attempts.get());
+
+      nextRound(queue).run();
+      assertEquals(2, attempts.get());
+
+      assertNotNull(nextRound(queue));
+      manager.stop();
+   }
+
+   /**
+    * Creates an {@link RpcManager} where the first request to a single target fails and the following ones succeed.
+    *
+    * @param attempts Incremented on every request to a single target.
+    * @return The {@link RpcManager} mock.
+    */
+   private static RpcManager createRpcManagerFailingUnicast(AtomicInteger attempts) {
+      RpcManager rpcManager = createRpcManager();
+      Mockito.when(rpcManager.invokeCommand(ArgumentMatchers.any(Address.class), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any()))
+            .thenAnswer(failFirstAttempt(attempts));
+      return rpcManager;
+   }
+
+   /**
+    * Creates an {@link Answer} that fails the first request, as if it had timed out, and completes the following ones.
+    *
+    * @param attempts Incremented on every request.
+    * @return The {@link Answer} to stub an RPC with.
+    */
+   private static Answer<CompletionStage<Void>> failFirstAttempt(AtomicInteger attempts) {
+      return invocationOnMock -> attempts.incrementAndGet() == 1
+            ? CompletableFuture.failedFuture(new TimeoutException("simulated RPC timeout"))
+            : CompletableFutures.completedNull();
+   }
+
+   /**
+    * Waits for the next scheduled cleanup round.
+    *
+    * @param queue The queue holding the rounds scheduled by the manager.
+    * @return The {@link Runnable} that runs the round.
+    * @throws InterruptedException If interrupted while waiting.
+    * @throws AssertionError If no round is scheduled in time.
+    */
+   private static Runnable nextRound(BlockingDeque<RunnableData> queue) throws InterruptedException {
+      RunnableData data = queue.poll(10, TimeUnit.SECONDS);
+      assertNotNull(data);
+      return data.runnable;
    }
 
    private static void insertTombstones(int targetSize, DefaultIracTombstoneManager manager, IracMetadata metadata) {

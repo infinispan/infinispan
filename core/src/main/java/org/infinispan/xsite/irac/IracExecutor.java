@@ -74,7 +74,8 @@ public class IracExecutor implements Runnable {
          hasPendingRunnable.set(false);
          try {
             return runnable.get().exceptionally(e -> {
-               log.warnFailedIracTask(e);
+               // Report the failure with the stack trace only at debug level.
+               log.debug("[IRAC] Task failed, the next one will still run", e);
                return null;
             });
          } catch (Throwable e) {

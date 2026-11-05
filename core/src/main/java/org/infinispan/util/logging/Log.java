@@ -2078,11 +2078,6 @@ public interface Log extends BasicLogger {
    @Description("During conflict resolution for cross-site replication an unexpected error occurred. To ensure data consistency between backup locations you should initiate state transfer to synchronize data between clusters.")
    void unexpectedErrorFromIrac(@Cause Throwable t);
 
-   @LogMessage(level = WARN)
-   @Message(value = "[IRAC] Background task failed; subsequent tasks will continue.", id = 731)
-   @Description("An asynchronous cross-site replication task failed. The executor will continue with the next scheduled task.")
-   void warnFailedIracTask(@Cause Throwable t);
-
    @LogMessage(level = DEBUG)
    @Message(value = "Cannot obtain cache '%s' as it is in FAILED state. Please check the configuration", id = 609)
    void cannotObtainFailedCache(String name, @Cause Throwable t);
@@ -2503,4 +2498,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Creating cache '%s' in a mixed-version cluster (oldest member %s); " +
          "newer configuration elements may be omitted from the configuration replicated to older nodes and some features might be disabled", id = 730)
    void possibleConfigurationOmissionInMixedCluster(String cacheName, NodeVersion oldestMember);
+
+   @LogMessage(level = WARN)
+   @Message(value = "[IRAC] Tombstone cleanup round failed for cache '%s' and will be retried: %s", id = 731)
+   @Description("A tombstone cleanup round for cross-site replication failed, for example because a cluster member did not " +
+         "respond in time. The next round retries the cleanup. If this message persists, check the health of the cluster.")
+   void warnFailedIracTask(String cacheName, Throwable t);
 }
