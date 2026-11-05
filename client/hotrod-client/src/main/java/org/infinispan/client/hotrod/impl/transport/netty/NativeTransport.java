@@ -2,14 +2,16 @@ package org.infinispan.client.hotrod.impl.transport.netty;
 
 import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 
+import java.nio.channels.spi.SelectorProvider;
 import java.util.concurrent.ExecutorService;
 
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollDatagramChannel;
-import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollIoHandler;
 import io.netty.channel.epoll.EpollSocketChannel;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
@@ -48,7 +50,7 @@ public final class NativeTransport {
 
    private static boolean useNativeIOUring() {
       try {
-         Class.forName("io.netty.incubator.channel.uring.IOUring", true, NativeTransport.class.getClassLoader());
+         Class.forName("io.netty.channel.uring.IoUring", true, NativeTransport.class.getClassLoader());
          if (IOURingNativeTransport.isAvailable()) {
             return !IOURING_DISABLED && IS_LINUX;
          } else {
@@ -86,13 +88,11 @@ public final class NativeTransport {
 
    public static EventLoopGroup createEventLoopGroup(int maxExecutors, ExecutorService executorService) {
       if (USE_NATIVE_EPOLL) {
-         // new MultiThreadIoEventLoopGroup(maxExecutors, executorService, EpollIoHandler.newFactory());
-         return new EpollEventLoopGroup(maxExecutors, executorService);
+         return new MultiThreadIoEventLoopGroup(maxExecutors, executorService, EpollIoHandler.newFactory());
       } else if (USE_NATIVE_IOURING) {
          return IOURingNativeTransport.createEventLoopGroup(maxExecutors, executorService);
       } else {
-         // new MultiThreadIoEventLoopGroup(maxExecutors, executorService, NioIoHandler.newFactory(SelectorProvider.provider()));
-         return new NioEventLoopGroup(maxExecutors, executorService);
+         return new MultiThreadIoEventLoopGroup(maxExecutors, executorService, NioIoHandler.newFactory(SelectorProvider.provider()));
       }
    }
 }
