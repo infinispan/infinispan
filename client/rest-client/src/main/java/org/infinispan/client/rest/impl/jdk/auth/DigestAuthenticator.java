@@ -15,7 +15,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.CompletionStage;
@@ -37,9 +36,6 @@ public class DigestAuthenticator extends HttpAuthenticator {
          '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
    };
    private final Charset credentialsCharset = StandardCharsets.US_ASCII;
-   private String lastNonce;
-   private long nonceCount;
-   private String cnonce;
    // Cached challenge parameters for preauthentication
    private volatile Map<String, String> cachedParameters;
 
@@ -53,7 +49,7 @@ public class DigestAuthenticator extends HttpAuthenticator {
    }
 
    @Override
-   public HttpRequest.Builder preauthenticate(HttpRequest.Builder request) {
+   public HttpRequest.Builder preauthenticate(HttpRequest.Builder request, AuthRequestState state) {
       Map<String, String> params = cachedParameters;
       if (params != null) {
          // Build a mutable copy with the current request's method and URI
@@ -63,15 +59,16 @@ public class DigestAuthenticator extends HttpAuthenticator {
          HttpRequest tempRequest = request.copy().build();
          requestParams.put("methodname", tempRequest.method());
          requestParams.put("uri", digestUri(tempRequest.uri()));
-         request.header(WWW_AUTH_RESP, createDigestHeader(tempRequest, requestParams));
+         request.header(WWW_AUTH_RESP, createDigestHeader(tempRequest, requestParams, state));
+         state.preauthenticated = true;
       }
       return request;
    }
 
    @Override
-   public <T> CompletionStage<HttpResponse<T>> authenticate(HttpResponse<T> response, HttpResponse.BodyHandler<?> bodyHandler) {
+   public <T> CompletionStage<HttpResponse<T>> authenticate(HttpResponse<T> response, HttpResponse.BodyHandler<?> bodyHandler, AuthRequestState state) {
       if (configuration.username() == null || configuration.password() == null) {
-         Log.REST.warn("No username and password provided for authentication");
+         Log.REST.digestCredentialsMissing();
          return null;
       }
       String header = findHeader(response, WWW_AUTH, "Digest");
@@ -86,16 +83,23 @@ public class DigestAuthenticator extends HttpAuthenticator {
       }
       String realm = parameters.get("realm");
       if (realm == null) {
-         throw new AuthenticationException("Missing nonce in challenge header: " + header);
+         throw new AuthenticationException("Missing realm in challenge header: " + header);
       }
       boolean isStale = Boolean.parseBoolean(parameters.get("stale"));
       HttpRequest request = response.request();
-      if (cachedParameters != null) {
+      String previousNonce = previousDigestNonce(request);
+      if (state.preauthenticated) {
          // A preauthenticated request was rejected (e.g. nonce expired or different server node).
          // Clear the cache and retry with the fresh challenge.
-         cachedParameters = null;
-      } else if (havePreviousDigestAuthorizationAndShouldAbort(request, isStale)) {
-         Log.REST.error("Previous digest authorization failed");
+         state.preauthenticated = false;
+         if (cachedParameters != null) {
+            cachedParameters = null;
+         }
+         Log.REST.debug("Preauthenticated digest request rejected, retrying with the fresh challenge");
+      } else if (previousNonce != null && previousNonce.equals(nonce) && !isStale) {
+         // The server re-challenged with the same nonce without marking it stale: it rejected the
+         // response itself, so retrying cannot help.
+         Log.REST.previousDigestAuthorizationFailed();
          return null;
       }
       parameters.put("methodname", request.method());
@@ -103,7 +107,7 @@ public class DigestAuthenticator extends HttpAuthenticator {
       parameters.computeIfAbsent("charset", k -> getCredentialsCharset(request));
       // Strip old Authorization headers to prevent accumulation across retries
       HttpRequest.Builder newRequest = copyRequest(request, (n, v) -> !n.equalsIgnoreCase(WWW_AUTH_RESP))
-            .header(WWW_AUTH_RESP, createDigestHeader(request, parameters));
+            .header(WWW_AUTH_RESP, createDigestHeader(request, parameters, state));
       return client.sendAsync(newRequest.build(), (HttpResponse.BodyHandler<T>) bodyHandler)
             .thenApply(r -> {
                if (r.statusCode() != 401) {
@@ -142,15 +146,22 @@ public class DigestAuthenticator extends HttpAuthenticator {
       return new String(buffer);
    }
 
-   private boolean havePreviousDigestAuthorizationAndShouldAbort(HttpRequest request, boolean isStale) {
-      final Optional<String> previousAuthorizationHeader = request.headers().firstValue(WWW_AUTH_RESP);
-      if (previousAuthorizationHeader.isPresent() && previousAuthorizationHeader.get().startsWith("Digest")) {
-         return !isStale;
+   private static String previousDigestNonce(HttpRequest request) {
+      List<String> headers = request.headers().allValues(WWW_AUTH_RESP);
+      for (String header : headers) {
+         if (header.startsWith("Digest")) {
+            Matcher matcher = HEADER_REGEX.matcher(header);
+            while (matcher.find()) {
+               if ("nonce".equals(matcher.group(1))) {
+                  return matcher.group(2);
+               }
+            }
+         }
       }
-      return false;
+      return null;
    }
 
-   private synchronized String createDigestHeader(HttpRequest request, Map<String, String> parameters) throws AuthenticationException {
+   private String createDigestHeader(HttpRequest request, Map<String, String> parameters, AuthRequestState state) throws AuthenticationException {
       String uri = parameters.get("uri");
       String realm = parameters.get("realm");
       String nonce = parameters.get("nonce");
@@ -191,20 +202,20 @@ public class DigestAuthenticator extends HttpAuthenticator {
 
       String uname = configuration.username();
       String pwd = new String(configuration.password());
-      if (nonce.equals(this.lastNonce)) {
-         nonceCount++;
+      if (nonce.equals(state.lastNonce)) {
+         state.nonceCount.incrementAndGet();
       } else {
-         nonceCount = 1;
-         cnonce = null;
-         lastNonce = nonce;
+         state.nonceCount.set(1);
+         state.cnonce = null;
+         state.lastNonce = nonce;
       }
       StringBuilder sb = new StringBuilder(256);
       Formatter formatter = new Formatter(sb, Locale.US);
-      formatter.format("%08x", nonceCount);
+      formatter.format("%08x", state.nonceCount.get());
       formatter.close();
       final String nc = sb.toString();
-      if (cnonce == null) {
-         cnonce = createCnonce();
+      if (state.cnonce == null) {
+         state.cnonce = createCnonce();
       }
       String s1;
       String s2;
@@ -213,7 +224,7 @@ public class DigestAuthenticator extends HttpAuthenticator {
          sb.append(uname).append(':').append(realm).append(':').append(pwd);
          String checksum = encode(digester.digest(getBytes(sb.toString(), charset)));
          sb.setLength(0);
-         sb.append(checksum).append(':').append(nonce).append(':').append(cnonce);
+         sb.append(checksum).append(':').append(nonce).append(':').append(state.cnonce);
          s1 = sb.toString();
       } else {
          sb.setLength(0);
@@ -248,7 +259,7 @@ public class DigestAuthenticator extends HttpAuthenticator {
       } else {
          sb.setLength(0);
          sb.append(hasha1).append(':').append(nonce).append(':').append(nc).append(':')
-               .append(cnonce).append(':').append(qop == QOP_AUTH_INT ? "auth-int" : "auth")
+               .append(state.cnonce).append(':').append(qop == QOP_AUTH_INT ? "auth-int" : "auth")
                .append(':').append(h2);
          digestValue = sb.toString();
       }
@@ -271,7 +282,7 @@ public class DigestAuthenticator extends HttpAuthenticator {
          buffer.append(", nc=");
          buffer.append(nc);
          buffer.append(", cnonce=\"");
-         buffer.append(cnonce);
+         buffer.append(state.cnonce);
          buffer.append("\", ");
       }
       buffer.append("algorithm=");

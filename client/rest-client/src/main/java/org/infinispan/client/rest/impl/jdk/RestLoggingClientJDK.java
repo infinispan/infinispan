@@ -46,7 +46,7 @@ public class RestLoggingClientJDK implements RestLoggingClient {
          amp = true;
       }
       if (appenders != null) {
-         for(String appender : appenders) {
+         for (String appender : appenders) {
             if (amp) {
                sb.append("&");
             }

@@ -40,7 +40,7 @@ public class RestCounterClientJDK implements RestCounterClient {
 
    @Override
    public CompletionStage<RestResponse> configuration(String mediaType) {
-      return client.get(path+"/config", mediaType != null ? Map.of(ACCEPT, mediaType) : Collections.emptyMap());
+      return client.get(path + "/config", mediaType != null ? Map.of(ACCEPT, mediaType) : Collections.emptyMap());
    }
 
    @Override
