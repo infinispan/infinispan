@@ -34,9 +34,9 @@ public class FileWatcherTest {
          Files.createFile(a);
          ConcurrentMap<Path, AtomicInteger> counters = new ConcurrentHashMap<>();
          watcher.watch(a, p -> counters.computeIfAbsent(p, k -> new AtomicInteger()).incrementAndGet());
-         Files.setLastModifiedTime(a, FileTime.fromMillis(System.currentTimeMillis()));
+         touch(a);
          Eventually.eventually(() -> counters.containsKey(a) && counters.get(a).get() == 1);
-         Files.setLastModifiedTime(a, FileTime.fromMillis(System.currentTimeMillis()));
+         touch(a);
          Eventually.eventually(() -> counters.get(a).get() == 2);
          Files.createFile(b);
          Thread.sleep(FileWatcher.SLEEP + 500);
@@ -46,10 +46,44 @@ public class FileWatcherTest {
          watcher.watch(b, p -> counters.computeIfAbsent(p, k -> new AtomicInteger()).incrementAndGet());
          // add a second watcher to "a"
          watcher.watch(a, p -> counters.computeIfAbsent(p, k -> new AtomicInteger()).incrementAndGet());
-         Files.setLastModifiedTime(a, FileTime.fromMillis(System.currentTimeMillis()));
-         Files.setLastModifiedTime(b, FileTime.fromMillis(System.currentTimeMillis()));
+         touch(a);
+         touch(b);
          Eventually.eventually(() -> counters.get(a).get() == 4);
          Eventually.eventually(() -> counters.containsKey(b) && counters.get(b).get() == 1);
       }
+   }
+
+   /**
+    * The watcher only notifies on a strictly greater modification time, so pin down both sides of that
+    * boundary: rewriting the same timestamp is not a change, one millisecond later is.
+    */
+   @Test
+   public void testCallbackRequiresStrictlyNewerModificationTime() throws IOException, InterruptedException {
+      try(FileWatcher watcher = new FileWatcher()) {
+         watcher.start();
+         Path tmpDir = Paths.get(Testing.tmpDirectory(FileWatcherTest.class));
+         Files.createDirectories(tmpDir);
+         Path c = tmpDir.resolve("c");
+         Files.deleteIfExists(c);
+         Files.createFile(c);
+         AtomicInteger counter = new AtomicInteger();
+         watcher.watch(c, p -> counter.incrementAndGet());
+         long watched = Files.getLastModifiedTime(c).toMillis();
+         Files.setLastModifiedTime(c, FileTime.fromMillis(watched));
+         Thread.sleep(FileWatcher.SLEEP + 500);
+         assertEquals(0, counter.get());
+         Files.setLastModifiedTime(c, FileTime.fromMillis(watched + 1));
+         Eventually.eventually(() -> counter.get() == 1);
+      }
+   }
+
+   /**
+    * Sets a modification time strictly greater than the current one. Using {@link System#currentTimeMillis()}
+    * alone is not enough: it can land in the same millisecond as the timestamp the watcher already recorded,
+    * in which case no callback is ever invoked.
+    */
+   private static void touch(Path path) throws IOException {
+      long next = Math.max(System.currentTimeMillis(), Files.getLastModifiedTime(path).toMillis() + 1);
+      Files.setLastModifiedTime(path, FileTime.fromMillis(next));
    }
 }
