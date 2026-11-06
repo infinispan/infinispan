@@ -8,8 +8,8 @@ public class ConnectionActivator implements ContextAwareCommandActivator {
    private Context context;
 
    @Override
-   public boolean isActivated(ParsedCommand command) {
-      // In batch mode context is null
+   public boolean isActivated(ParsedCommand parsedCommand) {
+      // In batch mode or when no connection required, context may be null
       return context == null || context.isConnected();
    }
 

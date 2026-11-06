@@ -18,7 +18,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
-import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.Executor;
 import org.aesh.command.invocation.CommandInvocation;
@@ -248,6 +247,14 @@ public class CliExtension implements BeforeEachCallback, AfterEachCallback {
       }
 
       @Override
+      public void setPendingConnection(Shell shell, String connectionString) {
+      }
+
+      @Override
+      public void setPendingConnection(Shell shell, String connectionString, String username, String password) {
+      }
+
+      @Override
       public void disconnect() {
       }
 
@@ -282,7 +289,12 @@ public class CliExtension implements BeforeEachCallback, AfterEachCallback {
       }
 
       @Override
-      public CommandResult changeResource(Class<? extends Resource> fromResource, String resourceType, String name) throws CommandException {
+      public CommandResult changeResource(Class<? extends Resource> fromResource, String resourceType, String name) {
+         return null;
+      }
+
+      @Override
+      public String readPassword(String prompt, String confirmPrompt) {
          return null;
       }
 

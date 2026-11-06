@@ -41,6 +41,7 @@ import org.infinispan.commons.util.Version;
  */
 public class ContextImpl implements Context, AeshContext, Closeable {
    private static final String CONFIG_FILE = "cli.properties";
+   private final Shell shell;
    private Connection connection;
    private final Properties properties;
    private org.aesh.io.Resource cwd;
@@ -48,9 +49,22 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    private SSLContextSettings sslContext;
    private CommandRegistry<? extends CommandInvocation> registry;
    private final Path configPath;
+   private Shell pendingShell;
+   private String pendingConnectionString;
+   private String pendingUsername;
+   private String pendingPassword;
 
-   public ContextImpl(Properties defaults) {
+   public ContextImpl() {
+      this(System.getProperties());
+   }
+
+   public ContextImpl(Properties properties) {
+      this(properties, null);
+   }
+
+   public ContextImpl(Properties defaults, Shell shell) {
       this.properties = new Properties(defaults);
+      this.shell = shell;
       String userDir = properties.getProperty("user.dir");
       cwd = userDir != null ? new FileResource(userDir) : null;
       configPath = getConfigurationDirectory(properties);
@@ -62,7 +76,6 @@ public class ContextImpl implements Context, AeshContext, Closeable {
             System.err.println(Messages.MSG.configLoadFailed(configFile.toString()));
          }
       }
-
    }
 
    @Override
@@ -72,7 +85,7 @@ public class ContextImpl implements Context, AeshContext, Closeable {
 
    @Override
    public boolean isConnected() {
-      return connection != null && connection.isConnected();
+      return (connection != null && connection.isConnected()) || pendingConnectionString != null;
    }
 
    @Override
@@ -231,6 +244,10 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    public void disconnect() {
       Util.close(connection);
       connection = null;
+      pendingConnectionString = null;
+      pendingUsername = null;
+      pendingPassword = null;
+      pendingShell = null;
       refreshPrompt();
    }
 
@@ -261,7 +278,35 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    }
 
    @Override
+   public void setPendingConnection(Shell shell, String connectionString) {
+      this.pendingShell = shell;
+      this.pendingConnectionString = connectionString;
+      this.pendingUsername = null;
+      this.pendingPassword = null;
+   }
+
+   @Override
+   public void setPendingConnection(Shell shell, String connectionString, String username, String password) {
+      this.pendingShell = shell;
+      this.pendingConnectionString = connectionString;
+      this.pendingUsername = username;
+      this.pendingPassword = password;
+   }
+
+   @Override
    public Connection connection() {
+      // Lazy connection: establish connection if we have pending parameters
+      if (connection == null && pendingConnectionString != null) {
+         if (pendingUsername != null) {
+            connect(pendingShell, pendingConnectionString, pendingUsername, pendingPassword);
+         } else {
+            connect(pendingShell, pendingConnectionString);
+         }
+         pendingConnectionString = null;
+         pendingUsername = null;
+         pendingPassword = null;
+         pendingShell = null;
+      }
       return connection;
    }
 
@@ -300,5 +345,20 @@ public class ContextImpl implements Context, AeshContext, Closeable {
       } else {
          return Paths.get(SystemUtils.getAppConfigFolder(Version.getBrandName().toLowerCase().replace(' ', '_')));
       }
+   }
+
+   @Override
+   public String readPassword(String prompt, String confirmPrompt) throws InterruptedException {
+      String password = null;
+      while (password == null) {
+         password = shell.readLine(new Prompt(prompt, '*'));
+      }
+      if (confirmPrompt != null) {
+         String confirm = null;
+         while (confirm == null || !confirm.equals(password)) {
+            confirm = shell.readLine(new Prompt(confirmPrompt, '*'));
+         }
+      }
+      return password;
    }
 }
