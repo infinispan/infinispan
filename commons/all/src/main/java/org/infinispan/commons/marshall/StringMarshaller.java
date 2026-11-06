@@ -23,7 +23,7 @@ public class StringMarshaller extends AbstractMarshaller {
 
    @Override
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {
-      return new String(buf, charset);
+      return new String(buf, offset, length, charset);
    }
 
    @Override
