@@ -21,15 +21,18 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.impl.ComponentRef;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.distribution.Collector;
 import org.infinispan.interceptors.distribution.PrimaryOwnerOnlyCollector;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -57,6 +60,7 @@ public class CommandAckCollector {
    @Inject @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR)
    ScheduledExecutorService timeoutExecutor;
    @Inject Configuration configuration;
+   @Inject ComponentRef<DistributionManager> distributionManager;
 
    private final ConcurrentHashMap<Long, BaseCollector<?>> collectorMap;
    private long timeoutNanoSeconds;
@@ -186,6 +190,8 @@ public class CommandAckCollector {
       final CompletableFuture<T> exposedFuture;
       volatile T primaryResult;
       volatile boolean primaryResultReceived;
+      // Last outcome of a backup ack per sender, reported when the collector times out.
+      final Map<Address, String> acks = new ConcurrentHashMap<>();
 
       BaseCollector(long id, int topologyId) {
          this.topologyId = topologyId;
@@ -202,8 +208,28 @@ public class CommandAckCollector {
        */
       @Override
       public final synchronized Void call() {
-         future.completeExceptionally(log.timeoutWaitingForAcks(Util.prettyPrintTime(timeoutNanoSeconds, TimeUnit.NANOSECONDS), getAddress(), id, topologyId));
+         future.completeExceptionally(log.timeoutWaitingForAcks(Util.prettyPrintTime(timeoutNanoSeconds, TimeUnit.NANOSECONDS), getAddress(), id, topologyId, installedTopologyId(), acks.toString()));
          return null;
+      }
+
+      private String installedTopologyId() {
+         // Diagnostics only: the component may be stopping, and the future must complete regardless
+         try {
+            DistributionManager dm = distributionManager == null ? null : distributionManager.running();
+            CacheTopology topology = dm == null ? null : dm.getCacheTopology();
+            return topology == null ? "unknown" : String.valueOf(topology.getTopologyId());
+         } catch (RuntimeException e) {
+            return "unknown";
+         }
+      }
+
+      final void ackReceived(Address from) {
+         acks.put(from, "received");
+      }
+
+      final void ackIgnored(Address from, int ackTopologyId) {
+         acks.put(from, future.isDone() ? "ignored (already completed)" :
+               "ignored (topology " + ackTopologyId + ", expected " + topologyId + ")");
       }
 
       protected abstract String getAddress();
@@ -302,8 +328,10 @@ public class CommandAckCollector {
                   id, from, topologyId, this.topologyId);
          }
          if (isWrongTopologyOrIsDone(topologyId)) {
+            ackIgnored(from, topologyId);
             return;
          }
+         ackReceived(from);
          boolean empty;
          synchronized (this) {
             empty = backupOwners.remove(from) && backupOwners.isEmpty();
@@ -379,8 +407,10 @@ public class CommandAckCollector {
                   id, from, topologyId, this.topologyId, segment);
          }
          if (isWrongTopologyOrIsDone(topologyId)) {
+            ackIgnored(from, topologyId);
             return;
          }
+         ackReceived(from);
          synchronized (this) {
             Collection<Integer> pendingSegments = backups.getOrDefault(from, Collections.emptyList());
             if (pendingSegments.remove(segment) && pendingSegments.isEmpty()) {

@@ -1490,8 +1490,8 @@ public interface Log extends BasicLogger {
 
    //removed unused message (id=426)
 
-   @Message(value = "Timeout after %s waiting for acks (%s). Id=%s, Topology Id=%s", id = 427)
-   TimeoutException timeoutWaitingForAcks(String timeout, String address, long id, int topology);
+   @Message(value = "Timeout after %s waiting for acks (%s). Id=%s, Topology Id=%s, Installed Topology Id=%s, Acks received from backups=%s", id = 427)
+   TimeoutException timeoutWaitingForAcks(String timeout, String address, long id, int topology, String installedTopology, String acks);
 
    @LogMessage(level = WARN)
    @Message(value = "'%1$s' at %3$s has been deprecated. Please use '%2$s' instead", id = 428)
