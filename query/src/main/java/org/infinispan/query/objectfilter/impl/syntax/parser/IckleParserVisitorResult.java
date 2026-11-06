@@ -880,6 +880,7 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
 
          // Get pattern
          String pattern = ctx.additiveExpression().getText();
+         boolean isParameter = pattern.startsWith(":");
 
          // Remove quotes
          if (pattern.startsWith("'") && pattern.endsWith("'")) {
@@ -898,7 +899,8 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
 
          checkAnalyzed(property, false);
 
-         expressionBuilder.addLike(property, pattern, escapeChar);
+         Object patternValue = isParameter ? parameterStringValue(pattern) : pattern;
+         expressionBuilder.addLike(property, patternValue, escapeChar);
 
          return null;
       }
