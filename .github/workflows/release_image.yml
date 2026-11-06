@@ -46,6 +46,9 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -115,3 +118,34 @@ jobs:
 
       - name: Print Quay.io image url
         run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
+
+      - name: Install cosign
+        if: ${{ inputs.push }}
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: 'v3.1.3'
+
+      - name: Prepare registry credentials for SBOM attestation
+        if: ${{ inputs.push }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/docker-config"
+          cp "$HOME/.config/containers/auth.json" "$RUNNER_TEMP/docker-config/config.json"
+          echo "DOCKER_CONFIG=$RUNNER_TEMP/docker-config" >> "$GITHUB_ENV"
+
+      - name: Generate SBOM
+        if: ${{ inputs.push }}
+        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        with:
+          image: docker.io/infinispan/server:${{ inputs.version }}
+          format: spdx-json
+          output-file: ./sbom.spdx.json
+          syft-version: 'v1.52.0'
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Create SBOM attestations for all tags
+        if: ${{ inputs.push }}
+        run: |
+          set -euo pipefail
+          cosign attest --predicate ./sbom.spdx.json --type spdxjson "docker.io/infinispan/server:${{ inputs.version }}"
+          cosign attest --predicate ./sbom.spdx.json --type spdxjson "quay.io/infinispan/server:${{ inputs.version }}"
