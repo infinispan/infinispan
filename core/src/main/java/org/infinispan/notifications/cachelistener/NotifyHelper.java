@@ -6,6 +6,7 @@ import java.util.concurrent.CompletionStage;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.IracPutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.WriteCommand;
@@ -40,10 +41,21 @@ public class NotifyHelper {
          } else if (command instanceof EvictCommand) {
             stage = evictionManager.onEntryEviction(Collections.singletonMap(entry.getKey(), entry), command);
          } else if (command instanceof RemoveCommand) {
-            stage = notifier.notifyCacheEntryRemoved(entry.getKey(), previousValue, entry.getMetadata(), false, ctx, command);
+            // A remove may take the key out of memory before it commits, so previous could be null even with a previous value.
+            // Therefore, we fallback to the value injected in the entry held in the context.
+            V removedValue = previousValue == null && entry instanceof MVCCEntry<K, V> mvcc
+                  ? mvcc.getOldValue()
+                  : previousValue;
+            stage = notifier.notifyCacheEntryRemoved(entry.getKey(), removedValue, entry.getMetadata(), false, ctx, command);
          } else if (entry.isInvalidated() || command instanceof InvalidateCommand) {
             stage = notifier.notifyCacheEntryInvalidated(entry.getKey(), previousValue, entry.getMetadata(), false, ctx, command);
          } else {
+            // An IRAC remove may take the key out of memory before it commits, similar to a plain remove command.
+            // Fall back to the value and metadata injected in the entry then.
+            if (previousValue == null && command instanceof IracPutKeyValueCommand && entry instanceof MVCCEntry<K,V> mvcc) {
+               previousValue = mvcc.getOldValue();
+               previousMetadata = mvcc.getOldMetadata();
+            }
             if (entry instanceof MVCCEntry<K, V> mvccEntry && mvccEntry.isExpired()) {
                stage = notifier.notifyCacheEntryExpired(entry.getKey(), previousValue, previousMetadata, ctx);
             } else {

@@ -388,9 +388,9 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
             store.delayAfterModification(3);
             try {
                cache.put("replicating", "completes, but replication is stuck on delayed Future");
-               if (!passivation) {
-                  cache.put("in-queue", "completes, but waiting on previous replication to complete before replicating");
-               }
+               // Both the write-through and passivation cases need a second queued modification so the subsequent
+               // remove is the third in-flight op and trips the queue backpressure (modificationQueueSize == 2).
+               cache.put("in-queue", "completes, but waiting on previous replication to complete before replicating");
                // Needs to be in other thread as non blocking store is invoked in same thread
                Future<Void> f = fork(() -> {
                   // This will not return since the replication queue is full from in-queue
