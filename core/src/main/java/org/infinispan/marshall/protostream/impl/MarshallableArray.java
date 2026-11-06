@@ -125,7 +125,7 @@ public class MarshallableArray<T> {
                   done = true;
                   break;
                case 2 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
-                  byte[] bytes = in.readByteArray();
+                  java.nio.ByteBuffer bytes = in.readByteBuffer();
                   entries[i++] = marshaller.objectFromByteBuffer(bytes);
                   break;
                }

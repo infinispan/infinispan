@@ -68,6 +68,11 @@ public interface Marshaller {
    /**
     * Unmarshalls an object from a specific portion of a byte array.
     *
+    * <p>
+    * Implementations must read only the given range, as the array can hold other data around it. The array is not owned
+    * by the marshaller, so the returned object must not keep a reference to it.
+    * </p>
+    *
     * @param buf    byte array containing the binary representation of an object.  Must not be null.
     * @param offset point in buffer to start reading
     * @param length number of bytes to consider
