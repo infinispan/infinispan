@@ -47,6 +47,15 @@ public final class ProgressTracker {
       state.completed();
    }
 
+   /**
+    * Marks the tracked task as failed and stops reporting any progress.
+    *
+    * @param cause The reason the task failed.
+    */
+   public void failed(Throwable cause) {
+      state.failed(cause);
+   }
+
    public long pendingTasks() {
       return state.pending();
    }
@@ -95,6 +104,11 @@ public final class ProgressTracker {
          lock.lock();
          try {
             if (value < 0) {
+               // Task still running when it failed.
+               // The failure has already stopped the tracking, so these updates are ignored.
+               if (status == Progression.FAILED)
+                  return;
+
                if (startedAt == null)
                   throw new IllegalStateException("Removing tasks from a completed tracker: " + name);
 
@@ -102,7 +116,7 @@ public final class ProgressTracker {
             }
 
             // If the tracker is initializing or restarting, we need to track the time the operations started.
-            if (status == Progression.IDLE || status == Progression.DONE) {
+            if (status == Progression.IDLE || status == Progression.DONE || status == Progression.FAILED) {
                startedAt = timeService.instant();
 
                // The status goes back to idle the first time it reinitialize.
@@ -132,6 +146,20 @@ public final class ProgressTracker {
          }
       }
 
+      public void failed(Throwable cause) {
+         lock.lock();
+         try {
+            status = Progression.FAILED;
+
+            if (startedAt != null)
+               log.taskFailed(name, startedAt, timeService.instant(), cause);
+
+            reset();
+         } finally {
+            lock.unlock();
+         }
+      }
+
       @GuardedBy("lock")
       private void reset() {
          pending = 0;
@@ -148,7 +176,7 @@ public final class ProgressTracker {
       public void run() {
          lock.lock();
          try {
-            if (status == Progression.DONE)
+            if (status == Progression.DONE || status == Progression.FAILED)
                return;
 
             if (lastCheck == pending)
@@ -167,5 +195,6 @@ public final class ProgressTracker {
       PROGRESSING,
       HANG,
       DONE,
+      FAILED,
    }
 }
