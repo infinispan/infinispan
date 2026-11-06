@@ -25,10 +25,6 @@ import org.infinispan.lock.impl.functions.UnlockFunction;
 import org.infinispan.lock.impl.manager.EmbeddedClusteredLockManager;
 import org.infinispan.lock.logging.Log;
 import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
-import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.RemoteException;
@@ -46,6 +42,11 @@ import org.infinispan.remoting.transport.Address;
  * the actual implementation</li> </lu>
  * <p>
  * <h2>Partition handling</h2>
+ * <p>
+ * <h2>Notifications</h2> This class does not register a cluster listener of its own. A node that fails to acquire the
+ * lock is registered as a waiter in the {@link ClusteredLockValue} and the single cluster listener installed by the
+ * {@link EmbeddedClusteredLockManager} routes the release and removal events back to this instance through {@link
+ * #handleLockReleased(ClusteredLockValue)} and {@link #handleLockRemoved()}.
  *
  * @author Katia Aresti, karesti@redhat.com
  * @see <a href="https://infinispan.org/documentation/">Infinispan documentation</a>
@@ -59,12 +60,11 @@ public class ClusteredLockImpl implements ClusteredLock {
    private final AdvancedCache<ClusteredLockKey, ClusteredLockValue> clusteredLockCache;
    private final EmbeddedClusteredLockManager clusteredLockManager;
    private final FunctionalMap.ReadWriteMap<ClusteredLockKey, ClusteredLockValue> readWriteMap;
-   private final Queue<RequestHolder> pendingRequests;
+   private final Queue<RequestHolder<?>> pendingRequests;
    private final Address originator;
    private final AtomicInteger viewChangeUnlockHappening = new AtomicInteger(0);
    private final RequestExpirationScheduler requestExpirationScheduler;
    private final ClusterChangeListener clusterChangeListener;
-   private final LockReleasedListener lockReleasedListener;
 
    public ClusteredLockImpl(String name,
                             ClusteredLockKey lockKey,
@@ -79,15 +79,11 @@ public class ClusteredLockImpl implements ClusteredLock {
       this.originator = clusteredLockCache.getCacheManager().getAddress();
       this.requestExpirationScheduler = new RequestExpirationScheduler(clusteredLockManager.getScheduledExecutorService());
       this.clusterChangeListener = new ClusterChangeListener();
-      this.lockReleasedListener = new LockReleasedListener();
       this.clusteredLockCache.getCacheManager().addListener(clusterChangeListener);
-      this.clusteredLockCache.addFilteredListener(lockReleasedListener, new ClusteredLockFilter(lockKey), null,
-            Util.asSet(CacheEntryModified.class, CacheEntryRemoved.class));
    }
 
    public void stop() {
-      clusteredLockCache.removeListener(clusterChangeListener);
-      clusteredLockCache.removeListener(lockReleasedListener);
+      clusteredLockCache.getCacheManager().removeListener(clusterChangeListener);
       requestExpirationScheduler.clear();
    }
 
@@ -100,11 +96,20 @@ public class ClusteredLockImpl implements ClusteredLock {
          this.requestId = createRequestId();
          this.requestor = requestor;
          this.request = request;
+         // A node is only notified while it is registered as a waiter, so the pending requests are not drained by
+         // the events of the locks acquired by the other nodes. Completed requests have to remove themselves.
+         request.whenComplete((ignoredValue, ignoredThrowable) -> pendingRequests.remove(this));
       }
 
       public boolean isDone() {
          return request.isDone();
       }
+
+      /**
+       * @return {@code true} if the request waits for the lock to be released instead of failing immediately. Such a
+       * request has to register the node as a waiter of the lock.
+       */
+      protected abstract boolean isWaiting();
 
       public void handleLockResult(Boolean result, Throwable ex) {
          if (ex != null) {
@@ -144,6 +149,11 @@ public class ClusteredLockImpl implements ClusteredLock {
       @Override
       protected void forceFailed() {
          request.complete(null);
+      }
+
+      @Override
+      protected boolean isWaiting() {
+         return true;
       }
 
       @Override
@@ -218,6 +228,11 @@ public class ClusteredLockImpl implements ClusteredLock {
       }
 
       @Override
+      protected boolean isWaiting() {
+         return hasTimeout();
+      }
+
+      @Override
       public String toString() {
          final StringBuilder sb = new StringBuilder("TryLockRequestHolder{");
          sb.append("name=").append(getName());
@@ -236,27 +251,31 @@ public class ClusteredLockImpl implements ClusteredLock {
       }
    }
 
-   @Listener(clustered = true)
-   class LockReleasedListener {
+   /**
+    * Invoked by the cluster listener of the {@link EmbeddedClusteredLockManager} when this lock has been modified and
+    * this node is registered as a waiter.
+    *
+    * @param value the new value of the lock
+    */
+   public void handleLockReleased(ClusteredLockValue value) {
+      if (value == null || value.getState() != ClusteredLockState.RELEASED)
+         return;
 
-      @CacheEntryModified
-      public void entryModified(CacheEntryModifiedEvent event) {
-         ClusteredLockValue value = (ClusteredLockValue) event.getValue();
-         if (value.getState() == ClusteredLockState.RELEASED) {
-            if (log.isTraceEnabled()) {
-               log.tracef("LOCK[%s] Lock has been released, %s notified", getName(), originator);
-            }
-            retryPendingRequests(value);
-         }
+      if (log.isTraceEnabled()) {
+         log.tracef("LOCK[%s] Lock has been released, %s notified", getName(), originator);
       }
+      retryPendingRequests(value);
+   }
 
-      @CacheEntryRemoved
-      public void entryRemoved(CacheEntryRemovedEvent event) {
-         while (!pendingRequests.isEmpty()) {
-            RequestHolder requestHolder = pendingRequests.poll();
-            requestHolder.handleLockResult(null, log.lockDeleted());
-            requestExpirationScheduler.abortScheduling(requestHolder.requestId);
-         }
+   /**
+    * Invoked by the cluster listener of the {@link EmbeddedClusteredLockManager} when this lock has been removed and
+    * this node is registered as a waiter. All the pending requests are completed exceptionally.
+    */
+   public void handleLockRemoved() {
+      RequestHolder<?> requestHolder;
+      while ((requestHolder = pendingRequests.poll()) != null) {
+         requestHolder.handleLockResult(null, log.lockDeleted());
+         requestExpirationScheduler.abortScheduling(requestHolder.requestId);
       }
    }
 
@@ -266,7 +285,7 @@ public class ClusteredLockImpl implements ClusteredLock {
             log.tracef("LOCK[%s] Hold pending requests while view change unlock is happening in %s", getName(), originator);
          }
       } else {
-         RequestHolder nextRequestor = null;
+         RequestHolder<?> nextRequestor = null;
          if (log.isTraceEnabled()) {
             log.tracef("LOCK[%s] Pending requests size[%d] in %s", getName(), pendingRequests.size(), originator);
          }
@@ -277,8 +296,7 @@ public class ClusteredLockImpl implements ClusteredLock {
             if (log.isTraceEnabled()) {
                log.tracef("LOCK[%s] About to retry lock for %s", getName(), nextRequestor);
             }
-            final RequestHolder requestor = nextRequestor;
-            lock(requestor);
+            lock(nextRequestor);
          }
       }
    }
@@ -287,7 +305,7 @@ public class ClusteredLockImpl implements ClusteredLock {
       retryPendingRequests(null);
    }
 
-   private boolean isSameRequest(RequestHolder nextRequestor, ClusteredLockValue value) {
+   private boolean isSameRequest(RequestHolder<?> nextRequestor, ClusteredLockValue value) {
       if (value == null) return false;
 
       return nextRequestor.requestId.equals(value.getRequestId()) && nextRequestor.requestor.equals(value.getOwner());
@@ -384,7 +402,7 @@ public class ClusteredLockImpl implements ClusteredLock {
       return lockRequest;
    }
 
-   private void lock(RequestHolder<Void> requestHolder) {
+   private void lock(RequestHolder<?> requestHolder) {
       if (requestHolder == null || requestHolder.isDone())
          return;
 
@@ -394,9 +412,7 @@ public class ClusteredLockImpl implements ClusteredLock {
             log.tracef("LOCK[%s] View change unlock is happening in %s. Do not try to lock", getName(), originator);
          }
       } else {
-         readWriteMap.eval(lockKey, new LockFunction(requestHolder.requestId, requestHolder.requestor)).whenComplete((lockResult, ex) -> {
-            requestHolder.handleLockResult(lockResult, ex);
-         });
+         evalLockFunction(requestHolder);
       }
    }
 
@@ -429,10 +445,28 @@ public class ClusteredLockImpl implements ClusteredLock {
       if (isChangeViewUnlockInProgress()) {
          requestHolder.handleLockResult(false, null);
       } else {
-         readWriteMap.eval(lockKey, new LockFunction(requestHolder.requestId, requestHolder.requestor)).whenComplete((lockResult, ex) -> {
-            requestHolder.handleLockResult(lockResult, ex);
-         });
+         evalLockFunction(requestHolder);
       }
+   }
+
+   private void evalLockFunction(RequestHolder<?> requestHolder) {
+      // The node has to be notified when the lock is released if this request waits for it, or if another request of
+      // this node is still pending. The latter also applies when this request acquires the lock, because an
+      // acquisition drops the waiters registered during the previous ownership epoch.
+      boolean otherRequestsPending = hasOtherPendingRequests(requestHolder);
+      LockFunction lockFunction = new LockFunction(requestHolder.requestId, requestHolder.requestor,
+            requestHolder.isWaiting(), otherRequestsPending);
+      readWriteMap.eval(lockKey, lockFunction).whenComplete((lockResult, ex) -> {
+         requestHolder.handleLockResult(lockResult, ex);
+      });
+   }
+
+   private boolean hasOtherPendingRequests(RequestHolder<?> requestHolder) {
+      for (RequestHolder<?> pendingRequest : pendingRequests) {
+         if (pendingRequest != requestHolder && !pendingRequest.isDone())
+            return true;
+      }
+      return false;
    }
 
    @Override
