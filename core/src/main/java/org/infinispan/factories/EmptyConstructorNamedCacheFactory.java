@@ -11,6 +11,7 @@ import org.infinispan.commands.CommandsFactoryImpl;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.io.ByteBufferFactoryImpl;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.HotKeysConfiguration;
 import org.infinispan.container.offheap.OffHeapEntryFactory;
 import org.infinispan.container.offheap.OffHeapEntryFactoryImpl;
 import org.infinispan.container.offheap.OffHeapMemoryAllocator;
@@ -49,6 +50,7 @@ import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferLockImpl;
 import org.infinispan.stats.ClusterCacheStats;
+import org.infinispan.stats.HotKeyTracker;
 import org.infinispan.stats.impl.ClusterCacheStatsImpl;
 import org.infinispan.telemetry.impl.CacheSpanAttribute;
 import org.infinispan.transaction.impl.ClusteredTransactionOriginatorChecker;
@@ -96,7 +98,8 @@ import org.infinispan.xsite.status.TakeOfflineManager;
                               TransactionOriginatorChecker.class, OffHeapEntryFactory.class, OffHeapMemoryAllocator.class,
                               PublisherHandler.class, InvocationHelper.class, TakeOfflineManager.class,
                               IracVersionGenerator.class, BackupReceiver.class, StorageConfigurationManager.class,
-                              XSiteMetricsCollector.class, ClusterCacheStats.class, CacheSpanAttribute.class
+                              XSiteMetricsCollector.class, ClusterCacheStats.class, CacheSpanAttribute.class,
+                              HotKeyTracker.class,
 })
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
@@ -210,6 +213,10 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          return new ClusterCacheStatsImpl();
       } else if (componentName.equals(CacheSpanAttribute.class.getName())) {
          return new CacheSpanAttribute(componentRegistry.getCacheName(), configuration);
+      }  else if (componentName.equals(HotKeyTracker.class.getName())) {
+         HotKeysConfiguration hkc = configuration.statistics().hotKeys();
+         int numSegments = configuration.clustering().hash().numSegments();
+         return HotKeyTracker.create(hkc.enabled() ? hkc.topK() : 0, numSegments);
       }
 
       throw CONTAINER.factoryCannotConstructComponent(componentName);

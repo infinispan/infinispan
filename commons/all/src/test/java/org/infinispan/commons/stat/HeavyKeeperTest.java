@@ -214,4 +214,55 @@ public class HeavyKeeperTest {
       assertThat(hk.query("challenger")).isTrue();
       assertThat(expelled).containsExactly("established-2");
    }
+
+   @Test
+   public void testNewcomerNotAboveMinimumIsNotAdmitted() {
+      HeavyKeeper<String> hk = new HeavyKeeper<>(2, 8, 7, 0.9, HASH);
+
+      hk.incrBy("a", 10);
+      hk.incrBy("b", 5);
+
+      // Admission requires beating the minimum strictly; a tie is not enough.
+      assertThat(hk.incrBy("below", 3)).isNull();
+      assertThat(hk.incrBy("tie", 5)).isNull();
+
+      assertThat(hk.query("below")).isFalse();
+      assertThat(hk.query("tie")).isFalse();
+      assertThat(hk.list()).extracting(HeavyKeeper.KeyFrequency::key).containsExactlyInAnyOrder("a", "b");
+   }
+
+   @Test
+   public void testMinimumMovesWhenSmallestItemGrows() {
+      HeavyKeeper<String> hk = new HeavyKeeper<>(2, 8, 7, 0.9, HASH);
+
+      hk.incrBy("a", 10);
+      hk.incrBy("b", 5);
+
+      // A rejected newcomer, so the minimum ("b") has already been looked up before it changes.
+      assertThat(hk.incrBy("probe", 1)).isNull();
+
+      // "b" overtakes "a", so "a" becomes the minimum.
+      hk.incrBy("b", 20);
+
+      String expelled = hk.incrBy("c", 15);
+      assertThat(expelled).isEqualTo("a");
+      assertThat(hk.query("b")).isTrue();
+      assertThat(hk.query("c")).isTrue();
+   }
+
+   @Test
+   public void testMinimumIsForgottenAfterReset() {
+      HeavyKeeper<String> hk = new HeavyKeeper<>(1, 8, 7, 0.9, HASH);
+
+      hk.incrBy("old", 100);
+      hk.incrBy("rejected", 50);
+      hk.reset();
+
+      hk.incrBy("x", 10);
+
+      // The minimum is now "x" with 10, not the 100 observed before the reset.
+      String expelled = hk.incrBy("y", 20);
+      assertThat(expelled).isEqualTo("x");
+      assertThat(hk.query("y")).isTrue();
+   }
 }

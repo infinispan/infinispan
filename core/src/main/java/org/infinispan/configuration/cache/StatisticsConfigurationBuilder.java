@@ -14,10 +14,12 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 public class StatisticsConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<StatisticsConfiguration> {
 
    private final AttributeSet attributes;
+   private final HotKeysConfigurationBuilder hotKeysBuilder;
 
    StatisticsConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       this.attributes = StatisticsConfiguration.attributeDefinitionSet();
+      this.hotKeysBuilder = new HotKeysConfigurationBuilder(builder);
    }
 
    @Override
@@ -49,19 +51,30 @@ public class StatisticsConfigurationBuilder extends AbstractConfigurationChildBu
       return this;
    }
 
+   /**
+    * Returns the hot keys configuration builder.
+    *
+    * @return the hot keys sub-builder
+    */
+   public HotKeysConfigurationBuilder hotKeys() {
+      return hotKeysBuilder;
+   }
+
    @Override
    public StatisticsConfiguration create() {
-      return new StatisticsConfiguration(attributes.protect());
+      return new StatisticsConfiguration(attributes.protect(), hotKeysBuilder.create());
    }
 
    @Override
    public StatisticsConfigurationBuilder read(StatisticsConfiguration template, Combine combine) {
       this.attributes.read(template.attributes(), combine);
+      this.hotKeysBuilder.read(template.hotKeys(), combine);
       return this;
    }
 
    @Override
    public String toString() {
-      return "StatisticsConfigurationBuilder [attributes=" + attributes + "]";
+      return "StatisticsConfigurationBuilder [attributes=" + attributes
+            + ", hotKeys=" + hotKeysBuilder + "]";
    }
 }
