@@ -318,6 +318,21 @@ public class QueryConditionsTest extends AbstractQueryTest {
       assertEquals(1500, list.get(0).getAmount(), 0);
    }
 
+   public void testLikeWithParam() {
+      Query<Transaction> q = queryCache("FROM " + TRANSACTION_TYPE + " WHERE description like :param2");
+      q.setParameter("param2", "%rent%");
+      List<Transaction> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getAccountId());
+      assertEquals(1500, list.get(0).getAmount(), 0);
+   }
+
+   public void testLikeWithQuotedParam() {
+      Query<Transaction> q = queryCache("FROM " + TRANSACTION_TYPE + " WHERE description like ':param2'");
+      q.setParameter("param2", "%rent%");
+      assertEquals(0, q.list().size());
+   }
+
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "Input is not a valid date string: ")
    public void testBetweenArgsAreComparable() {
       queryCache("FROM " + TRANSACTION_TYPE + " WHERE date between '' AND ''").execute();
