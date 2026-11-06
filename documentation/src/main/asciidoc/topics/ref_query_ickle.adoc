@@ -116,6 +116,22 @@ execution of a query with parameters. This effort is not repeated during subsequ
 performance compared to a similar query using constant values instead of query parameters.
 ====
 
+[IMPORTANT]
+====
+Named parameters must not be enclosed in quotes.
+A quoted parameter like `':authorName'` is treated as a string literal, not as a parameter placeholder.
+This is consistent with JPQL and standard SQL behavior, where content inside quotes is always literal text.
+
+[source,java]
+----
+// Correct: parameter without quotes
+cache.query("FROM Book WHERE author = :authorName");
+
+// Wrong: quoted parameter is treated as the literal string ':authorName'
+cache.query("FROM Book WHERE author = ':authorName'");
+----
+====
+
 == Query execution
 
 The `Query` API provides two methods for executing Ickle queries on a cache:
