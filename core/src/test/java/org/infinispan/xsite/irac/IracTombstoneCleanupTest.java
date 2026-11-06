@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
@@ -23,6 +24,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
@@ -83,6 +85,8 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       builder.clustering().hash().numOwners(2).numSegments(16);
       builder.sites().addBackup().site("NYC").strategy(BackupConfiguration.BackupStrategy.ASYNC).stateTransfer().chunkSize(1);
+      // Short delay for the tests that run the scheduler. It is stopped by default, see createCacheManagers().
+      builder.sites().maxTombstoneCleanupDelay(100);
       return builder;
    }
 
@@ -205,6 +209,66 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
       tombstoneManager(bCache).removeTombstone(key);
    }
 
+   /**
+    * A round that fails must not stop the following ones. The rounds are started with
+    * {@link DefaultIracTombstoneManager#startCleanupTombstone()} because, unlike
+    * {@link DefaultIracTombstoneManager#runCleanupAndWait()}, it goes through the executor that runs them in production.
+    */
+   public void testCleanupResumesAfterFailedPrimaryCheck(Method method) {
+      String key = k(method);
+      int segment = getSegment(key);
+      Cache<String, String> bCache = findBackupOwner(segment);
+
+      // Stored only in the backup owner: the primary owner sees it as stale and asks the owners to remove it.
+      tombstoneManager(bCache).storeTombstone(segment, key, dummyMetadata(4));
+      assertEquals(1, tombstoneManager(bCache).size());
+
+      CompletableFuture<Void> failureInjected = recordingRpcManager(bCache).failNextRequest(IracTombstonePrimaryCheckCommand.class);
+
+      try {
+         tombstoneManager(bCache).startCleanupTombstone();
+
+         // Wait until the first round is running, otherwise the executor merges both calls into a single round.
+         eventually(() -> "The primary owner check was not sent", failureInjected::isDone);
+         assertEquals(1, tombstoneManager(bCache).size());
+
+         tombstoneManager(bCache).startCleanupTombstone();
+
+         eventuallyEquals(0, () -> tombstoneManager(bCache).size());
+      } finally {
+         // remove tombstone to avoid messing up with other tests
+         tombstoneManager(bCache).removeTombstone(key);
+      }
+   }
+
+   /**
+    * The scheduler must keep starting rounds by itself after a failed one. Nothing else starts a round in this test,
+    * which is how a node behaves in production.
+    */
+   public void testScheduledCleanupResumesAfterFailedPrimaryCheck(Method method) {
+      String key = k(method);
+      int segment = getSegment(key);
+      Cache<String, String> bCache = findBackupOwner(segment);
+
+      // Stored only in the backup owner: the primary owner sees it as stale and asks the owners to remove it.
+      tombstoneManager(bCache).storeTombstone(segment, key, dummyMetadata(5));
+      assertEquals(1, tombstoneManager(bCache).size());
+
+      CompletableFuture<Void> failureInjected = recordingRpcManager(bCache).failNextRequest(IracTombstonePrimaryCheckCommand.class);
+
+      try {
+         // Enables the scheduler stopped in createCacheManagers().
+         tombstoneManager(bCache).start();
+
+         eventually(() -> "The primary owner check was not sent", failureInjected::isDone);
+         eventuallyEquals(0, () -> tombstoneManager(bCache).size());
+      } finally {
+         tombstoneManager(bCache).stopCleanupTask();
+         // remove tombstone to avoid messing up with other tests
+         tombstoneManager(bCache).removeTombstone(key);
+      }
+   }
+
    public void testStateTransfer(Method method) {
       int numberOfKeys = 100;
       List<IracTombstoneInfo> keys = new ArrayList<>(numberOfKeys);
@@ -304,6 +368,8 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
       @GuardedBy("this")
       private final List<CacheRpcCommand> commandList;
       private volatile boolean recording;
+      private volatile Class<? extends CacheRpcCommand> commandToFail;
+      private volatile CompletableFuture<Void> failureInjected;
 
       RecordingRpcManager(RpcManager realOne) {
          super(realOne);
@@ -340,6 +406,19 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
          return found;
       }
 
+      /**
+       * Fails the next request sending a command of the given class, as if it had timed out. Later requests are not
+       * affected.
+       *
+       * @param commandClass The class of the command to fail.
+       * @return A {@link CompletableFuture} completed when the request is failed.
+       */
+      CompletableFuture<Void> failNextRequest(Class<? extends CacheRpcCommand> commandClass) {
+         failureInjected = new CompletableFuture<>();
+         commandToFail = commandClass;
+         return failureInjected;
+      }
+
       void startRecording() {
          synchronized (this) {
             commandList.clear();
@@ -349,6 +428,7 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
 
       void stopRecording() {
          recording = false;
+         commandToFail = null;
          synchronized (this) {
             commandList.clear();
          }
@@ -357,6 +437,11 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
 
       @Override
       protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command, ResponseCollector<Address, T> collector, Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker, RpcOptions rpcOptions) {
+         if (command.getClass() == commandToFail) {
+            commandToFail = null;
+            failureInjected.complete(null);
+            return CompletableFuture.failedFuture(new TimeoutException("Simulated RPC timeout"));
+         }
          if (recording) {
             synchronized (this) {
                commandList.add(command);
