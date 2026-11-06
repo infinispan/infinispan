@@ -656,35 +656,70 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
    private boolean updateCacheTopology(String cacheName, CacheTopology cacheTopology, int viewId,
                                        Address sender, LocalCacheStatus cacheStatus) {
+      IgnoredTopologyUpdate ignored;
+      int statusRequestViewId;
       synchronized (runningCaches) {
-         if (!validateCommandViewId(cacheTopology, viewId, sender, cacheName))
-            return false;
-
-         cacheStatus.setCurrentTopology(cacheTopology);
+         ignored = validateCommandViewId(viewId, sender);
+         statusRequestViewId = latestStatusResponseViewId;
+         if (ignored == null) {
+            cacheStatus.setCurrentTopology(cacheTopology);
+         }
       }
       // logging is outside of the synchronized block to avoid deadlocks when running in virtual threads
+      if (ignored != null) {
+         logIgnoredTopologyUpdate(ignored, cacheTopology, cacheName, viewId, sender, statusRequestViewId);
+         return false;
+      }
       log.debugf("Updated local topology for cache %s: %s", cacheName, cacheTopology);
       return true;
    }
 
    /**
+    * Why a topology update or a rebalance start was discarded by {@link #validateCommandViewId(int, Address)}.
+    */
+   private enum IgnoredTopologyUpdate {
+      /**
+       * The sender is no longer the coordinator.
+       */
+      OLD_COORDINATOR,
+      /**
+       * The update belongs to a view older than the latest status request.
+       */
+      OLD_VIEW
+   }
+
+   /**
+    * Checks whether a topology update or a rebalance start sent by {@code sender} in view {@code viewId} is still
+    * relevant.
+    * <p>
     * Synchronization is required to prevent topology updates while preparing the status response.
+    *
+    * @return {@code null} if the update must be applied, otherwise the reason it has to be ignored.
     */
    @GuardedBy("runningCaches")
-   private boolean validateCommandViewId(CacheTopology cacheTopology, int viewId, Address sender,
-                                         String cacheName) {
+   private IgnoredTopologyUpdate validateCommandViewId(int viewId, Address sender) {
       if (!sender.equals(transport.getCoordinator())) {
-         log.debugf("Ignoring topology %d for cache %s from old coordinator %s",
-                    cacheTopology.getTopologyId(), cacheName, sender);
-         return false;
+         return IgnoredTopologyUpdate.OLD_COORDINATOR;
       }
       if (viewId < latestStatusResponseViewId) {
-         log.debugf(
-               "Ignoring topology %d for cache %s from view %d received after status request from view %d",
-               cacheTopology.getTopologyId(), cacheName, viewId, latestStatusResponseViewId);
-         return false;
+         return IgnoredTopologyUpdate.OLD_VIEW;
       }
-      return true;
+      return null;
+   }
+
+   /**
+    * Dropping a topology update is rare and hard to diagnose after the fact, so it is logged at {@code INFO}.
+    * Must be called outside the {@code runningCaches} monitor.
+    */
+   private static void logIgnoredTopologyUpdate(IgnoredTopologyUpdate ignored, CacheTopology cacheTopology,
+                                                String cacheName, int viewId, Address sender,
+                                                int statusRequestViewId) {
+      switch (ignored) {
+         case OLD_COORDINATOR -> CLUSTER.ignoringTopologyFromOldCoordinator(cacheTopology.getTopologyId(), cacheName,
+                                                                            sender);
+         case OLD_VIEW -> CLUSTER.ignoringTopologyFromOldView(cacheTopology.getTopologyId(), cacheName, viewId,
+                                                              statusRequestViewId);
+      }
    }
 
    private CompletionStage<Void> resetLocalTopologyBeforeRebalance(String cacheName, CacheTopology newCacheTopology,
@@ -738,25 +773,32 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    private CompletionStage<Void> doHandleStableTopologyUpdate(String cacheName, CacheTopology newStableTopology,
                                                               int viewId,
                                                               Address sender, LocalCacheStatus cacheStatus) {
+      IgnoredTopologyUpdate ignored;
+      int statusRequestViewId;
       synchronized (runningCaches) {
-         if (!validateCommandViewId(newStableTopology, viewId, sender, cacheName))
-            return completedNull();
-
-         CacheTopology stableTopology = cacheStatus.getStableTopology();
-         if (stableTopology == null || stableTopology.getTopologyId() < newStableTopology.getTopologyId()) {
-            log.tracef("Updating stable topology for cache %s: %s", cacheName, newStableTopology);
-            cacheStatus.setStableTopology(newStableTopology);
-            if (newStableTopology != null
-                  && cacheStatus.getJoinInfo().getPersistentUUID() != null
-                  && !newStableTopology.wasTopologyRestoredFromState()) {
-               // Don't use the current CH state for the next restart.
-               // We only delete the consistent hash in a subsequent stable topology installation.
-               // The consistent hash is kept in disk until we confirm, in a 2PC-like approach, that all nodes in the topology
-               // received the stable topology.
-               // If the topology was *not* restored, we then just delete it.
-               deleteCHState(cacheName);
+         ignored = validateCommandViewId(viewId, sender);
+         statusRequestViewId = latestStatusResponseViewId;
+         if (ignored == null) {
+            CacheTopology stableTopology = cacheStatus.getStableTopology();
+            if (stableTopology == null || stableTopology.getTopologyId() < newStableTopology.getTopologyId()) {
+               log.tracef("Updating stable topology for cache %s: %s", cacheName, newStableTopology);
+               cacheStatus.setStableTopology(newStableTopology);
+               if (newStableTopology != null
+                     && cacheStatus.getJoinInfo().getPersistentUUID() != null
+                     && !newStableTopology.wasTopologyRestoredFromState()) {
+                  // Don't use the current CH state for the next restart.
+                  // We only delete the consistent hash in a subsequent stable topology installation.
+                  // The consistent hash is kept in disk until we confirm, in a 2PC-like approach, that all nodes in the topology
+                  // received the stable topology.
+                  // If the topology was *not* restored, we then just delete it.
+                  deleteCHState(cacheName);
+               }
             }
          }
+      }
+      // logging is outside of the synchronized block to avoid deadlocks when running in virtual threads
+      if (ignored != null) {
+         logIgnoredTopologyUpdate(ignored, newStableTopology, cacheName, viewId, sender, statusRequestViewId);
       }
       return completedNull();
    }

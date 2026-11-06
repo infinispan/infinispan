@@ -2498,4 +2498,12 @@ public interface Log extends BasicLogger {
    @Message(value = "Creating cache '%s' in a mixed-version cluster (oldest member %s); " +
          "newer configuration elements may be omitted from the configuration replicated to older nodes and some features might be disabled", id = 730)
    void possibleConfigurationOmissionInMixedCluster(String cacheName, NodeVersion oldestMember);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Ignoring topology %d for cache %s from old coordinator %s", id = 731)
+   void ignoringTopologyFromOldCoordinator(int topologyId, String cacheName, Address sender);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Ignoring topology %d for cache %s from view %d received after status request from view %d", id = 732)
+   void ignoringTopologyFromOldView(int topologyId, String cacheName, int viewId, int statusRequestViewId);
 }
