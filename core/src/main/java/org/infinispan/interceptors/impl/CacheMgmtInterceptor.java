@@ -47,6 +47,7 @@ import org.infinispan.commons.util.concurrent.StripedCounters;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalMetricsConfiguration;
 import org.infinispan.container.DataContainer;
@@ -692,7 +693,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
    )
    public long getApproximateEntries() {
       // Don't restrict the segments in case some writes used CACHE_MODE_LOCAL
-      IntSet allSegments = IntSets.immutableRangeSet(cacheConfiguration.clustering().hash().numSegments());
+      IntSet allSegments = allSegments();
       // Do restrict the segments when counting entries in shared stores
       IntSet writeSegments;
       if (distributionManager != null) {
@@ -702,6 +703,16 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
       }
       long persistenceSize = CompletionStages.join(approximatePersistenceSize(allSegments, writeSegments));
       return approximateTotalSize(persistenceSize, allSegments);
+   }
+
+   /**
+    * All the segments of the data container: a cache that does not need segments only has the one
+    * segment, as in {@code DataContainerFactory}.
+    */
+   private IntSet allSegments() {
+      int numSegments = Configurations.needSegments(cacheConfiguration) ?
+            cacheConfiguration.clustering().hash().numSegments() : 1;
+      return IntSets.immutableRangeSet(numSegments);
    }
 
    private CompletionStage<Long> approximatePersistenceSize(IntSet privateSegments, IntSet sharedSegments) {
@@ -750,7 +761,7 @@ public final class CacheMgmtInterceptor extends JmxStatsCommandInterceptor imple
          LocalizedCacheTopology cacheTopology = distributionManager.getCacheTopology();
          primarySegments = cacheTopology.getLocalPrimarySegments();
       } else {
-         primarySegments = IntSets.immutableRangeSet(cacheConfiguration.clustering().hash().numSegments());
+         primarySegments = allSegments();
       }
       long persistenceSize = CompletionStages.join(approximatePersistenceSize(primarySegments, primarySegments));
       return approximateTotalSize(persistenceSize, primarySegments);
