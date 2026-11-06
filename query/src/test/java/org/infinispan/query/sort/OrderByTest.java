@@ -7,7 +7,7 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.model.Book;
+import org.infinispan.protostream.sampledomain.Book;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
@@ -28,28 +28,15 @@ public class OrderByTest extends SingleCacheManagerTest {
 
    @BeforeMethod(alwaysRun = true)
    public void beforeMethod() {
-      Book book = new Book();
-      book.setTitle("island");
-      book.setDescription("A place surrounded by the sea.");
-      cache.put(1, book);
-
-      Book book2 = new Book();
-      book2.setTitle("home");
-      book2.setDescription("The place where I'm staying.");
-      cache.put(2, book2);
-
-      Book book3 = new Book();
-      book3.setTitle("space");
-      book3.setDescription("Space is the place");
-      cache.put(3, book3);
+      cache.putAll(Book.data());
    }
 
    public void useDifferentIndexFieldNamesTests() {
-      Query<Book> query = cache.query("from org.infinispan.query.model.Book where naming : 'place' order by label");
+      Query<Book> query = cache.query(String.format("from %s where naming : 'novel' order by title", Book.class.getName()));
       QueryResult<Book> result = query.execute();
 
       assertThat(result.count().exact()).isTrue();
       assertThat(result.count().value()).isEqualTo(3);
-      assertThat(result.list()).extracting("title").contains("island", "home", "space");
+      assertThat(result.list()).extracting("title").containsExactlyInAnyOrder("1984", "The Great Gatsby", "To Kill a Mockingbird");
    }
 }

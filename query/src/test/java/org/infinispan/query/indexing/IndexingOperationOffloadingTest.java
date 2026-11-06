@@ -13,10 +13,10 @@ import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.sampledomain.TypeA;
+import org.infinispan.protostream.sampledomain.TypeB;
+import org.infinispan.protostream.sampledomain.TypeC;
 import org.infinispan.query.core.impl.Log;
-import org.infinispan.query.model.TypeA;
-import org.infinispan.query.model.TypeB;
-import org.infinispan.query.model.TypeC;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -65,7 +65,7 @@ public class IndexingOperationOffloadingTest extends SingleCacheManagerTest {
       types.putAllAsync(entries).get();
       assertThat(entries).hasSize(SIZE);
 
-      Query<TypeA> queryAll = types.query("from org.infinispan.query.model.TypeA");
+      Query<TypeA> queryAll = types.query("from org.infinispan.protostream.sampledomain.TypeA");
       QueryResult<TypeA> result = queryAll.execute();
       assertThat(result.count().value()).isEqualTo(SIZE);
    }
@@ -103,7 +103,7 @@ public class IndexingOperationOffloadingTest extends SingleCacheManagerTest {
       CompletableFuture.allOf(chunksExecutions).get();
       assertThat(completedExecutions.get()).isEqualTo(CHUNKS_NUMBER);
 
-      Query<TypeB> queryAll = types.query("from org.infinispan.query.model.TypeB");
+      Query<TypeB> queryAll = types.query("from org.infinispan.protostream.sampledomain.TypeB");
       QueryResult<TypeB> result = queryAll.execute();
       assertThat(result.count().value()).isEqualTo(CHUNKS_NUMBER * CHUNK_SIZE);
    }

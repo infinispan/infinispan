@@ -7,7 +7,7 @@ import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.model.Book;
+import org.infinispan.protostream.sampledomain.Book;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeMethod;
@@ -28,27 +28,24 @@ public class FullTextParameterTest extends SingleCacheManagerTest {
 
    @BeforeMethod(alwaysRun = true)
    public void beforeMethod() {
-      Book book = new Book();
-      book.setTitle("island");
-      book.setDescription("A place surrounded by the sea.");
-      cache.put(1, book);
+      cache.putAll(Book.data());
    }
 
    public void fulltext() {
-      Query<Book> query = cache.query("from org.infinispan.query.model.Book where naming : :description");
-      query.setParameter("description", "place");
+      Query<Book> query = cache.query(String.format("from %s where naming : :p1", Book.class.getName()));
+      query.setParameter("p1", "roaring");
       QueryResult<Book> result = query.execute();
 
       assertThat(result.count().value()).isEqualTo(1);
-      assertThat(result.list()).extracting("title").contains("island");
+      assertThat(result.list()).extracting("title").contains("The Great Gatsby");
    }
 
    public void generic() {
-      Query<Book> query = cache.query("from org.infinispan.query.model.Book where title = :title");
-      query.setParameter("title", "island");
+      Query<Book> query = cache.query(String.format("from %s where title = :p1", Book.class.getName()));
+      query.setParameter("p1", "1984");
       QueryResult<Book> result = query.execute();
 
       assertThat(result.count().value()).isEqualTo(1);
-      assertThat(result.list()).extracting("title").contains("island");
+      assertThat(result.list()).extracting("title").contains("1984");
    }
 }

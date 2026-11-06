@@ -9,11 +9,12 @@ import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.ClusteringConfiguration;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.Search;
+import org.infinispan.protostream.sampledomain.Car;
+import org.infinispan.query.Indexer;
 import org.infinispan.query.core.stats.IndexInfo;
 import org.infinispan.query.core.stats.IndexStatisticsSnapshot;
+import org.infinispan.query.core.stats.SearchStatisticsSnapshot;
 import org.infinispan.query.helper.StaticTestingErrorHandler;
-import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
@@ -73,20 +74,20 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
    public void testPartiallyReindex() {
       cache(0).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).put(key("F1NUM"), new Car("megane", "white", 300));
-      Search.getIndexer(cache(0)).run(key("F1NUM")).toCompletableFuture().join();
+      Indexer.of(cache(0)).run(key("F1NUM")).toCompletableFuture().join();
       verifyFindsCar(1, "megane");
       cache(0).remove(key("F1NUM"));
       verifyFindsCar(0, "megane");
    }
 
    protected Object key(String keyId) {
-      //Used to verify remoting is fine with non serializable keys
+      //Used to verify remoting is fine with non-serializable keys
       return new NonSerializableKeyType(keyId);
    }
 
    protected void rebuildIndexes() throws Exception {
       Cache<?, ?> cache = cache(0);
-      CompletionStages.join(Search.getIndexer(cache).run());
+      CompletionStages.join(Indexer.of(cache).run());
    }
 
    protected void verifyFindsCar(int expectedCount, String carMake) {
@@ -103,7 +104,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
    }
 
    private void assertIndexedEntities(int expected, Class<?> entityClass, Cache<?, Car> cache) {
-      IndexStatisticsSnapshot indexStatistics = await(Search.getClusteredSearchStatistics(cache)).getIndexStatistics();
+      IndexStatisticsSnapshot indexStatistics = await(SearchStatisticsSnapshot.of(cache)).getIndexStatistics();
       IndexInfo indexInfo = indexStatistics.indexInfos().get(entityClass.getName());
       int count = (int) indexInfo.count();
       // each entry is indexed in all owners for redundancy

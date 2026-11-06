@@ -19,7 +19,7 @@ import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
+import org.infinispan.protostream.sampledomain.bank.Account;
 import org.infinispan.test.TestingUtil;
 import org.mockito.Mockito;
 import org.reactivestreams.Publisher;
@@ -73,13 +73,13 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
    }
 
    public void testSegmentFinishedCallback() {
-      RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
+      RemoteCache<Integer, Account> cache = clients.get(0).getCache();
       populateCache(CACHE_SIZE, Util::newAccount, cache);
       TestSegmentKeyTracker testSegmentKeyTracker = new TestSegmentKeyTracker(60);
 
-      Publisher<Map.Entry<Integer, AccountHS>> publisher = cache.publishEntries(null, null, null, 3);
+      Publisher<Map.Entry<Integer, Account>> publisher = cache.publishEntries(null, null, null, 3);
       TestingUtil.replaceField(testSegmentKeyTracker, "segmentKeyTracker", publisher, RemotePublisher.class);
-      try (CloseableIterator<Map.Entry<Integer, AccountHS>> iterator = Closeables.iterator(publisher, 3)) {
+      try (CloseableIterator<Map.Entry<Integer, Account>> iterator = Closeables.iterator(publisher, 3)) {
          while (iterator.hasNext()) iterator.next();
          assertEquals(60, testSegmentKeyTracker.finished.size());
       }

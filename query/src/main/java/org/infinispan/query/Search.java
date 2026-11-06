@@ -115,15 +115,19 @@ public final class Search {
 
    /**
     * Returns search statistics for the local node.
+    * @deprecated use {@link SearchStatistics#of(Cache)} instead.
     */
+   @Deprecated
    public static <K, V> SearchStatistics getSearchStatistics(Cache<K, V> cache) {
-      return ComponentRegistryUtils.getSearchStatsRetriever(cache).getSearchStatistics();
+      return SearchStatistics.of(cache);
    }
 
    /**
     * Returns aggregated search statistics for all nodes in the cluster.
+    * @deprecated Use {@link SearchStatisticsSnapshot#of(Cache)} instead.
     */
+   @Deprecated
    public static CompletionStage<SearchStatisticsSnapshot> getClusteredSearchStatistics(Cache<?, ?> cache) {
-      return ComponentRegistryUtils.getSearchStatsRetriever(cache).getDistributedSearchStatistics();
+      return SearchStatisticsSnapshot.of(cache);
    }
 }

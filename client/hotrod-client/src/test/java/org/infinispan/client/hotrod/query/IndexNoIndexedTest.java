@@ -7,13 +7,13 @@ import java.util.Collections;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.Reviewer;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.Revision;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.sampledomain.Reviewer;
+import org.infinispan.protostream.sampledomain.Revision;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 

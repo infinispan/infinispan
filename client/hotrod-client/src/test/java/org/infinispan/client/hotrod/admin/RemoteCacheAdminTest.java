@@ -26,8 +26,6 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManagerAdmin;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.TransactionPB;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.commons.api.CacheContainerAdmin;
@@ -44,8 +42,9 @@ import org.infinispan.configuration.internal.PrivateGlobalConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
-import org.infinispan.query.dsl.embedded.testdomain.Transaction;
-import org.infinispan.query.dsl.embedded.testdomain.User;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
+import org.infinispan.protostream.sampledomain.bank.Transaction;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -62,7 +61,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
             getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.indexing().enable()
              .storage(LOCAL_HEAP)
-             .addIndexedEntity("sample_bank_account.Transaction");
+             .addIndexedEntity(Transaction.ENTITY_NAME);
       createHotRodServers(2, builder);
    }
 
@@ -326,7 +325,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");
       RemoteCache<String, Transaction> cache = client(0).getCache(cacheName);
       verifyQuery(cache, 0);
-      Transaction tx = new TransactionPB();
+      Transaction tx = new Transaction();
       tx.setId(1);
       tx.setAccountId(777);
       tx.setAmount(500);
@@ -346,7 +345,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");
       RemoteCache<String, Transaction> cache = client(0).getCache(cacheName);
       verifyQuery(cache, 0);
-      Transaction tx = new TransactionPB();
+      Transaction tx = new Transaction();
       tx.setId(1);
       tx.setAccountId(777);
       tx.setAmount(500);
@@ -367,7 +366,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");
       RemoteCache<String, Transaction> cache = client(0).getCache(cacheName);
       verifyQuery(cache, 0);
-      Transaction tx = new TransactionPB();
+      Transaction tx = new Transaction();
       tx.setId(1);
       tx.setAccountId(777);
       tx.setAmount(500);
@@ -387,7 +386,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
       client(0).administration().withFlags(CacheContainerAdmin.AdminFlag.VOLATILE).createCache(cacheName, "template");
       RemoteCache<String, Transaction> cache = client(0).getCache(cacheName);
       verifyQuery(cache, 0);
-      Transaction tx = new TransactionPB();
+      Transaction tx = new Transaction();
       tx.setId(1);
       tx.setAccountId(777);
       tx.setAmount(500);
@@ -403,7 +402,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
    }
 
    private void verifyQuery(RemoteCache<String, Transaction> cache, int count) {
-      List<User> users = cache.<User>query("from sample_bank_account.Transaction where longDescription:'RENT'").list();
+      List<User> users = cache.<User>query("from sample_domain.Transaction where longDescription:'RENT'").list();
       assertEquals(count, users.size());
    }
 
@@ -430,7 +429,7 @@ public class RemoteCacheAdminTest extends MultiHotRodServersTest {
 
       RemoteCache<String, Transaction> cache = client(0).getCache(cacheName);
       for (int i = 0; i < 10; i++) {
-         Transaction tx = new TransactionPB();
+         Transaction tx = new Transaction();
          tx.setId(i);
          tx.setAccountId(777);
          tx.setAmount(500);

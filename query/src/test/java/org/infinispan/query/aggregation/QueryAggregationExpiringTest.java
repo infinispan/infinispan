@@ -13,7 +13,7 @@ import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.model.Task;
+import org.infinispan.protostream.sampledomain.Task;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -50,15 +50,15 @@ public class QueryAggregationExpiringTest extends SingleCacheManagerTest {
       Map<String, Long> result;
       do {
          timeService.advance(100, TimeUnit.MILLISECONDS);
-         Query<Object[]> query = cache.query("select status, count(status) from org.infinispan.query.model.Task group by status");
+         Query<Object[]> query = cache.query("select status, count(status) from org.infinispan.protostream.sampledomain.Task group by status");
          result = resultMaps(query.list());
          assertThat(result).isNotNull();
 
-         query = cache.query("select label, count(label) from org.infinispan.query.model.Task group by label");
+         query = cache.query("select label, count(label) from org.infinispan.protostream.sampledomain.Task group by label");
          result = resultMaps(query.list());
          assertThat(result).isNotNull();
 
-         query = cache.query("select type, count(type) from org.infinispan.query.model.Task group by type");
+         query = cache.query("select type, count(type) from org.infinispan.protostream.sampledomain.Task group by type");
          result = resultMaps(query.list());
          assertThat(result).isNotNull();
       } while (!result.isEmpty());

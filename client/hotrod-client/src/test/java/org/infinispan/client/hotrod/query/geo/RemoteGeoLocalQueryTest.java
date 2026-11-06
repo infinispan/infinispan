@@ -6,18 +6,18 @@ import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import java.util.List;
 import java.util.Map;
 
+import org.infinispan.api.annotations.indexing.model.LatLng;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.commons.api.query.QueryResult;
-import org.infinispan.commons.api.query.geo.LatLng;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContextInitializer;
+import org.infinispan.protostream.sampledomain.Restaurant;
+import org.infinispan.protostream.sampledomain.TrainRoute;
 import org.infinispan.query.mapper.mapping.SearchMapping;
 import org.infinispan.query.mapper.mapping.metamodel.IndexMetamodel;
-import org.infinispan.query.model.Restaurant;
-import org.infinispan.query.model.TrainRoute;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
@@ -28,11 +28,7 @@ public class RemoteGeoLocalQueryTest extends SingleHotRodServerTest {
    private static final String RESTAURANT_ENTITY_NAME = "geo.Restaurant";
    private static final String TRAIN_ROUTE_ENTITY_NAME = "geo.TrainRoute";
 
-   private static final LatLng MILAN_COORDINATES = LatLng.of(45.4685, 9.1824);
-   private static final LatLng COMO_COORDINATES = LatLng.of(45.8064, 9.0852);
    private static final LatLng BOLOGNA_COORDINATES = LatLng.of(44.4949, 11.3426);
-   private static final LatLng ROME_COORDINATES = LatLng.of(41.8967, 12.4822);
-   private static final LatLng VENICE_COORDINATES = LatLng.of(45.4404, 12.3160);
    private static final LatLng SELVA_COORDINATES = LatLng.of(46.5560, 11.7559);
 
    @Override
@@ -71,27 +67,7 @@ public class RemoteGeoLocalQueryTest extends SingleHotRodServerTest {
    public void indexingAndSearch() {
       RemoteCache<Object, Object> remoteCache = remoteCacheManager.getCache();
 
-      // data taken from https://www.google.com/maps/
-      remoteCache.put("La Locanda di Pietro", new Restaurant("La Locanda di Pietro",
-            "Roman-style pasta dishes & Lazio region wines at a cozy traditional trattoria with a shaded terrace.",
-            "Via Sebastiano Veniero, 28/c, 00192 Roma RM", 41.907903484609356, 12.45540543756422, 4.6f));
-      remoteCache.put("Scialla The Original Street Food", new Restaurant("Scialla The Original Street Food",
-            "Pastas & traditional pizza pies served in an unassuming eatery with vegetarian options.",
-            "Vicolo del Farinone, 27, 00193 Roma RM", 41.90369455835456, 12.459566517195528, 4.7f));
-      remoteCache.put("Trattoria Pizzeria Gli Archi", new Restaurant("Trattoria Pizzeria Gli Archi",
-            "Traditional trattoria with exposed brick walls, serving up antipasti, pizzas & pasta dishes.",
-            "Via Sebastiano Veniero, 26, 00192 Roma RM", 41.907930453801285, 12.455204785977637, 4.0f));
-      remoteCache.put("Alla Bracioleria Gracchi Restaurant", new Restaurant("Alla Bracioleria Gracchi Restaurant",
-            "", "Via dei Gracchi, 19, 00192 Roma RM", 41.907129402661795, 12.458927251586584, 4.7f ));
-      remoteCache.put("Magazzino Scipioni", new Restaurant("Magazzino Scipioni",
-            "Contemporary venue with a focus on unique wines & seasonal Italian plates, plus a bottle shop.",
-            "Via degli Scipioni, 30, 00192 Roma RM", 41.90817843995448, 12.457118458698043, 4.6f));
-      remoteCache.put("Dal Toscano Restaurant", new Restaurant("Dal Toscano Restaurant",
-            "Rich pastas, signature steaks & classic Tuscan dishes, plus Chianti wines, at a venerable trattoria.",
-            "Via Germanico, 58-60, 00192 Roma RM", 41.90785274056548, 12.45822050287784, 4.2f));
-      remoteCache.put("Il Ciociaro", new Restaurant("Il Ciociaro",
-            "Long-running, old-school restaurant plating traditional staples, from carbonara to tiramisu.",
-            "Via Barletta, 21, 00192 Roma RM", 41.91038657525997, 12.458851939120656, 4.2f));
+      remoteCache.putAll(Restaurant.data());
 
       String ickle = String.format("from %s r " +
             "where r.location within circle(41.90847031512531, 12.455633288333539, :distance) ", RESTAURANT_ENTITY_NAME);
@@ -260,14 +236,7 @@ public class RemoteGeoLocalQueryTest extends SingleHotRodServerTest {
    public void indexingAndSearch_multiGeoPointEntities() {
       RemoteCache<Object, Object> remoteCache = remoteCacheManager.getCache();
 
-      remoteCache.put("Rome-Milan", new TrainRoute("Rome-Milan", ROME_COORDINATES.latitude(), ROME_COORDINATES.longitude(),
-            MILAN_COORDINATES.latitude(), MILAN_COORDINATES.longitude()));
-      remoteCache.put("Bologna-Selva", new TrainRoute("Bologna-Selva", BOLOGNA_COORDINATES.latitude(), BOLOGNA_COORDINATES.longitude(),
-            SELVA_COORDINATES.latitude(), SELVA_COORDINATES.longitude()));
-      remoteCache.put("Milan-Como", new TrainRoute("Milan-Como", MILAN_COORDINATES.latitude(), MILAN_COORDINATES.longitude(),
-            COMO_COORDINATES.latitude(), COMO_COORDINATES.longitude()));
-      remoteCache.put("Bologna-Venice", new TrainRoute("Bologna-Venice", BOLOGNA_COORDINATES.latitude(), BOLOGNA_COORDINATES.longitude(),
-            VENICE_COORDINATES.latitude(), VENICE_COORDINATES.longitude()));
+      remoteCache.putAll(TrainRoute.data());
 
       Query<TrainRoute> trainQuery = remoteCache.query("from geo.TrainRoute r where r.departure within circle(:lat, :lon, :distance)");
       trainQuery.setParameter("lat", BOLOGNA_COORDINATES.latitude());
