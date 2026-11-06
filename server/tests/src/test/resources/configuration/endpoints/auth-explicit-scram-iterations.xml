@@ -1,0 +1,26 @@
+<!-- Same as auth-explicit.xml, but raises the SCRAM server-side maximum iteration count (wildfly.sasl.scram.max-iteration-count) so that SASL mechanisms can be verified against LDAP backends which store PBKDF2 hashes with more iterations than Elytron's default of 32768. -->
+<endpoint xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="urn:infinispan:server:16.4 https://infinispan.org/schemas/infinispan-server-16.4.xsd"
+          xmlns="urn:infinispan:server:16.4" socket-binding="default" security-realm="default">
+   <hotrod-connector>
+      <authentication>
+         <sasl mechanisms="SCRAM-SHA-512 SCRAM-SHA-384 SCRAM-SHA-256 DIGEST-SHA-512 DIGEST-SHA-384 DIGEST-SHA-256 PLAIN"
+               server-name="infinispan">
+            <property name="wildfly.sasl.scram.max-iteration-count">262144</property>
+         </sasl>
+      </authentication>
+   </hotrod-connector>
+   <rest-connector>
+      <authentication mechanisms="DIGEST-SHA-256 BASIC"/>
+   </rest-connector>
+   <memcached-connector>
+      <authentication>
+         <sasl mechanisms="SCRAM-SHA-512 SCRAM-SHA-384 SCRAM-SHA-256 DIGEST-SHA-512 DIGEST-SHA-384 DIGEST-SHA-256 PLAIN">
+            <property name="wildfly.sasl.scram.max-iteration-count">262144</property>
+         </sasl>
+      </authentication>
+   </memcached-connector>
+   <resp-connector>
+      <authentication security-realm="default"/>
+   </resp-connector>
+</endpoint>

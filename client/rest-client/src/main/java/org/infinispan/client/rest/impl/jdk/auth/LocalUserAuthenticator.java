@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.client.rest.configuration.AuthenticationConfiguration;
+import org.infinispan.client.rest.logging.Log;
 import org.infinispan.commons.util.Util;
 
 /**
@@ -29,7 +30,6 @@ public class LocalUserAuthenticator extends HttpAuthenticator {
    private static final long MAX_CHALLENGE_FILE_SIZE = 1024;
 
    // Guard against infinite retry loops
-   private volatile int retryCount = 0;
    private static final int MAX_RETRIES = 3;
 
    private volatile String cachedToken;
@@ -44,7 +44,7 @@ public class LocalUserAuthenticator extends HttpAuthenticator {
    }
 
    @Override
-   public HttpRequest.Builder preauthenticate(HttpRequest.Builder request) {
+   public HttpRequest.Builder preauthenticate(HttpRequest.Builder request, AuthRequestState state) {
       String token = cachedToken;
       if (token != null) {
          request.header(WWW_AUTH_RESP, LOCALUSER_PREFIX + " " + SESSION_TOKEN_PREFIX + token);
@@ -53,19 +53,21 @@ public class LocalUserAuthenticator extends HttpAuthenticator {
    }
 
    @Override
-   public <T> CompletionStage<HttpResponse<T>> authenticate(HttpResponse<T> response, HttpResponse.BodyHandler<?> bodyHandler) {
+   public <T> CompletionStage<HttpResponse<T>> authenticate(HttpResponse<T> response, HttpResponse.BodyHandler<?> bodyHandler, AuthRequestState state) {
       // If the rejected request used a session token, invalidate it and restart
       HttpRequest originalRequest = response.request();
       String authHeader = originalRequest.headers().firstValue(WWW_AUTH_RESP).orElse(null);
       if (authHeader != null && authHeader.contains(SESSION_TOKEN_PREFIX)) {
          cachedToken = null;
-         retryCount = 0;
+         state.retryCount.set(0);
+         Log.REST.debug("Invalidating localuser session token");
       }
 
-      if (retryCount >= MAX_RETRIES) {
+      if (state.retryCount.get() >= MAX_RETRIES) {
+         Log.REST.localuserRetryLimitReached();
          return null;
       }
-      retryCount++;
+      state.retryCount.incrementAndGet();
 
       List<String> wwwAuthHeaders = response.headers().allValues(WWW_AUTH);
       String localuserHeader = null;
@@ -110,8 +112,11 @@ public class LocalUserAuthenticator extends HttpAuthenticator {
       return client.sendAsync(newRequest.build(), (HttpResponse.BodyHandler<T>) bodyHandler)
             .thenApply(r -> {
                if (r.statusCode() != 401) {
-                  retryCount = 0;
-                  r.headers().firstValue(SESSION_TOKEN_HEADER).ifPresent(t -> cachedToken = t);
+                  state.retryCount.set(0);
+                  r.headers().firstValue(SESSION_TOKEN_HEADER).ifPresent(t -> {
+                     cachedToken = t;
+                     Log.REST.debug("Caching localuser session token");
+                  });
                }
                return r;
             });
