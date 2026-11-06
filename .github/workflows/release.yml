@@ -149,11 +149,16 @@ jobs:
          env:
             GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
-      - name: Attach server distribution
-        run: |
-          gh release upload ${{ steps.resolve-versions.outputs.RELEASE_VERSION }} distribution/target/distribution/infinispan-server-${{ steps.resolve-versions.outputs.RELEASE_VERSION }}.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+      - name: Sign and attach server distribution
+        uses: ./.github/actions/sign-release-assets
+        with:
+          release-tag: ${{ steps.resolve-versions.outputs.RELEASE_VERSION }}
+          asset-paths: |
+            distribution/target/distribution/infinispan-server-${{ steps.resolve-versions.outputs.RELEASE_VERSION }}.zip
+          gpg-armored-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
+          gpg-passphrase: ${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}
+          token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+          clobber: "true"
 
       - name: Check SBOM availability
         id: sbom-check
@@ -259,12 +264,17 @@ jobs:
         name: Build native executable
         run: ./mvnw package -Pdistribution -Pnative -am -pl ${{ steps.detect-cli.outputs.module }} ${{ matrix.native_extra_args }}
 
-      - name: Upload CLI native executable
+      - name: Sign and attach CLI native executable
         id: upload-cli-native-executable
-        run: |
-          gh release upload ${{ needs.release.outputs.version }} ${{ steps.detect-cli.outputs.module }}/target/infinispan-cli-${{ needs.release.outputs.version }}-${{ matrix.asset_name }}.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+        uses: ./.github/actions/sign-release-assets
+        with:
+          release-tag: ${{ needs.release.outputs.version }}
+          asset-paths: |
+            ${{ steps.detect-cli.outputs.module }}/target/infinispan-cli-${{ needs.release.outputs.version }}-${{ matrix.asset_name }}.zip
+          gpg-armored-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
+          gpg-passphrase: ${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}
+          token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+          clobber: "true"
 
   images:
     needs: [published, release]
