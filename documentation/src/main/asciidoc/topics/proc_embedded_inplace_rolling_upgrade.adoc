@@ -1,0 +1,151 @@
+[id='embedded-inplace-rolling-upgrade_{context}']
+= Performing an in-place rolling upgrade for embedded caches
+
+Upgrade a {brandname} embedded deployment one node at a time while the cluster continues to serve requests.
+The recommended approach keeps your cluster at full capacity by adding one temporary node before you start; see xref:inplace-rolling-upgrade-spare-node_{context}[Upgrading with an additional temporary node] for details on provisioning and removing it.
+This procedure describes the stop-and-restart process that every upgraded node goes through, whether or not you use a temporary node.
+
+.Prerequisites
+
+* Your deployment meets all xref:inplace-rolling-upgrades_{context}[in-place rolling upgrade prerequisites].
+* Each node has a stable, unique global persistent location configured.
++
+For more information, see link:{config_docs}#configuring-global-persistent-location_persistence[Configuring the global persistent location].
+* The application dependency has been updated to the target {brandname} version.
+
+.Procedure
+
+. Verify that the cluster is healthy and all nodes are members of the cluster view.
++
+You can check cluster health programmatically:
++
+[source,java,options="nowrap",subs=attributes+]
+----
+EmbeddedCacheManager manager = ...;
+Health health = manager.getHealth();
+ClusterHealth clusterHealth = health.getClusterHealth();
+assert clusterHealth.getHealthStatus() == HealthStatus.HEALTHY;
+----
+
+. For each node in the cluster, one at a time, perform the following steps:
++
+.. Stop the node gracefully.
++
+[source,java,options="nowrap",subs=attributes+]
+----
+manager.stop();
+----
++
+Then shut down the application process.
++
+.. Update the application's {brandname} dependency to the target version.
++
+[WARNING]
+====
+In an embedded deployment, upgrading a node also upgrades its clients at the same time.
+While the cluster contains nodes running different versions, an upgraded client may write values that contain fields from a newer schema definition.
+Nodes running the previous version do not know about these fields and drop them when they store or replicate the value, so data can be lost.
+Defer serialization schema changes until every node is running on the target version, and then apply them once the upgrade completes.
+====
+
+.. Rebuild and deploy the application.
+.. Start the application and the cache manager.
++
+The node rejoins the cluster using the identity and topology state persisted in its global persistent location.
+When a node leaves or rejoins, {brandname} automatically rebalances data across the remaining nodes.
++
+.. Wait until the upgraded node has joined the cluster view and all caches report stable topologies before upgrading the next node.
++
+Poll the cluster health of any running node until it reports `HEALTHY`. While a rebalance is in progress, the status reports `HEALTHY_REBALANCING` instead:
++
+[source,java,options="nowrap",subs=attributes+]
+----
+while (manager.getHealth().getClusterHealth().getHealthStatus() != HealthStatus.HEALTHY) {
+   Thread.sleep(5000);
+}
+----
++
+If your application exposes health through Spring Boot Actuator or Quarkus SmallRye Health, you can poll the corresponding endpoint instead of calling into the cache manager directly; see xref:embedded-expose-health_{context}[Exposing health and membership information for monitoring].
+
+[IMPORTANT]
+====
+Do not stop the next node until the previously upgraded node has fully joined the cluster.
+Stopping multiple nodes simultaneously with only two owners risks data loss.
+====
+
+. Verify that the cluster is healthy and that all caches have the expected number of entries.
+
+[id='embedded-expose-health_{context}']
+== Exposing health and membership information for monitoring
+
+In an embedded deployment the cache manager runs inside your application process, so there is no REST endpoint or CLI to query cluster state from outside that process.
+To observe health and membership during a rolling upgrade without writing custom code into each check, expose this information through one of three standard mechanisms: JMX, Spring Boot Actuator or Quarkus SmallRye Health.
+
+=== JMX
+
+{brandname} exposes cluster health and membership as standard MBeans that any JMX client can query.
+In an embedded deployment these MBeans are not registered by default; enable them in the global configuration of your cache manager:
+
+[source,java,options="nowrap",subs=attributes+]
+----
+GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
+builder.jmx().enable();
+----
+
+Once enabled, inspect the following ObjectNames with a tool such as jconsole or `jcmd` (replace `<cache-manager-name>` with your cache manager name; by default it is `DefaultCacheManager`):
+
+* `org.infinispan:type=CacheManager,name=<cache-manager-name>,component=CacheContainerHealth`: cluster health, through the attributes `clusterHealth`, `clusterName`, `numberOfNodes` and `cacheHealth`.
+* `org.infinispan:type=CacheManager,name=<cache-manager-name>,component=CacheManager`: membership, through the attributes `clusterMembers`, `clusterSize` and `nodeAddress`.
+
+For example, to query the cluster health status of a running application process:
+
+[source,shell,options="nowrap",subs=attributes+]
+----
+jcmd <pid> MBean.getAttributes org.infinispan:type=CacheManager,name=<cache-manager-name>,component=CacheContainerHealth clusterHealth numberOfNodes
+----
+
+=== Spring Boot Actuator
+
+If your application runs on Spring Boot, expose the cluster state through Spring Boot Actuator by registering a `HealthIndicator` bean that wraps the embedded cache manager health API.
+Add the `spring-boot-starter-actuator` dependency and register the following indicator as a bean; it then appears under `/actuator/health`:
+
+[source,java,options="nowrap",subs=attributes+]
+----
+include::code_examples/EmbeddedCacheManagerHealthIndicator.java[]
+----
+
+The indicator reports `UP` while the cluster is healthy or rebalancing (the cluster continues to serve requests during a rolling upgrade) and includes the health status, cluster name and node count as details.
+
+=== Quarkus SmallRye Health
+
+If your application runs on Quarkus with the Infinispan Embedded extension from quarkiverse, adding the `smallrye-health` extension registers a readiness check automatically; no additional code is required.
+The check appears in the `/q/health/ready` response as follows:
+
+[source,json,options="nowrap",subs=attributes+]
+----
+{
+   "status": "UP",
+   "checks": [
+      {
+         "name": "Infinispan Embedded cluster health check",
+         "status": "UP",
+         "data": {
+            "clusterHealth": "HEALTHY",
+            "clusterName": "<cluster-name>",
+            "clusterMembers": "3"
+         }
+      }
+   ]
+}
+----
+
+The check reports `DOWN` whenever the cluster health status is anything other than `HEALTHY`, including while a rebalance is in progress after a node leaves or rejoins during your upgrade; poll this endpoint until it returns to `UP` before you proceed with the next node.
+
+Both integrations report only the number of cluster members, not their addresses.
+To verify exactly which members are present, query the `clusterMembers` JMX attribute described above, or call `getMembers()` programmatically from within your application.
+
+.Downgrade procedure
+
+You can use the same procedure to downgrade a cluster to a previous version, which also serves as the rollback path if an upgrade does not go well (see xref:inplace-rolling-upgrade-downgrade_{context}[Rolling back an upgrade by downgrading]).
+Replace the target version with the previous version and follow the same steps.
+Check the xref:compatibility_chart[compatibility chart] for any caveats that apply to the downgrade path.

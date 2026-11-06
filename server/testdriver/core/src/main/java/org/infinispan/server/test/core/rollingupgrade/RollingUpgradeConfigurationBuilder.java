@@ -18,6 +18,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.configuration.StringConfiguration;
 import org.infinispan.server.Server;
 import org.infinispan.server.test.core.InfinispanServerListener;
+import org.infinispan.server.test.core.compatibility.Compatibility;
 import org.jboss.shrinkwrap.api.Archive;
 
 public class RollingUpgradeConfigurationBuilder {
@@ -162,9 +163,13 @@ public class RollingUpgradeConfigurationBuilder {
    }
 
    public RollingUpgradeConfiguration build() {
-      return new RollingUpgradeConfiguration(nodeCount, fromVersion, toVersion, name, jgroupsProtocol, serverCheckTimeSecs,
+
+      RollingUpgradeConfiguration configuration = new RollingUpgradeConfiguration(nodeCount, fromVersion, toVersion, name, jgroupsProtocol, serverCheckTimeSecs,
             useSharedDataMount, serverConfigurationFile, defaultServerConfigurationFile, properties,
             customArchives.toArray(new Archive[0]), mavenArtifacts.toArray(new String[0]), listeners,
             exceptionHandler, initialHandler, isValidServerState, configurationHandler);
+      // Luckily, properties are mutable...
+      configuration.properties().putAll(Compatibility.INSTANCE.compatibilityEntry(configuration).properties());
+      return configuration;
    }
 }
