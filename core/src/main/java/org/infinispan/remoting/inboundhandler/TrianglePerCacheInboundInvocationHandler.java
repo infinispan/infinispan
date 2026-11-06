@@ -5,6 +5,9 @@ import static org.infinispan.context.impl.FlagBitSets.FORCE_ASYNCHRONOUS;
 import static org.infinispan.context.impl.FlagBitSets.FORCE_SYNCHRONOUS;
 import static org.infinispan.remoting.inboundhandler.DeliverOrder.NONE_NO_FC;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
@@ -18,7 +21,9 @@ import org.infinispan.remoting.inboundhandler.action.ActionState;
 import org.infinispan.remoting.inboundhandler.action.DefaultReadyAction;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.remoting.inboundhandler.action.TriangleOrderAction;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.logging.Log;
@@ -155,7 +160,16 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
             false) {
          @Override
          public boolean isReady() {
-            return super.isReady() && readyAction.isReady();
+            return super.isReady() && (isStopped() || readyAction.isReady());
+         }
+
+         @Override
+         protected CompletionStage<CacheNotFoundResponse> beforeInvoke() {
+            if (isStopped()) {
+               // Do not ack a write that was not applied, the originator retries in the next topology
+               return CompletableFuture.failedFuture(OutdatedTopologyException.RETRY_NEXT_TOPOLOGY);
+            }
+            return super.beforeInvoke();
          }
 
          @Override
