@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.embedded;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -289,6 +290,70 @@ public class QueryConditionsTest extends AbstractQueryTest {
       assertEquals(1, list.get(0).getId());
    }
 
+   public void testEqWithQuotedParamIsLiteral() {
+      Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE surname = ':notAParam'");
+      assertEquals(0, q.list().size());
+   }
+
+   public void testNotEqWithQuotedParamIsLiteral() {
+      Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE surname != ':notAParam'");
+      assertEquals(3, q.list().size());
+   }
+
+   public void testGtWithQuotedParamIsLiteral() {
+      Query<Transaction> q = queryCache("FROM " + TRANSACTION_TYPE + " WHERE description > ':notAParam'");
+      List<Transaction> list = q.list();
+      for (Transaction t : list) {
+         assertTrue(t.getDescription().compareTo(":notAParam") > 0);
+      }
+   }
+
+   public void testLtWithQuotedParamIsLiteral() {
+      Query<Transaction> q = queryCache("FROM " + TRANSACTION_TYPE + " WHERE description < ':notAParam'");
+      List<Transaction> list = q.list();
+      for (Transaction t : list) {
+         assertTrue(t.getDescription().compareTo(":notAParam") < 0);
+      }
+   }
+
+   public void testBetweenWithStringLiteral() {
+      Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE surname BETWEEN 'Doa' AND 'Doz'");
+      List<User> list = q.list();
+      assertThat(list).extracting(User::getSurname).containsExactly("Doe");
+   }
+
+   public void testInWithStringLiteral() {
+      Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE surname IN ('Doe', 'Man')");
+      List<User> list = q.list();
+      assertThat(list).extracting(User::getSurname).containsExactlyInAnyOrder("Doe", "Man");
+   }
+
+   public void testBetweenWithQuotedParamIsLiteral() {
+      Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE surname BETWEEN ':aaa' AND ':zzz'");
+      assertEquals(0, q.list().size());
+   }
+
+   public void testInWithQuotedParamIsLiteral() {
+      Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE surname IN (':notAParam', ':alsoNotAParam')");
+      assertEquals(0, q.list().size());
+   }
+
+   public void testBetweenWithParam() {
+      Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE surname BETWEEN :lower AND :upper");
+      q.setParameter("lower", "Doa");
+      q.setParameter("upper", "Doz");
+      List<User> list = q.list();
+      assertThat(list).extracting(User::getSurname).containsExactly("Doe");
+   }
+
+   public void testInWithParam() {
+      Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE surname IN (:s1, :s2)");
+      q.setParameter("s1", "Doe");
+      q.setParameter("s2", "Man");
+      List<User> list = q.list();
+      assertThat(list).extracting(User::getSurname).containsExactlyInAnyOrder("Doe", "Man");
+   }
+
    public void testEqHybridQueryWithPredicateOptimisation() {
       Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE notes like '%ipsum%' AND (name='John' OR name='Jane')");
       List<User> list = q.list();
@@ -329,7 +394,6 @@ public class QueryConditionsTest extends AbstractQueryTest {
 
    public void testLikeWithQuotedParam() {
       Query<Transaction> q = queryCache("FROM " + TRANSACTION_TYPE + " WHERE description like ':param2'");
-      q.setParameter("param2", "%rent%");
       assertEquals(0, q.list().size());
    }
 
