@@ -289,6 +289,42 @@ public class QueryConditionsTest extends AbstractQueryTest {
       assertEquals(1, list.get(0).getId());
    }
 
+   public void testEqWithQuotedParamIsLiteral() {
+      Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE surname = ':notAParam'");
+      assertEquals(0, q.list().size());
+   }
+
+   public void testNotEqWithQuotedParamIsLiteral() {
+      Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE surname != ':notAParam'");
+      assertEquals(3, q.list().size());
+   }
+
+   public void testGtWithQuotedParamIsLiteral() {
+      Query<Transaction> q = queryCache("FROM " + TRANSACTION_TYPE + " WHERE description > ':notAParam'");
+      List<Transaction> list = q.list();
+      for (Transaction t : list) {
+         assertTrue(t.getDescription().compareTo(":notAParam") > 0);
+      }
+   }
+
+   public void testLtWithQuotedParamIsLiteral() {
+      Query<Transaction> q = queryCache("FROM " + TRANSACTION_TYPE + " WHERE description < ':notAParam'");
+      List<Transaction> list = q.list();
+      for (Transaction t : list) {
+         assertTrue(t.getDescription().compareTo(":notAParam") < 0);
+      }
+   }
+
+   public void testBetweenWithQuotedParamIsLiteral() {
+      Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE surname BETWEEN ':aaa' AND ':zzz'");
+      assertEquals(0, q.list().size());
+   }
+
+   public void testInWithQuotedParamIsLiteral() {
+      Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE surname IN (':notAParam', ':alsoNotAParam')");
+      assertEquals(0, q.list().size());
+   }
+
    public void testEqHybridQueryWithPredicateOptimisation() {
       Query<User> q = queryCache("FROM " + USER_TYPE + " WHERE notes like '%ipsum%' AND (name='John' OR name='Jane')");
       List<User> list = q.list();
@@ -316,6 +352,20 @@ public class QueryConditionsTest extends AbstractQueryTest {
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).getAccountId());
       assertEquals(1500, list.get(0).getAmount(), 0);
+   }
+
+   public void testLikeWithParam() {
+      Query<Transaction> q = queryCache("FROM " + TRANSACTION_TYPE + " WHERE description like :param2");
+      q.setParameter("param2", "%rent%");
+      List<Transaction> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getAccountId());
+      assertEquals(1500, list.get(0).getAmount(), 0);
+   }
+
+   public void testLikeWithQuotedParam() {
+      Query<Transaction> q = queryCache("FROM " + TRANSACTION_TYPE + " WHERE description like ':param2'");
+      assertEquals(0, q.list().size());
    }
 
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "Input is not a valid date string: ")
