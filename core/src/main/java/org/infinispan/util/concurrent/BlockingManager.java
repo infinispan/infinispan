@@ -93,6 +93,21 @@ public interface BlockingManager {
    <V> CompletionStage<V> supplyBlocking(Supplier<V> supplier, Object traceId);
 
    /**
+    * Same as {@link #supplyBlocking(Supplier, Object)}, but always submits the {@code Supplier} to a blocking thread,
+    * even when the current thread is already blocking.
+    * <p>
+    * Use it when the caller may hold something the supplier needs, so running the supplier in the current thread
+    * would deadlock. The returned stage, if not complete, resumes any chained stage on the non-blocking executor.
+    * </p>
+    *
+    * @param <V> the supplied type.
+    * @param supplier blocking operation that returns a value.
+    * @param traceId an identifier that can be used to tell in a trace when an operation moves between threads.
+    * @return a stage that, when complete, contains the value returned from the supplier or a throwable.
+    */
+   <V> CompletionStage<V> dispatchBlocking(Supplier<V> supplier, Object traceId);
+
+   /**
     * Replacement for {@code CompletionStage.handleAsync()} that invokes the {@code BiFunction} in a blocking thread
     * (if the current thread is non-blocking) or in the current thread (if the current thread is blocking and the stage
     * is completed).
