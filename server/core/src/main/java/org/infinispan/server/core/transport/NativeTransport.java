@@ -2,13 +2,15 @@ package org.infinispan.server.core.transport;
 
 import static org.infinispan.server.core.logging.Log.SERVER;
 
+import java.nio.channels.spi.SelectorProvider;
 import java.util.concurrent.ThreadFactory;
 
+import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.MultithreadEventLoopGroup;
 import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollIoHandler;
 import io.netty.channel.epoll.EpollServerSocketChannel;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.ServerSocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
@@ -60,7 +62,7 @@ public final class NativeTransport {
 
    private static boolean useNativeIOUring() {
       try {
-         Class.forName("io.netty.incubator.channel.uring.IOUring", true, NativeTransport.class.getClassLoader());
+         Class.forName("io.netty.channel.uring.IoUring", true, NativeTransport.class.getClassLoader());
          if (IOURingNativeTransport.isAvailable()) {
             return !IOURING_DISABLED && IS_LINUX;
          } else {
@@ -95,9 +97,9 @@ public final class NativeTransport {
 
    public static MultithreadEventLoopGroup createEventLoopGroup(int maxExecutors, ThreadFactory threadFactory) {
       return switch (TYPE) {
-         case EPOLL -> new EpollEventLoopGroup(maxExecutors, threadFactory);
+         case EPOLL -> new MultiThreadIoEventLoopGroup(maxExecutors, threadFactory, EpollIoHandler.newFactory());
          case IOURING -> IOURingNativeTransport.createEventLoopGroup(maxExecutors, threadFactory);
-         default -> new NioEventLoopGroup(maxExecutors, threadFactory);
+         default -> new MultiThreadIoEventLoopGroup(maxExecutors, threadFactory, NioIoHandler.newFactory(SelectorProvider.provider()));
       };
    }
 }

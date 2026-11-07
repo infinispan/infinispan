@@ -147,6 +147,7 @@ public class ChannelHandler {
 
    private SslContext initSslContext(SslConfiguration ssl) {
       SslContextBuilder builder = SslContextBuilder.forClient();
+      builder.endpointIdentificationAlgorithm(ssl.hostnameValidation() ? "HTTPS" : null);
       try {
          if (ssl.keyStoreFileName() != null) {
             builder.keyManager(new SslContextFactory()

@@ -111,7 +111,6 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
 
    private void initSsl(Channel channel) {
       SslConfiguration ssl = configuration.security().ssl();
-      SslHandler sslHandler = sslContext.newHandler(channel.alloc(), ssl.sniHostName(), -1);
       String sniHostName;
       if (hostNameToUse != null) {
          sniHostName = hostNameToUse;
@@ -120,10 +119,14 @@ class ChannelInitializer extends io.netty.channel.ChannelInitializer<Channel> {
       } else {
          sniHostName = ((InetSocketAddress) unresolvedAddress).getHostString();
       }
+      int port = unresolvedAddress instanceof InetSocketAddress ? ((InetSocketAddress) unresolvedAddress).getPort() : -1;
+      SslHandler sslHandler = sslContext.newHandler(channel.alloc(), sniHostName, port);
       SSLParameters sslParameters = sslHandler.engine().getSSLParameters();
       sslParameters.setServerNames(Collections.singletonList(new SNIHostName(sniHostName)));
       if (ssl.hostnameValidation()) {
          sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+      } else {
+         sslParameters.setEndpointIdentificationAlgorithm(null);
       }
       Collection<String> namedGroups = ssl.namedGroups();
       if (namedGroups != null && !namedGroups.isEmpty()) {
