@@ -232,7 +232,7 @@ public class PrimaryNearCacheLoseAndRegainSegmentsTest extends MultiHotRodServer
       // Capture the current CacheInfo (topology ID = N) so we can replay it
       CacheInfo currentCacheInfo = inrc.getDispatcher().getCacheInfo(inrc.getName());
       int currentTopologyId = currentCacheInfo.getTopologyId();
-      assertThat(currentTopologyId).isGreaterThan(0);
+      assertThat(currentTopologyId).isNotZero();
 
       // Replay the same topology event a second time with the same ID.
       // onTopologyUpdate must treat it as stale and not invalidate any segments.
@@ -283,7 +283,7 @@ public class PrimaryNearCacheLoseAndRegainSegmentsTest extends MultiHotRodServer
 
       CacheInfo afterRebalance = inrc.getDispatcher().getCacheInfo(inrc.getName());
       int currentTopologyId = afterRebalance.getTopologyId();
-      assertThat(currentTopologyId).isGreaterThan(1);
+      assertThat(currentTopologyId).isNotZero();
 
       // Re-populate near cache (key1 moved, read it again from server 0)
       assertThat(clientCache.get(key0)).isEqualTo("v0");

@@ -1079,13 +1079,21 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
     * </ul>
     */
    void onTopologyUpdate(CacheInfo oldCacheInfo, CacheInfo newCacheInfo) {
-      int newTopologyId = newCacheInfo != null ? newCacheInfo.getTopologyId() : -1;
-      if (newTopologyId < 0) {
+      if (newCacheInfo == null) {
          lastSeenTopologyId.set(-1);
          return;
       }
+      ConsistentHash oldCH = oldCacheInfo != null ? oldCacheInfo.getConsistentHash() : null;
+      ConsistentHash newCH = newCacheInfo.getConsistentHash();
+      if (oldCH instanceof SegmentConsistentHash oldSCH && newCH instanceof SegmentConsistentHash newSCH
+            && java.util.Arrays.deepEquals(oldSCH.getSegmentOwners(), newSCH.getSegmentOwners())) {
+         return;
+      }
+      int newTopologyId = newCacheInfo.getTopologyId();
       int lastSeen = lastSeenTopologyId.get();
-      if (newTopologyId < lastSeen) {
+      if (newTopologyId == lastSeen) {
+         return;
+      } else if (newTopologyId < lastSeen) {
          if (!hasActivePrimaryListeners() || newTopologyId == 1) {
             lastSeenTopologyId.set(newTopologyId);
          } else {
@@ -1095,17 +1103,12 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
             }
             return;
          }
-      } else if (newTopologyId == lastSeen) {
-         return;
       } else {
          lastSeenTopologyId.set(newTopologyId);
       }
       if (!inPrimaryMode.get()) {
          return;
       }
-
-      ConsistentHash oldCH = oldCacheInfo != null ? oldCacheInfo.getConsistentHash() : null;
-      ConsistentHash newCH = newCacheInfo != null ? newCacheInfo.getConsistentHash() : null;
 
       if (newCH instanceof SegmentConsistentHash newSCH) {
          int numSegments = newSCH.getNumSegments();

@@ -701,7 +701,7 @@ class Encoder2x implements VersionedEncoder {
                // Only send a topology update if the cache is clustered
                if (cacheMode.isClustered()) {
                   // Use the request cache's topology id as the HotRod topologyId.
-                  int currentTopologyId = cacheTopology.getTopologyId();
+                  int currentTopologyId = cacheTopology.getReadConsistentHash().hashCode();
                   // AND if the client's topology id is different from the server's topology id
                   if (topologyId != currentTopologyId) {
                      Optional<AbstractTopologyResponse> respOptional =
@@ -748,7 +748,7 @@ class Encoder2x implements VersionedEncoder {
          return Optional.empty();
       }
 
-      int clientTopologyId = cacheTopology.getTopologyId();
+      int clientTopologyId = cacheTopology.getReadConsistentHash().hashCode();
       if (log.isTraceEnabled()) {
          log.tracef("Check for partial topologies: endpoints=%s, client-topology=%s, server-topology=%s, server-client-topology=%s",
                serverEndpoints, responseTopologyId, cacheTopology.getTopologyId(), clientTopologyId);
