@@ -24,7 +24,9 @@ import static java.io.ObjectStreamConstants.TC_STRING;
 import static java.io.ObjectStreamConstants.baseWireHandle;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
@@ -33,7 +35,10 @@ import java.io.WriteAbortedException;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,12 +54,14 @@ public class Deserializer {
 
    private static final SEntity END = new SString("END");
    private final PrimitiveClassDescFactory primitiveClassDescFactory = new PrimitiveClassDescFactory();
+   private final MarkedStream markedIn;
    private final DataInputStream din;
    private final List<SEntity> handles = new ArrayList<>();
    private final Map<String, ClassDesc> classDescriptions = new HashMap<>();
 
    public Deserializer(InputStream in, boolean header) throws IOException {
-      this.din = new DataInputStream(in);
+      this.markedIn = new MarkedStream(in);
+      this.din = new DataInputStream(markedIn);
       if (header) {
          if (din.readShort() != STREAM_MAGIC || din.readShort() != STREAM_VERSION)
             throw new StreamCorruptedException("Bad stream header");
@@ -124,16 +131,41 @@ public class Deserializer {
 
    private void classData(SObject t, ObjectClassDesc cd) throws IOException {
       int flags = cd.getFlags();
-      if ((flags & SC_SERIALIZABLE) != 0) {
-         for (FieldDesc fieldDesc : cd.getFields()) {
-            t.setField(fieldDesc.getName(), fieldDesc.read());
-         }
-         if ((flags & SC_WRITE_METHOD) != 0) {
-            objectAnnotation(t);
-         }
+      if ((flags & SC_SERIALIZABLE) != 0 && (flags & SC_WRITE_METHOD) == 0) {
+         readDeclaredFields(t, cd);
+      } else if ((flags & SC_SERIALIZABLE) != 0) {
+         // A class that declares its own writeObject() produces a section containing either the default field values followed by custom data (when it called defaultWriteObject()) or only custom data. The stream does not record which is present, so try reading fields first and fall back to treating the whole section as opaque custom data when parsing fails
+         readCustomWriterSlot(t, cd);
       } else if ((flags & SC_EXTERNALIZABLE) != 0) {
          if ((flags & SC_BLOCK_DATA) == 0) throw new IOException("Can't handle externalContents");
          objectAnnotation(t);
+      }
+   }
+
+   private void readDeclaredFields(SObject t, ObjectClassDesc cd) throws IOException {
+      for (FieldDesc fieldDesc : cd.getFields()) {
+         t.setField(fieldDesc.getName(), fieldDesc.read());
+      }
+   }
+
+   /**
+    * Reads the section of object data belonging to a class that declares its own writeObject(). If the fields cannot be parsed, the stream is rewound and the entire section is re-read as custom data (see {@link #classData}). Note that if hand-written blockdata happens to parse successfully as the declared fields followed by a valid annotation terminator it will be rendered as such; this ambiguity cannot be resolved without access to the class definitions.
+    */
+   private void readCustomWriterSlot(SObject t, ObjectClassDesc cd) throws IOException {
+      Map<String, SEntity> savedFields = t.fieldSnapshot();
+      int handlesSize = handles.size();
+      Set<String> classNamesAtMark = new HashSet<>(classDescriptions.keySet());
+      int mark = markedIn.mark();
+      try {
+         readDeclaredFields(t, cd);
+         objectAnnotation(t);
+      } catch (IOException e) {
+         // writeObject did not call defaultWriteObject(): no field values are present in the stream. Rewind and re-read this section as custom data only. A nested custom writer encountered while reading the declared fields may have created its own mark, which resetToMark(mark) discards so the rewind reaches the start of this section
+         markedIn.resetToMark(mark);
+         while (handles.size() > handlesSize) handles.remove(handles.size() - 1);
+         classDescriptions.keySet().retainAll(classNamesAtMark);
+         t.restoreFields(savedFields);
+         objectAnnotation(t); // if parsing the custom region also fails let it propagate: the stream is genuinely malformed
       }
    }
 
@@ -566,7 +598,10 @@ public class Deserializer {
       }
 
       SEntity read() throws IOException {
-         return readObject();
+         SEntity entity = readObject();
+         // block data can never appear as a direct child of the instance-data region: encountering it here means we are misaligned (e.g. reading custom writeObject data as fields) so fail loudly rather than storing garbage
+         if (entity instanceof SBlockData) throw new StreamCorruptedException("Unexpected block data in field value");
+         return entity;
       }
 
       public String toString() {
@@ -598,6 +633,70 @@ public class Deserializer {
       @Override
       public String getTypeName() {
          return classDesc.toString();
+      }
+   }
+
+   /**
+    * An {@link InputStream} supporting nested mark/reset by replaying the bytes read since the requested {@code mark()} call. Marks form a stack: each {@code mark()} records the current stream position and returns a token, and {@code resetToMark(int)} rewinds to that specific mark, discarding any newer marks created in the meantime (for example by a nested custom writer). Memory usage stays bounded by the total number of bytes read from the underlying stream.
+    */
+   private static final class MarkedStream extends FilterInputStream {
+
+      private final ByteArrayOutputStream captured = new ByteArrayOutputStream();
+      private final Deque<Integer> marks = new ArrayDeque<>();
+      private final Map<Integer, Integer> markOffsets = new HashMap<>();
+      private int nextToken = 1;
+      // snapshot served after resetToMark() before falling through to the underlying stream again
+      private byte[] replay;
+      private int replayPos;
+      // offset in captured where the replay begins
+      private int replayBase;
+
+      MarkedStream(InputStream in) {
+         super(in);
+      }
+
+      int mark() {
+         int pos = replay != null ? replayBase + replayPos : captured.size();
+         int token = nextToken++;
+         marks.push(token);
+         markOffsets.put(token, pos);
+         return token;
+      }
+
+      void resetToMark(int token) {
+         Integer top;
+         while ((top = marks.peek()) != null) {
+            marks.pop();
+            if (top != token) markOffsets.remove(top);
+            if (top == token) break;
+         }
+         Integer pos = markOffsets.remove(token);
+         if (pos == null) throw new IllegalStateException("Unknown or already consumed mark");
+         byte[] all = captured.toByteArray();
+         this.replay = Arrays.copyOfRange(all, pos, all.length);
+         this.replayPos = 0;
+         this.replayBase = pos;
+      }
+
+      @Override
+      public int read() throws IOException {
+         if (replay != null && replayPos < replay.length) return replay[replayPos++] & 0xff;
+         int b = in.read();
+         if (b >= 0) captured.write(b);
+         return b;
+      }
+
+      @Override
+      public int read(byte[] b, int off, int len) throws IOException {
+         if (replay != null && replayPos < replay.length) {
+            int n = Math.min(len, replay.length - replayPos);
+            System.arraycopy(replay, replayPos, b, off, n);
+            replayPos += n;
+            return n;
+         }
+         int r = in.read(b, off, len);
+         if (r > 0) captured.write(b, off, r);
+         return r;
       }
    }
 }

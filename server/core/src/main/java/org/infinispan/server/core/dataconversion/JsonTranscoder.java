@@ -74,6 +74,7 @@ public class JsonTranscoder extends OneToManyTranscoder {
          String json = entity.json().toString();
          return outputAsString ? json : StandardConversions.convertCharset(json, StandardCharsets.UTF_8, destinationCharset);
       } catch (IOException e) {
+         logger.errorf("DEBUG-REST-JSON-CONVERT: exception=%s", e, e);
          throw logger.errorConvertingContent(content, APPLICATION_SERIALIZED_OBJECT, APPLICATION_JSON, e);
       }
    }

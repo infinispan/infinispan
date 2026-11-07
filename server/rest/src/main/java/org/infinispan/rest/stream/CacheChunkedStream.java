@@ -108,7 +108,7 @@ public abstract class CacheChunkedStream<T> {
 
       @Override
       public void onError(Throwable t) {
-         logger.error("Error encountered while streaming cache chunk", t);
+         logger.error("Error encountered while streaming cache chunk: ", t);
          if (pendingBuffer != null) {
             pendingBuffer.release();
             pendingBuffer = null;
