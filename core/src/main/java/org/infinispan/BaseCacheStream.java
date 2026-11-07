@@ -95,7 +95,7 @@ public interface BaseCacheStream<T, S extends BaseStream<T, S>> extends BaseStre
     * Disables tracking of rehash events that could occur to the underlying cache.  If a rehash event occurs while
     * a terminal operation is being performed it is possible for some values that are in the cache to not be found.
     * Note that you will never have an entry duplicated when rehash awareness is disabled, only lost values.
-    * <p>Most terminal operations will run faster with rehash awareness disabled even without a rehash occuring.
+    * <p>Most terminal operations will run faster with rehash awareness disabled even without a rehash occurring.
     * However if a rehash occurs with this disabled be prepared to possibly receive only a subset of values.</p>
     * @return a stream with rehash awareness disabled.
     */
