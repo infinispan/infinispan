@@ -645,41 +645,48 @@ class Encoder2x implements VersionedEncoder {
       } else {
          if (log.isTraceEnabled()) log.tracef("Write hash distribution change response header %s", h);
          buf.writeByte(1); // Topology changed
-         ExtendedByteBuf.writeUnsignedInt(h.topologyId, buf); // Topology ID
+         writeHashTopology(h, ch, buf, localAddress);
+      }
+   }
 
-         // Write members
-         AtomicInteger indexCount = new AtomicInteger(-1);
-         ExtendedByteBuf.writeUnsignedInt(members.size(), buf);
-         Map<Address, Integer> indexedMembers = new HashMap<>();
-         members.forEach((addr, serverAddr) -> {
-            ExtendedByteBuf.writeString(serverAddr.getHost(localAddress), buf);
-            ExtendedByteBuf.writeUnsignedShort(serverAddr.getPort(), buf);
-            indexCount.incrementAndGet();
-            indexedMembers.put(addr, indexCount.get()); // easier indexing
-         });
+   void writeHashTopology(HashDistAware20Response h, ConsistentHash ch, ByteBuf buf, InetAddress localAddress) {
+      Map<Address, ServerAddress> members = h.serverEndpointsMap.entrySet().stream().filter(e ->
+            ch.getMembers().contains(e.getKey())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-         // Write segment information
-         int numSegments = ch.getNumSegments();
-         buf.writeByte(h.hashFunction); // Hash function
-         ExtendedByteBuf.writeUnsignedInt(numSegments, buf);
+      ExtendedByteBuf.writeUnsignedInt(h.topologyId, buf); // Topology ID
 
-         for (int segmentId = 0; segmentId < numSegments; ++segmentId) {
-            List<Address> owners = ch.locateOwnersForSegment(segmentId).stream().filter(members::containsKey).collect(Collectors.toList());
-            int ownersSize = owners.size();
-            if (ownersSize == 0) {
-               // When sending partial updates, number of owners could be 0,
-               // in which case just take the first member in the list.
-               buf.writeByte(1);
-               ExtendedByteBuf.writeUnsignedInt(0, buf);
-            } else {
-               buf.writeByte(ownersSize);
-               owners.forEach(ownerAddr -> {
-                  Integer index = indexedMembers.get(ownerAddr);
-                  if (index != null) {
-                     ExtendedByteBuf.writeUnsignedInt(index, buf);
-                  }
-               });
-            }
+      // Write members
+      AtomicInteger indexCount = new AtomicInteger(-1);
+      ExtendedByteBuf.writeUnsignedInt(members.size(), buf);
+      Map<Address, Integer> indexedMembers = new HashMap<>();
+      members.forEach((addr, serverAddr) -> {
+         ExtendedByteBuf.writeString(serverAddr.getHost(localAddress), buf);
+         ExtendedByteBuf.writeUnsignedShort(serverAddr.getPort(), buf);
+         indexCount.incrementAndGet();
+         indexedMembers.put(addr, indexCount.get()); // easier indexing
+      });
+
+      // Write segment information
+      int numSegments = ch.getNumSegments();
+      buf.writeByte(h.hashFunction); // Hash function
+      ExtendedByteBuf.writeUnsignedInt(numSegments, buf);
+
+      for (int segmentId = 0; segmentId < numSegments; ++segmentId) {
+         List<Address> owners = ch.locateOwnersForSegment(segmentId).stream().filter(members::containsKey).collect(Collectors.toList());
+         int ownersSize = owners.size();
+         if (ownersSize == 0) {
+            // When sending partial updates, number of owners could be 0,
+            // in which case just take the first member in the list.
+            buf.writeByte(1);
+            ExtendedByteBuf.writeUnsignedInt(0, buf);
+         } else {
+            buf.writeByte(ownersSize);
+            owners.forEach(ownerAddr -> {
+               Integer index = indexedMembers.get(ownerAddr);
+               if (index != null) {
+                  ExtendedByteBuf.writeUnsignedInt(index, buf);
+               }
+            });
          }
       }
    }

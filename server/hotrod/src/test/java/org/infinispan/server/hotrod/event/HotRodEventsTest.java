@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod.event;
 
+import static org.infinispan.server.hotrod.OperationStatus.Success;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertStatus;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertSuccess;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.k;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.v;
@@ -13,6 +15,7 @@ import java.util.Optional;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.server.hotrod.HotRodSingleNodeTest;
 import org.infinispan.server.hotrod.test.TestGetWithVersionResponse;
+import org.infinispan.server.hotrod.test.TestResponse;
 import org.testng.annotations.Test;
 
 /**
@@ -192,6 +195,55 @@ public class HotRodEventsTest extends HotRodSingleNodeTest {
       withClientListener(client(), eventListener, Optional.empty(), Optional.empty(), true, true, () -> {
          eventListener.expectUnorderedEvents(cache, Arrays.asList(k1, k2, k3), Event.Type.CACHE_ENTRY_CREATED);
       });
+   }
+
+   public void testPrimaryNearCacheListenerProtocol(Method m) {
+      EventLogListener eventListener = new EventLogListener();
+      byte[] key = k(m);
+      client().put(key, 0, 0, v(m));
+
+      TestResponse response = client().addPrimaryNearCacheListener(eventListener, 0);
+      try {
+         assertStatus(response, Success);
+         client().put(key, 0, 0, v(m, "v2-"));
+         eventListener.expectOnlyModifiedEvent(cache, key);
+         client().remove(key);
+         eventListener.expectOnlyRemovedEvent(cache, key);
+      } finally {
+         assertStatus(client().removeClientListener(eventListener.getId()), Success);
+      }
+   }
+
+   /**
+    * A primary listener can be removed and re-added on the same connection (e.g. when a server temporarily stops
+    * being a primary owner for any segment). The bloom filter used by the new listener must be the one that
+    * reads add keys to, otherwise invalidations are silently dropped.
+    */
+   public void testPrimaryNearCacheListenerWithBloomFilterReAdded(Method m) {
+      EventLogListener eventListener = new EventLogListener();
+      byte[] readKey = k(m, "read-");
+      byte[] unreadKey = k(m, "unread-");
+      client().put(readKey, 0, 0, v(m));
+      client().put(unreadKey, 0, 0, v(m));
+
+      int bloomBits = 1024;
+      assertStatus(client().addPrimaryNearCacheListener(eventListener, bloomBits), Success);
+      assertStatus(client().removeClientListener(eventListener.getId()), Success);
+
+      assertStatus(client().addPrimaryNearCacheListener(eventListener, bloomBits), Success);
+      try {
+         // Reading adds the key to the bloom filter of the current listener
+         assertStatus(client().getWithMetadata(readKey, 0), Success);
+
+         // Key was never read so the bloom filter must filter out the event
+         client().put(unreadKey, 0, 0, v(m, "v2-"));
+         eventListener.expectNoEvents(Optional.empty());
+
+         client().put(readKey, 0, 0, v(m, "v2-"));
+         eventListener.expectOnlyModifiedEvent(cache, readKey);
+      } finally {
+         assertStatus(client().removeClientListener(eventListener.getId()), Success);
+      }
    }
 
 }

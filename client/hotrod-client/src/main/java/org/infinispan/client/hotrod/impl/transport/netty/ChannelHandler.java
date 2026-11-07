@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl.transport.netty;
 import java.io.File;
 import java.net.SocketAddress;
 import java.security.Provider;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -247,5 +248,9 @@ public class ChannelHandler {
 
    public OperationChannel getChannelForAddress(SocketAddress socketAddress) {
       return channels.get(socketAddress);
+   }
+
+   Collection<OperationChannel> getChannels() {
+      return channels.values();
    }
 }

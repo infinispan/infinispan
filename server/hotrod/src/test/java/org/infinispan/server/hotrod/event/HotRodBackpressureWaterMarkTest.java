@@ -5,6 +5,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertStatus;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.withClientListener;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -118,6 +119,48 @@ public class HotRodBackpressureWaterMarkTest extends HotRodSingleNodeTest {
          // All events should be written and their per-event futures completed — queue drains to 0
          eventually(() -> eventSizeRef.get() == 0, 10, TimeUnit.SECONDS);
       });
+   }
+
+   public void testTopologyEventBypassesHardCap() throws Exception {
+      HotRodClient separateClient = connectClient();
+      try {
+         TestClientListener listener = new TestClientListener() {
+            @Override
+            public byte[] getId() {
+               return new byte[]{10, 11, 12};
+            }
+         };
+         assertStatus(separateClient.addClientListener(listener, false, Optional.empty(), Optional.empty(), true), Success);
+
+         Object sender = getSender(listener.getId());
+         Channel ch = TestingUtil.extractField(sender, "ch");
+         AtomicInteger eventSizeRef = TestingUtil.extractField(sender, "eventSize");
+
+         assertTrue(ch.isOpen(), "Channel should be open");
+
+         // Make the channel non-writable so the topology event stays queued
+         ch.config().setWriteBufferWaterMark(new WriteBufferWaterMark(1, 2));
+         ch.eventLoop().submit(() -> ch.write(ch.alloc().buffer(64).writeZero(64))).get(5, TimeUnit.SECONDS);
+         assertFalse(ch.isWritable(), "Channel should be non-writable");
+
+         eventSizeRef.set(MAX_SIZE - 1);
+
+         Class<?> tceClass = Class.forName("org.infinispan.server.hotrod.Events$TopologyChangedEvent");
+         java.lang.reflect.Constructor<?> ctor = tceClass.getDeclaredConstructors()[0];
+         ctor.setAccessible(true);
+         Object tce = ctor.newInstance((byte) 42, 0L, listener.getId(), null, null, null, null);
+
+         java.lang.reflect.Method method = sender.getClass().getSuperclass().getDeclaredMethod(
+               "sendTopologyEvent", tceClass);
+         method.setAccessible(true);
+         method.invoke(sender, tce);
+
+         // Unlike key events, topology events must not close the channel when the queue is at the hard cap
+         assertTrue(ch.isOpen(), "Channel should remain open after a topology event at the hard cap");
+         assertEquals(MAX_SIZE, eventSizeRef.get());
+      } finally {
+         killClient(separateClient);
+      }
    }
 
    public void testHardCapClosesChannel() throws Exception {

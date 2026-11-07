@@ -1,8 +1,10 @@
 package org.infinispan.server.hotrod;
 
+import java.net.InetAddress;
 import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commons.util.Util;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.server.hotrod.transport.ExtendedByteBuf;
 
 import io.netty.buffer.ByteBuf;
@@ -153,6 +155,42 @@ class Events {
       void writeEvent(ByteBuf buf) {
          defaultEvent(buf);
          ExtendedByteBuf.writeRangedBytes(eventData, buf);
+      }
+   }
+
+   static class TopologyChangedEvent extends Event {
+      private final HashDistAware20Response topologyResponse;
+      private final ConsistentHash ch;
+      private final InetAddress localAddress;
+      private final VersionedEncoder encoder;
+
+      protected TopologyChangedEvent(byte version, long messageId, byte[] listenerId,
+                                     HashDistAware20Response topologyResponse,
+                                     ConsistentHash ch,
+                                     InetAddress localAddress, VersionedEncoder encoder) {
+         super(version, messageId, HotRodOperation.CACHE_TOPOLOGY_CHANGED_EVENT, listenerId, false, (byte) 0, null);
+         this.topologyResponse = topologyResponse;
+         this.ch = ch;
+         this.localAddress = localAddress;
+         this.encoder = encoder;
+      }
+
+      @Override
+      public String toString() {
+         return "TopologyChangedEvent{" +
+               "version=" + version +
+               ", messageId=" + messageId +
+               ", op=" + op +
+               ", listenerId=" + Util.printArray(listenerId, false) +
+               ", topologyId=" + (topologyResponse != null ? topologyResponse.topologyId : -1) +
+               '}';
+      }
+
+      @Override
+      void writeEvent(ByteBuf buf) {
+         if (encoder instanceof Encoder2x encoder2x) {
+            encoder2x.writeHashTopology(topologyResponse, ch, buf, localAddress);
+         }
       }
    }
 }
