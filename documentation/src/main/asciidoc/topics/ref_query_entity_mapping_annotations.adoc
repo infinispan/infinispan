@@ -22,7 +22,7 @@ The key for each value needs to be indexed as well, and the key instance must be
 
 .Registering a key Transformer via annotations
 
-You can annotate your key class with `org.infinispan.api.annotation.query.Transformable` and your custom transformer implementation
+You can annotate your key class with `org.infinispan.api.annotations.query.Transformable` and your custom transformer implementation
 will be picked up automatically:
 
 [source,java]
