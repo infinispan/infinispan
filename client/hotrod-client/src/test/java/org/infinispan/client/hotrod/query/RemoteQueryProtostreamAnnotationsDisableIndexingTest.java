@@ -9,7 +9,6 @@ import java.util.List;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.TestDomainSCI;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.api.query.Query;
@@ -17,6 +16,8 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.GeneratedSchema;
 import org.infinispan.protostream.annotations.ProtoField;
 import org.infinispan.protostream.annotations.ProtoSchema;
+import org.infinispan.protostream.sampledomain.TestDomainSCI;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -83,7 +84,7 @@ public class RemoteQueryProtostreamAnnotationsDisableIndexingTest extends Single
       org.infinispan.configuration.cache.ConfigurationBuilder builder = new org.infinispan.configuration.cache.ConfigurationBuilder();
       builder.indexing().enable()
             .storage(LOCAL_HEAP)
-            .addIndexedEntity("sample_bank_account.User");
+            .addIndexedEntity(User.ENTITY_NAME);
 
       return TestCacheManagerFactory.createServerModeCacheManager(TestDomainSCI.INSTANCE, builder);
    }

@@ -2,7 +2,6 @@ package org.infinispan.server.functional.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_PROTOSTREAM_TYPE;
-import static org.infinispan.server.functional.hotrod.HotRodCacheQueries.ENTITY_USER;
 import static org.infinispan.server.test.core.Common.sync;
 import static org.infinispan.server.test.core.TestSystemPropertyNames.INFINISPAN_TEST_SERVER_CONTAINER_VOLUME_REQUIRED;
 
@@ -28,8 +27,9 @@ import org.infinispan.configuration.cache.IndexStartupMode;
 import org.infinispan.configuration.cache.IndexStorage;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
-import org.infinispan.protostream.sampledomain.User;
+import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.protostream.schema.Schema;
+import org.infinispan.protostream.types.java.CommonTypesSchema;
 import org.infinispan.server.test.core.ContainerInfinispanServerDriver;
 import org.infinispan.server.test.core.ServerRunMode;
 import org.infinispan.server.test.jupiter.InfinispanServerExtension;
@@ -88,12 +88,13 @@ public class RestReindexAutoCacheIT {
    private RemoteCache<String, User> initialize(String name, IndexStorage indexStorage, IndexStartupMode indexStartupMode) throws IOException {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       ProtoStreamMarshaller protoStreamMarshaller = new ProtoStreamMarshaller();
+      protoStreamMarshaller.register(new CommonTypesSchema());
       FileDescriptorSource descriptor = FileDescriptorSource.fromString(TestDomainSCI.INSTANCE.getName(), TestDomainSCI.INSTANCE.getContent());
       protoStreamMarshaller.getSerializationContext().registerProtoFiles(descriptor);
       builder.marshaller(protoStreamMarshaller);
       builder.addContextInitializer(TestDomainSCI.INSTANCE);
       RemoteCacheManager remoteCacheManager = SERVER.hotrod().withClientConfiguration(builder).createRemoteCacheManager();
-      RemoteCache<String, User> remoteCache = createQueryablePersistentCache(remoteCacheManager, name, TestDomainSCI.INSTANCE, ENTITY_USER, indexStorage, indexStartupMode);
+      RemoteCache<String, User> remoteCache = createQueryablePersistentCache(remoteCacheManager, name, TestDomainSCI.INSTANCE, User.ENTITY_NAME, indexStorage, indexStartupMode);
       User user = new User();
       user.setId(1);
       user.setName("Tom");
@@ -105,8 +106,8 @@ public class RestReindexAutoCacheIT {
    }
 
    private static void corruptIndex(ContainerInfinispanServerDriver serverDriver) throws IOException {
-      String output = serverDriver.syncFilesFromServer(0, "data/corruptible/sample_bank_account.User");
-      Path index = Path.of(output).resolve("sample_bank_account.User");
+      String output = serverDriver.syncFilesFromServer(0, "data/corruptible/sample_domain.User");
+      Path index = Path.of(output).resolve(User.ENTITY_NAME);
       PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:segments*");
       try (var finder = Files.find(index, 1, (path, attrs) -> matcher.matches(path.getFileName()))) {
          Path segment = finder.findFirst().get();
@@ -126,7 +127,7 @@ public class RestReindexAutoCacheIT {
             "Reindexing incomplete",
             () -> {
                RestResponse stats = sync(rest.cache(cacheName).searchStats());
-               return stats.body().contains("types\":{\"sample_bank_account.User\":{\"count\":1");
+               return stats.body().contains("types\":{\"sample_domain.User\":{\"count\":1");
             },
             serverDriver.getTimeout(), 1, TimeUnit.SECONDS);
    }
