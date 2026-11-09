@@ -1,0 +1,35 @@
+{
+  "status": "UP",
+  "components": {
+    "infinispanEmbedded": {
+      "status": "UP",
+      "details": {
+        "cache_manager_status": "RUNNING",
+        "cluster_name": "default-autoconfigure",
+        "node_address": "node-a",
+        "node_name": "node-a",
+        "version": "16.4.0.Final",
+        "cluster_size": 2,
+        "coordinator": true,
+        "physical_addresses": [
+          "192.0.2.10:7800"
+        ],
+        "cluster_health": "HEALTHY",
+        "caches": {
+          "people": "HEALTHY"
+        },
+        "members": [
+          {
+            "node_address": "node-a",
+            "version": "16.4.0"
+          },
+          {
+            "node_address": "node-b",
+            "version": "16.3.0"
+          }
+        ],
+        "rolling_upgrade": true
+      }
+    }
+  }
+}
