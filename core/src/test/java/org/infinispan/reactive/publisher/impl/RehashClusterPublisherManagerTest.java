@@ -1,7 +1,8 @@
 package org.infinispan.reactive.publisher.impl;
 
-import static org.infinispan.context.Flag.STATE_TRANSFER_PROGRESS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.any;
@@ -22,7 +23,7 @@ import java.util.stream.Stream;
 
 import org.infinispan.Cache;
 import org.infinispan.CachePublisher;
-import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -41,6 +42,7 @@ import org.infinispan.testing.ExceptionRunnable;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
+import org.reactivestreams.Publisher;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -192,36 +194,48 @@ public class RehashClusterPublisherManagerTest extends MultipleCacheManagersTest
    }
 
    @Test(dataProvider = "GuaranteeParallelEntry")
+   @SuppressWarnings({"unchecked", "rawtypes"})
    public void testSegmentMovesToOriginatorJustBeforePublisherCompletes(DeliveryGuarantee deliveryGuarantee, boolean parallel,
          boolean isEntry) throws Exception {
       Cache cache2 = cache(2);
 
       CheckPoint checkPoint = new CheckPoint();
-      // Always let it process the publisher
-      checkPoint.triggerForever(Mocks.BEFORE_RELEASE);
-      // Block on the publisher
-      LocalPublisherManager<?, ?> spy = Mocks.replaceComponentWithSpy(cache2, LocalPublisherManager.class);
+      LocalPublisherManager original = TestingUtil.extractComponent(cache2, LocalPublisherManager.class);
+      LocalPublisherManager spy = Mockito.spy(original);
 
-      Answer<SegmentAwarePublisherSupplier<?>> blockingLpmAnswer = invocation -> {
-         SegmentAwarePublisherSupplier<?> result = (SegmentAwarePublisherSupplier<?>) invocation.callRealMethod();
-         return Mocks.blockingPublisherAware(result, checkPoint);
+      // Block the reduction (not state transfer) after it produced its value, until node2 is told segment 2 moved.
+      Answer<?> holdReduction = invocation -> {
+         Object[] args = invocation.getArguments();
+         Function<Publisher<?>, CompletionStage<?>> transformer = (Function) args[6];
+         args[6] = (Function<Publisher<?>, CompletionStage<?>>) p -> transformer.apply(p).thenCompose(value -> {
+            checkPoint.trigger("reduced");
+            return checkPoint.future("release", 10, TimeUnit.SECONDS, testExecutor()).thenApply(ignore -> value);
+         });
+         return invocation.getMethod().invoke(original, args);
       };
-      // Depending upon if it is parallel or not, it can invoke either method
-      doAnswer(blockingLpmAnswer).when(spy)
-            .entryPublisher(eq(IntSets.immutableSet(2)), any(), any(),
-                  eq(EnumUtil.bitSetOf(STATE_TRANSFER_PROGRESS)), any(), any());
+      doAnswer(holdReduction).when(spy).entryReduction(anyBoolean(), any(), any(), any(), anyLong(), any(), any(), any());
+      doAnswer(holdReduction).when(spy).keyReduction(anyBoolean(), any(), any(), any(), anyLong(), any(), any(), any());
+      // waitForNoRebalance can return before node2 is told about the loss, so wait for the call itself.
+      doAnswer(invocation -> {
+         IntSet lost = invocation.getArgument(0);
+         original.segmentsLost(lost);
+         if (lost.contains(2)) checkPoint.trigger("lost");
+         return null;
+      }).when(spy).segmentsLost(any());
       TestingUtil.replaceComponent(cache2, LocalPublisherManager.class, spy, true);
 
-
-      int expectedAmount = caches().size();
-      runCommand(deliveryGuarantee, parallel, isEntry, expectedAmount, () -> {
-         Future<?> rebalanceFuture = fork(this::triggerRebalanceSegment2MovesToNode0);
-
-         // Now let the stream be processed
-         checkPoint.awaitStrict(Mocks.AFTER_INVOCATION, 10, TimeUnit.SECONDS);
-         checkPoint.triggerForever(Mocks.AFTER_RELEASE);
-         rebalanceFuture.get(10, TimeUnit.SECONDS);
-      });
+      // AT_LEAST_ONCE returns node2's value and retries segment 2 on node0, so that key comes twice.
+      int expectedAmount = caches().size() + (deliveryGuarantee == DeliveryGuarantee.AT_LEAST_ONCE ? 1 : 0);
+      try {
+         runCommand(deliveryGuarantee, parallel, isEntry, expectedAmount, () -> {
+            checkPoint.awaitStrict("reduced", 10, TimeUnit.SECONDS);
+            triggerRebalanceSegment2MovesToNode0();
+            checkPoint.awaitStrict("lost", 10, TimeUnit.SECONDS);
+            checkPoint.trigger("release");
+         });
+      } finally {
+         TestingUtil.replaceComponent(cache2, LocalPublisherManager.class, original, true);
+      }
    }
 
    private void runCommand(DeliveryGuarantee deliveryGuarantee, boolean parallel, boolean isEntry, int expectedAmount,
