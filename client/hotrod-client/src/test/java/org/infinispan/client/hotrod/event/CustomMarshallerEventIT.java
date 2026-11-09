@@ -109,7 +109,7 @@ public class CustomMarshallerEventIT extends SingleHotRodServerTest {
 
       @Override
       public Object objectFromByteBuffer(byte[] buf, int offset, int length) {
-         return new Id(buf[0]);
+         return new Id(buf[offset]);
       }
 
       @Override

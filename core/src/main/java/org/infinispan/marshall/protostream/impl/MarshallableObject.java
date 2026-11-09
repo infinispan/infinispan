@@ -93,7 +93,7 @@ public class MarshallableObject<T> extends AbstractMarshallableWrapper<T> {
       public MarshallableObject<?> read(ReadContext ctx) throws IOException {
          final TagReader in = ctx.getReader();
          WrappedMessage message = null;
-         byte[] bytes = null;
+         java.nio.ByteBuffer bytes = null;
          boolean done = false;
          while (!done) {
             final int tag = in.readTag();
@@ -102,7 +102,7 @@ public class MarshallableObject<T> extends AbstractMarshallableWrapper<T> {
                   done = true;
                   break;
                case 1 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
-                  bytes = in.readByteArray();
+                  bytes = in.readByteBuffer();
                   break;
                }
                case (2 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED): {
