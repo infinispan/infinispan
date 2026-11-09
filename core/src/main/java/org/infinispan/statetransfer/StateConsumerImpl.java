@@ -421,9 +421,18 @@ public class StateConsumerImpl implements StateConsumer {
          }
          IntSet addedSegments;
          if (previousWriteCh == null) {
-            // If we have any segments assigned in the initial CH, it means we are the first member.
-            // If we are not the first member, we can only add segments via rebalance.
-            addedSegments = IntSets.immutableEmptySet();
+            ConsistentHash currentCH = cacheTopology.getCurrentCH();
+            if (startStateTransfer && currentCH != null && currentCH.getMembers().contains(address)) {
+               // The first topology this node installs is a rebalance, so it never installed the old stable topology.
+               // That happens during manual recovery, when the rebalance overtakes the recovered topology.
+               // The current CH is what this node held before the rebalance.
+               addedSegments = IntSets.mutableCopyFrom(newWriteSegments);
+               addedSegments.removeAll(getOwnedSegments(currentCH));
+            } else {
+               // If we have any segments assigned in the initial CH, it means we are the first member.
+               // If we are not the first member, we can only add segments via rebalance.
+               addedSegments = IntSets.immutableEmptySet();
+            }
 
             if (log.isTraceEnabled()) {
                log.tracef("On cache %s we have: added segments: %s", cacheName, addedSegments);
