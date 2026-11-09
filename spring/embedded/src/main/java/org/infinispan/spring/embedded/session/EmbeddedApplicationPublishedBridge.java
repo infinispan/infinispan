@@ -42,11 +42,23 @@ public class EmbeddedApplicationPublishedBridge extends AbstractApplicationPubli
 
    @CacheEntryExpired
    public void processCacheEntryExpired(CacheEntryExpiredEvent event) {
-      emitSessionExpiredEvent((Session) event.getValue());
+      // The expired value is read from the data container when the event is raised, so it may be
+      // missing if the entry was already removed by a concurrent operation.
+      Session session = (Session) event.getValue();
+      if (session != null) {
+         emitSessionExpiredEvent(session);
+      }
    }
 
    @CacheEntryRemoved
    public void processCacheEntryDestroyed(CacheEntryRemovedEvent event) {
-      emitSessionDestroyedEvent((Session) event.getOldValue());
+      // An unconditional Cache#remove() of a key which is no longer present still raises a
+      // CacheEntryRemoved event, but without an old value. This happens when the entry expires
+      // between AbstractInfinispanSessionRepository#findById and #deleteById. No session was
+      // destroyed in that case, so there is nothing to publish.
+      Session session = (Session) event.getOldValue();
+      if (session != null) {
+         emitSessionDestroyedEvent(session);
+      }
    }
 }

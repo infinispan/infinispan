@@ -1,13 +1,21 @@
 package org.infinispan.spring.embedded.session;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.common.InfinispanTestExecutionListener;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.common.session.AbstractInfinispanSessionRepository;
+import org.infinispan.spring.common.session.AbstractInfinispanSessionRepository.InfinispanSession;
 import org.infinispan.spring.common.session.InfinispanApplicationPublishedBridgeTCK;
 import org.infinispan.spring.embedded.provider.BasicConfiguration;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.springframework.session.events.SessionDestroyedEvent;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 import org.testng.annotations.AfterClass;
@@ -73,5 +81,49 @@ public class EmbeddedApplicationPublishedBridgeTest extends InfinispanApplicatio
    @Override
    public void testEventBridgeWithSessionIdChange() throws Exception {
       super.testEventBridgeWithSessionIdChange();
+   }
+
+   /**
+    * An unconditional {@code Cache#remove()} of a key which is not present still raises a
+    * {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved} event, but
+    * without an old value. The bridge must not fail and must not report a destroyed session.
+    */
+   public void testRemovingUnknownSessionDoesNotPublishDestroyedEvent() {
+      //given
+      List<Object> events = new CopyOnWriteArrayList<>();
+      sessionRepository.setApplicationEventPublisher(events::add);
+
+      //when
+      embeddedCacheManager.getCache().remove("not-present");
+
+      //then
+      assertEquals(0, countDestroyedEvents(events));
+   }
+
+   /**
+    * Reproduces the race in {@link AbstractInfinispanSessionRepository#deleteById(String)}: the
+    * session is still readable when {@code findById} decides it is expired, but its cache entry is
+    * gone by the time {@code remove()} runs. The resulting removal event carries no old value.
+    */
+   public void testRemovingExpiredSessionDoesNotPublishDestroyedEvent() {
+      //given
+      List<Object> events = new CopyOnWriteArrayList<>();
+      sessionRepository.setApplicationEventPublisher(events::add);
+
+      InfinispanSession session = sessionRepository.createSession();
+      session.setMaxInactiveInterval(Duration.ofSeconds(1));
+      sessionRepository.save(session);
+      String sessionId = session.getId();
+
+      //when
+      eventually(() -> embeddedCacheManager.getCache().get(sessionId) == null);
+      embeddedCacheManager.getCache().remove(sessionId);
+
+      //then
+      assertEquals(0, countDestroyedEvents(events));
+   }
+
+   private long countDestroyedEvents(List<Object> events) {
+      return events.stream().filter(e -> e.getClass() == SessionDestroyedEvent.class).count();
    }
 }
