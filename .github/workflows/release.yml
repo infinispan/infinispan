@@ -39,7 +39,7 @@ jobs:
 
     steps:
       - name: Set up Java
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           java-version: '25'
           distribution: 'zulu'
@@ -290,7 +290,7 @@ jobs:
   operator-main:
     needs: [images, release]
     if: ${{ !contains(needs.release.outputs.version, '.Dev') }}
-    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@40b3c0fbec83064b4a7173fafb68d053e56fe606 # main
+    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@9317ef8cd252e71668187c7f3852076949eed525 # main
     secrets: inherit
     with:
       image: quay.io/infinispan/server:${{ needs.release.outputs.version }}
