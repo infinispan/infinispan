@@ -1,5 +1,7 @@
 package org.infinispan.it.endpoints;
 
+import java.util.Arrays;
+
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
@@ -22,7 +24,7 @@ public class SpyMemcachedMarshaller extends AbstractMarshaller {
 
    @Override
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) {
-      return transcoder.decode(new CachedData(0, buf, length));
+      return transcoder.decode(new CachedData(0 , Arrays.copyOfRange(buf, offset, offset + length), length));
    }
 
    @Override

@@ -142,8 +142,8 @@ public class MarshallableMap<K, V> {
       }
 
       private Object read(TagReader in) throws IOException {
-         byte[] bytes = in.readByteArray();
-         return bytes.length == 0 ? null : marshaller.objectFromByteBuffer(bytes);
+         java.nio.ByteBuffer bytes = in.readByteBuffer();
+         return !bytes.hasRemaining() ? null : marshaller.objectFromByteBuffer(bytes);
       }
 
       private void write(WriteContext ctx, int field, Object object) throws IOException {

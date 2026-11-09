@@ -56,7 +56,7 @@ public class JavaSerializationMarshaller extends AbstractMarshaller {
 
    @Override
    public Object objectFromByteBuffer(byte[] buf, int offset, int length) throws IOException, ClassNotFoundException {
-      try (ObjectInputStream ois = new CheckedInputStream(new ByteArrayInputStream(buf), allowList)) {
+      try (ObjectInputStream ois = new CheckedInputStream(new ByteArrayInputStream(buf, offset, length), allowList)) {
          return ois.readObject();
       }
    }

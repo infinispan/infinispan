@@ -1,6 +1,7 @@
 package org.infinispan.marshall.protostream.impl;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.MarshallingException;
@@ -86,7 +87,7 @@ public class MarshallableUserObject<T> extends AbstractMarshallableWrapper<T> {
       public MarshallableUserObject read(ReadContext ctx) throws IOException {
          TagReader in = ctx.getReader();
          try {
-            byte[] bytes = null;
+            ByteBuffer bytes = null;
             boolean done = false;
             while (!done) {
                final int tag = in.readTag();
@@ -97,7 +98,7 @@ public class MarshallableUserObject<T> extends AbstractMarshallableWrapper<T> {
                      break;
                   // field number 1
                   case 1 << WireType.TAG_TYPE_NUM_BITS | WireType.WIRETYPE_LENGTH_DELIMITED: {
-                     bytes = in.readByteArray();
+                     bytes = in.readByteBuffer();
                      break;
                   }
                   default: {
@@ -105,11 +106,30 @@ public class MarshallableUserObject<T> extends AbstractMarshallableWrapper<T> {
                   }
                }
             }
-            Object userObject = userMarshaller.objectFromByteBuffer(bytes);
+            Object userObject = unmarshall(bytes);
             return new MarshallableUserObject<>(userObject);
          } catch (ClassNotFoundException e) {
             throw new MarshallingException(e);
          }
+      }
+
+      /**
+       * Reads the user object from the bytes of the message, without copying them when the buffer exposes its array.
+       *
+       * @param bytes the bytes of the user object.
+       * @return the unmarshalled user object.
+       * @throws IOException if the object cannot be unmarshalled.
+       * @throws ClassNotFoundException if the class of the object is unknown.
+       */
+      private Object unmarshall(ByteBuffer bytes) throws IOException, ClassNotFoundException {
+         // If we have access to the underlying array, let's use directly without copying.
+         if (bytes.hasArray())
+            return userMarshaller.objectFromByteBuffer(bytes.array(), bytes.arrayOffset() + bytes.position(), bytes.remaining());
+
+         // Otherwise, we need to copy the exact dimension of the data.
+         byte[] copy = new byte[bytes.remaining()];
+         bytes.get(copy);
+         return userMarshaller.objectFromByteBuffer(copy);
       }
 
       @Override
