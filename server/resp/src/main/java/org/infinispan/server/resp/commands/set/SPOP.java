@@ -36,6 +36,8 @@ public class SPOP extends RespCommand implements Resp3Command {
       }
       final byte[] key = arguments.get(0);
       EmbeddedSetCache<byte[], byte[]> esc = handler.getEmbeddedSetCache();
-      return handler.stageToReturn(esc.pop(key, count, true), ctx, ResponseWriter.ARRAY_BULK_STRING);
+      boolean hasCount = arguments.size() > 1;
+      return handler.stageToReturn(esc.pop(key, count, true), ctx,
+            hasCount ? ResponseWriter.ARRAY_BULK_STRING : ResponseWriter.FIRST_BULK_STRING_OR_NULL);
    }
 }

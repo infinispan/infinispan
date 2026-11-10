@@ -63,6 +63,17 @@ public interface ResponseWriter {
    };
 
    /**
+    * Serializes the first element of a collection as a bulk string, writing null when the collection is null or empty.
+    */
+   BiConsumer<Collection<byte[]>, ResponseWriter> FIRST_BULK_STRING_OR_NULL = (c, writer) -> {
+      if (c == null || c.isEmpty()) {
+         writer.nulls();
+      } else {
+         writer.string(c.iterator().next());
+      }
+   };
+
+   /**
     * List the consumers for set responses with the different types needed.
     */
    BiConsumer<Set<byte[]>, ResponseWriter> SET_BULK_STRING = (s, writer) -> writer.set(s, Resp3Type.BULK_STRING);
