@@ -3,6 +3,7 @@ package org.infinispan.query.objectfilter.impl.syntax.parser;
 import org.infinispan.query.grammar.IckleParser;
 import org.infinispan.query.objectfilter.ParsingException;
 import org.infinispan.query.objectfilter.impl.ql.QueryParser;
+import org.infinispan.query.objectfilter.impl.syntax.update.QueryFunctionRegistry;
 
 /**
  * @author anistor@redhat.com
@@ -12,12 +13,30 @@ public final class IckleQueryStringParser {
 
    private static final QueryParser queryParser = new QueryParser();
 
+   /**
+    * Shared registry of the built-in functions only, backing the two-argument
+    * overload: a single instance serves every call instead of copying the
+    * built-ins afresh on each parse.
+    */
+   private static final QueryFunctionRegistry BUILT_IN_REGISTRY = QueryFunctionRegistry.standard();
+
    private IckleQueryStringParser() {
    }
 
+   /**
+    * Parses a query string using only the built-in query functions.
+    */
    public static <TypeMetadata> IckleParsingResult<TypeMetadata> parse(String queryString, ObjectPropertyHelper<TypeMetadata> propertyHelper) {
+      return parse(queryString, propertyHelper, BUILT_IN_REGISTRY);
+   }
+
+   /**
+    * Parses a query string, validating function calls against the given registry.
+    */
+   public static <TypeMetadata> IckleParsingResult<TypeMetadata> parse(String queryString, ObjectPropertyHelper<TypeMetadata> propertyHelper,
+                                                                       QueryFunctionRegistry functionRegistry) {
       IckleParser.StatementContext tree = queryParser.parseQuery(queryString);
-      IckleParserVisitorResult visitor = new IckleParserVisitorResult(queryString, propertyHelper);
+      IckleParserVisitorResult visitor = new IckleParserVisitorResult(queryString, propertyHelper, functionRegistry);
       visitor.visit(tree);
 
       IckleParsingResult result = visitor.getParsingResult();

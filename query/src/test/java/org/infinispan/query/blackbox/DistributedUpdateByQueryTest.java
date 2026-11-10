@@ -84,4 +84,32 @@ public class DistributedUpdateByQueryTest extends MultipleCacheManagersTest {
       assertEquals("senior", ((Person) cache(1).get("p2")).getBlurb());
       assertEquals("blurb3", ((Person) cache(0).get("p3")).getBlurb());
    }
+
+   @Test
+   public void testDistributedUpdateWithArithmeticExpression() {
+      cache(0).put("p1", new Person("Alice", "blurb1", 30));
+      cache(1).put("p2", new Person("Bob", "blurb2", 31));
+
+      Query<Person> update = cache(0).query(
+            "UPDATE FROM " + Person.class.getName() + " SET age = age + 5 WHERE age = 30");
+      int count = update.executeStatement();
+      assertEquals(1, count);
+
+      assertEquals(35, ((Person) cache(0).get("p1")).getAge());
+      assertEquals(31, ((Person) cache(1).get("p2")).getAge());
+   }
+
+   @Test
+   public void testDistributedUpdateWithFunctionExpression() {
+      cache(0).put("p1", new Person("Alice", "blurb1", 30));
+      cache(1).put("p2", new Person("Bob", "blurb2", 31));
+
+      Query<Person> update = cache(0).query(
+            "UPDATE FROM " + Person.class.getName() + " SET name = upper(name) WHERE age = 30");
+      int count = update.executeStatement();
+      assertEquals(1, count);
+
+      assertEquals("ALICE", ((Person) cache(0).get("p1")).getName());
+      assertEquals("Bob", ((Person) cache(1).get("p2")).getName());
+   }
 }

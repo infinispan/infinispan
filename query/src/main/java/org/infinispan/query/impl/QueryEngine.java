@@ -14,10 +14,13 @@ import org.infinispan.commons.query.BaseQuery;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.marshall.protostream.impl.SerializationContextRegistry;
+import org.infinispan.protostream.ImmutableSerializationContext;
 import org.infinispan.query.clustered.DistributedIndexedQueryImpl;
 import org.infinispan.query.core.impl.AggregatingQuery;
 import org.infinispan.query.core.impl.EmbeddedQuery;
 import org.infinispan.query.core.impl.EmptyResultQuery;
+import org.infinispan.query.core.impl.ExpressionProjectionQuery;
 import org.infinispan.query.core.impl.HybridQuery;
 import org.infinispan.query.core.impl.Log;
 import org.infinispan.query.core.impl.MetadataHybridQuery;
@@ -60,6 +63,7 @@ import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleQueryStringParser;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
 import org.infinispan.query.objectfilter.impl.syntax.parser.RowPropertyHelper;
+import org.infinispan.query.objectfilter.impl.syntax.update.QueryFunctionRegistry;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.util.function.SerializableFunction;
 
@@ -89,6 +93,8 @@ public class QueryEngine<TypeMetadata> {
 
    protected final QueryCache queryCache;
 
+   private final QueryFunctionRegistry functionRegistry;
+
    protected final LocalQueryStatistics queryStatistics;
 
    protected static final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
@@ -116,6 +122,8 @@ public class QueryEngine<TypeMetadata> {
       this.cache = cache;
       this.matcherImplClass = matcherImplClass;
       this.queryCache = SecurityActions.getGlobalComponentRegistry(cache.getCacheManager()).getComponent(QueryCache.class);
+      QueryFunctionRegistry registry = SecurityActions.getGlobalComponentRegistry(cache.getCacheManager()).getComponent(QueryFunctionRegistry.class);
+      this.functionRegistry = registry != null ? registry : QueryFunctionRegistry.standard();
       this.queryStatistics = SecurityActions.getCacheComponentRegistry(cache).getComponent(LocalQueryStatistics.class);
       this.matcher = SecurityActions.getCacheComponentRegistry(cache).getComponent(matcherImplClass);
       propertyHelper = ((BaseMatcher<TypeMetadata, ?, ?>) matcher).getPropertyHelper();
@@ -538,6 +546,10 @@ public class QueryEngine<TypeMetadata> {
          return new EmptyResultQuery<>(cache, queryString, parsingResult.getStatementType(), namedParameters, startOffset, maxResults, queryStatistics);
       }
 
+      if (parsingResult.hasExpressionProjections()) {
+         return buildExpressionProjectionQuery(queryString, namedParameters, startOffset, maxResults, parsingResult, local);
+      }
+
       if (!isIndexed) {
          return new EmbeddedQuery<>(this, cache, queryString, parsingResult.getStatementType(),
                namedParameters, parsingResult.getProjections(), startOffset, maxResults, defaultMaxResults,
@@ -666,10 +678,42 @@ public class QueryEngine<TypeMetadata> {
       // some fields are indexed, run a hybrid query
       IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, expansion, null, null, null, null);
       Query<?> expandedQuery = new EmbeddedLuceneQuery<>(this, namedParameters, fpr, null, null, -1, -1, local);
-       return new MetadataHybridQuery<>(cache, queryString, parsingResult.getStatementType(),
-             namedParameters, getObjectFilter(matcher, queryString, namedParameters, null), startOffset, maxResults,
-             expandedQuery, queryStatistics, local, allSortFieldsAreStored, parsingResult.getUpdateOperations(), parsingResult.getTargetEntityName(),
-             getQueryEngineProvider());
+      return new MetadataHybridQuery<>(cache, queryString, parsingResult.getStatementType(),
+            namedParameters, getObjectFilter(matcher, queryString, namedParameters, null), startOffset, maxResults,
+            expandedQuery, queryStatistics, local, allSortFieldsAreStored, parsingResult.getUpdateOperations(), parsingResult.getTargetEntityName(),
+            getQueryEngineProvider());
+   }
+
+   private BaseQuery<?> buildExpressionProjectionQuery(String queryString, Map<String, Object> namedParameters,
+                                                       long startOffset, int maxResults, IckleParsingResult<TypeMetadata> parsingResult, boolean local) {
+      // All projections are passed through: expression projections are
+      // evaluated in-memory, plain property projections are read from the
+      // entity (a mixed select must return one value per projection).
+      List<PropertyPath<?>> exprProjections = parsingResult.getProjectedPaths() == null
+            ? java.util.List.of()
+            : java.util.Arrays.asList(parsingResult.getProjectedPaths());
+
+      BaseQuery<?> innerQuery;
+      if (!isIndexed) {
+         String filterQueryString = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), null,
+               parsingResult.getWhereClause(), parsingResult.getFilteringClause(), parsingResult.getSortFields());
+         innerQuery = new EmbeddedQuery<>(this, cache, filterQueryString, parsingResult.getStatementType(),
+               namedParameters, null, startOffset, maxResults, defaultMaxResults,
+               queryStatistics, local, null, parsingResult.getTargetEntityName());
+      } else {
+         IckleParsingResult<TypeMetadata> fpr = makeFilterParsingResult(parsingResult, parsingResult.getWhereClause(), null, null, null, parsingResult.getSortFields());
+         innerQuery = new EmbeddedLuceneQuery<>(this, namedParameters, fpr, null, null, startOffset, maxResults, local);
+      }
+
+      ImmutableSerializationContext serCtx = null;
+      SerializationContextRegistry ctxRegistry = SecurityActions.getCacheComponentRegistry(cache)
+            .getComponent(SerializationContextRegistry.class);
+      if (ctxRegistry != null) {
+         serCtx = ctxRegistry.getUserCtx();
+      }
+
+      return new ExpressionProjectionQuery(queryString, namedParameters, innerQuery, exprProjections,
+            functionRegistry, serCtx, startOffset, maxResults, local);
    }
 
    private IckleParsingResult<TypeMetadata> makeFilterParsingResult(IckleParsingResult<TypeMetadata> parsingResult, BooleanExpr normalizedWhereClause,
@@ -679,7 +723,7 @@ public class QueryEngine<TypeMetadata> {
 
       if (!queryString.toUpperCase().contains("JOIN")) {
          queryString = SyntaxTreePrinter.printTree(parsingResult.getTargetEntityName(), projection,
-                 normalizedWhereClause, parsingResult.getFilteringClause(), sortFields);
+               normalizedWhereClause, parsingResult.getFilteringClause(), sortFields);
       }
 
       return new IckleParsingResult<>(queryString, parsingResult.getStatementType(), parsingResult.getParameterNames(),
@@ -744,8 +788,8 @@ public class QueryEngine<TypeMetadata> {
 
    public IckleParsingResult<TypeMetadata> parse(String queryString) {
       return queryCache != null
-            ? queryCache.get(cache.getName(), queryString, null, IckleParsingResult.class, (qs, accumulators) -> IckleQueryStringParser.parse(qs, propertyHelper))
-            : IckleQueryStringParser.parse(queryString, propertyHelper);
+            ? queryCache.get(cache.getName(), queryString, null, IckleParsingResult.class, (qs, accumulators) -> IckleQueryStringParser.parse(qs, propertyHelper, functionRegistry))
+            : IckleQueryStringParser.parse(queryString, propertyHelper, functionRegistry);
    }
 
    protected final ObjectFilter getObjectFilter(Matcher matcher, String queryString, Map<String, Object> namedParameters, List<FieldAccumulator> accumulators) {
@@ -794,9 +838,9 @@ public class QueryEngine<TypeMetadata> {
             queryStatistics, ickleParsingResult.getUpdateOperations(), ickleParsingResult.getTargetEntityName());
    }
 
-    public SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> getQueryEngineProvider() {
-       return queryEngineProvider;
-    }
+   public SerializableFunction<AdvancedCache<?, ?>, QueryEngine<?>> getQueryEngineProvider() {
+      return queryEngineProvider;
+   }
 
    private static String getInputColumnKey(PropertyPath<?> p) {
       if (p instanceof AggregationFunctionPropertyPath<?> afp) {

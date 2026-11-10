@@ -146,10 +146,13 @@ loop(
       '/entity reference',
       line('version(', '/alias', ')'),
       line('score(', '/alias', ')'),
-      line(choice('avg','count','max','min','sum'), '(', '/attribute or path', ')')
+      line(choice('avg','count','max','min','sum'), '(', '/attribute or path', ')'),
+      '/expression'
   )) , ','
 )
 ....
+
+A projection item may also be an arbitrary expression combining property references, operators, and function calls; see link:#select-expressions_{context}[Expressions in SELECT statements].
 
 === Project cache entry version
 It is possible to project the cache entry version, using the `version` projection function.
@@ -182,6 +185,46 @@ in the same `Object[]` returned hit.
 # return the cache entry value and the the score of the matching
 SELECT b, score(b) FROM org.infinispan.sample.Book b WHERE b.title like '%Data Grid%'
 ----
+
+[id='select-expressions_{context}']
+=== Expressions in SELECT statements
+
+In addition to projecting individual fields, the `SELECT` clause supports expressions that compute a derived value
+from the entity's properties at query execution time.
+Any of the built-in functions listed in link:#query-functions_{context}[Query functions] can be used, as well as
+any link:#user_defined_functions_{context}[user-defined functions] registered on the server.
+
+An expression can combine property references, string/numeric/boolean constants, named parameters, function calls
+(arbitrarily nested), the arithmetic operators `+`, `-`, `*`, `/`, and `%`, unary minus, and parentheses.
+The `+` operator concatenates strings when at least one operand is a string.
+Like `UPDATE` expressions, a `SELECT` expression can contain at most one division operator
+(see the note in link:#update-expressions_{context}[Expressions in UPDATE statements]).
+
+[source,sql,title="Concatenating fields with a separator"]
+----
+SELECT concat(title, ' (', publicationYear, ')') FROM org.infinispan.sample.Book WHERE title LIKE '%Data Grid%'
+----
+
+[source,sql,title="Nested function calls"]
+----
+SELECT upper(concat(author.name, ' - ', title)) FROM org.infinispan.sample.Book WHERE author.name = 'Manik'
+----
+
+[source,sql,title="Arithmetic expression with a function call"]
+----
+SELECT publicationYear - 10, upper(title) FROM org.infinispan.sample.Book WHERE title LIKE '%Java%'
+----
+
+A projection query returns one row per matching entity.
+Each row is an `Object[]` with one slot per projection item, so a query with a single projection returns a one-element
+array and a query with multiple projections returns an array with one slot per projected expression.
+
+[NOTE]
+====
+Queries that contain computed expressions in the `SELECT` clause cannot be fully evaluated against the search index.
+{brandname} fetches the matching entities and evaluates the expressions in memory.
+This applies to both indexed and non-indexed caches.
+====
 
 [discrete]
 == Sorting
@@ -360,8 +403,14 @@ You can update entities in {brandname} caches with the following syntax:
 
 [source,sql,title="Update Query in Ickle"]
 ----
-UPDATE FROM <entityName> {SET | ADD | REMOVE} <field> = <value> [, ...]* [WHERE condition]
+UPDATE FROM <entityName> <operation> [,<operation>]* [WHERE condition]
 ----
+
+Where `<operation>` is one of:
+
+* `SET <field> = <expression>` — assign a new value to a field.
+* `ADD <field> = <expression>` — add values to a collection field.
+* `REMOVE <field> = <expression>` — remove values from a collection field.
 
 The following railroad diagram illustrates the syntax of an UPDATE statement:
 
@@ -374,24 +423,17 @@ stack(
 )
 ....
 
+
 * Reference only single entities with `<entityName>`. UPDATE queries cannot use joins.
 * WHERE conditions are optional.
-* Use `SET` to assign a new value to a field. When the target is a collection, the list replaces the entire existing collection.
-* Use `ADD` to add values to a collection field without replacing its contents.
-* Use `REMOVE` to remove values from a collection field without affecting other members.
 
-Values can be:
+The `<expression>` on the right-hand side can be a constant, an arithmetic expression, a function call, a property reference, or a list:
 
-* A single constant: `SET name = 'John'`, `ADD tags = 'newTag'`
-* A list of constants in parentheses: `ADD tags = ('tag1', 'tag2')`, `REMOVE tags = ('oldTag')`
-* A list of constants in square brackets: `SET tags = ['a', 'b']`, `REMOVE tags = ['c']`
-
-The following example sets a new title, adds two tags, and removes one tag from all books whose price is greater than 100:
-
-[source,sql]
-----
-UPDATE FROM org.infinispan.sample.Book SET title = 'Updated Title', ADD tags = ('sale', 'featured'), REMOVE tags = ['discount'] WHERE price > 100
-----
+* A single constant: `SET name = 'John'`
+* An arithmetic expression: `SET age = age + 1`
+* A function call: `SET name = upper(name)`
+* A list of values in parentheses: `ADD tags = ('new', 'updated')`
+* A list of values in square brackets: `ADD tags = ['new', 'updated']`
 
 UPDATE queries cannot use any of the following:
 
@@ -403,6 +445,336 @@ UPDATE queries cannot use any of the following:
 ====
 Invoke the `Query.executeStatement()` method to execute UPDATE statements.
 ====
+
+[id='update-expressions_{context}']
+=== Expressions in UPDATE statements
+
+The right-hand side of a `SET`, `ADD`, or `REMOVE` operation accepts expressions in addition to plain constants.
+Expressions allow you to compute new values based on the current property values of the entity being updated.
+
+[source,sql,title="Incrementing a numeric field"]
+----
+UPDATE FROM org.example.Account SET balance = balance + 100 WHERE id = 42
+----
+
+[source,sql,title="String concatenation with the + operator"]
+----
+UPDATE FROM org.example.Person SET fullName = firstName + ' ' + lastName WHERE id = 1
+----
+
+[source,sql,title="Using functions and named parameters"]
+----
+UPDATE FROM org.example.Product SET price = round(price * :factor) + :fee WHERE category = :cat
+----
+
+The following elements can appear in an expression:
+
+* *Constants* — numeric literals (`42`, `3.14`), strings (`'hello'`), booleans (`true`, `false`), and `null`.
+* *Property references* — the current value of any field on the entity, including nested paths (`address.city`).
+* *Arithmetic operators* — `+`, `-`, `*`, `/`, `%` with standard precedence (multiplicative before additive, left-associative).
+* *Unary minus* — `-expr` to negate an expression.
+* *Parentheses* — to override the default operator precedence.
+* *Function calls* — any of the built-in functions listed in link:#query-functions_{context}[Query functions].
+* *Named parameters* — `:paramName` placeholders, set via `Query.setParameter()`.
+
+[NOTE]
+====
+When the `+` operator has at least one `String` operand, it performs string concatenation instead of numeric addition.
+All other operators require numeric operands.
+====
+
+[NOTE]
+====
+All operations in a single UPDATE statement are evaluated against the *original* entity state before any assignment is applied.
+For example, `SET a = a + 1, b = a * 2` computes both expressions using the pre-update value of `a`.
+====
+
+[NOTE]
+====
+If an operation in a multi-operation UPDATE statement fails when it is applied to an entry,
+{brandname} undoes the operations that already succeeded for that entry,
+leaving the entry unchanged, and the statement fails with an error.
+Entries that were updated before the failure keep their changes.
+Updates are applied per entry without locking the entry against concurrent writes,
+so a concurrent update to the same entry may lose one of the two updates.
+====
+
+[NOTE]
+====
+If an expression evaluates to a non-integral floating-point value (for example, `SET rating = 7.0 / 2` produces `3.5`)
+and the target field is an integer type, the update fails with a clear error instead of silently truncating the value.
+Integral floating-point results (such as `3.0`) are converted to the field's integer type normally.
+====
+
+[NOTE]
+====
+An expression can contain at most one division operator.
+If an expression contains a second `/` character, the query language lexer interprets the pair of slashes
+as a regular expression literal and the statement fails to parse, regardless of spacing or parentheses.
+Split the computation across multiple `UPDATE` statements, or compute the reciprocal in advance and pass it
+as a named parameter (for example, `SET a = price * :invQuantity`).
+====
+
+[discrete]
+==== Operator precedence
+
+[%header,cols="1,1,2",stripes=even]
+|===
+|Precedence |Operator |Description
+
+ |1 (highest)
+ |`*`, `/`, `%`
+ |Multiplication, division, modulo. Left-associative.
+
+ |2
+ |`+`, `-` (binary)
+ |Addition (or string concatenation) and subtraction. Left-associative.
+
+ |3 (lowest)
+ |`+`, `-` (unary)
+ |Unary plus or minus applied to a single operand.
+|===
+
+[discrete]
+==== Null propagation
+
+If any operand in an arithmetic expression is `null`, the result is `null`.
+String concatenation with a `null` operand also yields `null`.
+Division or modulo by zero is an error.
+
+[discrete]
+==== Type coercion
+
+Arithmetic on two integral values (`byte`, `short`, `int`, `long`) produces a `long` result.
+If either operand is floating-point, the result is a `double`.
+The final value is coerced to the target property type on assignment.
+For example, assigning a `double` value of `3.0` to an `int` field succeeds, but `3.5` is rejected.
+
+[discrete]
+==== Type checking
+
+The target property of a `SET`, `ADD`, or `REMOVE` operation must exist in the entity, and the type of the
+assigned value is validated against the target property type at parse time.
+Statements whose value can never be converted to the target type are rejected immediately, before any entry
+is touched, with a precise error.
+For example:
+
+[source,sql,title="Boolean value for an integer field"]
+----
+UPDATE FROM org.example.Account SET balance = true WHERE id = 42
+-- ISPN028537: Cannot assign a boolean value to property 'balance': incompatible with property type int
+----
+
+The following situations are rejected at parse time:
+
+* a `boolean` value assigned to a numeric, temporal, or enum field;
+* a numeric value assigned to a `boolean`, temporal, or enum field;
+* a string value assigned to a temporal field (there is no string-to-date conversion at runtime);
+* arithmetic operators applied to non-numeric operands (string concatenation with `+` is the only exception);
+* a constant expression that divides or takes the modulo by zero;
+* a constant expression that evaluates to a non-integral value for an integer field (for example, `SET rating = 7.0 / 2`).
+
+Values of unknown type — named parameters, function calls without a declared return type, and properties whose
+type cannot be determined — are not rejected at parse time; they are validated at runtime when the statement is
+applied.
+Similarly, assignments that the runtime conversion can handle (for example, the string `'42'` to an `int` field)
+are accepted at parse time and converted when the statement is applied.
+
+[id='query-functions_{context}']
+=== Query functions
+
+{brandname} provides a set of built-in functions that can be called in `UPDATE` statement expressions
+and in `SELECT` clause projections.
+Function names are case-insensitive.
+
+[discrete]
+==== Mathematical functions
+
+[%header,cols="1,2,1,1",stripes=even]
+|===
+|Function |Description |Arguments |Returns
+
+|`abs(n)`
+ |Returns the absolute value of `n`.
+ |`abs(-5)`
+ |`5` (same integral/floating-point type as the argument)
+
+|`round(n)`
+ |Returns the nearest integer to `n`.
+ |`round(3.7)`
+ |`4` (long)
+
+|`floor(n)`
+ |Returns the largest integer less than or equal to `n`.
+ |`floor(3.7)`
+ |`3` (same type as the argument)
+
+|`ceil(n)`
+ |Returns the smallest integer greater than or equal to `n`.
+ |`ceil(3.2)`
+ |`4` (same type as the argument)
+
+|`min(a, b)`
+ |Returns the smaller of two values.
+ |`min(3, 7)`
+ |`3`
+
+|`max(a, b)`
+ |Returns the greater of two values.
+ |`max(3, 7)`
+ |`7`
+
+|`power(a, b)`
+ |Returns `a` raised to the power of `b`.
+ |`power(2, 10)`
+ |`1024`
+
+|`sqrt(n)`
+ |Returns the square root of `n`.
+ |`sqrt(16)`
+ |`4.0` (double)
+|===
+
+[discrete]
+==== String functions
+
+[%header,cols="1,2,1,1",stripes=even]
+|===
+|Function |Description |Arguments |Returns
+
+|`concat(a, b, ...)`
+ |Concatenates two or more values into a single string.
+ |`concat('Hello, ', 'World')`
+ |`'Hello, World'`
+
+|`upper(s)`
+ |Converts a string to upper case.
+ |`upper('hello')`
+ |`'HELLO'`
+
+|`lower(s)`
+ |Converts a string to lower case.
+ |`lower('HELLO')`
+ |`'hello'`
+
+|`trim(s)`
+ |Removes leading and trailing whitespace.
+ |`trim('  padded  ')`
+ |`'padded'`
+
+|`length(s)`
+ |Returns the number of characters in a string.
+ |`length('hello')`
+ |`5` (long)
+
+|`substring(s, begin [, end])`
+ |Returns a substring from index `begin` (inclusive) to `end` (exclusive). Indices are one-based.
+ |`substring('Hello', 2, 4)`
+ |`'el'`
+
+|`replace(s, from, to)`
+  |Replaces all occurrences of `from` with `to` in the string.
+  |`replace('aaa', 'a', 'b')`
+  |`'bbb'`
+|===
+
+[discrete]
+==== Regexp functions
+
+Regexp functions use Java regular-expression syntax (see `java.util.regex.Pattern`).
+Patterns that are string literals in the query are compiled once and reused for all matching entities.
+
+[%header,cols="1,2,1,1",stripes=even]
+|===
+|Function |Description |Arguments |Returns
+
+|`regexp_like(s, pattern)`
+|Returns `true` if the pattern matches anywhere in the string.
+|`regexp_like('order-123', '\d+')`
+|`true` (boolean)
+
+|`regexp_replace(s, pattern, replacement)`
+|Replaces all substrings matching the pattern with the replacement string.
+|`regexp_replace('hello123', '\d+', 'X')`
+|`'helloX'`
+
+|`regexp_substr(s, pattern)`
+|Returns the first substring matching the pattern, or `null` if no match.
+|`regexp_substr('order-123', '\d+')`
+|`'123'`
+
+|`regexp_instr(s, pattern)`
+  |Returns the one-based position of the first match, or `0` if no match.
+  |`regexp_instr('hello123', '\d+')`
+  |`6` (int)
+|===
+
+[discrete]
+==== Date functions
+
+All date functions accept a `java.util.Date` or `java.time.Instant` as the first argument and an integral amount as the second.
+
+[%header,cols="1,2,1,1",stripes=even]
+|===
+|Function |Description |Arguments |Returns
+
+|`addDays(d, n)`
+|Adds or subtracts days.
+|`addDays(dueDate, 7)`
+|`Date` / `Instant`
+
+|`addHours(d, n)`
+|Adds or subtracts hours.
+|`addHours(created, -24)`
+|`Date` / `Instant`
+
+|`addMinutes(d, n)`
+|Adds or subtracts minutes.
+|`addMinutes(start, 30)`
+|`Date` / `Instant`
+
+|`addMonths(d, n)`
+|Adds or subtracts months.
+|`addMonths(birthday, 1)`
+|`Date` / `Instant`
+
+|`addYears(d, n)`
+|Adds or subtracts years.
+|`addYears(expiry, 1)`
+|`Date` / `Instant`
+
+|`dateAdd(d, n, unit)`
+|Generic date addition. The `unit` argument is a string: `'SECOND'`, `'MINUTE'`, `'HOUR'`, `'DAY'`, `'WEEK'`, `'MONTH'`, or `'YEAR'`.
+|`dateAdd(due, 3, 'DAY')`
+|`Date` / `Instant`
+|===
+
+[discrete]
+==== Conversion functions
+
+Conversion functions are useful for performing arithmetic on fields stored as strings or for changing the numeric type of a value.
+
+[%header,cols="1,2,1,1",stripes=even]
+|===
+|Function |Description |Arguments |Returns
+
+|`toLong(v)`
+|Converts a number or numeric string to a long.
+|`toLong('123')`
+|`123` (long)
+
+|`toDouble(v)`
+|Converts a number or numeric string to a double.
+|`toDouble('3.14')`
+|`3.14` (double)
+
+|`toString(v)`
+|Converts any value to its string representation.
+|`toString(42)`
+|`'42'`
+|===
+
+include::proc_user_defined_functions.adoc[leveloffset=+1]
 
 [role="_additional-resources"]
 .Additional resources

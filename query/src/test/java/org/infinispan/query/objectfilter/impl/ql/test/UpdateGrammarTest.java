@@ -107,4 +107,140 @@ public class UpdateGrammarTest extends TestBase {
    public void testUpdateMissingFrom() {
       expectParserFailure("update set name = 'x' where id = 1");
    }
+
+   // --- Expression tests ---
+
+   @Test
+   public void testUpdateSetArithmeticAdd() {
+      expectParserSuccess("update from example.Entity set count = count + 1 where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetArithmeticSubtract() {
+      expectParserSuccess("update from example.Entity set count = count - 5 where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetArithmeticMultiply() {
+      expectParserSuccess("update from example.Entity set price = price * 2 where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetArithmeticDivide() {
+      expectParserSuccess("update from example.Entity set price = price / 2 where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetArithmeticModulo() {
+      expectParserSuccess("update from example.Entity set count = count % 10 where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetComplexArithmetic() {
+      expectParserSuccess("update from example.Entity set total = price * quantity + shipping where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetPrecedence() {
+      expectParserSuccess("update from example.Entity set total = a + b * c where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetParenthesizedExpression() {
+      expectParserSuccess("update from example.Entity set total = (a + b) * c where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetUnaryMinus() {
+      expectParserSuccess("update from example.Entity set offset = -5 where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetNegatedProperty() {
+      expectParserSuccess("update from example.Entity set offset = -value where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetFunctionCall() {
+      expectParserSuccess("update from example.Entity set score = abs(score) where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetFunctionCallWithArgs() {
+      expectParserSuccess("update from example.Entity set name = upper(name) where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetFunctionInExpression() {
+      expectParserSuccess("update from example.Entity set total = round(price * quantity, 2) + 1 where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetStringConcat() {
+      expectParserSuccess("update from example.Entity set fullName = firstName + ' ' + lastName where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetNestedPropertyRef() {
+      expectParserSuccess("update from example.Entity set copy = source.value where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetExpressionWithParam() {
+      expectParserSuccess("update from example.Entity set count = count + :increment where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetExpressionMultipleOps() {
+      expectParserSuccess("update from example.Entity set a = a + 1, set b = b * 2 where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetAddExpressionToCollection() {
+      expectParserSuccess("update from example.Entity add tags = concat('prefix_', id) where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetUnknownFunction() {
+      // Syntactically valid; unknown function names are a semantic error caught by the visitor
+      expectParserSuccess("update from example.Entity set x = nonexistfunc(1) where id = 1");
+   }
+
+   @Test
+   public void testUpdateSetConstantDivision() {
+      // a bare '/' between two numeric literals must lex as SLASH, not be swallowed
+      expectParserSuccess("update from example.Entity set a = 1 / 2 where id = 1");
+   }
+
+   @Test
+   public void testSecondDivisionInSameExpressionFailsToParse() {
+      // ANTLR's max-munch lexes the second '/' of a single expression as a REGEXP_LITERAL
+      // (price/2/quantity becomes price REGEXP_LITERAL(/2/) quantity), so at most one
+      // division is possible per expression; spacing and parentheses do not change this.
+      expectParserFailure("update from example.Entity set a = price/2/quantity where id = 1");
+      expectParserFailure("update from example.Entity set a = price / 2 / quantity where id = 1");
+      expectParserFailure("update from example.Entity set a = price / 2 + quantity / 3 where id = 1");
+   }
+
+   @Test
+   public void testShortRegexpLiteralLexesAsRegexp() {
+      // the max-munch behavior behind the one-division-per-expression limitation
+      expectLexerSuccess("/2/", "REGEXP_LITERAL");
+   }
+
+   @Test
+   public void testFullTextRegexpLiteralStillParses() {
+      // a full-text /re/ term must still win (max-munch) over the new SLASH token
+      expectParserSuccess("from example.Entity where name : /name/");
+   }
+
+   @Test
+   public void testSlashLexesAsSlash() {
+      expectLexerSuccess("/", "SLASH");
+   }
+
+   @Test
+   public void testRegexpLiteralLexesAsRegexp() {
+      expectLexerSuccess("/name/", "REGEXP_LITERAL");
+   }
 }

@@ -11,6 +11,7 @@ import org.infinispan.commons.marshall.ProtoStreamTypeIds;
 import org.infinispan.protostream.annotations.Proto;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.query.objectfilter.SortField;
+import org.infinispan.query.objectfilter.impl.ql.ExpressionProjection;
 import org.infinispan.query.objectfilter.impl.ql.PropertyPath;
 import org.infinispan.query.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.query.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
@@ -330,6 +331,18 @@ public final class IckleParsingResult<TypeMetadata> {
 
    public Object[] getProjectedNullMarkers() {
       return projectedNullMarkers;
+   }
+
+   public boolean hasExpressionProjections() {
+      if (projectedPaths == null) {
+         return false;
+      }
+      for (PropertyPath<?> p : projectedPaths) {
+         if (p instanceof ExpressionProjection) {
+            return true;
+         }
+      }
+      return false;
    }
 
    public boolean hasGroupingOrAggregations() {
