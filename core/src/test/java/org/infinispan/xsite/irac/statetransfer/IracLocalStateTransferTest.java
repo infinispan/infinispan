@@ -8,9 +8,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.RequestUUID;
+import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
@@ -25,11 +29,17 @@ import org.infinispan.distribution.DistributionTestHelper;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.impl.IracMetadata;
 import org.infinispan.metadata.impl.PrivateMetadata;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
+import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.test.TestDataSCI;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.xsite.AbstractXSiteTest;
+import org.infinispan.xsite.irac.ControlledIracManager;
 import org.infinispan.xsite.irac.IracManager;
 import org.infinispan.xsite.irac.ManualIracManager;
 import org.testng.annotations.BeforeMethod;
@@ -181,6 +191,36 @@ public class IracLocalStateTransferTest extends AbstractXSiteTest {
 
       assertNotInDataContainer(LON, key);
       assertNotInDataContainer(NYC, key);
+   }
+
+   /**
+    * Tests that the new primary owner sends the key when the state arrives before the rebalance topology is installed.
+    *
+    * @param method the test method, used to generate the key and the value.
+    * @throws Exception if rebalancing cannot be disabled or enabled.
+    */
+   public void testNewPrimarySendStateBeforeTopologyInstalled(Method method) throws Exception {
+      String key = TestingUtil.k(method);
+      String value = TestingUtil.v(method);
+
+      ManualIracManager iracManager = ManualIracManager.wrapCache(cache(LON, 0));
+      iracManager.enable();
+      cache(LON, 0).put(key, value);
+
+      // the joiner starts without segments, so its components can be replaced before the rebalance
+      LocalTopologyManager ltm = TestingUtil.extractGlobalComponent(cache(LON, 0).getCacheManager(), LocalTopologyManager.class);
+      ltm.setRebalancingEnabled(false);
+      try {
+         addNewNode(site(LON));
+         Cache<String, String> joiner = cache(LON, NUM_NODES);
+         joiner.addListener(TestingUtil.wrapComponent(joiner, IracManager.class, im -> new DelayTopologyIracManager(im, key)));
+         changeOwnership(LON, NUM_NODES); //primary owner changes from node-0 to node-3
+      } finally {
+         ltm.setRebalancingEnabled(true);
+      }
+      site(LON).waitForClusterToForm(null);
+
+      assertEventuallyInSite(NYC, cache -> value.equals(cache.get(key)), 30, TimeUnit.SECONDS);
    }
 
    @BeforeMethod(alwaysRun = true)
@@ -404,5 +444,41 @@ public class IracLocalStateTransferTest extends AbstractXSiteTest {
       };
 
       abstract ConfigurationBuilder create();
+   }
+
+   /**
+    * Holds the installation of a topology, for which the state was already requested, until the state is handled.
+    */
+   @Listener
+   public class DelayTopologyIracManager extends ControlledIracManager {
+
+      private final CompletableFuture<Void> stateReceived = new CompletableFuture<>();
+      private final Object key;
+      private volatile int requestedTopologyId = -1;
+
+      DelayTopologyIracManager(IracManager actual, Object key) {
+         super(actual);
+         this.key = key;
+      }
+
+      @Override
+      public void onTopologyUpdate(CacheTopology oldCacheTopology, CacheTopology newCacheTopology) {
+         requestedTopologyId = newCacheTopology.getTopologyId();
+         super.onTopologyUpdate(oldCacheTopology, newCacheTopology);
+      }
+
+      @Override
+      public void receiveState(int segment, Object key, RequestUUID owner, IracMetadata tombstone) {
+         super.receiveState(segment, key, owner, tombstone);
+         stateReceived.complete(null);
+      }
+
+      @TopologyChanged
+      public CompletionStage<Void> onTopologyChanged(TopologyChangedEvent<?, ?> event) {
+         if (!event.isPre() || event.getNewTopologyId() != requestedTopologyId) {
+            return CompletableFutures.completedNull();
+         }
+         return stateReceived.thenRunAsync(() -> eventually(() -> !containsKey(key)), testExecutor());
+      }
    }
 }
