@@ -36,8 +36,8 @@ public class AuthorizationKerberosIT extends InfinispanSuite {
          .property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf")
          .mavenArtifacts(ClusteredIT.mavenArtifacts())
          .artifacts(Artifacts.artifacts())
-         .addListener(new KerberosListener())
          .addListener(new LdapServerListener(true))
+         .addListener(new KerberosListener())
          .build();
 
    static class HotRod extends HotRodAuthorizationTest {

@@ -44,8 +44,8 @@ public class AuthenticationKerberosIT {
       InfinispanServerExtensionBuilder.config("configuration/AuthenticationKerberosTest.xml")
          .numServers(1)
          .property("java.security.krb5.conf", "${infinispan.server.config.path}/krb5.conf")
-         .addListener(new KerberosListener())
          .addListener(new LdapServerListener(true))
+         .addListener(new KerberosListener())
          .build();
 
    static class ArgsProvider implements ArgumentsProvider {

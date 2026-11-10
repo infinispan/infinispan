@@ -149,6 +149,18 @@ public class TestSystemPropertyNames {
     */
    public static final String LDAP_SERVER = "org.infinispan.test.ldapServer";
    /**
+    * Specifies the host port allocated for plain LDAP
+    */
+   public static final String LDAP_PORT = "org.infinispan.test.ldap.port";
+   /**
+    * Specifies the host port allocated for LDAPS
+    */
+   public static final String LDAPS_PORT = "org.infinispan.test.ldaps.port";
+   /**
+    * Specifies the host port allocated for the Kerberos KDC
+    */
+   public static final String KDC_PORT = "org.infinispan.test.kdc.port";
+   /**
     * Specifies the type of sasl mechanism for the Hot Rod client. Not all tests are using it.
     */
    public static final String HOTROD_CLIENT_SASL_MECHANISM = "org.infinispan.test.hotrod.client.salsmechanism";

@@ -18,7 +18,7 @@ public class RemoteLdapServer implements LdapServer {
    }
 
    @Override
-   public void start(String keystoreFile, File confDir) throws URISyntaxException, LdapException, IOException {
+   public void start(String keystoreFile, File confDir, LdapPorts ports) throws URISyntaxException, LdapException, IOException {
       URI ldapUri = new URI(System.getProperty(TEST_LDAP_URL));
       try (LdapNetworkConnection connection = new LdapNetworkConnection(ldapUri.getHost(), ldapUri.getPort())) {
          connection.setTimeOut(60);

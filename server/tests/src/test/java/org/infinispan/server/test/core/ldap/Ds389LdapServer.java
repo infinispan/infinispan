@@ -14,13 +14,12 @@ import org.testcontainers.containers.wait.strategy.Wait;
 /**
  * A 389 Directory Server backed by testcontainers, using the official {@code docker.io/389ds/dirsrv} image.
  *
- * <p>The server is reachable on the same fixed ports as {@link ApacheLdapServer},
- * {@value #LDAP_HOST_PORT} (LDAP) and {@value #LDAPS_HOST_PORT} (LDAPS). The container creates an instance named
- * {@code localhost} listening on internal ports 3389/3636, with a self-signed certificate for LDAPS. Unlike the other
- * backends it does not create any backend database itself; this class adds the standard test users by creating the
- * {@code userRoot} backend under {@value #DOMAIN} and importing the same {@code ldif/infinispan.ldif} used by
- * {@link ApacheLdapServer}. The import runs from this process over LDAP, since images prior to 3.0 do not ship an
- * in-container <code>ldapadd</code>.
+ * <p>The server is reachable on the host ports allocated per test (see {@code LdapServerListener}), exposing the
+ * container's internal LDAP ({@value #LDAP_PORT}) and LDAPS ({@value #LDAPS_PORT}) ports. The container creates an
+ * instance named {@code localhost} with a self-signed certificate for LDAPS. Unlike the other backends it does not
+ * create any backend database itself; this class adds the standard test users by creating the {@code userRoot} backend
+ * under {@value #DOMAIN} and importing the same {@code ldif/infinispan.ldif} used by {@link ApacheLdapServer}. The
+ * import runs from this process over LDAP, since images prior to 3.0 do not ship an in-container <code>ldapadd</code>.
  *
  * <p>The 389 Directory Server hashes every written {@code userPassword}, so a realm backed by this server can only
  * verify credentials for which it holds password material (PLAIN, SCRAM); DIGEST mechanisms are not supported. Simple
@@ -31,8 +30,6 @@ public class Ds389LdapServer implements LdapServer {
    public static final String DS_389_IMAGE = "docker.io/389ds/dirsrv:3.1";
    public static final int LDAP_PORT = 3389;
    public static final int LDAPS_PORT = 3636;
-   public static final int LDAP_HOST_PORT = 10389;
-   public static final int LDAPS_HOST_PORT = 10636;
    public static final String DOMAIN = "dc=infinispan,dc=org";
    public static final String ADMIN_DN = "cn=Directory Manager";
    public static final String ADMIN_PASSWORD = "strongPassword";
@@ -49,7 +46,7 @@ public class Ds389LdapServer implements LdapServer {
    private GenericContainer<?> container;
 
    @Override
-   public void start(String keystoreFile, File confDir) throws Exception {
+   public void start(String keystoreFile, File confDir, LdapPorts ports) throws Exception {
       String image = System.getProperty(IMAGE_PROPERTY);
       if (image == null || image.isEmpty()) {
          image = DS_389_IMAGE;
@@ -58,13 +55,13 @@ public class Ds389LdapServer implements LdapServer {
       GenericContainer<?> server = new GenericContainer<>(image)
             .withEnv("DS_DM_PASSWORD", ADMIN_PASSWORD)
             .waitingFor(Wait.forLogMessage(".*INFO: 389-ds-container started\\..*", 1));
-      server.setPortBindings(List.of(LDAP_HOST_PORT + ":" + LDAP_PORT, LDAPS_HOST_PORT + ":" + LDAPS_PORT));
+      server.setPortBindings(List.of(ports.ldap() + ":" + LDAP_PORT, ports.ldaps() + ":" + LDAPS_PORT));
       server.start();
       container = server;
-      seedUsers();
+      seedUsers(ports);
    }
 
-   private void seedUsers() throws Exception {
+   private void seedUsers(LdapPorts ports) throws Exception {
       // The 389ds/dirsrv image intentionally creates no result database, so add the standard userRoot first.
       ExecResult result = container.execInContainer("dsconf", "localhost", "backend", "create",
             "--suffix", DOMAIN, "--be-name", "userRoot", "--create-suffix");
@@ -72,7 +69,7 @@ public class Ds389LdapServer implements LdapServer {
          throw new IllegalStateException("Failed to create userRoot result: stdout=[" + result.getStdout() +"], stderr=[" + result.getStderr() +"]");
       }
       // Images prior to 3.0 do not ship ldapadd, so add the users from this process over LDAP instead of exec'ing in the container.
-      try (LdapNetworkConnection connection = new LdapNetworkConnection("localhost", LDAP_HOST_PORT);
+      try (LdapNetworkConnection connection = new LdapNetworkConnection("localhost", ports.ldap());
            InputStream ldif = getClass().getClassLoader().getResourceAsStream(DEFAULT_LDIF)) {
          connection.bind(ADMIN_DN, ADMIN_PASSWORD);
          LdifImporter.importEntries(connection, ldif);
