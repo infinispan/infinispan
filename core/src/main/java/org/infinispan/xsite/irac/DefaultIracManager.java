@@ -17,6 +17,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
@@ -53,6 +54,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.metadata.impl.IracMetadata;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -104,6 +106,14 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       e.getValue().discard();
       return true;
    };
+   // Minimum and maximum delay, in milliseconds, before a new round is triggered after a key failed to be loaded.
+   // The delay doubles on each consecutive attempt, up to the maximum value.
+   private static final long MIN_RETRY_DELAY_MILLIS = 50;
+   private static final long MAX_RETRY_DELAY_MILLIS = 1000;
+   // Maximum number of consecutive rounds where neither the entry nor the tombstone are found before the key is
+   // discarded. Only used if the cache has a store, since the entry may not be loadable while passivation is in
+   // progress after an eviction.
+   private static final int MAX_MISSING_ENTRY_ATTEMPTS = 10;
 
    @Inject
    RpcManager rpcManager;
@@ -115,11 +125,14 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    CommandsFactory commandsFactory;
    @Inject
    IracTombstoneManager iracTombstoneManager;
+   @Inject
+   PersistenceManager persistenceManager;
 
    private final Map<Object, IracManagerKeyState> updatedKeys;
    private final Collection<IracXSiteBackup> asyncBackups;
    private final IracExecutor iracExecutor;
    private final int batchSize;
+   private ScheduledExecutorService scheduledExecutor;
    private volatile boolean hasClear;
 
    private boolean statisticsEnabled;
@@ -143,6 +156,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    public void inject(@ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService executorService,
                       @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR) Executor blockingExecutor) {
       // using the inject method here in order to decrease the class size
+      scheduledExecutor = executorService;
       iracExecutor.setExecutor(blockingExecutor);
       setBackOff(backup -> new ExponentialBackOffImpl(executorService));
    }
@@ -390,22 +404,32 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
             .exceptionally(throwable -> {
                log.debugf(throwable, "[IRAC] Failed to load entry to send to remote sites. It will be retried. State=%s", state);
                state.retry();
-               iracExecutor.run();
+               // back-off before the next round, otherwise a permanent failure keeps a thread busy retrying.
+               scheduleRound(MIN_RETRY_DELAY_MILLIS);
                return null;
             }));
    }
 
    private CompletableSource sendUpdateBatch(Collection<? extends IracStateData> batch) {
-      int size = batch.size();
       boolean trace = log.isTraceEnabled();
 
       if (trace) {
-         log.tracef("[IRAC] Batch ready to send remote site with %d keys", size);
+         log.tracef("[IRAC] Batch ready to send remote site with %d keys", batch.size());
       }
+
+      if (batch.isEmpty()) {
+         if (trace) {
+            log.trace("[IRAC] Batch not sent, reason: batch is empty");
+         }
+         return Completable.complete();
+      }
+
+      Collection<IracStateData> toSend = filterMissingEntries(batch);
+      int size = toSend.size();
 
       if (size == 0) {
          if (trace) {
-            log.trace("[IRAC] Batch not sent, reason: batch is empty");
+            log.trace("[IRAC] Batch not sent, reason: no entry to send");
          }
          return Completable.complete();
       }
@@ -413,7 +437,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       AggregateCompletionStage<Void> aggregation = CompletionStages.aggregateCompletionStage();
       for (IracXSiteBackup backup : asyncBackups) {
          if (backup.isBackOffEnabled()) {
-            for (IracStateData data : batch) {
+            for (IracStateData data : toSend) {
                data.state.retry();
             }
             continue;
@@ -422,18 +446,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          IracPutManyRequest cmd = commandsFactory.buildIracPutManyCommand(size);
          Collection<IracManagerKeyState> invalidState = new ArrayList<>(size);
          Collection<IracManagerKeyState> validState = new ArrayList<>(size);
-         for (IracStateData data : batch) {
-            if (data.entry == null && data.tombstone == null) {
-               // Entry may not be loadable yet if passivation is still in progress after eviction.
-               // Retry instead of discarding so the next batch cycle can find the entry in the store.
-               if (log.isTraceEnabled()) {
-                  log.tracef("[IRAC] Entry and tombstone both null for key %s, scheduling retry", data.state.getKeyInfo());
-               }
-               data.state.retry();
-               iracExecutor.run();
-               continue;
-            }
-
+         for (IracStateData data : toSend) {
             if (data.state.wasSuccessful(backup))
                continue;
 
@@ -471,7 +484,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
                // safety net; should never happen
                // onUnexpectedThrowable() log the exception!
                onUnexpectedThrowable(throwable);
-               for (IracStateData data : batch) {
+               for (IracStateData data : toSend) {
                   data.state.retry();
                }
             }
@@ -487,6 +500,74 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       }
 
       return Completable.fromCompletionStage(aggregation.freeze());
+   }
+
+   /**
+    * Removes from the batch the keys without an entry and without a tombstone.
+    * <p>
+    * There is nothing to send to the remote site(s) for those keys. The entry may be temporarily missing if passivation
+    * is still in progress after an eviction, so the key is retried, with a back-off, while the cache has a store where
+    * the entry can be loaded from. If the entry is never found, or the cache has no store (for example, the entry was
+    * evicted and removed), the key is discarded. Otherwise, it would be retried forever keeping a thread busy.
+    *
+    * @param batch The keys to send to the remote site(s).
+    * @return The keys with an entry or a tombstone to send to the remote site(s).
+    */
+   private Collection<IracStateData> filterMissingEntries(Collection<? extends IracStateData> batch) {
+      List<IracStateData> toSend = new ArrayList<>(batch.size());
+      List<IracManagerKeyState> toDiscard = null;
+      long retryDelayMillis = -1;
+      for (IracStateData data : batch) {
+         if (data.entry != null || data.tombstone != null) {
+            data.state.resetMissingEntryAttempts();
+            toSend.add(data);
+            continue;
+         }
+         int attempts = data.state.incrementAndGetMissingEntryAttempts();
+         if (!persistenceManager.isEnabled() || attempts > MAX_MISSING_ENTRY_ATTEMPTS) {
+            if (log.isDebugEnabled()) {
+               log.debugf("[IRAC] Entry and tombstone both null for key %s after %d attempt(s). The update is discarded.",
+                     data.state.getKeyInfo(), attempts);
+            }
+            if (toDiscard == null) {
+               toDiscard = new ArrayList<>(batch.size());
+            }
+            toDiscard.add(data.state);
+            continue;
+         }
+         if (log.isTraceEnabled()) {
+            log.tracef("[IRAC] Entry and tombstone both null for key %s, scheduling retry (attempt %d)",
+                  data.state.getKeyInfo(), attempts);
+         }
+         data.state.retry();
+         long delayMillis = retryDelayMillis(attempts);
+         retryDelayMillis = retryDelayMillis < 0 ? delayMillis : Math.min(retryDelayMillis, delayMillis);
+      }
+      if (toDiscard != null) {
+         log.iracDiscardingKeyWithoutEntryAndTombstone(commandsFactory.getCacheName(), toDiscard.get(0).getKey());
+         toDiscard.forEach(IracManagerKeyState::discard);
+         removeStateFromCluster(toDiscard);
+      }
+      if (retryDelayMillis >= 0) {
+         scheduleRound(retryDelayMillis);
+      }
+      return toSend;
+   }
+
+   /**
+    * Triggers a new round after the delay.
+    */
+   private void scheduleRound(long delayMillis) {
+      if (log.isTraceEnabled()) {
+         log.tracef("[IRAC] Scheduling a new round in %d milliseconds", delayMillis);
+      }
+      scheduledExecutor.schedule(iracExecutor, delayMillis, TimeUnit.MILLISECONDS);
+   }
+
+   private static long retryDelayMillis(int attempts) {
+      // doubles the delay on each attempt: 50, 100, 200, ... up to MAX_RETRY_DELAY_MILLIS.
+      long delayMillis = MIN_RETRY_DELAY_MILLIS << Math.min(attempts - 1, MAX_MISSING_ENTRY_ATTEMPTS);
+      return Math.min(delayMillis, MAX_RETRY_DELAY_MILLIS);
    }
 
    private CompletionStage<Void> sendClearUpdate() {

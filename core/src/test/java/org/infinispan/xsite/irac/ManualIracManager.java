@@ -212,6 +212,16 @@ public class ManualIracManager extends ControlledIracManager {
       }
 
       @Override
+      public int incrementAndGetMissingEntryAttempts() {
+         return 0;
+      }
+
+      @Override
+      public void resetMissingEntryAttempts() {
+
+      }
+
+      @Override
       public boolean isDone() {
          return false;
       }
