@@ -9,6 +9,7 @@ import org.infinispan.server.functional.hotrod.HotRodCacheContinuousQueries;
 import org.infinispan.server.functional.hotrod.HotRodCacheEvents;
 import org.infinispan.server.functional.hotrod.HotRodCacheOperations;
 import org.infinispan.server.functional.hotrod.HotRodCacheQueries;
+import org.infinispan.server.functional.hotrod.HotRodCacheQueryExpressions;
 import org.infinispan.server.functional.hotrod.HotRodClientMetrics;
 import org.infinispan.server.functional.hotrod.HotRodCounterOperations;
 import org.infinispan.server.functional.hotrod.HotRodFlagCacheOperations;
@@ -62,6 +63,7 @@ import org.junit.platform.suite.api.Suite;
       HotRodTransactionalCacheOperations.class,
       HotRodCacheEvents.class,
       HotRodCacheQueries.class,
+      HotRodCacheQueryExpressions.class,
       HotRodCacheContinuousQueries.class,
       HotRodListenerWithDslFilter.class,
       IgnoreCaches.class,

@@ -15,6 +15,15 @@
               ]
             }
           ]
+        },
+        {
+          "description": "Ickle query expressions in UPDATE statements and SELECT projections were introduced in 16.4; during mixed-version operation queries containing such expressions fail on older nodes; defer using query expressions until the upgrade completes",
+          "issue": "https://github.com/infinispan/infinispan/issues/18076",
+          "test-failures": [
+            {
+              "test-class": "org.infinispan.server.functional.hotrod.HotRodCacheQueryExpressions"
+            }
+          ]
         }
       ]
     },

@@ -8,14 +8,18 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.regex.PatternSyntaxException;
 
 import org.infinispan.commons.jdkspecific.CallerId;
 import org.infinispan.server.test.core.rollingupgrade.RollingUpgradeConfiguration;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public record Compatibility(List<CompatibilityEntry> compatibility) {
+
+   private static final Log log = LogFactory.getLog(Compatibility.class);
 
    public static Compatibility INSTANCE = Compatibility.load("compatibility.json");
 
@@ -24,7 +28,9 @@ public record Compatibility(List<CompatibilityEntry> compatibility) {
       if (is != null) {
          try (is) {
             return new ObjectMapper().readValue(is, Compatibility.class);
-         } catch (IOException ignored) {
+         } catch (IOException e) {
+            log.warnf("Failed to parse %s (%s); no test exclusions will be applied during rolling upgrade tests",
+                  name, e.getMessage());
          }
       }
       return new Compatibility(Collections.emptyList());
@@ -37,15 +43,30 @@ public record Compatibility(List<CompatibilityEntry> compatibility) {
    }
 
    public boolean isCompatibilitySkip(RollingUpgradeConfiguration configuration, String className, String methodName) {
-      Optional<String> found = compatibility.stream()
+      return compatibility.stream()
             .filter(e -> e.matchesVersions(configuration.fromVersion().version(), configuration.toVersion().version()))
             .flatMap(e -> e.exceptions().stream())
             .flatMap(e -> e.testFailures().stream())
             .filter(e -> e.testClass().equals(className))
-            .flatMap(e -> e.testMethods().stream())
-            .filter(e -> e.equals(methodName))
-            .findFirst();
-      return found.isPresent();
+            // an empty test-methods list excludes every method of the class
+            .anyMatch(e -> e.testMethods().isEmpty()
+                  || e.testMethods().stream().anyMatch(pattern -> matchesMethod(pattern, methodName)));
+   }
+
+   /**
+    * Matches a {@code test-methods} entry against a method name. Each entry is a regular
+    * expression matched against the whole method name, so a plain method name matches itself
+    * while a pattern such as {@code testSelect.*} excludes a family of methods. An invalid
+    * pattern never fails the match: it is reported and treated as a literal method name.
+    */
+   private static boolean matchesMethod(String pattern, String methodName) {
+      try {
+         return methodName.matches(pattern);
+      } catch (PatternSyntaxException e) {
+         log.warnf("Invalid regular expression '%s' in a test-methods entry; treating it as a literal method name",
+               pattern);
+         return methodName.equals(pattern);
+      }
    }
 
    public CompatibilityEntry compatibilityEntry(RollingUpgradeConfiguration configuration) {
