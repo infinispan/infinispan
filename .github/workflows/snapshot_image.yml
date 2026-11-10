@@ -50,10 +50,8 @@ jobs:
           echo "srcroot=$SRCROOT" >> $GITHUB_OUTPUT
           mv infinispan-server-*.zip "$SRCROOT"/server/image/infinispan-server.zip
 
-      - name: Install qemu
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y qemu-user-static
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
 
       - name: Build image
         id: build-image
