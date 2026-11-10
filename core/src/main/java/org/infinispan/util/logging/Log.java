@@ -2514,4 +2514,15 @@ public interface Log extends BasicLogger {
    @Description("A tombstone cleanup round for cross-site replication failed, for example because a cluster member did not " +
          "respond in time. The next round retries the cleanup. If this message persists, check the health of the cluster.")
    void warnFailedIracTask(String cacheName, String failure);
+
+   @LogMessage(level = WARN)
+   @Message(value = "[IRAC] Cache '%s' discarded %d update(s) that cannot be replicated to the backup site(s): the " +
+         "entries are no longer in memory and the cache has no persistent store to load them from", id = 734)
+   @Description("Asynchronous cross-site replication sends the latest value of each updated entry to the backup sites. " +
+         "If an entry is evicted before its update is sent, and the cache has no persistent store to load it from, " +
+         "such as when the cache has no store or only write-only stores, the entry cannot be loaded again and the " +
+         "update is not replicated, so the backup sites might no longer have the same data. To avoid this, configure " +
+         "a persistent store that is not write-only with passivation, or increase the memory limit, for caches that " +
+         "use eviction with asynchronous backups. To synchronize the data again, run a cross-site state transfer.")
+   void iracDiscardedUpdatesWithoutEntry(String cacheName, int count);
 }
