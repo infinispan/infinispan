@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.script.ScriptEngineFactory;
 
+import org.infinispan.api.query.functions.QueryFunction;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.filter.NamedFactory;
@@ -14,6 +15,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
+import org.infinispan.query.objectfilter.impl.syntax.update.QueryFunctionRegistry;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.tasks.ServerTaskEngine;
 import org.infinispan.server.tasks.ServerTaskWrapper;
@@ -31,6 +33,7 @@ public class Extensions {
    private final Map<String, KeyValueFilterConverterFactory> keyValueFilterConverterFactories = new HashMap<>();
    private final Map<String, ParamKeyValueFilterConverterFactory> paramKeyValueFilterConverterFactories = new HashMap<>();
    private final Map<String, ServerTaskWrapper> serverTasks = new HashMap<>();
+   private final Map<String, QueryFunction> queryFunctions = new HashMap<>();
 
    public Extensions() {
    }
@@ -41,6 +44,7 @@ public class Extensions {
       loadNamedFactory(classLoader, CacheEventFilterConverterFactory.class, filterConverterFactories);
       loadNamedFactory(classLoader, KeyValueFilterConverterFactory.class, keyValueFilterConverterFactories);
       loadNamedFactory(classLoader, ParamKeyValueFilterConverterFactory.class, paramKeyValueFilterConverterFactories);
+      loadNamedFactory(classLoader, QueryFunction.class, queryFunctions);
       loadService(classLoader, Driver.class);
       if (loadService(classLoader, ScriptEngineFactory.class) == 0) {
          Server.log.noScriptEngines();
@@ -91,6 +95,13 @@ public class Extensions {
       for (ServerTask t : ServiceFinder.load(ServerTask.class, classLoader)) {
          serverTasks.put(t.getName(), new ServerTaskWrapper(t));
          Server.log.loadedExtension(t.getClass().getName());
+      }
+   }
+
+   public void applyQueryFunctions(QueryFunctionRegistry registry) {
+      for (Map.Entry<String, QueryFunction> entry : queryFunctions.entrySet()) {
+         registry.add(entry.getKey(), entry.getValue());
+         Server.log.loadedExtension(entry.getKey());
       }
    }
 

@@ -8,14 +8,14 @@ import java.util.List;
 
 import org.infinispan.Cache;
 import org.infinispan.api.annotations.indexing.Indexed;
+import org.infinispan.api.query.functions.QueryFunction;
+import org.infinispan.api.query.functions.QueryFunctionContext;
+import org.infinispan.api.query.functions.QueryFunctionSignature;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.api.query.Query;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.query.functions.QueryFunction;
-import org.infinispan.query.functions.QueryFunctionContext;
-import org.infinispan.query.functions.QueryFunctionSignature;
 import org.infinispan.query.objectfilter.ParsingException;
 import org.infinispan.query.objectfilter.impl.syntax.update.QueryFunctionRegistry;
 import org.infinispan.test.MultipleCacheManagersTest;

@@ -4,9 +4,9 @@ import static org.infinispan.query.functions.builtin.FunctionArgs.requireArity;
 
 import java.util.List;
 
-import org.infinispan.query.functions.QueryFunction;
-import org.infinispan.query.functions.QueryFunctionContext;
-import org.infinispan.query.functions.QueryFunctionSignature;
+import org.infinispan.api.query.functions.QueryFunction;
+import org.infinispan.api.query.functions.QueryFunctionContext;
+import org.infinispan.api.query.functions.QueryFunctionSignature;
 
 public final class ConversionFunctions {
 

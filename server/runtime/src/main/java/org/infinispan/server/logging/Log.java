@@ -120,7 +120,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot have multiple connectors of the same type: found [%s]", id = 80025)
    CacheConfigurationException multipleEndpointsSameTypeFound(String names);
 
-   @LogMessage(level = Logger.Level.WARN)
+   @LogMessage(level = Logger.Level.ERROR)
    @Message(value = "Extension factory '%s' is lacking a @NamedFactory annotation", id = 80026)
    void unnamedFactoryClass(String name);
 

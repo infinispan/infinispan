@@ -41,7 +41,9 @@ import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.functional.extensions.entities.Entities;
 import org.infinispan.server.test.api.TestClientDriver;
+import org.infinispan.server.test.artifacts.Artifacts;
 import org.infinispan.server.test.jupiter.InfinispanServer;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -269,6 +271,25 @@ public class HotRodCacheQueries {
 
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
+   public void testUpdateStatementWithUserDefinedFunction(boolean indexed) {
+      Assumptions.assumeTrue(Artifacts.artifacts().length > 0,
+                  "requires the query-functions.jar server-side artifact, which is unavailable in GraalVM native mode");
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
+      remoteCache.put(1, createUser1());
+      remoteCache.put(2, createUser2());
+
+      Query<User> query = remoteCache.query("UPDATE FROM sample_domain.User SET name = reverse(name) WHERE name = 'Tom'");
+      assertEquals(1, query.executeStatement());
+
+      User updated = remoteCache.get(1);
+      assertEquals("moT", updated.getName());
+
+      User unchanged = remoteCache.get(2);
+      assertEquals("Adrian", unchanged.getName());
+   }
+
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
    public void testSelectFunctionCallConcat(boolean indexed) {
       RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
       remoteCache.put(1, createUser1());
@@ -338,6 +359,8 @@ public class HotRodCacheQueries {
    @ParameterizedTest
    @ValueSource(booleans = {true, false})
    public void testSelectFunctionCallUserDefinedFunction(boolean indexed) {
+      Assumptions.assumeTrue(Artifacts.artifacts().length > 0,
+                  "requires the query-functions.jar server-side artifact, which is unavailable in GraalVM native mode");
       RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
       remoteCache.put(1, createUser1());
       remoteCache.put(2, createUser2());

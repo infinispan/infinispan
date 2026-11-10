@@ -11,10 +11,15 @@ import org.infinispan.query.objectfilter.impl.syntax.update.QueryFunctionRegistr
  * Context for evaluating UPDATE statement value expressions: the materialized
  * target entity, a reader for its current property values, the named
  * parameters of the query and the registry of available functions.
+ * <p>
+ * Unlike the {@link org.infinispan.api.query.functions.QueryFunctionContext}
+ * interface seen by user-defined functions, this class exposes the registry of
+ * available functions, which is needed to resolve nested function calls but is
+ * not part of the extension-point contract.
  *
- * @since 16.3
+ * @since 16.4
  */
-public final class QueryFunctionContext {
+public final class QueryFunctionContext implements org.infinispan.api.query.functions.QueryFunctionContext {
 
    private final Object entity;
    private final Function<String[], Object> propertyReader;
@@ -41,6 +46,7 @@ public final class QueryFunctionContext {
       this(entity, propertyReader, namedParameters, functions, new ConcurrentHashMap<>());
    }
 
+   @Override
    public Object getEntity() {
       return entity;
    }
@@ -61,6 +67,7 @@ public final class QueryFunctionContext {
     * @param regex the regular-expression string
     * @return the compiled pattern
     */
+   @Override
    public Pattern compilePattern(String regex) {
       return patternCache.computeIfAbsent(regex, Pattern::compile);
    }
@@ -71,6 +78,7 @@ public final class QueryFunctionContext {
     * @param path the property path, e.g. {@code ["address", "city"]}
     * @return the current value, possibly {@code null}
     */
+   @Override
    public Object getPropertyValue(String[] path) {
       return propertyReader.apply(path);
    }

@@ -1,0 +1,11 @@
+[id='server-user-defined-functions']
+:context: server-user-defined-functions
+= Deploying user-defined functions to {brandname} Server
+
+Deploy custom functions to {brandname} Server for use in statement value expressions.
+
+include::{topics}/proc_user_defined_functions.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.infinispan.query.functions.QueryFunction;
+import org.infinispan.api.query.functions.QueryFunction;
 import org.infinispan.query.functions.QueryFunctionContext;
 import org.infinispan.query.objectfilter.impl.syntax.ConstantValueExpr;
 

@@ -12,9 +12,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
-import org.infinispan.query.functions.QueryFunction;
-import org.infinispan.query.functions.QueryFunctionContext;
-import org.infinispan.query.functions.QueryFunctionSignature;
+import org.infinispan.api.query.functions.QueryFunction;
+import org.infinispan.api.query.functions.QueryFunctionContext;
+import org.infinispan.api.query.functions.QueryFunctionSignature;
 
 public final class DateFunctions {
 

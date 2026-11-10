@@ -7,10 +7,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.infinispan.api.query.functions.QueryFunction;
+import org.infinispan.api.query.functions.QueryFunctionSignature;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.query.functions.QueryFunction;
-import org.infinispan.query.functions.QueryFunctionSignature;
 import org.infinispan.query.functions.builtin.ConversionFunctions;
 import org.infinispan.query.functions.builtin.DateFunctions;
 import org.infinispan.query.functions.builtin.MathFunctions;
