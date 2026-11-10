@@ -1,10 +1,14 @@
 package org.infinispan.server.test.core;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.Locale;
+import java.util.Properties;
 
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.ldap.ApacheLdapServer;
 import org.infinispan.server.test.core.ldap.Ds389LdapServer;
+import org.infinispan.server.test.core.ldap.LdapPorts;
 import org.infinispan.server.test.core.ldap.LdapServer;
 import org.infinispan.server.test.core.ldap.RemoteLdapServer;
 import org.infinispan.server.test.core.ldap.SambaLdapServer;
@@ -62,10 +66,30 @@ public class LdapServerListener implements InfinispanServerListener {
    @Override
    public void before(InfinispanServerDriver driver) {
       String type = driver.getConfiguration().properties().getProperty(TestSystemPropertyNames.LDAP_SERVER, "apache");
+      int ldapPort = findFreePort();
+      int ldapsPort = findFreePort();
+      int kdcPort = kdc ? findFreePort() : 0;
+      LdapPorts ports = new LdapPorts(ldapPort, ldapsPort, kdcPort);
       ldapServer = LdapServerType.valueOf(type.toUpperCase(Locale.ROOT)).ldapServer(kdc);
       Exceptions.unchecked(() -> {
-         ldapServer.start(driver.getCertificateFile("server.pfx").getAbsolutePath(), driver.getConfDir());
+         ldapServer.start(driver.getCertificateFile("server.pfx").getAbsolutePath(), driver.getConfDir(), ports);
       });
+      // Publish the allocated ports so the server realm configuration (and the Kerberos
+      // listener) can reach the backend on the ports this test actually bound.
+      Properties properties = driver.getConfiguration().properties();
+      properties.setProperty(TestSystemPropertyNames.LDAP_PORT, String.valueOf(ldapPort));
+      properties.setProperty(TestSystemPropertyNames.LDAPS_PORT, String.valueOf(ldapsPort));
+      if (kdcPort > 0) {
+         properties.setProperty(TestSystemPropertyNames.KDC_PORT, String.valueOf(kdcPort));
+      }
+   }
+
+   private static int findFreePort() {
+      try (ServerSocket socket = new ServerSocket(0)) {
+         return socket.getLocalPort();
+      } catch (IOException e) {
+         throw new IllegalStateException("Unable to allocate a free port", e);
+      }
    }
 
    @Override

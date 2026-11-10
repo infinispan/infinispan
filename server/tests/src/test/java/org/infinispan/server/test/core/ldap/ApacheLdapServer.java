@@ -3,6 +3,7 @@ package org.infinispan.server.test.core.ldap;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -41,15 +42,13 @@ import org.apache.kerby.kerberos.kerb.type.KerberosTime;
 import org.apache.kerby.kerberos.kerb.type.base.EncryptionKey;
 import org.apache.kerby.kerberos.kerb.type.base.EncryptionType;
 import org.apache.kerby.kerberos.kerb.type.base.PrincipalName;
+import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.infinispan.commons.util.Util;
 import org.infinispan.server.test.core.AbstractInfinispanServerDriver;
 
 public class ApacheLdapServer implements LdapServer {
 
    private static final String LDAP_HOST = "0.0.0.0";
-   public static final int KDC_PORT = 6088;
-   public static final int LDAP_PORT = 10389;
-   public static final int LDAPS_PORT = 10636;
    public static final String DOMAIN = "dc=infinispan,dc=org";
    public static final String REALM = "INFINISPAN.ORG";
 
@@ -94,28 +93,35 @@ public class ApacheLdapServer implements LdapServer {
 
    @CreateLdapServer(
          transports = {
-               @CreateTransport(protocol = "LDAP", port = LDAP_PORT, address = LDAP_HOST),
-               @CreateTransport(protocol = "LDAPS", port = LDAPS_PORT, address = LDAP_HOST, ssl = true),
+               @CreateTransport(protocol = "LDAP", port = 0, address = LDAP_HOST),
+               @CreateTransport(protocol = "LDAPS", port = 0, address = LDAP_HOST, ssl = true),
          }
    )
-   public void createLdap(String keystoreFile) throws Exception {
+   public void createLdap(String keystoreFile, LdapPorts ports) throws Exception {
       final CreateLdapServer createLdapServer = (CreateLdapServer) AnnotationUtils.getInstance(CreateLdapServer.class);
       ldapServer = ServerAnnotationProcessor.instantiateLdapServer(createLdapServer, directoryService);
       ldapServer.setKeystoreFile(keystoreFile);
       ldapServer.setCertificatePassword(AbstractInfinispanServerDriver.KEY_PASSWORD);
-      Arrays.stream(ldapServer.getTransports())
-            .filter(Transport::isSSLEnabled)
-            .map(t -> (TcpTransport) t)
-            .forEach(t -> t.setEnabledProtocols(Arrays.asList("TLSv1.3", "TLSv1.2")));
+      // The ports are allocated per test. The annotation processor bakes the placeholder port into
+      // the acceptor's default local address at construction time, so re-point both the acceptor
+      // and the transport's bookkeeping port at the allocated ports before the server starts.
+      for (Transport transport : ldapServer.getTransports()) {
+         int port = transport.isSSLEnabled() ? ports.ldaps() : ports.ldap();
+         transport.setPort(port);
+         ((NioSocketAcceptor) transport.getAcceptor()).setDefaultLocalAddress(new InetSocketAddress(LDAP_HOST, port));
+         if (transport.isSSLEnabled()) {
+            ((TcpTransport) transport).setEnabledProtocols(Arrays.asList("TLSv1.3", "TLSv1.2"));
+         }
+      }
    }
 
    @Override
-   public void start(String keystoreFile, File confDir) throws Exception {
+   public void start(String keystoreFile, File confDir, LdapPorts ports) throws Exception {
       createDs();
-      createLdap(keystoreFile);
+      createLdap(keystoreFile, ports);
       ldapServer.start();
       if (withKdc) {
-         startKdc();
+         startKdc(ports);
       }
       loadLDIF(confDir);
    }
@@ -154,18 +160,18 @@ public class ApacheLdapServer implements LdapServer {
       }
    }
 
-   private void startKdc() throws KrbException {
-      createKdc();
+   private void startKdc(LdapPorts ports) throws KrbException {
+      createKdc(ports);
       kdcServer.init();
       kadmin = new LocalKadminImpl(kdcServer.getKdcSetting(), kdcServer.getIdentityService());
       kdcServer.start();
    }
 
-   private void createKdc() {
+   private void createKdc(LdapPorts ports) {
       kdcServer = new KdcServer();
       kdcServer.setKdcRealm(REALM);
       kdcServer.setAllowUdp(true);
-      kdcServer.setKdcPort(KDC_PORT);
+      kdcServer.setKdcPort(ports.kdc());
       kdcServer.setKdcHost(LDAP_HOST);
       KdcConfig config = kdcServer.getKdcConfig();
       config.setString(KdcConfigKey.KDC_SERVICE_NAME, "TestKDCServer");

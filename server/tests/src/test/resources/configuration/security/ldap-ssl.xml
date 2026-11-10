@@ -8,7 +8,7 @@
                <truststore path="ca.pfx" password="secret"/>
             </ssl>
          </server-identities>
-         <ldap-realm name="ldap" url="ldaps://${org.infinispan.test.host.address}:10636"
+         <ldap-realm name="ldap" url="ldaps://${org.infinispan.test.host.address}:${org.infinispan.test.ldaps.port}"
                      principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword" client-ssl-context="default" connection-timeout="15s">
             <identity-mapping rdn-identifier="uid" search-dn="dc=infinispan,dc=org" search-recursive="true">
                <attribute-mapping>

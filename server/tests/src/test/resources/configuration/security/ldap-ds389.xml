@@ -8,7 +8,7 @@
            password material which 389 Directory Server never stores. -->
       <security-realm name="default">
 
-         <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389"
+         <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:${org.infinispan.test.ldap.port}"
                      principal="cn=Directory Manager" credential="strongPassword" connection-timeout="15s">
             <identity-mapping rdn-identifier="uid" search-dn="dc=infinispan,dc=org" search-recursive="true">
                <attribute-mapping>
