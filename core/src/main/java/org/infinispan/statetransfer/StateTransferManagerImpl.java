@@ -183,7 +183,6 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
       int newRebalanceId = newCacheTopology.getRebalanceId();
       CacheTopology.Phase phase = newCacheTopology.getPhase();
-      iracManager.onTopologyUpdate(oldCacheTopology, newCacheTopology);
 
       return cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newTopologyId, true)
             .thenCompose(
@@ -194,6 +193,12 @@ public class StateTransferManagerImpl implements StateTransferManager {
                completeInitialTransferIfNeeded(newCacheTopology, phase);
                partitionHandlingManager.onTopologyUpdate(newCacheTopology);
                iracVersionGenerator.onTopologyChange(newCacheTopology);
+            }).whenComplete((ignored, throwable) -> {
+               // IRAC checks the ownership of the pending keys using the installed topology.
+               // It must run after the topology is installed, otherwise, a state response received from the previous primary
+               // owner can be discarded because this node is not yet an owner of the segment.
+               // It also runs if the update failed, as it did before it was moved after the update.
+               iracManager.onTopologyUpdate(oldCacheTopology, newCacheTopology);
             });
    }
 
