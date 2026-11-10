@@ -2508,4 +2508,14 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Ignoring topology %d for cache %s from view %d received after status request from view %d", id = 732)
    void ignoringTopologyFromOldView(int topologyId, String cacheName, int viewId, int statusRequestViewId);
+
+   @LogMessage(level = WARN)
+   @Message(value = "[IRAC] Cache '%s' discarded %d update(s) that cannot be replicated to the backup site(s): the " +
+         "entries are no longer in memory and the cache has no persistent store to load them from", id = 733)
+   @Description("Asynchronous cross-site replication sends the latest value of each updated entry to the backup sites. " +
+         "If an entry is evicted before its update is sent, and the cache has no persistent store, the entry cannot be " +
+         "loaded again and the update is not replicated, so the backup sites might no longer have the same data. To " +
+         "avoid this, configure a persistent store with passivation, or increase the memory limit, for caches that use " +
+         "eviction with asynchronous backups. To synchronize the data again, run a cross-site state transfer.")
+   void iracDiscardedUpdatesWithoutEntry(String cacheName, int count);
 }
