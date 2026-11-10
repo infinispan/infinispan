@@ -70,10 +70,37 @@ collectionAssignment
    ;
 
 updateValue
-   :  constant
-   |  LPAREN constant (COMMA constant)* RPAREN
-   |  LSQUARE constant (COMMA constant)* RSQUARE
-   ;
+    :  updateExpression
+    |  LPAREN updateValue (COMMA updateValue)* RPAREN
+    |  LSQUARE updateValue (COMMA updateValue)* RSQUARE
+    ;
+
+updateExpression
+    :  updateTerm ( (PLUS | MINUS) updateTerm )*
+    ;
+
+updateTerm
+    :  updateFactor ( (ASTERISK | SLASH | PERCENT) updateFactor )*
+    ;
+
+updateFactor
+    :  (PLUS | MINUS)? updatePrimary
+    ;
+
+updatePrimary
+    :  constant
+    |  functionCall
+    |  updatePath
+    |  LPAREN updateExpression RPAREN
+    ;
+
+functionCall
+    :  identifier LPAREN (updateExpression (COMMA updateExpression)*)? RPAREN
+    ;
+
+updatePath
+    :  dotIdentifierPath
+    ;
 
 querySpec
    :  selectFrom whereClause? ( groupByClause havingClause? )?  (QUERY_SPEC selectFrom whereClause? groupByClause? havingClause?)
@@ -188,7 +215,18 @@ explicitSelectItem
 	;
 
 selectExpression
-    : expression aliasClause?
+    : selectExpressionValue aliasClause?
+    ;
+
+selectExpressionValue
+    : quantifiedExpression
+    | standardFunction
+    | distanceFunction
+    | setFunction
+    | versionFunction
+    | scoreFunction
+    | collectionExpression
+    | updateExpression
     ;
 
 identifier
