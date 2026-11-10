@@ -2,11 +2,14 @@ package org.infinispan.server.resp;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.resp.test.RawRespConnection;
+import org.infinispan.server.resp.test.RespTestingUtil;
 import org.infinispan.server.resp.test.TestSetup;
 import org.testng.annotations.AfterClass;
 
@@ -46,6 +49,14 @@ public abstract class SingleNodeRespBaseTest extends AbstractRespTest {
       StatefulRedisConnection<String, String> conn = client.connect(newCodec());
       connections.add(conn);
       return conn;
+   }
+
+   /**
+    * Opens a plain socket connection to the server, already switched to RESP3, to assert on the exact reply bytes.
+    * The caller must close it.
+    */
+   protected final RawRespConnection rawConnection() throws IOException {
+      return RawRespConnection.connect(RespTestingUtil.HOST, server.getPort(), isAuthorizationEnabled());
    }
 
    @AfterClass(alwaysRun = true)

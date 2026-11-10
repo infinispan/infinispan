@@ -5,11 +5,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.server.resp.test.RespTestingUtil.ADMIN;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.security.Security;
+import org.infinispan.server.resp.test.RawRespConnection;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.CopyArgs;
@@ -679,6 +681,54 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       RedisCommands<String, String> redis = redisConnection.sync();
       assertThat(redis.spop("spop-nokey")).isNull();
       assertThat(redis.spop("spop-nokey", 5)).isEmpty();
+   }
+
+   // Lettuce unwraps a one-element array into a single value, so these tests check the raw reply type.
+
+   public void testSpopWithoutCountRepliesWithBulkString() throws IOException {
+      redisConnection.sync().sadd("spop-raw", "a");
+      try (RawRespConnection raw = rawConnection()) {
+         raw.send("SPOP spop-raw");
+         raw.assertFrame("$1\r\na\r\n");
+         // The set is now empty and the key is gone, so the reply is null rather than an empty array.
+         raw.send("SPOP spop-raw");
+         raw.assertFrame("_\r\n");
+      }
+   }
+
+   public void testSpopWithCountRepliesWithArray() throws IOException {
+      redisConnection.sync().sadd("spop-raw-count", "a");
+      try (RawRespConnection raw = rawConnection()) {
+         raw.send("SPOP spop-raw-count 1");
+         raw.assertFrame("*1\r\n$1\r\na\r\n");
+         raw.send("SPOP spop-raw-count 1");
+         raw.assertFrame("*0\r\n");
+      }
+   }
+
+   public void testSrandmemberWithoutCountRepliesWithBulkString() throws IOException {
+      redisConnection.sync().sadd("srand-raw", "a");
+      try (RawRespConnection raw = rawConnection()) {
+         raw.send("SRANDMEMBER srand-raw");
+         raw.assertFrame("$1\r\na\r\n");
+         raw.send("SRANDMEMBER srand-raw-nokey");
+         raw.assertFrame("_\r\n");
+      }
+      // SRANDMEMBER must not remove the element.
+      assertThat(redisConnection.sync().smembers("srand-raw")).containsExactly("a");
+   }
+
+   public void testSrandmemberWithCountRepliesWithArray() throws IOException {
+      redisConnection.sync().sadd("srand-raw-count", "a");
+      try (RawRespConnection raw = rawConnection()) {
+         raw.send("SRANDMEMBER srand-raw-count 1");
+         raw.assertFrame("*1\r\n$1\r\na\r\n");
+         // A negative count allows repeats.
+         raw.send("SRANDMEMBER srand-raw-count -2");
+         raw.assertFrame("*2\r\n$1\r\na\r\n$1\r\na\r\n");
+         raw.send("SRANDMEMBER srand-raw-nokey 1");
+         raw.assertFrame("*0\r\n");
+      }
    }
 
    public void testSrandmemberCountZero() {
