@@ -46,14 +46,20 @@ public class BITPOS extends RespCommand implements Resp3Command {
             }
          }
 
-         if (arguments.size() > 3) {
+         boolean endGiven = arguments.size() > 3;
+         if (endGiven) {
             end = Integer.parseInt(new String(arguments.get(3)));
             if (end < 0) {
                end = value.length + end;
             }
          }
+
          start = Math.max(0, start);
-         end = Math.min(value.length - 1, end);
+         end = Math.min(value.length - 1, Math.max(0, end));
+
+         if (start > end) {
+            return -1L;
+         }
 
          for (int i = start; i <= end; i++) {
             byte b = value[i];
@@ -69,7 +75,7 @@ public class BITPOS extends RespCommand implements Resp3Command {
             }
          }
 
-         return bit == 0 && (end + 1) * 8 < value.length * 8 ? (end + 1) * 8L : -1;
+         return bit == 0 && !endGiven ? value.length * 8L : -1L;
       }), ctx, (v, ch) -> ch.integers(v));
    }
 }

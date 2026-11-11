@@ -215,11 +215,20 @@ public class BitOpsTest extends SingleNodeRespBaseTest {
    @Test
    public void testBitPosAllOneBitsNoEnd() {
       RedisCommands<String, String> redis = redisConnection.sync();
-      // All 0xff: bit=0 without end - no zero bit in the string
+      // All 0xff: bit=0 without end - the string is treated as padded with zeros on the right,
+      // so the first clear bit is the one right after the string
       redis.set(k(), "\u00ff\u00ff\u00ff");
-      long result = redis.bitpos(k(), false);
-      // Implementation may return 24 (Redis) or -1
-      assertThat(result).isIn(-1L, 24L);
+      assertThat(redis.bitpos(k(), false)).isEqualTo(24);
+   }
+
+   @Test
+   public void testBitPosAllOneBitsStartOnly() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // A start without an end leaves the range open, so the zero padding still applies
+      redis.set(k(), "\u00ff\u00ff\u00ff");
+      assertThat(redis.bitpos(k(), false, 0)).isEqualTo(24);
+      assertThat(redis.bitpos(k(), false, 1)).isEqualTo(24);
+      assertThat(redis.bitpos(k(), false, -1)).isEqualTo(24);
    }
 
    @Test
@@ -228,6 +237,38 @@ public class BitOpsTest extends SingleNodeRespBaseTest {
       // All 0xff with explicit end: bit=0 returns -1 (no zero in range)
       redis.set(k(), "\u00ff\u00ff\u00ff");
       assertThat(redis.bitpos(k(), false, 0, 2)).isEqualTo(-1);
+      assertThat(redis.bitpos(k(), false, 0, -1)).isEqualTo(-1);
+   }
+
+   @Test
+   public void testBitPosAllOneBitsWithShortEnd() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // An end before the last byte must not return the first bit after the range
+      redis.set(k(), "\u00ff\u00ff\u00ff");
+      assertThat(redis.bitpos(k(), false, 0, 0)).isEqualTo(-1);
+      assertThat(redis.bitpos(k(), false, 0, 1)).isEqualTo(-1);
+      assertThat(redis.bitpos(k(), false, 1, 1)).isEqualTo(-1);
+   }
+
+   @Test
+   public void testBitPosStartAfterEnd() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // An empty range (start > end after clamping) returns -1 for both bit values
+      redis.set(k(), "\u00ff\u00ff\u0000");
+      assertThat(redis.bitpos(k(), false, 5)).isEqualTo(-1);
+      assertThat(redis.bitpos(k(), false, 2, 1)).isEqualTo(-1);
+      assertThat(redis.bitpos(k(), true, 2, 1)).isEqualTo(-1);
+   }
+
+   @Test
+   public void testBitPosNegativeEndClampedToZero() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // An end that is still negative after adding the length is clamped to byte 0
+      redis.set(k(), "\u00ff\u00ff\u00ff");
+      assertThat(redis.bitpos(k(), false, 0, -5)).isEqualTo(-1);
+
+      redis.set(k(), "\u00f0\u00ff\u00ff");
+      assertThat(redis.bitpos(k(), false, 0, -5)).isEqualTo(4);
    }
 
    @Test
