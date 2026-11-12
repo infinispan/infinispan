@@ -15,7 +15,10 @@
  */
 package org.infinispan.query.objectfilter.impl.ql.test;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.infinispan.query.objectfilter.ParsingException;
+import org.infinispan.query.objectfilter.impl.ql.QueryParser;
 import org.testng.annotations.Test;
 
 @Test(testName = "query.objectfilter.impl.ql.test.ParserTest", groups = "functional")
@@ -165,5 +168,34 @@ public class ParserTest extends TestBase {
    public void testNamedParam() {
       expectParserSuccess("FROM IndexedEntity e where e.name = :nameParam",
             "(QUERY (QUERY_SPEC (SELECT_FROM (FROM (PERSISTER_SPACE (ENTITY_PERSISTER_REF IndexedEntity e))) (SELECT (SELECT_LIST (SELECT_ITEM e)))) (where (= (PATH (. e name)) nameParam))))");
+   }
+
+   @Test
+   public void testNestingDepthWithinLimit() {
+      QueryParser parser = new QueryParser();
+      StringBuilder query = new StringBuilder("FROM Note WHERE ");
+      query.append("(".repeat(100));
+      query.append("name = 'foo'");
+      query.append(")".repeat(100));
+      parser.parseQuery(query.toString());
+   }
+
+   @Test
+   public void testNestingDepthExceedsLimit() {
+      QueryParser parser = new QueryParser();
+      StringBuilder query = new StringBuilder("FROM Note WHERE ");
+      query.append("(".repeat(101));
+      query.append("name = 'foo'");
+      query.append(")".repeat(101));
+      assertThatThrownBy(() -> parser.parseQuery(query.toString()))
+            .isInstanceOf(ParsingException.class)
+            .hasMessageContaining("ISPN028535")
+            .hasMessageContaining("nested parenthesized expressions");
+   }
+
+   @Test
+   public void testParenthesesInStringLiteralsNotCounted() {
+      QueryParser parser = new QueryParser();
+      parser.parseQuery("FROM Note WHERE name = '(((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((('");
    }
 }

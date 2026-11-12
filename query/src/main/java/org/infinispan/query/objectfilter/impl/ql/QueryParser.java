@@ -32,6 +32,7 @@ import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.infinispan.query.grammar.IckleLexer;
 import org.infinispan.query.grammar.IckleParser;
+import org.infinispan.query.impl.LifecycleManager;
 import org.infinispan.query.objectfilter.ParsingException;
 import org.infinispan.query.objectfilter.impl.logging.Log;
 import org.jboss.logging.Logger;
@@ -53,6 +54,18 @@ public final class QueryParser {
 
    private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, QueryParser.class.getName());
 
+   private static final int DEFAULT_MAX_NESTING_DEPTH = 100;
+   private static final int maxNestingDepth = resolveMaxNestingDepth();
+
+   private static int resolveMaxNestingDepth() {
+      int value = Integer.getInteger(LifecycleManager.MAX_NESTING_DEPTH_SYS_PROP, DEFAULT_MAX_NESTING_DEPTH);
+      if (value < 0) {
+         log.invalidNestingDepth(value, DEFAULT_MAX_NESTING_DEPTH);
+         return DEFAULT_MAX_NESTING_DEPTH;
+      }
+      return value;
+   }
+
    /**
     * Parses the given query string.
     *
@@ -65,6 +78,7 @@ public final class QueryParser {
       IckleLexer lexer = new IckleLexer(input);
       CommonTokenStream tokens = new CommonTokenStream(lexer);
       IckleParser parser = new IckleParser(tokens);
+      parser.setMaxNestingDepth(maxNestingDepth);
       final ANTLRErrorListener errorListener = new BaseErrorListener() {
          @Override
          public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
@@ -72,7 +86,11 @@ public final class QueryParser {
          }
       };
       parser.addErrorListener(errorListener);
-      return parser.statement();
+      try {
+         return parser.statement();
+      } catch (IckleParser.NestingDepthExceededException e) {
+         throw log.queryNestingDepthExceeded(e.depth, e.maxDepth, LifecycleManager.MAX_NESTING_DEPTH_SYS_PROP);
+      }
    }
 
    /**

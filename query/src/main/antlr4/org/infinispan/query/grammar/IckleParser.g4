@@ -12,6 +12,32 @@ import java.util.ArrayList;
 import java.util.List;
 }
 
+@parser::members {
+   private int _nestingDepth;
+   private int _maxNestingDepth = 100;
+
+   public void setMaxNestingDepth(int max) { _maxNestingDepth = max; }
+
+   private void _enterNesting() {
+      if (++_nestingDepth > _maxNestingDepth) {
+         throw new NestingDepthExceededException(_nestingDepth, _maxNestingDepth);
+      }
+   }
+
+   private void _exitNesting() { _nestingDepth--; }
+
+   public static class NestingDepthExceededException extends RuntimeException {
+      public final int depth;
+      public final int maxDepth;
+
+      public NestingDepthExceededException(int depth, int maxDepth) {
+         super("Nesting depth " + depth + " exceeds maximum " + maxDepth);
+         this.depth = depth;
+         this.maxDepth = maxDepth;
+      }
+   }
+}
+
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Statements
 
@@ -339,7 +365,7 @@ logicalAndExpression
 	;
 
 negatedExpression
-   :  not_key negatedExpression
+   :  not_key {_enterNesting();} negatedExpression {_exitNesting();}
    |  equalityExpression
    ;
 
@@ -514,7 +540,7 @@ collectionExpression
    ;
 
 vectorSearch
-   : LSQUARE expression (COMMA expression)* RSQUARE
+   : LSQUARE {_enterNesting();} expression (COMMA expression)* {_exitNesting();} RSQUARE
    ;
 
 atom
@@ -525,7 +551,7 @@ atom
 	    //  if it is constantReference (using context)
 	    //  otherwise it will be a generic element to be resolved on the next phase (1st tree walker)
    |  constant
-   |  LPAREN expressionOrVector RPAREN
+   |  LPAREN {_enterNesting();} expressionOrVector {_exitNesting();} RPAREN
    |  vectorSearch
    ;
 
@@ -568,9 +594,9 @@ vectorExpr
 identPrimary
 	: 	identifier
 		(	DOT identifier
-		|	LSQUARE expression RSQUARE
+		|	LSQUARE {_enterNesting();} expression {_exitNesting();} RSQUARE
 		|	LSQUARE RSQUARE
-		|	LPAREN exprList RPAREN
+		|	LPAREN {_enterNesting();} exprList {_exitNesting();} RPAREN
 		)*
 	;
 
@@ -625,7 +651,7 @@ dotIdentifierPath
 path
 	:	identifier
 		(	DOT identifier
-		|	LSQUARE expression RSQUARE
+		|	LSQUARE {_enterNesting();} expression {_exitNesting();} RSQUARE
 		|	LSQUARE RSQUARE
 		)*
 	;
@@ -932,7 +958,7 @@ ftBoost
 ftTermOrQuery
     : ftTerm
     | ftRange
-    | LPAREN ftConjunction (ftOr ftConjunction)* RPAREN
+    | LPAREN {_enterNesting();} ftConjunction (ftOr ftConjunction)* {_exitNesting();} RPAREN
     ;
 
 ftTerm
