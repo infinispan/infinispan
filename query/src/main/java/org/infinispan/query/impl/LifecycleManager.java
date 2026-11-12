@@ -92,6 +92,13 @@ public class LifecycleManager implements ModuleLifecycle {
     */
    public static final String MAX_BOOLEAN_CLAUSES_SYS_PROP = "infinispan.query.lucene.max-boolean-clauses";
 
+   /**
+    * Optional integer system property that sets the maximum nesting depth of parenthesized expressions in Ickle queries.
+    * Deeply nested queries can cause {@link StackOverflowError} in the ANTLR recursive descent parser.
+    * Default is 100.
+    */
+   public static final String MAX_NESTING_DEPTH_SYS_PROP = "infinispan.query.max-nesting-depth";
+
    private volatile boolean remoteQueryEnabled = false;
 
    /**

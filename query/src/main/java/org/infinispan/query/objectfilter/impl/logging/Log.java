@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.infinispan.query.objectfilter.ParsingException;
 import org.jboss.logging.BasicLogger;
+import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.Cause;
+import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.ValidIdRange;
@@ -121,5 +123,13 @@ public interface Log extends BasicLogger {
 
    @Message(id = 28534, value = "Spatial queries cannot be applied to property '%2$s' in type %1$s unless it is indexed as a spatial property.")
    ParsingException spatialQueryOnNotIndexedPropertyNotSupportedException(String typeName, String propertyName);
+
+   @Message(id = 28535, value = "Query has too many nested parenthesized expressions: depth %d exceeds maximum allowed %d. " +
+         "Use the system property '%s' to increase the limit.")
+   ParsingException queryNestingDepthExceeded(int depth, int maxDepth, String propertyName);
+
+   @LogMessage(level = Logger.Level.WARN)
+   @Message(id = 28536, value = "Invalid query max nesting depth %d, using default %d.")
+   void invalidNestingDepth(int configuredValue, int defaultValue);
 
 }
