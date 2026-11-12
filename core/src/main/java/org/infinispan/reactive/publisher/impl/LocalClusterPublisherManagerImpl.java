@@ -55,7 +55,7 @@ public class LocalClusterPublisherManagerImpl<K, V> implements ClusterPublisherM
          return flowable;
       }
       return flowable.filter(entry -> (keysToInclude == null || keysToInclude.contains(entry.getKey()))
-            && (segments == null || segments.contains(keyPartitioner.getSegment(entry.getKey()))));
+            && (segments.contains(keyPartitioner.getSegment(entry.getKey()))));
    }
 
    static <K, V> Flowable<SegmentPublisherSupplier.Notification<CacheEntry<K, V>>> notificationPublisherFromContext(
