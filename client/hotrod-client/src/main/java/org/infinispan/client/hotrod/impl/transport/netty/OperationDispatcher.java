@@ -1004,6 +1004,13 @@ public class OperationDispatcher {
       return retryCounter.get();
    }
 
+   /**
+    * @return the configured maximum number of retries, see {@link Configuration#maxRetries()}.
+    */
+   public int getMaxRetries() {
+      return maxRetries;
+   }
+
    public ConsistentHash getConsistentHash(String cacheName) {
       return getCacheInfo(cacheName).getConsistentHash();
    }

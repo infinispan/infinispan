@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl.iteration;
 import java.lang.invoke.MethodHandles;
 import java.net.ConnectException;
 import java.net.SocketAddress;
+import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
@@ -88,6 +89,10 @@ class RemoteInnerPublisherHandler<K, E> extends AbstractAsyncPublisherHandler<Ma
 
    @Override
    protected long handleNextResponse(IterationNextResponse<K, E> nextResponse, Map.Entry<SocketAddress, IntSet> target) {
+      // The iteration is making progress, so any earlier failure was transient and must not count towards the
+      // retry limit. Only real progress resets the budget - resetting it on a successful start instead would let
+      // a start/timeout/restart cycle repeat forever without ever advancing.
+      publisher.resetRetries();
       if (!nextResponse.hasMore()) {
          // Don't complete the segments if it was an invalid iteration
          if (nextResponse.getStatus() != HotRodConstants.INVALID_ITERATION) {
@@ -140,15 +145,44 @@ class RemoteInnerPublisherHandler<K, E> extends AbstractAsyncPublisherHandler<Ma
                }
             }
             publisher.erroredServer(failedServer);
-            // Try next target if possible
-            targetComplete();
+            if (!isSocketTimeout(t)) {
+               // Connection failures keep their existing behaviour: the server is dropped from the topology and the
+               // balancer stops handing it out, so this retry is self limiting.
+               // Try next target if possible
+               targetComplete();
 
-            accept(0);
-            return;
+               accept(0);
+               return;
+            }
+            // A socket timeout is only safe to retry before the iteration has been established. Nothing has been
+            // emitted for this target yet, so a fresh iteration cannot repeat entries, and the abandoned start is
+            // closed by IterationStartOperation#handleDelayedResponse once its late response arrives.
+            // Once an iteration is running we propagate instead: restarting it would re-read entries already given
+            // to the subscriber and leave the server side iteration orphaned.
+            if (iterationId == null && publisher.canRetry()) {
+               targetComplete();
+
+               accept(0);
+               return;
+            }
+            log.tracef("Not retrying the timeout from %s: either the iteration was already established or the " +
+                  "retries are exhausted, propagating the error", failedServer);
          }
       }
 
       t.addSuppressed(new TraceException());
       super.handleThrowableInResponse(t, target);
+   }
+
+   private static boolean isSocketTimeout(Throwable t) {
+      for (Throwable cause = t; cause != null; cause = cause.getCause()) {
+         if (cause instanceof SocketTimeoutException) {
+            return true;
+         }
+         if (cause.getCause() == cause) {
+            break;
+         }
+      }
+      return false;
    }
 }
