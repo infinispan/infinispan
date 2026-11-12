@@ -15,9 +15,15 @@ import org.infinispan.client.rest.RestEventListener;
 import org.infinispan.client.rest.impl.jdk.RestResponseInfoJDK;
 import org.infinispan.commons.dataconversion.MediaType;
 
+import com.google.errorprone.annotations.concurrent.GuardedBy;
+
 public class EventSubscriber implements Flow.Subscriber<String>, Closeable {
 
+   @GuardedBy("this")
    private Flow.Subscription subscription;
+
+   @GuardedBy("this")
+   private boolean closed;
    private final List<String> lines = new ArrayList<>();
    private final RestEventListener listener;
    private RestResponseInfoJDK responseInfo;
@@ -28,8 +34,17 @@ public class EventSubscriber implements Flow.Subscriber<String>, Closeable {
 
    @Override
    public void onSubscribe(Flow.Subscription subscription) {
-      listener.onOpen(responseInfo);
-      this.subscription = subscription;
+      synchronized (this) {
+         // Publish the subscription before notifying the listener: it may call close() as soon as it is notified.
+         this.subscription = subscription;
+         if (closed) {
+            // The handle was closed before the response arrived.
+            // Drop the stream without opening the listener.
+            subscription.cancel();
+            return;
+         }
+         listener.onOpen(responseInfo);
+      }
       subscription.request(1);
    }
 
@@ -60,7 +75,13 @@ public class EventSubscriber implements Flow.Subscriber<String>, Closeable {
 
    @Override
    public void close() {
-      subscription.cancel();
+      synchronized (this) {
+         closed = true;
+         // The subscription is absent when closing before the response arrives.
+         // Subscribe will cancel it.
+         if (subscription != null)
+            subscription.cancel();
+      }
       listener.close();
    }
 
