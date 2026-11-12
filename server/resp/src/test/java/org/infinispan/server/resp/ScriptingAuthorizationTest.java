@@ -84,8 +84,7 @@ public class ScriptingAuthorizationTest extends MultipleCacheManagersTest {
             .permission(AuthorizationPermission.READ)
             .permission(AuthorizationPermission.WRITE)
             .permission(AuthorizationPermission.EXEC)
-            .permission(AuthorizationPermission.CREATE)
-            .permission(AuthorizationPermission.ADMIN);
+            .permission(AuthorizationPermission.CREATE);
 
       // Role for readuser: can only read and has admin access (but not EXEC)
       authz.role("readuser")
