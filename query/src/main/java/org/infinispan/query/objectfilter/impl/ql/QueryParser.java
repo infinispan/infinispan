@@ -32,6 +32,7 @@ import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.infinispan.query.grammar.IckleLexer;
 import org.infinispan.query.grammar.IckleParser;
+import org.infinispan.query.impl.LifecycleManager;
 import org.infinispan.query.objectfilter.ParsingException;
 import org.infinispan.query.objectfilter.impl.logging.Log;
 import org.jboss.logging.Logger;
@@ -53,6 +54,18 @@ public final class QueryParser {
 
    private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, QueryParser.class.getName());
 
+   private static final int DEFAULT_MAX_NESTING_DEPTH = 100;
+   private static final int maxNestingDepth = resolveMaxNestingDepth();
+
+   private static int resolveMaxNestingDepth() {
+      int value = Integer.getInteger(LifecycleManager.MAX_NESTING_DEPTH_SYS_PROP, DEFAULT_MAX_NESTING_DEPTH);
+      if (value < 0) {
+         log.invalidNestingDepth(value, DEFAULT_MAX_NESTING_DEPTH);
+         return DEFAULT_MAX_NESTING_DEPTH;
+      }
+      return value;
+   }
+
    /**
     * Parses the given query string.
     *
@@ -61,6 +74,7 @@ public final class QueryParser {
     * @throws ParsingException in case any exception occurs during parsing
     */
    public IckleParser.StatementContext parseQuery(String ickle) throws ParsingException {
+      checkNestingDepth(ickle);
       CharStream input = CharStreams.fromString(ickle);
       IckleLexer lexer = new IckleLexer(input);
       CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -73,6 +87,30 @@ public final class QueryParser {
       };
       parser.addErrorListener(errorListener);
       return parser.statement();
+   }
+
+   private void checkNestingDepth(String query) {
+      int depth = 0;
+      int maxDepth = 0;
+      boolean inString = false;
+      for (int i = 0; i < query.length(); i++) {
+         char c = query.charAt(i);
+         if (c == '\'') {
+            inString = !inString;
+         } else if (!inString) {
+            if (c == '(') {
+               depth++;
+               if (depth > maxDepth) {
+                  maxDepth = depth;
+               }
+            } else if (c == ')') {
+               depth--;
+            }
+         }
+      }
+      if (maxDepth > maxNestingDepth) {
+         throw log.queryNestingDepthExceeded(maxDepth, maxNestingDepth, LifecycleManager.MAX_NESTING_DEPTH_SYS_PROP);
+      }
    }
 
    /**

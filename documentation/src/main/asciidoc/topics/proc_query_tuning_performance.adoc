@@ -11,6 +11,15 @@ For instance, if some fields in a schema are not annotated then the resulting in
 Start tuning query performance by checking the time it takes for each type of query to run.
 If your queries seem to be slow, you should make sure that queries are using the indexes for caches and that all entities and field mappings are indexed.
 
+.Adjusting the maximum query nesting depth
+
+Deeply nested Ickle queries with many parenthesized expressions can cause a `StackOverflowError` in the query parser.
+By default, {brandname} limits the nesting depth to 100 levels, which is sufficient for any typical query.
+
+To change the maximum nesting depth, set the following JVM system property:
+
+`-Dinfinispan.query.max-nesting-depth=<value>`
+
 .Adjusting the commit interval for indexes
 
 Indexing can degrade write throughput for {brandname} clusters.
