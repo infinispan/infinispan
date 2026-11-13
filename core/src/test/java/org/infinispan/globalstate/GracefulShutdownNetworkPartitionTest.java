@@ -210,13 +210,15 @@ public class GracefulShutdownNetworkPartitionTest extends BaseStatefulPartitionH
       int restartedIndex = cacheManagers.size() - 1;
       CompletableFuture<Void> join = CompletableFuture.runAsync(() -> cache(restartedIndex, CACHE_NAME), testExecutor());
 
-      // All nodes converge
+      // All nodes converge. The stable topology is checked as well: a member can install the current topology
+      // with every member while it is still recovering, and the next operation would fail with ISPN000689.
       eventually(() -> cacheManagers.stream().allMatch(ecm -> ecm.getMembers().size() == numMembersInCluster));
       eventually(() -> cacheManagers.stream()
             .map(ecm -> extractGlobalComponent(ecm, LocalTopologyManager.class))
             .allMatch(l -> {
                CacheTopology ct = l.getCacheTopology(CACHE_NAME);
-               return ct != null && ct.getMembers().size() == numMembersInCluster;
+               return ct != null && ct.getMembers().size() == numMembersInCluster
+                     && l.getStableCacheTopology(CACHE_NAME) != null;
             }), 30, TimeUnit.SECONDS);
 
       TestingUtil.join(join);
