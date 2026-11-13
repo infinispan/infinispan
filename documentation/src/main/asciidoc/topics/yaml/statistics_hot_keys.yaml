@@ -1,0 +1,6 @@
+distributedCache:
+  statistics:
+    enabled: true
+    hotKeys:
+      enabled: true
+      topK: 100

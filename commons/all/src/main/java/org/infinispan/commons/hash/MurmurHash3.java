@@ -3,6 +3,7 @@ package org.infinispan.commons.hash;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
+import java.util.UUID;
 
 import org.infinispan.commons.marshall.WrappedBytes;
 
@@ -188,16 +189,31 @@ public class MurmurHash3 implements Hash {
     * @return 64 bit hashed key
     */
    public static long MurmurHash3_x64_64(final byte[] key, final int seed) {
+      return MurmurHash3_x64_64(key, 0, key.length, seed);
+   }
+
+   /**
+    * Hash a range of a byte array using the x64 64 bit variant of MurmurHash3. The result is the same as
+    * hashing a copy of that range on its own.
+    *
+    * @param key    the array holding the bytes to hash
+    * @param offset index of the first byte to hash
+    * @param length number of bytes to hash
+    * @param seed   random value
+    * @return 64 bit hashed key
+    * @throws IndexOutOfBoundsException if the range is outside {@code key}
+    */
+   public static long MurmurHash3_x64_64(final byte[] key, final int offset, final int length, final int seed) {
       long h1 = 0x9368e53c2f6af274L ^ seed;
       long h2 = 0x586dcd208f7cd3fdL ^ seed;
 
       long c1 = 0x87c37b91114253d5L;
       long c2 = 0x4cf5ad432745937fL;
 
-      int numBlocks = key.length / 16;
+      int numBlocks = length / 16;
       for (int i = 0; i < numBlocks; i++) {
-         long k1 = getblock(key, i * 2 * 8);
-         long k2 = getblock(key, (i * 2 + 1) * 8);
+         long k1 = getblock(key, offset + i * 2 * 8);
+         long k2 = getblock(key, offset + (i * 2 + 1) * 8);
 
          k1 *= c1;
          k1 = (k1 << 23) | (k1 >>> 41);
@@ -223,9 +239,9 @@ public class MurmurHash3 implements Hash {
       long k1 = 0;
       long k2 = 0;
 
-      int tail = (key.length >>> 4) << 4;
+      int tail = offset + ((length >>> 4) << 4);
 
-      switch (key.length & 15) {
+      switch (length & 15) {
          case 15:
             k2 ^= (long) key[tail + 14] << 48;
          case 14:
@@ -256,7 +272,7 @@ public class MurmurHash3 implements Hash {
          case 2:
             k1 ^= (long) key[tail + 1] << 8;
          case 1:
-            k1 ^= key[tail + 0];
+            k1 ^= key[tail];
 
             k1 *= c1;
             k1 = (k1 << 23) | (k1 >>> 41);
@@ -276,7 +292,7 @@ public class MurmurHash3 implements Hash {
             h2 = h2 * 3 + 0x38495ab5;
       }
 
-      h2 ^= key.length;
+      h2 ^= length;
 
       h1 += h2;
       h2 += h1;
@@ -744,6 +760,95 @@ public class MurmurHash3 implements Hash {
       }
 
       h2 ^= byteLen;
+
+      h1 += h2;
+      h2 += h1;
+
+      h1 = fmix(h1);
+      h2 = fmix(h2);
+
+      h1 += h2;
+      h2 += h1;
+
+      return h1;
+   }
+
+   /**
+    * Hash an object using the x64 64 bit variant of MurmurHash3.
+    *
+    * <p>
+    * Strings, byte arrays, {@link WrappedBytes} (only the bytes in its view), {@code long[]}, {@link Long} and
+    * {@link UUID} are hashed by their full content: equal values always produce equal hashes, and distinct values
+    * collide only with the probability of a 64-bit hash.
+    * </p>
+    * <p>
+    * Any other type is hashed from its {@link Object#hashCode()}. Distinct objects with the same
+    * {@code hashCode()} then always produce the same hash, for every seed.
+    * </p>
+    *
+    * @param o    the object to hash, not {@code null}
+    * @param seed random value
+    * @return 64 bit hashed object
+    * @throws NullPointerException if {@code o} is {@code null}
+    */
+   public long MurmurHash3_x64_64(Object o, int seed) {
+      if (o instanceof String s)
+         return MurmurHash3_x64_64_String(s, seed);
+
+      if (o instanceof byte[] b)
+         return MurmurHash3_x64_64(b, seed);
+
+      if (o instanceof WrappedBytes wb)
+         return MurmurHash3_x64_64(wb.getBytes(), wb.backArrayOffset(), wb.getLength(), seed);
+
+      if (o instanceof long[] l)
+         return MurmurHash3_x64_64(l, seed);
+
+      // Same result as hashing new long[] {value}, without the allocation.
+      if (o instanceof Long l)
+         return MurmurHash3_x64_64_singleBlock(l, 0, Long.BYTES, seed);
+
+      // Same result as hashing new long[] {msb, lsb}, without the allocation.
+      if (o instanceof UUID u)
+         return MurmurHash3_x64_64_singleBlock(u.getMostSignificantBits(), u.getLeastSignificantBits(), 2 * Long.BYTES, seed);
+
+      return MurmurHash3_x64_64_singleBlock(o.hashCode(), 0, Integer.BYTES, seed);
+   }
+
+   /**
+    * Hashes up to 16 bytes, given as two 64-bit words, using the x64 64 bit variant of MurmurHash3.
+    *
+    * @param k1     the first 8 bytes
+    * @param k2     the next 8 bytes, zero when hashing 8 bytes or fewer
+    * @param length the number of bytes being hashed, at most 16
+    * @param seed   random value
+    * @return 64 bit hashed value
+    */
+   private static long MurmurHash3_x64_64_singleBlock(long k1, long k2, int length, int seed) {
+      long h1 = 0x9368e53c2f6af274L ^ seed;
+      long h2 = 0x586dcd208f7cd3fdL ^ seed;
+
+      long c1 = 0x87c37b91114253d5L;
+      long c2 = 0x4cf5ad432745937fL;
+
+      k1 *= c1;
+      k1 = (k1 << 23) | (k1 >>> 41);
+      k1 *= c2;
+      h1 ^= k1;
+      h1 += h2;
+
+      h2 = (h2 << 41) | (h2 >>> 23);
+
+      k2 *= c2;
+      k2 = (k2 << 23) | (k2 >>> 41);
+      k2 *= c1;
+      h2 ^= k2;
+      h2 += h1;
+
+      h1 = h1 * 3 + 0x52dce729;
+      h2 = h2 * 3 + 0x38495ab5;
+
+      h2 ^= length;
 
       h1 += h2;
       h2 += h1;

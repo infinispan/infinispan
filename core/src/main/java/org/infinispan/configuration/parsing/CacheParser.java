@@ -12,6 +12,7 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.configuration.io.ConfigurationReader;
@@ -399,10 +400,53 @@ public class CacheParser implements ConfigurationParser {
             this.parseCacheSecurity(reader, builder);
             break;
          }
+         case STATISTICS: {
+            this.parseStatistics(reader, holder);
+            break;
+         }
          default: {
             reader.handleAny(holder);
          }
       }
+   }
+
+   /**
+    * Parses the {@code statistics} element of a cache: its {@code enabled} attribute and its {@code hot-keys}
+    * child element.
+    *
+    * @param reader the reader positioned on the {@code statistics} element
+    * @param holder the holder whose current configuration builder receives the values
+    * @throws CacheConfigurationException if the element has an unknown attribute or child element
+    */
+   private void parseStatistics(ConfigurationReader reader, ConfigurationBuilderHolder holder) {
+      ConfigurationBuilder builder = holder.getCurrentConfigurationBuilder();
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         Attribute attribute = Attribute.forName(reader.getAttributeName(i));
+         switch (attribute) {
+            case ENABLED -> builder.statistics().enabled(ParseUtils.parseBoolean(reader, i, reader.getAttributeValue(i)));
+            default -> throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+
+      while (reader.inTag()) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case HOT_KEYS -> parseHotKeys(reader, builder);
+            default -> throw ParseUtils.unexpectedElement(reader);
+         }
+      }
+   }
+
+   /**
+    * Parses the {@code hot-keys} element into the statistics builder of a cache.
+    *
+    * @param reader  the reader positioned on the {@code hot-keys} element
+    * @param builder the cache configuration builder that receives the values
+    * @throws CacheConfigurationException if the element has an unknown attribute or any content
+    */
+   private void parseHotKeys(ConfigurationReader reader, ConfigurationBuilder builder) {
+      ParseUtils.parseAttributes(reader, builder.statistics().hotKeys());
+      ParseUtils.requireNoContent(reader);
    }
 
    private void parseMemory(final ConfigurationReader reader, final ConfigurationBuilderHolder holder) {

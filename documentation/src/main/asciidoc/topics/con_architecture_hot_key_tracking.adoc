@@ -1,0 +1,53 @@
+[id="architecture-hot-key-tracking_{context}"]
+= Hot key tracking
+
+Hot key tracking reports the keys that each node reads and writes most often in a cache.
+It is part of cache statistics: it counts accesses only while statistics are enabled, and resetting the cache statistics also clears it.
+
+== What counts as an access
+
+Reads and writes are tracked separately.
+
+* Operations that only read, such as `get` and `getAll`, count as reads.
+* Operations that modify an entry count as writes, including operations that also read the entry, such as `compute` and `merge`.
+* Conditional writes, such as `putIfAbsent` and `replace`, count as writes even when the condition is not met.
+* Operations on multiple keys count one access for each key.
+* Operations that use the `SKIP_STATISTICS` flag are not counted.
+
+== Where accesses are counted
+
+Each node counts the requests that it receives from clients and applications.
+When a node forwards a request to the owners of a key, the owners do not count it again, so every access is counted exactly once in the cluster.
+
+As a consequence, the node that reports a key is not necessarily a node that owns it.
+Where accesses are counted depends on how requests reach the cluster:
+
+* Hot Rod clients send most requests directly to the owners of each key, so the owners report the keys that they hold.
+* REST, RESP, and Memcached clients can send requests to any node, so the accesses to a key are spread across the nodes that receive them.
+
+To find the hot keys of the whole cluster, combine the results from every node.
+
+== Accuracy and memory
+
+{brandname} does not keep a counter for every key.
+Instead, each node keeps a fixed-size probabilistic summary based on the HeavyKeeper algorithm, which finds the most frequent items in a stream with bounded memory.
+The memory that tracking uses depends only on the configured `top-k` value, not on the number of keys in the cache or the number of requests.
+
+The summary trades exact counts for bounded memory:
+
+* Any key that receives more than one in `top-k + 1` of the accesses that a node counts is always reported by that node.
+* Keys with fewer accesses are reported when they are among the most frequent keys, but the order of keys with similar counts can vary.
+* The reported counts are estimates and can differ from the actual number of accesses.
+
+== Impact on cache operations
+
+Tracking never makes a cache operation wait.
+When many threads access the cache at the same time, a node can leave some accesses out of the reported key counts instead of making operations wait for each other.
+Frequently accessed keys still receive enough counted accesses to be reported, so the keys that matter most are the least affected.
+
+Tracking data exists only in memory on each node.
+It is not replicated, persisted, or transferred during state transfer, and it starts empty when a node restarts.
+
+[role="_additional-resources"]
+.Additional resources
+* link:https://www.usenix.org/conference/atc18/presentation/gong[HeavyKeeper: An Accurate Algorithm for Finding Top-k Elephant Flows (USENIX ATC 2018)]
