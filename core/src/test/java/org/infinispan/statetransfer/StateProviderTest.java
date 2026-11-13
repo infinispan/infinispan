@@ -177,7 +177,7 @@ public class StateProviderTest {
       stateProvider.onTopologyUpdate(this.cacheTopology, false);
 
       log.debug("ch1: " + ch1);
-      IntSet segmentsToRequest = IntSets.from(ch1.getSegmentsForOwner(members1.get(0)));
+      IntSet segmentsToRequest = ch1.getSegmentsForOwnerAsIntSet(members1.get(0));
       CompletionStage<List<TransactionInfo>> transactionsStage =
          stateProvider.getTransactionsForSegments(members1.get(0), 1, segmentsToRequest);
       List<TransactionInfo> transactions = CompletionStages.join(transactionsStage);
@@ -281,7 +281,7 @@ public class StateProviderTest {
       stateProvider.onTopologyUpdate(this.cacheTopology, false);
 
       log.debug("ch1: " + ch1);
-      IntSet segmentsToRequest = IntSets.from(ch1.getSegmentsForOwner(members1.get(0)));
+      IntSet segmentsToRequest = ch1.getSegmentsForOwnerAsIntSet(members1.get(0));
       CompletionStage<List<TransactionInfo>> transactionsStage =
          stateProvider.getTransactionsForSegments(members1.get(0), 1, segmentsToRequest);
       List<TransactionInfo> transactions = CompletionStages.join(transactionsStage);

@@ -46,8 +46,8 @@ final class SegmentListener {
          return CompletableFutures.completedNull();
       }
 
-      var removedSegments = IntSets.mutableCopyFrom(event.getWriteConsistentHashAtStart().getSegmentsForOwner(address));
-      removedSegments.removeAll(IntSets.from(newWriteCh.getSegmentsForOwner(address)));
+      var removedSegments = IntSets.mutableCopyFrom(event.getWriteConsistentHashAtStart().getSegmentsForOwnerAsIntSet(address));
+      removedSegments.removeAll(newWriteCh.getSegmentsForOwnerAsIntSet(address));
 
       if (removedSegments.isEmpty()) {
          return CompletableFutures.completedNull();

@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.assertj.core.api.SoftAssertions;
-import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -171,10 +171,10 @@ public class BaseStatefulPartitionHandlingTest extends BasePartitionHandlingTest
          Address remappedOldAddress = persistentUUIDManager.getAddress(addressMapping.get(oldAddress));
          Address newAddress = newConsistentHash.getMembers().get(i);
          if (!remappedOldAddress.equals(newAddress)) return false;
-         Set<Integer> oldSegmentsForOwner = oldConsistentHash.getSegmentsForOwner(oldAddress);
-         Set<Integer> newSegmentsForOwner = newConsistentHash.getSegmentsForOwner(newAddress);
+         IntSet oldSegmentsForOwner = oldConsistentHash.getSegmentsForOwnerAsIntSet(oldAddress);
+         IntSet newSegmentsForOwner = newConsistentHash.getSegmentsForOwnerAsIntSet(newAddress);
          assertThat(oldSegmentsForOwner)
-               .withFailMessage(() -> String.format("Old: %s\nNew: %s", IntSets.from(oldSegmentsForOwner), IntSets.from(newSegmentsForOwner)))
+               .withFailMessage(() -> String.format("Old: %s\nNew: %s", oldSegmentsForOwner, newSegmentsForOwner))
                .isEqualTo(newSegmentsForOwner);
       }
 

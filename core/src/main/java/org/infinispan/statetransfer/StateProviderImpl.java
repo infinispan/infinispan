@@ -21,7 +21,6 @@ import java.util.function.Function;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.util.EnumUtil;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -182,7 +181,7 @@ public class StateProviderImpl implements StateProvider {
                 .thenApply(topology -> {
                    final ConsistentHash readCh = topology.getReadConsistentHash();
 
-                   IntSet ownedSegments = IntSets.from(readCh.getSegmentsForOwner(rpcManager.getAddress()));
+                   IntSet ownedSegments = readCh.getSegmentsForOwnerAsIntSet(rpcManager.getAddress());
                    if (!ownedSegments.containsAll(segments)) {
                       segments.removeAll(ownedSegments);
                       throw new IllegalArgumentException(

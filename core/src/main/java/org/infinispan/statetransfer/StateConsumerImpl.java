@@ -586,8 +586,9 @@ public class StateConsumerImpl implements StateConsumer {
       // B needs to request the transactions affecting that segment from A,
       // even though B already has the entries of that segment
       IntSet transactionOnlySegments = IntSets.mutableEmptySet(numSegments);
-      Set<Integer> pendingPrimarySegments = cacheTopology.getPendingCH().getPrimarySegmentsForOwner(address);
-      for (Integer segment : pendingPrimarySegments) {
+      IntSet pendingPrimarySegments = cacheTopology.getPendingCH().getPrimarySegmentsForOwnerAsIntSet(address);
+      for (PrimitiveIterator.OfInt iter = pendingPrimarySegments.iterator(); iter.hasNext(); ) {
+         int segment = iter.nextInt();
          List<Address> currentOwners = cacheTopology.getCurrentCH().locateOwnersForSegment(segment);
          if (currentOwners.get(0).equals(address)) {
             // Already primary
@@ -645,7 +646,7 @@ public class StateConsumerImpl implements StateConsumer {
 
    protected IntSet getOwnedSegments(ConsistentHash consistentHash) {
       Address address = rpcManager.getAddress();
-      return IntSets.from(consistentHash.getSegmentsForOwner(address));
+      return consistentHash.getSegmentsForOwnerAsIntSet(address);
    }
 
    @Override
@@ -677,7 +678,7 @@ public class StateConsumerImpl implements StateConsumer {
          log.tracef("Before applying the received state the data container of cache %s has %d keys", cacheName,
                     dataContainer.sizeIncludingExpired());
       }
-      IntSet mySegments = IntSets.from(wCh.getSegmentsForOwner(rpcManager.getAddress()));
+      IntSet mySegments = wCh.getSegmentsForOwnerAsIntSet(rpcManager.getAddress());
       Iterator<StateChunk> iterator = stateChunks.iterator();
       CompletionStage<?> stage = applyStateIteration(sender, mySegments, iterator);
       if (log.isTraceEnabled()) {

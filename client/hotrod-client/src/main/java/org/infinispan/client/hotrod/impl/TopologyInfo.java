@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
@@ -25,6 +24,7 @@ import org.infinispan.client.hotrod.impl.topology.CacheInfo;
 import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.util.IntSet;
 
 /**
  * Maintains topology information about caches.
@@ -54,7 +54,7 @@ public final class TopologyInfo {
       return cacheName != null ? cacheName : DEFAULT_CACHE_NAME;
    }
 
-   public Map<SocketAddress, Set<Integer>> getPrimarySegmentsByServer(String cacheName) {
+   public Map<SocketAddress, IntSet> getPrimarySegmentsByServer(String cacheName) {
       CacheInfo cacheInfo = caches.get(nameOrDefault(cacheName));
       if (cacheInfo != null) {
          return cacheInfo.getPrimarySegments();

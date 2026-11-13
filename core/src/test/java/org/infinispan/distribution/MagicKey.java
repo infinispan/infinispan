@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
-import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
@@ -17,6 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.protostream.annotations.ProtoFactory;
 import org.infinispan.protostream.annotations.ProtoField;
@@ -138,9 +138,9 @@ public class MagicKey implements Serializable {
       return hcs[segment] = dummy;
    }
 
-   private Set<Integer> segments(Cache<?, ?> owner) {
+   private IntSet segments(Cache<?, ?> owner) {
       return owner.getAdvancedCache().getDistributionManager().getCacheTopology().getWriteConsistentHash()
-            .getPrimarySegmentsForOwner(owner.getCacheManager().getAddress());
+            .getPrimarySegmentsForOwnerAsIntSet(owner.getCacheManager().getAddress());
    }
 
    public MagicKey(Cache<?, ?> primaryOwner) {

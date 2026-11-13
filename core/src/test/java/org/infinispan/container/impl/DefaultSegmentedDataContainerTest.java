@@ -3,9 +3,9 @@ package org.infinispan.container.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Set;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
@@ -40,7 +40,7 @@ public class DefaultSegmentedDataContainerTest extends MultipleCacheManagersTest
 
          DistributionManager dm = TestingUtil.extractComponent(cache, DistributionManager.class);
          Address address = cache.getCacheManager().getAddress();
-         Set<Integer> segments = dm.getCacheTopology().getReadConsistentHash().getSegmentsForOwner(address);
+         IntSet segments = dm.getCacheTopology().getReadConsistentHash().getSegmentsForOwnerAsIntSet(address);
 
          int mapCount = 0;
 

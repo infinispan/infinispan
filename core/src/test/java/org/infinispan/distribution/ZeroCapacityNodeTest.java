@@ -107,13 +107,13 @@ public class ZeroCapacityNodeTest extends MultipleCacheManagersTest {
       assertEquals(1f, capacityFactor(ch, node2), 0.0);
       assertEquals(0f, capacityFactor(ch, zeroCapacityNode), 0.0);
 
-      assertEquals(Collections.emptySet(), ch.getPrimarySegmentsForOwner(zeroCapacityNode.getAddress()));
-      assertEquals(Collections.emptySet(), ch.getSegmentsForOwner(zeroCapacityNode.getAddress()));
+      assertEquals(Collections.emptySet(), ch.getPrimarySegmentsForOwnerAsIntSet(zeroCapacityNode.getAddress()));
+      assertEquals(Collections.emptySet(), ch.getSegmentsForOwnerAsIntSet(zeroCapacityNode.getAddress()));
       cache1.stop();
 
       ConsistentHash ch2 = extractCacheTopology(cache2).getReadConsistentHash();
-      assertEquals(Collections.emptySet(), ch2.getPrimarySegmentsForOwner(zeroCapacityNode.getAddress()));
-      assertEquals(Collections.emptySet(), ch2.getSegmentsForOwner(zeroCapacityNode.getAddress()));
+      assertEquals(Collections.emptySet(), ch2.getPrimarySegmentsForOwnerAsIntSet(zeroCapacityNode.getAddress()));
+      assertEquals(Collections.emptySet(), ch2.getSegmentsForOwnerAsIntSet(zeroCapacityNode.getAddress()));
 
       // Test simple put and get
       zeroCapacityCache.put("key", "value");

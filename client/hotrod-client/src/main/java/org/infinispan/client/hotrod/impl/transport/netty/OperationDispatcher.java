@@ -58,6 +58,7 @@ import org.infinispan.commons.reactive.Functions;
 import org.infinispan.commons.reactive.RxJavaInterop;
 import org.infinispan.commons.stat.CounterTracker;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -410,7 +411,7 @@ public class OperationDispatcher {
       return channelHandler;
    }
 
-   public Map<SocketAddress, Set<Integer>> getPrimarySegmentsByAddress(String cacheName) {
+   public Map<SocketAddress, IntSet> getPrimarySegmentsByAddress(String cacheName) {
       CacheInfo cacheInfo = getCacheInfo(cacheName);
       return cacheInfo != null ? cacheInfo.getPrimarySegments() : null;
    }

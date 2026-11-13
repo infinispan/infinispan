@@ -4,6 +4,8 @@ import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Set;
 
+import org.infinispan.commons.util.IntSet;
+
 /**
  * Abstraction for the used consistent hash.
  *
@@ -25,9 +27,9 @@ public interface ConsistentHash {
     */
    int getNormalizedHash(Object object);
 
-   Map<SocketAddress, Set<Integer>> getSegmentsByServer();
+   Map<SocketAddress, IntSet> getSegmentsByServer();
 
-   default Map<SocketAddress, Set<Integer>> getPrimarySegmentsByServer() {
+   default Map<SocketAddress, IntSet> getPrimarySegmentsByServer() {
       return null;
    }
 }

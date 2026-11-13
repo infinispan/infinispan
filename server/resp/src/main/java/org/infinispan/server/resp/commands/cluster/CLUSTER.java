@@ -1,5 +1,7 @@
 package org.infinispan.server.resp.commands.cluster;
 
+import java.util.PrimitiveIterator;
+
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -34,7 +36,8 @@ public class CLUSTER extends FamilyCommand {
 
    static IntSet ownedSlots(Address member, ConsistentHash ch, SegmentSlotRelation ssr) {
       IntSet slots = IntSets.mutableEmptySet();
-      for (int segment: ch.getPrimarySegmentsForOwner(member)) {
+      for (PrimitiveIterator.OfInt iter = ch.getPrimarySegmentsForOwnerAsIntSet(member).iterator(); iter.hasNext(); ) {
+         int segment = iter.nextInt();
          slots.addAll(ssr.segmentToSlots(segment));
       }
       return IntSets.immutableSet(slots);

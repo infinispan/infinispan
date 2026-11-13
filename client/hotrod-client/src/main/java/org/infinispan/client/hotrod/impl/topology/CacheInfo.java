@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.impl.CacheTopologyInfoImpl;
 import org.infinispan.client.hotrod.impl.ClientTopology;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
 
 /**
@@ -33,7 +34,7 @@ public class CacheInfo {
    private final FailoverRequestBalancingStrategy balancer;
    private final int numSegments;
    private final List<InetSocketAddress> servers;
-   private final Map<SocketAddress, Set<Integer>> primarySegments;
+   private final Map<SocketAddress, IntSet> primarySegments;
    private final ConsistentHash consistentHash;
    private final AtomicReference<ClientTopology> clientTopologyRef;
    private final ClientTopology clientTopology;
@@ -116,7 +117,7 @@ public class CacheInfo {
       return servers;
    }
 
-   public Map<SocketAddress, Set<Integer>> getPrimarySegments() {
+   public Map<SocketAddress, IntSet> getPrimarySegments() {
       if (primarySegments == null) {
          return Collections.emptyMap();
       }
@@ -131,7 +132,7 @@ public class CacheInfo {
    public CacheTopologyInfo getCacheTopologyInfo() {
       Map<SocketAddress, Set<Integer>> segmentsByServer;
       if (consistentHash != null) {
-         segmentsByServer = consistentHash.getSegmentsByServer();
+         segmentsByServer = Collections.unmodifiableMap(consistentHash.getSegmentsByServer());
       } else {
          segmentsByServer = new HashMap<>(servers.size());
          for (InetSocketAddress server : servers) {

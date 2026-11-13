@@ -134,7 +134,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       CacheTopology stableTopology = context.getStableTopology();
       List<Address> stableMembers = new ArrayList<>(stableTopology.getMembers());
       // Ignore members without any segments (e.g. zero-capacity nodes)
-      stableMembers.removeIf(a -> stableTopology.getCurrentCH().getSegmentsForOwner(a).isEmpty());
+      stableMembers.removeIf(a -> stableTopology.getCurrentCH().getSegmentsForOwnerAsIntSet(a).isEmpty());
       List<Address> lostMembers = new ArrayList<>(stableMembers);
       lostMembers.removeAll(newMembers);
       if (isDataLost(stableTopology.getCurrentCH(), newMembers)) {

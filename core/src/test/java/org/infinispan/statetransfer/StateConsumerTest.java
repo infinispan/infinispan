@@ -254,8 +254,8 @@ public class StateConsumerTest extends AbstractInfinispanTest {
 
    private static void assertRebalanceStart(StateConsumerImpl stateConsumer, ConsistentHash current, ConsistentHash pending, Address member, Set<Integer> flatRequestedSegments) {
       // check that all segments have been requested
-      Set<Integer> oldSegments = current.getSegmentsForOwner(member);
-      Set<Integer> newSegments = pending.getSegmentsForOwner(member);
+      IntSet oldSegments = current.getSegmentsForOwnerAsIntSet(member);
+      IntSet newSegments = pending.getSegmentsForOwnerAsIntSet(member);
       newSegments.removeAll(oldSegments);
 
       log.debugf("Rebalancing. Added segments=%s, old segments=%s", newSegments, oldSegments);

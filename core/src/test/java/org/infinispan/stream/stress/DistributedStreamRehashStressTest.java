@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.StressTest;
-import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -121,13 +121,13 @@ public class DistributedStreamRehashStressTest extends StressTest {
          KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
          AdvancedCache<Integer, Integer> advancedCache = cache.getAdvancedCache();
          LocalizedCacheTopology cacheTopology = advancedCache.getDistributionManager().getCacheTopology();
-         Set<Integer> targetSegments = cacheTopology.getWriteConsistentHash().getSegmentsForOwner(cacheTopology.getLocalAddress());
+         IntSet targetSegments = cacheTopology.getWriteConsistentHash().getSegmentsForOwnerAsIntSet(cacheTopology.getLocalAddress());
          masterValues = masterValues.entrySet().stream()
                  .filter(e -> targetSegments.contains(keyPartitioner.getSegment(e.getKey())))
                  .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
          Iterator<Map.Entry<Integer, Integer>> iterator = cache.entrySet().stream()
                  .distributedBatchSize(50000)
-                 .filterKeySegments(IntSets.from(targetSegments))
+                 .filterKeySegments(targetSegments)
                  .iterator();
          while (iterator.hasNext()) {
             Map.Entry<Integer, Integer> entry = iterator.next();
