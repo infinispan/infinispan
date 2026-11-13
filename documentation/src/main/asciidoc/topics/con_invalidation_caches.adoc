@@ -17,12 +17,32 @@ Invalidation messages remove stale values from other nodes' memory.
 The messages are very small compared to replicating the entire value, and also other caches in the cluster look up modified data in a lazy manner, only when needed.
 The update to the shared store is typically handled by user application code or Hibernate.
 
-ifdef::community[]
-image::invalidation_cache_ispn.png[align="center", title="Invalidation cache"]
-endif::community[]
-ifdef::downstream[]
-image::invalidation_cache_rhdg.png[align="center", title="Invalidation cache"]
-endif::downstream[]
+.Invalidation cache
+[plantuml, target=invalidation-cache-flow, format=svg, align=center, subs="attributes+"]
+....
+@startuml
+skinparam defaultFontName sans-serif
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+participant "{brandname}\n(origin node)" as O
+participant "{brandname} A" as NA
+participant "{brandname} B" as NB
+participant "{brandname} C" as NC
+
+O -> O : put(k, v) updates the shared store
+par Concurrent invalidation messages to all other nodes
+  O -> NA : Invalidate key k\n(key only; no value)
+also
+  O -> NB : Invalidate key k\n(key only; no value)
+also
+  O -> NC : Invalidate key k\n(key only; no value)
+end
+NA -> NA : Remove stale entry for k
+NB -> NB : Remove stale entry for k
+note right of NC : Never held a local copy,\nso nothing to remove
+@enduml
+....
 
 Sometimes the application reads a value from the external store and wants to write it to the local cache, without removing it from the other nodes.
 To do this, it must call `Cache.putForExternalRead(key, value)` instead of `Cache.put(key, value)`.

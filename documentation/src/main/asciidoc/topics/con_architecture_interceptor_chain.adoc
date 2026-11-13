@@ -7,8 +7,8 @@ Each interceptor handles a specific cross-cutting concern and delegates to the n
 
 == How the chain works
 
-The chain is implemented as a linked list of `AsyncInterceptor` instances managed by `AsyncInterceptorChainImpl`.
-When a cache operation is invoked, the chain starts execution from the first interceptor and proceeds through the chain.
+The chain holds its interceptors in an ordered list inside `AsyncInterceptorChainImpl`, where each interceptor keeps a reference to the next one and passes control along that link when invoked.
+When a cache operation is invoked, execution starts at the first interceptor and proceeds through the rest of the chain.
 Each interceptor can:
 
 * Execute logic before passing control to the next interceptor
@@ -110,8 +110,11 @@ class NotificationInterceptor extends DDAsyncInterceptor
 class CallInterceptor extends DDAsyncInterceptor
 
 abstract class AbstractLockingInterceptor extends DDAsyncInterceptor
-class PessimisticLockingInterceptor extends AbstractLockingInterceptor
-class OptimisticLockingInterceptor extends AbstractLockingInterceptor
+
+abstract class AbstractTxLockingInterceptor extends AbstractLockingInterceptor
+class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor
+class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor
+class NonTransactionalLockingInterceptor extends AbstractLockingInterceptor
 
 abstract class BaseRpcInterceptor extends DDAsyncInterceptor
 abstract class ClusteringInterceptor extends BaseRpcInterceptor
@@ -120,8 +123,9 @@ class NonTxDistributionInterceptor extends BaseDistributionInterceptor
 class TxDistributionInterceptor extends BaseDistributionInterceptor
 class TriangleDistributionInterceptor extends BaseDistributionInterceptor
 
-class CacheLoaderInterceptor extends DDAsyncInterceptor
-class CacheWriterInterceptor extends DDAsyncInterceptor
+abstract class JmxStatsCommandInterceptor extends DDAsyncInterceptor
+class CacheLoaderInterceptor extends JmxStatsCommandInterceptor
+class CacheWriterInterceptor extends JmxStatsCommandInterceptor
 
 abstract class BaseBackupInterceptor extends DDAsyncInterceptor
 class NonTransactionalBackupInterceptor extends BaseBackupInterceptor
@@ -130,65 +134,66 @@ class NonTransactionalBackupInterceptor extends BaseBackupInterceptor
 
 == Default chain order
 
-The interceptor chain is assembled at cache startup based on the cache configuration.
-The typical ordering is:
+The interceptor chain is assembled when a cache starts by `InterceptorChainFactory.buildInterceptorChain()`.
+Interceptors are appended one after another, so their position in the chain matches that assembly order.
+The table below shows a representative chain for a distributed synchronous cache with cross-site backups and an asynchronous persistent store configured (non-transactional).
 
 [cols="1,3,4"]
 |===
 |Order |Interceptor |Responsibility
 
 |1
-|`IsMarshallableInterceptor`
-|Verifies that keys and values can be serialized.
+|`VersionInterceptor`
+|Manages entry versioning. Present only in non-transactional caches.
 
 |2
-|`BatchingInterceptor`
-|Handles manual batch demarcation.
+|`IsMarshallableInterceptor`
+|Verifies that keys and values can be marshalled before serialization happens. Present only when an asynchronous store is used.
 
 |3
-|`TxInterceptor`
-|Manages transaction enlistment, prepare, commit, and rollback.
+|`CacheMgmtInterceptor`
+|Handles cache management commands such as clear or size requests. Always present in the chain.
 
 |4
-|`NotificationInterceptor`
-|Fires cache event notifications to registered listeners.
+|`StateTransferInterceptor`
+|Sets the topology id on each command and retries it if a topology change happens while processing. Present for clustered caches that use state transfer, plus transactional invalidation caches.
 
 |5
-|`VersionInterceptor`
-|Manages entry versioning for optimistic locking.
+|`*LockingInterceptor`
+|Acquires and releases locks before delegating further down the chain. Non-transactional chains use `NonTransactionalLockingInterceptor`, while transactional caches use a pessimistic or optimistic variant.
 
 |6
-|`*LockingInterceptor`
-|Acquires and releases locks. The specific implementation depends on the transaction mode (pessimistic or optimistic).
+|`*BackupInterceptor`
+|Replicates write commands to backup sites for cross-site replication, wrapping them in a `SingleXSiteRpcCommand`. Present when backups are configured.
 
 |7
-|`EntryWrappingInterceptor`
-|Wraps cache entries for transactional isolation.
+|`EntryWrappingInterceptor`, then persistence interceptors
+|Wraps cache entries so that downstream interceptors see transactional state. Persistence loaders and writers (`ClusteredCacheLoaderInterceptor` and `DistCacheWriterInterceptor` in clustered modes) are inserted immediately after this interceptor, before any distribution handling.
 
 |8
 |`*DistributionInterceptor`
-|Routes commands to the correct owners in distributed and replicated modes.
+|Routes commands to the correct owners in distributed or replicated modes: `TriangleDistributionInterceptor` for distributed caches running in embedded mode, otherwise `NonTxDistributionInterceptor`. Invalidation mode uses `InvalidationInterceptor`, and local caches add no routing interceptor here.
 
 |9
-|`StateTransferInterceptor`
-|Coordinates operations during topology changes and state transfer.
+|`NonTxIracRemoteSiteInterceptor`
+|Handles write commands received from backup sites and applies cross-site metadata and merge policies. Present on all clustered chains.
 
 |10
-|`CacheLoaderInterceptor`
-|Loads entries from persistent stores on cache miss.
+|`SegmentHashInterceptor`
+|Maintains per-segment hashes of entries so that conflicts can be detected when two partitions are merged back together. Present only when the cache resolves conflicts at merge time (a merge policy other than `NONE`) and no shared store is used.
 
 |11
-|`CacheWriterInterceptor`
-|Writes entries to persistent stores after mutation.
-
-|12
-|`*BackupInterceptor`
-|Replicates operations to remote sites for cross-site replication.
-
-|13
 |`CallInterceptor`
 |Executes the actual cache operation on the data container. Always last in the chain.
 |===
 
-Not all interceptors are present in every chain.
-For example, transaction interceptors are omitted for non-transactional caches, and distribution interceptors are omitted for local caches.
+Additional interceptors appear depending on configuration, inserted within this order:
+
+* `BatchingInterceptor`: added first only when invocation batching is enabled (disabled by default). Handles manual batch demarcation.
+* Transactional caches add a transaction trio after state transfer handling: `TransactionSynchronizerInterceptor` for clustered caches, then `TxInterceptor`, and finally the locking interceptor. When transaction notifications are enabled, `NotificationInterceptor` follows right after the locking interceptor so that locks are still held while it fires prepare/commit/rollback events to listeners.
+* Caches with L1 enabled add `L1LastChanceInterceptor` before entry wrapping, plus either `L1TxInterceptor` or `L1NonTxInterceptor` after persistence handling.
+* Caches with asynchronous cross-site backups add an IRAC local site interceptor (`NonTxIracLocalSiteInterceptor`, or the optimistic/pessimistic transactional variants) between L1 and distribution/invalidation routing.
+* Clustered caches that do not allow reads and writes during a partition (a `whenSplit` value other than `ALLOW_READ_WRITES`) add `PartitionHandlingInterceptor`.
+* Version-aware caches swap `EntryWrappingInterceptor` for `VersionedEntryWrappingInterceptor`, and synchronous distribution/replication modes use `VersionedDistributionInterceptor` instead of the regular routing interceptors.
+
+Not all interceptors are present in every chain: local caches skip state transfer, backup, distribution, and cross-site handling entirely.
