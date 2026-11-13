@@ -606,9 +606,14 @@ end note
 
 CC -> Other: Replication
 activate Other
-Other -> Other: CacheListener:\ncreate cache locally
-Other -> LCS: createCache()
+Other -> Other: CacheListener:\ndefine configuration\nand register cache
+Other --> CC: Acknowledge write
 deactivate Other
+Other ->> Other: Start cache\nin the background
+note right
+  Includes the initial
+  state transfer
+end note
 
 GCM -> LCS: createCache()
 activate LCS
@@ -625,6 +630,7 @@ deactivate LCS
 
 GCM --> Admin: Cache
 deactivate GCM
+Admin -> Admin: Wait for the cache\nto start locally
 deactivate Admin
 
 == Cache Removal ==
@@ -652,10 +658,31 @@ The `GlobalConfigurationManager` orchestrates this flow:
 . The configuration is serialized to XML and wrapped in a `CacheState` along with any admin flags.
 . The `CacheState` is put into the internal CONFIG cache, keyed by a `ScopedState("cache", cacheName)`.
 . The CONFIG cache is replicated, so all nodes receive the entry.
-. On each node, a `GlobalConfigurationStateListener` reacts to the cache event and calls `LocalConfigurationStorage.createCache()` to define and start the cache locally.
+. On each node, a `GlobalConfigurationStateListener` reacts to the cache event and calls `LocalConfigurationStorage.createCache()`.
+The configuration is defined and the cache is registered before the node acknowledges the write.
+The cache then starts in the background, so the write does not wait for the cache to start on any node.
 . In `OVERLAY` mode, the `OverlayLocalConfigurationStorage` also persists the configuration to `caches.xml`.
+. The node that runs `createCache()` waits for the cache to start locally before it returns the cache.
 
 The same pattern applies to template creation and removal.
+
+==== Cache readiness after creation
+
+When `createCache()` returns, the cache exists on every node in the cluster, but it is ready only on the node that created it.
+Every other node finishes starting the cache in the background.
+Starting a clustered cache includes joining its topology and, when `await-initial-transfer` is enabled, which is the default, waiting for its initial state transfer.
+The initial state transfer can take a long time for a cache that already holds a lot of data.
+
+The `await-initial-transfer` state transfer attribute applies to each node separately.
+When it is enabled, a node considers the cache started only after its own initial state transfer completes.
+It does not make `createCache()` wait for other nodes.
+
+While a node is still starting a cache:
+
+* A `getCache()` call for that cache on the node waits until the start completes.
+* Hot Rod requests for that cache that reach the node fail with a `Cache '<name>' is not ready` error.
+
+Applications that create a cache on one node and use it on another must wait until the cache is ready on that node.
 
 === Cluster-wide configuration updates
 
@@ -777,4 +804,12 @@ On startup, the `GlobalConfigurationManager` restores runtime-created caches:
 . The `LocalConfigurationStorage` loads persisted configurations from `caches.xml` and `templates.xml`.
 . If the node joins an existing cluster, it also receives CONFIG cache entries replicated from other nodes.
 . Each persisted configuration is validated for compatibility with any cluster-wide version already in the CONFIG cache.
-. Caches and templates are created locally, matching the state of the rest of the cluster.
+An incompatible configuration fails the startup.
+. Templates and caches that the CONFIG cache already contains are created locally from the cluster state, without writing them to the CONFIG cache again.
+During a full-cluster restart, the first node to start usually writes every persisted configuration, and the nodes that start later find them already in place.
+. Templates and caches that the CONFIG cache does not contain yet are written to it, which defines them on every node as described in the runtime cache creation flow.
+. The caches start locally, matching the state of the rest of the cluster.
+
+If writing a cache configuration to the CONFIG cache fails, for example because of a timeout, the node logs a warning, defines the cache locally from its persisted configuration, and continues the startup.
+After it has processed all caches, the node retries each failed cache once if the CONFIG cache still does not contain it.
+If the retry also fails, the cache runs on this node, but other nodes might not create it until a later restart writes the configuration successfully.
