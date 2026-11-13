@@ -101,15 +101,34 @@ public class EmbeddedClusteredLockManagerTest extends BaseClusteredLockTest {
 
    public void testRemove() {
       ClusteredLockManager clusteredLockManager = clusteredLockManager(0);
+      clusteredLockManager.defineLock(LOCK_NAME);
+      assertNotNull(clusteredLockManager.get(LOCK_NAME));
+      assertTrue(await(clusteredLockManager.remove(LOCK_NAME)));
+      assertFalse(clusteredLockManager.isDefined(LOCK_NAME));
+   }
+
+   /**
+    * Locks must not install a cluster listener each, otherwise every lock creation and removal is broadcast to the
+    * whole cluster. A single listener per node, filtered by the node id, is enough.
+    */
+   public void testSingleClusterListenerPerNode() {
+      ClusteredLockManager clusteredLockManager = clusteredLockManager(0);
       Cache<Object, Object> clusteredLocksCache = cache(0, ClusteredLockModuleLifecycle.CLUSTERED_LOCK_CACHE_NAME);
-      int beforeSize = getListeners(clusteredLocksCache).size();
+
       clusteredLockManager.defineLock(LOCK_NAME);
       clusteredLockManager.get(LOCK_NAME);
-      int afterSize = getListeners(clusteredLocksCache).size();
-      assertTrue(beforeSize < afterSize);
-      await(clusteredLockManager.remove(LOCK_NAME));
-      int afterRemoveSize = getListeners(clusteredLocksCache).size();
-      assertFalse(clusteredLockManager.isDefined(LOCK_NAME));
-      assertEquals(beforeSize, afterRemoveSize);
+      int listenersWithOneLock = getListeners(clusteredLocksCache).size();
+
+      for (int i = 0; i < 10; i++) {
+         String name = LOCK_NAME + "-" + i;
+         clusteredLockManager.defineLock(name);
+         assertNotNull(clusteredLockManager.get(name));
+      }
+      assertEquals(listenersWithOneLock, getListeners(clusteredLocksCache).size());
+
+      for (int i = 0; i < 10; i++) {
+         await(clusteredLockManager.remove(LOCK_NAME + "-" + i));
+      }
+      assertEquals(listenersWithOneLock, getListeners(clusteredLocksCache).size());
    }
 }
