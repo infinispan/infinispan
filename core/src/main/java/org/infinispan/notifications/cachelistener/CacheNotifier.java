@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
@@ -120,6 +121,17 @@ public interface CacheNotifier<K, V> extends DataConversionAwareListenable<K, V>
 
    // Callers sync - until additional parts of topology updates - not in user thread
    CompletionStage<Void> notifyPartitionStatusChanged(AvailabilityMode mode, boolean pre);
+
+   /**
+    * Notifies all registered listeners of a
+    * {@link org.infinispan.notifications.cachelistener.event.SegmentsLostEvent} event, i.e. that the given segments
+    * no longer have any owner holding their data.
+    *
+    * @param segments      the segments that lost all their owners, must not be empty
+    * @param newTopologyId the id of the topology in which the loss was detected
+    */
+   // Callers sync - until additional parts of topology updates - not in user thread
+   CompletionStage<Void> notifySegmentsLost(IntSet segments, int newTopologyId);
 
    // Callers sync - done in periodic persistence thread - not in user thread
    CompletionStage<Void> notifyPersistenceAvailabilityChanged(boolean available);

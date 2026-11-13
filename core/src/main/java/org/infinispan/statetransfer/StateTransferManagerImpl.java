@@ -1,5 +1,7 @@
 package org.infinispan.statetransfer;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -9,14 +11,19 @@ import java.util.function.Function;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.internal.InternalCacheNames;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.internal.PrivateCacheConfiguration;
 import org.infinispan.container.versioning.irac.IracVersionGenerator;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.KeyPartitioner;
 import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
@@ -35,11 +42,14 @@ import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.annotation.SegmentsLost;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PreloadManager;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.CacheTopologyHandler;
@@ -75,6 +85,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Inject GlobalStateManager globalStateManager;
    // Only join the cluster after preloading
    @Inject PreloadManager preloadManager;
+   @Inject PersistenceManager persistenceManager;
    // Make sure we can handle incoming requests before joining
    @Inject PerCacheInboundInvocationHandler inboundInvocationHandler;
    @Inject IracManager iracManager;
@@ -159,7 +170,10 @@ public class StateTransferManagerImpl implements StateTransferManager {
    }
 
    private CompletionStage<Void> doTopologyUpdate(CacheTopology newCacheTopology, boolean isRebalance) {
-      CacheTopology oldCacheTopology = distributionManager.getCacheTopology();
+      LocalizedCacheTopology oldCacheTopology = distributionManager.getCacheTopology();
+      // Before the first real topology update the distribution manager returns a placeholder topology,
+      // which must not be used to reason about ownership changes.
+      boolean wasConnected = oldCacheTopology != null && oldCacheTopology.isConnected();
 
       int newTopologyId = newCacheTopology.getTopologyId();
       if (oldCacheTopology != null && oldCacheTopology.getTopologyId() > newTopologyId) {
@@ -189,6 +203,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
                   ignored -> updateProviderAndConsumer(isRebalance, newTopologyId, newCacheTopology, newRebalanceId, phase)
             ).thenCompose(
                   ignored -> cacheNotifier.notifyTopologyChanged(oldCacheTopology, newCacheTopology, newTopologyId, false)
+            ).thenCompose(
+                  ignored -> notifySegmentsLostIfNeeded(wasConnected ? oldCacheTopology : null, newCacheTopology)
             ).thenRun(() -> {
                completeInitialTransferIfNeeded(newCacheTopology, phase);
                partitionHandlingManager.onTopologyUpdate(newCacheTopology);
@@ -200,6 +216,53 @@ public class StateTransferManagerImpl implements StateTransferManager {
                // It also runs if the update failed, as it did before it was moved after the update.
                iracManager.onTopologyUpdate(oldCacheTopology, newCacheTopology);
             });
+   }
+
+   /**
+    * Raises a {@link org.infinispan.notifications.cachelistener.event.SegmentsLostEvent} if installing
+    * {@code newCacheTopology} leaves some segments without a single owner still holding their data.
+    * <p>
+    * A segment is lost when none of the nodes that could read it in the old topology is still a member of the new
+    * one. Membership is taken from the new consistent hash rather than from
+    * {@link CacheTopology#getActualMembers()} on purpose: when the cache enters degraded mode the consistent hash is
+    * left untouched, because the data is only unreachable and comes back once the partitions merge.
+    * <p>
+    * Nothing is lost when the cache has a shared store: the new owners read the entries back from it. A shared store
+    * can be neither passivating nor purged on startup, so its contents always outlive the nodes that wrote them.
+    * Private stores do not help, as they go away with the node that owned them.
+    */
+   private CompletionStage<Void> notifySegmentsLostIfNeeded(CacheTopology oldCacheTopology, CacheTopology newCacheTopology) {
+      if (oldCacheTopology == null || !cacheNotifier.hasListener(SegmentsLost.class))
+         return CompletableFutures.completedNull();
+
+      if (persistenceManager.hasStore(StoreConfiguration::shared))
+         return CompletableFutures.completedNull();
+
+      List<Address> newMembers = newCacheTopology.getMembers();
+      // The local node is either leaving the cache or has not joined it yet, it is not in a position to report
+      // a cluster-wide data loss.
+      if (!newMembers.contains(rpcManager.getAddress()))
+         return CompletableFutures.completedNull();
+
+      ConsistentHash oldReadCH = oldCacheTopology.getReadConsistentHash();
+      IntSet lostSegments = null;
+      for (int segment = 0; segment < oldReadCH.getNumSegments(); segment++) {
+         if (Collections.disjoint(oldReadCH.locateOwnersForSegment(segment), newMembers)) {
+            if (lostSegments == null) {
+               lostSegments = IntSets.mutableEmptySet(oldReadCH.getNumSegments());
+            }
+            lostSegments.set(segment);
+         }
+      }
+
+      if (lostSegments == null)
+         return CompletableFutures.completedNull();
+
+      if (log.isTraceEnabled()) {
+         log.tracef("Segments %s of cache %s lost all their owners in topology %d", lostSegments, cacheName,
+                    newCacheTopology.getTopologyId());
+      }
+      return cacheNotifier.notifySegmentsLost(lostSegments, newCacheTopology.getTopologyId());
    }
 
    private CompletionStage<?> updateProviderAndConsumer(boolean isRebalance, int newTopologyId, CacheTopology newCacheTopology,
