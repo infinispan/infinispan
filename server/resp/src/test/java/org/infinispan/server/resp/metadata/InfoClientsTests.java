@@ -2,6 +2,8 @@ package org.infinispan.server.resp.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -13,11 +15,30 @@ import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.ArrayOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 
 @Test(groups = "functional", testName = "server.resp.metadata.InfoClientsTests")
 public class InfoClientsTests extends SingleNodeRespBaseTest {
+
+   // BLMOVEM is not part of the Lettuce command set.
+   private static final ProtocolKeyword BLMOVEM = new ProtocolKeyword() {
+      private final byte[] bytes = "BLMOVEM".getBytes(StandardCharsets.US_ASCII);
+
+      @Override
+      public byte[] getBytes() {
+         return bytes;
+      }
+
+      @Override
+      public String name() {
+         return "BLMOVEM";
+      }
+   };
 
    @Override
    public Object[] factory() {
@@ -100,6 +121,35 @@ public class InfoClientsTests extends SingleNodeRespBaseTest {
       // Netty's event is handled asynchronously.
       eventually(() -> metadata.getConnectedClients() == 2);
       assertInfoValue(c0, Map.entry("connected_clients", 2L));
+   }
+
+   public void testBlockedClientReleasedAfterBlmovemReply() throws Throwable {
+      ClientMetadata metadata = server.metadataRepository().client();
+      RedisCommands<String, String> c0 = redisConnection.sync();
+      // Other test methods may leave connections open, restore whatever count this test started with.
+      long connectedBefore = metadata.getConnectedClients();
+
+      try (StatefulRedisConnection<String, String> conn = newConnection()) {
+         // BLMOVEM blocks on a single source key until an element is available.
+         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8)
+               .addKey("blmovem-src").addKey("blmovem-dst")
+               .add("LEFT").add("RIGHT")
+               .add("0");
+         RedisFuture<List<Object>> fut = conn.async().dispatch(BLMOVEM, new ArrayOutput<>(StringCodec.UTF8), args);
+         eventually(() -> metadata.getBlockedClients() == 1);
+         assertThat(metadata.getBlockedKeys()).isEqualTo(1);
+         assertInfoValue(c0, Map.entry("blocked_clients", 1L), Map.entry("total_blocking_keys", 1L));
+
+         // Once the client receives the reply, it is no longer counted as blocked.
+         c0.lpush("blmovem-src", "a");
+         assertThat(fut.get(10, TimeUnit.SECONDS)).containsExactly("a");
+         assertThat(metadata.getBlockedClients()).isZero();
+         assertThat(metadata.getBlockedKeys()).isZero();
+         assertInfoValue(c0, Map.entry("blocked_clients", 0L), Map.entry("total_blocking_keys", 0L));
+      }
+
+      // Netty handles the disconnect asynchronously. Wait for it, so the next test method sees the original count.
+      eventually(() -> metadata.getConnectedClients() == connectedBefore);
    }
 
    @SafeVarargs

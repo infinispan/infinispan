@@ -125,11 +125,12 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
       ClientMetadata metadata = handler.respServer().metadataRepository().client();
       metadata.incrementBlockedClients();
       metadata.recordBlockedKeys(configuration.keys().size());
-      pubSubListener.getFuture().whenComplete((ignore, t) -> {
+      // Return the dependent future, so the metadata is updated before the reply is written to the client.
+      // Dependents of the original future would run in reverse registration order, after the reply.
+      return pubSubListener.getFuture().whenComplete((ignore, t) -> {
          metadata.decrementBlockedClients();
          metadata.recordBlockedKeys(-configuration.keys().size());
       });
-      return pubSubListener.getFuture();
    }
 
    private static CompletionStage<Collection<byte[]>> pollAllKeys(
