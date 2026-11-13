@@ -84,6 +84,7 @@ public class Bookmark extends CliCommand {
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
+         Context context = invocation.getContext();
          // Aesh sets unspecified options to empty string, normalize to null
          url = emptyToNull(url);
          username = emptyToNull(username);
@@ -95,7 +96,7 @@ public class Bookmark extends CliCommand {
          hostnameVerifier = emptyToNull(hostnameVerifier);
 
          // Infer values from the current connection if not explicitly provided
-         if (invocation.getContext().isConnected()) {
+         if (context.isConnected()) {
             Connection connection = invocation.getContext().connection();
             if (url == null) {
                url = connection.getURI();
@@ -103,7 +104,6 @@ public class Bookmark extends CliCommand {
             if (username == null) {
                username = connection.getUsername();
             }
-            Context context = invocation.getContext();
             if (truststore == null) {
                truststore = context.getProperty(Context.Property.TRUSTSTORE);
             }
@@ -119,7 +119,7 @@ public class Bookmark extends CliCommand {
          }
 
          // For new bookmarks, a URL is required. For existing ones, keep the current URL.
-         Properties existing = loadBookmarks(invocation);
+         Properties existing = loadBookmarks(context);
          if (url == null) {
             url = existing.getProperty(name + ".url");
          }
@@ -163,7 +163,7 @@ public class Bookmark extends CliCommand {
             url = cleanUrl.toString();
          }
 
-         Properties bookmarks = loadBookmarks(invocation);
+         Properties bookmarks = loadBookmarks(context);
          setIfPresent(bookmarks, name, "url", url);
          setIfPresent(bookmarks, name, "username", username);
          setIfPresent(bookmarks, name, "truststore", truststore);
@@ -178,7 +178,7 @@ public class Bookmark extends CliCommand {
          boolean hasSecrets = password != null || truststorePassword != null || keystorePassword != null;
          if (hasSecrets) {
             try {
-               KeyStoreCredentialStore store = openCredentialStoreWithFallback(invocation, true);
+               KeyStoreCredentialStore store = openCredentialStoreWithFallback(context, true);
                storeSecret(store, name, "password", password);
                storeSecret(store, name, "truststore-password", truststorePassword);
                storeSecret(store, name, "keystore-password", keystorePassword);
@@ -209,7 +209,8 @@ public class Bookmark extends CliCommand {
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
-         Properties bookmarks = loadBookmarks(invocation);
+         Context context = invocation.getContext();
+         Properties bookmarks = loadBookmarks(context);
          String prefix = name + ".";
          List<String> toRemove = bookmarks.stringPropertyNames().stream()
                .filter(k -> k.startsWith(prefix)).toList();
@@ -225,7 +226,7 @@ public class Bookmark extends CliCommand {
          Path storePath = invocation.getContext().configPath().resolve(CREDENTIAL_STORE_FILE);
          if (Files.exists(storePath)) {
             try {
-               KeyStoreCredentialStore store = openCredentialStoreWithFallback(invocation, false);
+               KeyStoreCredentialStore store = openCredentialStoreWithFallback(context, false);
                for (String secretKey : SECRET_KEYS) {
                   String alias = credentialAlias(name, secretKey);
                   if (store.exists(alias, PasswordCredential.class)) {
@@ -248,7 +249,8 @@ public class Bookmark extends CliCommand {
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
-         Properties bookmarks = loadBookmarks(invocation);
+         Context context = invocation.getContext();
+         Properties bookmarks = loadBookmarks(context);
          Set<String> names = new TreeSet<>();
          for (String key : bookmarks.stringPropertyNames()) {
             int dot = key.indexOf('.');
@@ -281,7 +283,8 @@ public class Bookmark extends CliCommand {
 
       @Override
       public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
-         Properties bookmarks = loadBookmarks(invocation);
+         Context context = invocation.getContext();
+         Properties bookmarks = loadBookmarks(context);
          String prefix = name + ".";
          boolean found = false;
          for (String key : new TreeSet<>(bookmarks.stringPropertyNames())) {
@@ -293,10 +296,10 @@ public class Bookmark extends CliCommand {
          }
 
          // Show which secrets are stored (without revealing values)
-         Path storePath = invocation.getContext().configPath().resolve(CREDENTIAL_STORE_FILE);
+         Path storePath = context.configPath().resolve(CREDENTIAL_STORE_FILE);
          if (Files.exists(storePath)) {
             try {
-               KeyStoreCredentialStore store = openCredentialStoreWithFallback(invocation, false);
+               KeyStoreCredentialStore store = openCredentialStoreWithFallback(context, false);
                for (String secretKey : SECRET_KEYS) {
                   if (store.exists(credentialAlias(name, secretKey), PasswordCredential.class)) {
                      invocation.println(secretKey + " = ********");
@@ -316,8 +319,8 @@ public class Bookmark extends CliCommand {
       }
    }
 
-   static Properties loadBookmarks(ContextAwareCommandInvocation invocation) throws CommandException {
-      Path configPath = invocation.getContext().configPath();
+   static Properties loadBookmarks(Context context) throws CommandException {
+      Path configPath = context.configPath();
       Path bookmarksFile = configPath.resolve(BOOKMARKS_FILE);
       Properties props = new Properties();
       if (Files.exists(bookmarksFile)) {
@@ -347,9 +350,9 @@ public class Bookmark extends CliCommand {
       return "bookmark." + bookmarkName + "." + secretKey;
    }
 
-   static KeyStoreCredentialStore openCredentialStore(ContextAwareCommandInvocation invocation, boolean create, char[] masterPassword)
+   static KeyStoreCredentialStore openCredentialStore(Context context, boolean create, char[] masterPassword)
          throws CredentialStoreException {
-      Path storePath = invocation.getContext().configPath().resolve(CREDENTIAL_STORE_FILE);
+      Path storePath = context.configPath().resolve(CREDENTIAL_STORE_FILE);
       return Credentials.getKeyStoreCredentialStore(storePath, Credentials.STORE_TYPE, create, masterPassword);
    }
 
@@ -357,13 +360,13 @@ public class Bookmark extends CliCommand {
     * Attempts to open the credential store with an empty password first.
     * If that fails, prompts the user for the master password.
     */
-   static KeyStoreCredentialStore openCredentialStoreWithFallback(ContextAwareCommandInvocation invocation, boolean create)
+   static KeyStoreCredentialStore openCredentialStoreWithFallback(Context context, boolean create)
          throws CredentialStoreException, CommandException {
       try {
-         return openCredentialStore(invocation, false, new char[0]);
+         return openCredentialStore(context, false, new char[0]);
       } catch (CredentialStoreException e) {
-         char[] masterPassword = getMasterPassword(invocation);
-         return openCredentialStore(invocation, create, masterPassword);
+         char[] masterPassword = getMasterPassword(context);
+         return openCredentialStore(context, create, masterPassword);
       }
    }
 
@@ -378,9 +381,9 @@ public class Bookmark extends CliCommand {
       }
    }
 
-   static char[] getMasterPassword(ContextAwareCommandInvocation invocation) throws CommandException {
+   static char[] getMasterPassword(Context context) throws CommandException {
       try {
-         return invocation.getPasswordInteractively(Messages.MSG.bookmarkMasterPassword(), null).toCharArray();
+         return context.readPassword(Messages.MSG.bookmarkMasterPassword(), null).toCharArray();
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new CommandException("Interrupted while reading master password", e);
@@ -412,8 +415,8 @@ public class Bookmark extends CliCommand {
     * Resolves a bookmark by name, loading properties and secrets.
     * Returns null if the bookmark does not exist.
     */
-   public static ResolvedBookmark resolve(ContextAwareCommandInvocation invocation, String bookmarkName) throws CommandException {
-      Properties bookmarks = loadBookmarks(invocation);
+   public static ResolvedBookmark resolve(Context context, String bookmarkName) throws CommandException {
+      Properties bookmarks = loadBookmarks(context);
       String url = bookmarks.getProperty(bookmarkName + ".url");
       if (url == null) {
          return null;
@@ -427,10 +430,10 @@ public class Bookmark extends CliCommand {
       String password = null;
       String truststorePassword = null;
       String keystorePassword = null;
-      Path storePath = invocation.getContext().configPath().resolve(CREDENTIAL_STORE_FILE);
+      Path storePath = context.configPath().resolve(CREDENTIAL_STORE_FILE);
       if (Files.exists(storePath)) {
          try {
-            KeyStoreCredentialStore store = openCredentialStoreWithFallback(invocation, false);
+            KeyStoreCredentialStore store = openCredentialStoreWithFallback(context, false);
             password = retrieveSecret(store, bookmarkName, "password");
             truststorePassword = retrieveSecret(store, bookmarkName, "truststore-password");
             keystorePassword = retrieveSecret(store, bookmarkName, "keystore-password");

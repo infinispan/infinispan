@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import org.aesh.command.CommandException;
 import org.aesh.command.CommandNotFoundException;
 import org.aesh.command.Executor;
+import org.aesh.command.impl.context.CommandContext;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.invocation.CommandInvocationConfiguration;
 import org.aesh.command.parser.CommandLineParserException;
@@ -122,6 +123,11 @@ public class ContextAwareCommandInvocation implements CommandInvocation {
       invocation.println(msg, paging);
    }
 
+   @Override
+   public CommandContext getCommandContext() {
+      return CommandInvocation.super.getCommandContext();
+   }
+
    public Context getContext() {
       return context;
    }
@@ -132,20 +138,6 @@ public class ContextAwareCommandInvocation implements CommandInvocation {
 
    public PrintStream getShellError() {
       return System.err;
-   }
-
-   public String getPasswordInteractively(String prompt, String confirmPrompt) throws InterruptedException {
-      String password = null;
-      while (password == null) {
-         password = shell.readLine(new Prompt(prompt, '*'));
-      }
-      if (confirmPrompt != null) {
-         String confirm = null;
-         while (confirm == null || !confirm.equals(password)) {
-            confirm = shell.readLine(new Prompt(confirmPrompt, '*'));
-         }
-      }
-      return password;
    }
 
    public void errorln(String msg) {
