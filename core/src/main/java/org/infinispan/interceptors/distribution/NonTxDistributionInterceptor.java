@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.PrimitiveIterator;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
@@ -75,9 +74,9 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    private Map<Address, IntSet> primaryOwnersOfSegments(ConsistentHash ch) {
       Map<Address, IntSet> map = new HashMap<>(ch.getMembers().size());
       for (Address member : ch.getMembers()) {
-         Set<Integer> segments = ch.getPrimarySegmentsForOwner(member);
+         IntSet segments = ch.getPrimarySegmentsForOwnerAsIntSet(member);
          if (!segments.isEmpty()) {
-            map.put(member, IntSets.from(segments));
+            map.put(member, segments);
          }
       }
       return map;

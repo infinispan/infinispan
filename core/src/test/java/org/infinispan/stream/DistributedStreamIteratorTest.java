@@ -29,7 +29,6 @@ import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.impl.InternalDataContainer;
@@ -451,7 +450,7 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
 
       KeyPartitioner keyPartitioner = TestingUtil.extractComponent(cache0, KeyPartitioner.class);
       ConsistentHash ch = cache0.getAdvancedCache().getDistributionManager().getCacheTopology().getWriteConsistentHash();
-      IntSet segmentsCache0 = IntSets.from(ch.getSegmentsForOwner(address(0)));
+      IntSet segmentsCache0 = ch.getSegmentsForOwnerAsIntSet(address(0));
 
       CacheStream<Map.Entry<Object, String>> stream = cache0.entrySet().stream();
       if (!rehashAware) stream = stream.disableRehashAware();

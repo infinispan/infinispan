@@ -12,6 +12,7 @@ import java.util.TreeMap;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 import org.jboss.logging.BasicLogger;
 
@@ -124,12 +125,12 @@ public class ConsistentHashV2 implements ConsistentHash {
    }
 
    @Override
-   public Map<SocketAddress, Set<Integer>> getSegmentsByServer() {
+   public Map<SocketAddress, IntSet> getSegmentsByServer() {
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public Map<SocketAddress, Set<Integer>> getPrimarySegmentsByServer() {
+   public Map<SocketAddress, IntSet> getPrimarySegmentsByServer() {
       throw new UnsupportedOperationException();
    }
 

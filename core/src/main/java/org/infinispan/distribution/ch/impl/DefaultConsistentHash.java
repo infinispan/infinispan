@@ -169,7 +169,13 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    }
 
    @Override
+   @Deprecated(since = "16.4")
    public Set<Integer> getSegmentsForOwner(Address owner) {
+      return getSegmentsForOwnerAsIntSet(owner);
+   }
+
+   @Override
+   public IntSet getSegmentsForOwnerAsIntSet(Address owner) {
       if (owner == null) {
          throw new IllegalArgumentException("owner cannot be null");
       }
@@ -187,7 +193,13 @@ public class DefaultConsistentHash extends AbstractConsistentHash {
    }
 
    @Override
+   @Deprecated(since = "16.4")
    public Set<Integer> getPrimarySegmentsForOwner(Address owner) {
+      return getPrimarySegmentsForOwnerAsIntSet(owner);
+   }
+
+   @Override
+   public IntSet getPrimarySegmentsForOwnerAsIntSet(Address owner) {
       if (owner == null) {
          throw new IllegalArgumentException("owner cannot be null");
       }

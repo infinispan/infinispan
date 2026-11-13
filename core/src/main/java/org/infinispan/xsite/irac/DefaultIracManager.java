@@ -209,9 +209,9 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          // not in teh cache topology
          return;
       }
-      IntSet addedSegments = mutableCopyFrom(newCacheTopology.getWriteConsistentHash().getSegmentsForOwner(local));
+      IntSet addedSegments = mutableCopyFrom(newCacheTopology.getWriteConsistentHash().getSegmentsForOwnerAsIntSet(local));
       if (oldCacheTopology.getMembers().contains(local)) {
-         addedSegments.removeAll(oldCacheTopology.getWriteConsistentHash().getSegmentsForOwner(local));
+         addedSegments.removeAll(oldCacheTopology.getWriteConsistentHash().getSegmentsForOwnerAsIntSet(local));
       }
 
       if (!addedSegments.isEmpty()) {

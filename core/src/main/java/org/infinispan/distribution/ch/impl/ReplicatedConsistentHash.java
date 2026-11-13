@@ -48,7 +48,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    private final List<Address> membersWithoutState;
 
    private final Map<Address, Float> capacityFactors;
-   private final Set<Integer> segments;
+   private final IntSet segments;
 
    public ReplicatedConsistentHash(List<Address> members, List<Integer> primaryOwners) {
       this(members, null, Collections.emptyList(), primaryOwners);
@@ -233,7 +233,13 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    }
 
    @Override
+   @Deprecated(since = "16.4")
    public Set<Integer> getSegmentsForOwner(Address owner) {
+      return getSegmentsForOwnerAsIntSet(owner);
+   }
+
+   @Override
+   public IntSet getSegmentsForOwnerAsIntSet(Address owner) {
       if (owner == null) {
          throw new IllegalArgumentException("owner cannot be null");
       }
@@ -245,7 +251,13 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    }
 
    @Override
+   @Deprecated(since = "16.4")
    public Set<Integer> getPrimarySegmentsForOwner(Address owner) {
+      return getPrimarySegmentsForOwnerAsIntSet(owner);
+   }
+
+   @Override
+   public IntSet getPrimarySegmentsForOwnerAsIntSet(Address owner) {
       int index = members.indexOf(owner);
       if (index == -1) {
          return IntSets.immutableEmptySet();

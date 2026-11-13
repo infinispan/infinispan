@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.util.IntSet;
-import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -175,9 +174,9 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
    }
 
    private IntSet localPrimarySegments() {
-      return IntSets.from(clusteringDependentLogic.getCacheTopology()
+      return clusteringDependentLogic.getCacheTopology()
             .getWriteConsistentHash()
-            .getPrimarySegmentsForOwner(rpcManager.getAddress()));
+            .getPrimarySegmentsForOwnerAsIntSet(rpcManager.getAddress());
    }
 
    private Flowable<XSiteState> publishDataContainerEntries(IntSet segments) {

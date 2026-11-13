@@ -2,7 +2,6 @@ package org.infinispan.client.hotrod.impl.consistenthash;
 
 import java.net.SocketAddress;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,6 +10,8 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.Immutables;
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.commons.util.Util;
 
 /**
@@ -57,23 +58,23 @@ public final class SegmentConsistentHash implements ConsistentHash {
    }
 
    @Override
-   public Map<SocketAddress, Set<Integer>> getSegmentsByServer() {
-      Map<SocketAddress, Set<Integer>> map = new HashMap<>();
+   public Map<SocketAddress, IntSet> getSegmentsByServer() {
+      Map<SocketAddress, IntSet> map = new HashMap<>();
       for (int segment = 0; segment < segmentOwners.length; segment++) {
          SocketAddress[] owners = segmentOwners[segment];
          for (SocketAddress s : owners) {
-            map.computeIfAbsent(s, k -> new HashSet<>()).add(segment);
+            map.computeIfAbsent(s, k -> IntSets.mutableEmptySet(segmentOwners.length)).set(segment);
          }
       }
       return Immutables.immutableMapWrap(map);
    }
 
    @Override
-   public Map<SocketAddress, Set<Integer>> getPrimarySegmentsByServer() {
-      Map<SocketAddress, Set<Integer>> map = new HashMap<>();
+   public Map<SocketAddress, IntSet> getPrimarySegmentsByServer() {
+      Map<SocketAddress, IntSet> map = new HashMap<>();
       for (int segment = 0; segment < segmentOwners.length; segment++) {
          SocketAddress[] owners = segmentOwners[segment];
-         map.computeIfAbsent(owners[0], k -> new HashSet<>()).add(segment);
+         map.computeIfAbsent(owners[0], k -> IntSets.mutableEmptySet(segmentOwners.length)).set(segment);
       }
       return Immutables.immutableMapWrap(map);
    }

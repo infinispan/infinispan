@@ -6,6 +6,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 
+import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.IntSets;
 import org.infinispan.distribution.ch.impl.ConsistentHashFactory;
 import org.infinispan.globalstate.ScopedPersistentState;
 import org.infinispan.remoting.transport.Address;
@@ -93,16 +95,43 @@ public interface ConsistentHash {
     * @param owner the address of the member
     * @return a non-null set of segment IDs, may or may not be unmodifiable, which shouldn't be modified by caller.
     * The set is empty if {@code owner} is not a member of the consistent hash.
+    * @deprecated since 16.4, use {@link #getSegmentsForOwnerAsIntSet(Address)} instead, which avoids boxing.
     */
+   @Deprecated(since = "16.4")
    Set<Integer> getSegmentsForOwner(Address owner);
+
+   /**
+    * Returns the segments owned by a cache member.
+    *
+    * @param owner the address of the member
+    * @return a non-null set of segment IDs, may or may not be unmodifiable, which shouldn't be modified by caller.
+    * The set is empty if {@code owner} is not a member of the consistent hash.
+    * @since 16.4
+    */
+   default IntSet getSegmentsForOwnerAsIntSet(Address owner) {
+      return IntSets.from(getSegmentsForOwner(owner));
+   }
 
    /**
     * Returns the segments that this cache member is the primary owner for.
     * @param owner the address of the member
     * @return a non-null set of segment IDs, may or may not be unmodifiable, which shouldn't be modified by caller.
     * The set is empty if {@code owner} is not a member of the consistent hash.
+    * @deprecated since 16.4, use {@link #getPrimarySegmentsForOwnerAsIntSet(Address)} instead, which avoids boxing.
     */
+   @Deprecated(since = "16.4")
    Set<Integer> getPrimarySegmentsForOwner(Address owner);
+
+   /**
+    * Returns the segments that this cache member is the primary owner for.
+    * @param owner the address of the member
+    * @return a non-null set of segment IDs, may or may not be unmodifiable, which shouldn't be modified by caller.
+    * The set is empty if {@code owner} is not a member of the consistent hash.
+    * @since 16.4
+    */
+   default IntSet getPrimarySegmentsForOwnerAsIntSet(Address owner) {
+      return IntSets.from(getPrimarySegmentsForOwner(owner));
+   }
 
    /**
     * Transform this hash into another utilizing the address mapper.
