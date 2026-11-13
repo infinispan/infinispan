@@ -28,6 +28,13 @@ public class InfinispanEmbeddedConfigurationProperties {
     */
    private String clusterName = DEFAULT_CLUSTER_NAME;
 
+   /**
+    * The marshaller to use for cache serialization.
+    * Shortcuts: "java" (deprecated Java Serialization), "protostream" (recommended).
+    * Can also be a fully qualified class name.
+    */
+   private String marshaller;
+
    public String getConfigXml() {
       return configXml;
    }
@@ -66,5 +73,13 @@ public class InfinispanEmbeddedConfigurationProperties {
 
    public boolean isReactive() {
       return reactive;
+   }
+
+   public String getMarshaller() {
+      return marshaller;
+   }
+
+   public void setMarshaller(String marshaller) {
+      this.marshaller = marshaller;
    }
 }
