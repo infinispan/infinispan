@@ -95,11 +95,11 @@ public class BLMOVEM extends AbstractLMOVEM implements Resp3Command {
       ClientMetadata metadata = handler.respServer().metadataRepository().client();
       metadata.incrementBlockedClients();
       metadata.recordBlockedKeys(1);
-      listener.getFuture().whenComplete((ignore, t) -> {
+      // Return the dependent future, so the metadata is updated before the reply is written to the client.
+      return listener.getFuture().whenComplete((ignore, t) -> {
          metadata.decrementBlockedClients();
          metadata.recordBlockedKeys(-1);
       });
-      return listener.getFuture();
    }
 
    @Listener(clustered = true)
