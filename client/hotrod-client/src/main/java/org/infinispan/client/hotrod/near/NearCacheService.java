@@ -1,9 +1,13 @@
 package org.infinispan.client.hotrod.near;
 
+import java.util.BitSet;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.function.BiConsumer;
+import java.util.function.ToIntFunction;
 
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -18,7 +22,8 @@ import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheFailoverEvent;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
-import org.infinispan.client.hotrod.impl.InternalRemoteCache;
+import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
+import org.infinispan.client.hotrod.impl.MetadataValueImpl;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.util.BloomFilter;
@@ -39,15 +44,18 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
    private final NearCacheConfiguration config;
    private final ClientListenerNotifier listenerNotifier;
    private Object listener;
-   private byte[] listenerId;
+   private volatile byte[] listenerId;
    private NearCache<K, V> cache;
    private Runnable invalidationCallback;
    private final int bloomFilterBits;
    private final int bloomFilterUpdateThreshold;
    private final AtomicInteger nearCacheRemovals;
-   private InternalRemoteCache<K, V> remote;
+   private InvalidatedNearRemoteCache<K, V> remote;
+
+   private record SegmentState(ToIntFunction<Object> function, AtomicIntegerArray epochs) {}
 
    private Channel channelUsed;
+   private volatile SegmentState segmentState;
 
    protected NearCacheService(NearCacheConfiguration config, ClientListenerNotifier listenerNotifier) {
       this.config = config;
@@ -68,17 +76,13 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
       }
    }
 
-   public Channel start(InternalRemoteCache<K, V> remote) {
+   public Channel start(InvalidatedNearRemoteCache<K, V> remote) {
       if (cache == null) {
          // Create near cache
          cache = createNearCache(config, this::entryRemovedFromNearCache);
          // Add a listener that updates the near cache
          listener = new InvalidatedNearCacheListener<>(this);
-         if (bloomFilterBits > 0) {
-            channelUsed = remote.addNearCacheListener(listener, bloomFilterBits);
-         } else {
-            remote.addClientListener(listener);
-         }
+         channelUsed = remote.addNearCacheListener(listener, bloomFilterBits);
          // Get the listener ID for faster listener connected lookups
          listenerId = listenerNotifier.findListenerId(listener);
       }
@@ -132,12 +136,42 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
 
    @Override
    public boolean replace(K key, MetadataValue<V> prevValue, MetadataValue<V> newValue) {
-      boolean replaced = cache.replace(key, prevValue, newValue);
+      MetadataValue<V> valueToStore = newValue;
+      if (newValue != null && newValue.getValue() != null) {
+         // A read must retain the epoch captured by its placeholder, even if ownership changes
+         // between response validation and this replacement.
+         valueToStore = prevValue instanceof EpochMetadataValue<V> placeholder
+               ? placeholder.withValue(newValue) : withCurrentEpoch(key, newValue);
+      }
+      boolean replaced = cache.replace(key, prevValue, valueToStore);
       if (log.isTraceEnabled()) {
          log.tracef("Replaced key=%s and value=%s with new value=%s in near cache (listenerId=%s): %s",
                key, prevValue, newValue, Util.printArray(listenerId), replaced);
       }
       return replaced;
+   }
+
+   /**
+    * Creates a read placeholder carrying the current segment epoch, so an in-flight response
+    * cannot be cached under a newer ownership generation.
+    *
+    * @param key the key being read
+    * @return a unique placeholder for the pending read
+    */
+   public MetadataValue<V> createPlaceholder(K key) {
+      return withCurrentEpoch(key, new MetadataValueImpl<>(-1, -1, -1, -1, -1, null));
+   }
+
+   private MetadataValue<V> withCurrentEpoch(K key, MetadataValue<V> value) {
+      SegmentState state = segmentState;
+      if (state != null) {
+         int segment = state.function().applyAsInt(key);
+         AtomicIntegerArray epochs = state.epochs();
+         if (segment >= 0 && segment < epochs.length()) {
+            return new EpochMetadataValue<>(value, epochs.get(segment), segment, epochs);
+         }
+      }
+      return value;
    }
 
    @Override
@@ -181,6 +215,17 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
       boolean listenerConnected = isConnected();
       if (listenerConnected) {
          MetadataValue<V> value = cache.get(key);
+         if (value instanceof EpochMetadataValue<V> emv) {
+            SegmentState state = segmentState;
+            AtomicIntegerArray epochs = state != null ? state.epochs() : null;
+            if (!emv.isCurrent(epochs)) {
+               // The topology change already invalidated every older entry in this segment.
+               // Advancing the epoch here would invalidate fresh entries as they are repopulated.
+               cache.remove(key, value);
+               return null;
+            }
+            value = emv.getDelegate();
+         }
          if (log.isTraceEnabled())
             log.tracef("Get key=%s returns value=%s (listenerId=%s)", key, value, Util.printArray(listenerId));
 
@@ -213,12 +258,23 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
       return cache.iterator();
    }
 
-   boolean isConnected() {
+   public boolean isConnected() {
+      if (remote != null && remote.isPrimaryMode()) {
+         return remote.hasActivePrimaryListeners();
+      }
       return listenerNotifier.isListenerConnected(listenerId);
    }
 
    public void setInvalidationCallback(Runnable r) {
       this.invalidationCallback = r;
+   }
+
+   /**
+    * Updates the listener ID tracked by this service. Used when the near cache switches between
+    * primary-owner and cluster-wide listener mode without a full stop/start cycle.
+    */
+   public void updateListenerId(byte[] newListenerId) {
+      this.listenerId = newListenerId;
    }
 
    public int getBloomFilterBits() {
@@ -233,12 +289,80 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
       return listenerId;
    }
 
+   /**
+    * Replaces the segment mapping and its epoch generation together. Values and pending read placeholders
+    * carrying a previous generation are no longer current, even if the owners have not changed.
+    *
+    * @param segmentFunction maps keys to segments, or {@code null} to disable segment tracking
+    * @param numSegments the number of segments in the new mapping
+    */
+   public void setSegmentFunction(ToIntFunction<Object> segmentFunction, int numSegments) {
+      if (segmentFunction != null && numSegments > 0) {
+         this.segmentState = new SegmentState(segmentFunction, new AtomicIntegerArray(numSegments));
+      } else {
+         this.segmentState = null;
+      }
+   }
+
+   public void invalidateSegment(int segment) {
+      SegmentState state = segmentState;
+      if (state != null && state.epochs() != null && segment >= 0 && segment < state.epochs().length()) {
+         state.epochs().incrementAndGet(segment);
+         if (log.isTraceEnabled()) {
+            log.tracef("Invalidated segment %d (new epoch %d) for near cache %s",
+                  segment, state.epochs().get(segment), remote != null ? remote.getName() : "");
+         }
+      }
+   }
+
+   public void invalidateSegments(Collection<Integer> segments) {
+      SegmentState state = segmentState;
+      if (state != null && state.epochs() != null) {
+         AtomicIntegerArray epochs = state.epochs();
+         for (int s : segments) {
+            if (s >= 0 && s < epochs.length()) {
+               epochs.incrementAndGet(s);
+               if (log.isTraceEnabled()) {
+                  log.tracef("Invalidated segment %d (new epoch %d) for near cache %s",
+                        s, epochs.get(s), remote != null ? remote.getName() : "");
+               }
+            }
+         }
+      }
+   }
+
+   public void invalidateSegments(BitSet segments) {
+      SegmentState state = segmentState;
+      if (state != null && state.epochs() != null) {
+         for (int s = segments.nextSetBit(0); s >= 0; s = segments.nextSetBit(s + 1)) {
+            invalidateSegment(s);
+         }
+      }
+   }
+
+   /** Fences every segment, when it isn't known which ones had their primary owner changed. */
+   public void invalidateAllSegments() {
+      SegmentState state = segmentState;
+      if (state != null && state.epochs() != null) {
+         for (int s = 0; s < state.epochs().length(); ++s) {
+            invalidateSegment(s);
+         }
+      }
+   }
+
    public byte[] calculateBloomBits() {
       if (bloomFilterBits <= 0) {
          return null;
       }
       BloomFilter<byte[]> bloomFilter = MurmurHash3BloomFilter.createFilter(bloomFilterBits);
       for (Map.Entry<K, MetadataValue<V>> entry : cache) {
+         MetadataValue<V> value = entry.getValue();
+         if (value instanceof EpochMetadataValue<V> emv) {
+            SegmentState state = segmentState;
+            if (!emv.isCurrent(state != null ? state.epochs() : null) && cache.remove(entry.getKey(), value)) {
+               continue;
+            }
+         }
          bloomFilter.addToFilter(remote.keyToBytes(entry.getKey()));
       }
 
@@ -246,7 +370,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
       return intSet.toBitSet();
    }
 
-      @ClientListener
+   @ClientListener
    private static class InvalidatedNearCacheListener<K, V> {
       private static final Log log = LogFactory.getLog(InvalidatedNearCacheListener.class);
       private final NearCache<K, V> cache;

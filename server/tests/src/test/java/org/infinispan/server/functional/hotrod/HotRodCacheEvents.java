@@ -22,10 +22,13 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.ProtocolVersion;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.configuration.ClientIntelligence;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.UTF8StringMarshaller;
 import org.infinispan.commons.util.Util;
@@ -41,6 +44,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * @author Tristan Tarrant &lt;tristan@infinispan.org&gt;
@@ -63,6 +67,43 @@ public class HotRodCacheEvents {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.version(protocolVersion).addContextInitializer(Entities.INSTANCE);
       return SERVERS.hotrod().withClientConfiguration(builder).withCacheMode(CacheMode.DIST_SYNC).create();
+   }
+
+   @ParameterizedTest
+   @ValueSource(booleans = {false, true})
+   public void testPrimaryNearCacheStaysUncachedAfterListenerDisconnect(boolean bloom) {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clientIntelligence(ClientIntelligence.HASH_DISTRIBUTION_AWARE);
+      builder.statistics().enable();
+      builder.remoteCache("*").nearCacheMode(NearCacheMode.INVALIDATED).nearCacheMaxEntries(100)
+            .nearCacheUseBloomFilter(bloom);
+      RemoteCache<Integer, String> remote = SERVERS.hotrod().withClientConfiguration(builder)
+            .withCacheMode(CacheMode.DIST_SYNC).create();
+      assertThat(remote).isInstanceOf(InvalidatedNearRemoteCache.class);
+      InvalidatedNearRemoteCache<Integer, String> near = (InvalidatedNearRemoteCache<Integer, String>) remote;
+      assertThat(near.isPrimaryMode()).isTrue();
+      var statistics = remote.clientStatistics();
+      RemoteCache<Integer, String> writer = SERVERS.hotrod().createRemoteCacheManager().getCache(remote.getName());
+      writer.put(1, "before");
+      assertThat(remote.get(1)).isEqualTo("before");
+      long initialHits = statistics.getNearCacheHits();
+      assertThat(remote.get(1)).isEqualTo("before");
+      assertThat(statistics.getNearCacheHits()).isEqualTo(initialHits + 1);
+
+      writer.put(1, "updated");
+      eventually(() -> "updated".equals(remote.get(1)));
+
+      var server = near.getPrimaryOwner(1);
+      near.getDispatcher().getChannelHandler().getChannelForAddress(server).getChannel().close().syncUninterruptibly();
+      writer.put(1, "after");
+      // Reconnecting the transport must not reinstall the listener or cache this owner's entries.
+      eventually(() -> "after".equals(remote.get(1)) && statistics.getNearCacheSize() == 0);
+      long hitsAfterDisconnect = statistics.getNearCacheHits();
+      assertThat(remote.get(1)).isEqualTo("after");
+      writer.put(1, "latest");
+      assertThat(remote.get(1)).isEqualTo("latest");
+      assertThat(statistics.getNearCacheHits()).isEqualTo(hitsAfterDisconnect);
+      assertThat(statistics.getNearCacheSize()).isZero();
    }
 
    @ParameterizedTest

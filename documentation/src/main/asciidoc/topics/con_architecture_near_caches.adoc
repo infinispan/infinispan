@@ -1,0 +1,104 @@
+[id="architecture-near-caches_{context}"]
+= Hot Rod near caches
+
+Hot Rod near caches store recently read entries in the client JVM and use server listeners to invalidate entries when remote values change.
+`InvalidatedNearRemoteCache` coordinates remote reads and listener state, while `NearCacheService` manages local entries and segment invalidation.
+
+== Listener modes
+
+Near caches use either a cluster-wide listener or primary-owner listeners.
+Bloom filters are optional in both modes.
+
+=== Cluster-wide mode
+
+In cluster-wide mode, a listener registered on one server receives invalidations for the entire cache.
+Events generated on other members are forwarded to the registration server.
+Listener failover clears the near cache because events might have been missed while the connection was unavailable.
+
+=== Primary-owner mode
+
+In primary mode, the client registers a listener on each server that owns at least one primary segment.
+Each server sends invalidations only for entries for which it is the primary owner, avoiding inter-node event forwarding.
+Reads that can populate the near cache use the corresponding primary listener channel.
+The client library manages these listeners internally; applications cannot register them through `@ClientListener` or `addClientListener()`.
+
+Primary mode requires `HASH_DISTRIBUTION_AWARE` client intelligence and support for Hot Rod protocol 4.2 across the connected cluster.
+
+==== Registration and topology snapshots
+
+Each primary listener registration receives an initial topology snapshot followed by topology change events.
+`OperationDispatcher` tracks the accepted topology sequence and the connections associated with it for each cache.
+A registration becomes active only after its topology snapshot has been accepted and its initial Bloom filter has been installed, if enabled.
+Before enabling primary mode, the client reconciles the topology used to begin registration with the latest accepted topology.
+This accounts for ownership changes that occur while registrations are in flight.
+
+The consistent hash identifier identifies a routing snapshot but does not order snapshots.
+Topology event sequences provide ordering across listener connections.
+Once sequenced pushes are established, ordinary response headers do not replace the installed routing topology.
+
+==== Topology event coalescing and ordering
+
+The server keeps pending topology events separately from the bounded entry-event queue.
+If a topology event has not yet been written, a newer event replaces its routing snapshot and retains the union of the changed segments and the earliest history baseline.
+This bounds pending topology state when a connection is not writable without discarding the ownership changes needed for invalidation.
+For example, a segment that moves from server A to server B and back to server A must still be invalidated even though its final owner is unchanged.
+
+Before accepting an update, the client checks that its source socket is still the current connection for that server.
+Within the current set of server connections, only a higher sequence advances the topology.
+An equal sequence can complete a registration without replacing the installed topology.
+If the update's history covers the previously accepted sequence, the client invalidates the reported changed segments before publishing the routing topology.
+If history is missing or starts after the accepted sequence, the client invalidates every segment conservatively.
+The first accepted sequence relies on registration reconciliation rather than invalidating every segment.
+
+A replacement connection can report a lower sequence after a full cluster restart.
+The client retains that snapshot while old connections remain associated with the accepted sequence.
+After those connections retire, it resets the sequence baseline and reconsiders pending snapshots.
+A response that replaces the membership with an entirely different set of servers also retires the old sockets, allowing the baseline to reset.
+
+==== Segment epochs and pending reads
+
+`NearCacheService` maintains a local epoch counter for each segment.
+An entry captures its segment, the segment's epoch, and the identity of the epoch array.
+Advancing a segment's epoch logically invalidates all older entries in that segment without scanning the near cache.
+Lookup checks these captured values, conditionally removes a stale entry, and returns a near-cache miss.
+Removing a stale entry does not advance the epoch again, so fresh entries in the same segment remain valid.
+
+Epochs advance when a primary owner changes, when topology history reports an intervening ownership change, or when a listener becomes unavailable or is disabled.
+Invalidation happens before a new routing topology is published, under the topology write lock.
+Changing the segment count replaces the mapping and epoch array together, invalidating entries from the previous mapping even if their numeric epochs match.
+
+A remote read first inserts a unique placeholder carrying the current epoch.
+The response can replace only that placeholder and retains its captured epoch.
+This prevents an old response from becoming a usable cached entry if invalidation occurs during the read or between response validation and replacement.
+Response validation also checks the listener channel, listener version, primary owner, and mode generation.
+These checks govern cache population; the original caller can still receive the remote response when it cannot be cached.
+
+Modification, removal, and expiration events remove the individual key, including any pending placeholder, rather than advancing its segment epoch.
+
+==== Bloom filter coordination
+
+Each primary listener has independent server-side Bloom filter state and a client-side update version.
+Before calculating and sending a filter update, the client claims an even version by making it odd.
+Reads that observe an odd version cannot populate the near cache for that listener, and responses spanning a version change fail cache validation.
+Completion releases the claimed version to the next even value.
+An update skips listeners whose versions are already claimed, allowing other listeners to progress independently.
+
+Filter calculation scans the local near cache and includes the keys of current entries and pending read placeholders.
+It conditionally removes epoch-stale entries and omits their keys when removal succeeds.
+If conditional removal fails, it retains the key in the filter conservatively.
+Calculation runs outside the Netty event loop.
+A failed filter update disables the affected owner's listener and invalidates its segments because the server-side filter state is uncertain.
+
+==== Listener lifecycle and fallback
+
+Primary listener registrations are attempted at startup and when a topology introduces a new primary owner.
+They are not failed over to a different server or automatically retried while the same server remains a primary owner.
+On listener disconnection or registration failure, affected segments are read remotely without caching while other owners can remain cached.
+If a server loses all its primary segments and later becomes a primary owner again, the client attempts a new registration.
+Registrations and removals are serialized per server, and a registration that outlives removal or owner detachment unregisters itself.
+
+If no primary listeners can be established during setup, the client falls back to a cluster-wide listener.
+Partial registration failure keeps primary mode active for the successful owners.
+If an older protocol version is detected after primary mode is active, the client suspends near-cache use, removes primary listeners, clears entries, and installs a cluster-wide listener.
+Near-cache use resumes only after replacement succeeds; installation failure leaves it suspended.
+The fallback remains in effect for the lifetime of the client, without automatically returning to primary mode.

@@ -20,6 +20,7 @@ public enum Attribute {
    @Deprecated(forRemoval = true, since = "11.0")
    LAZY_RETRIEVAL,
    LOCK_TIMEOUT,
+   MAX_BLOOM_FILTER_BITS,
    MECHANISMS,
    NAME,
    NETWORK_PREFIX_OVERRIDE,

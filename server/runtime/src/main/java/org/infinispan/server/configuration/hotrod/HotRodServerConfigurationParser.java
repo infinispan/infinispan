@@ -109,6 +109,10 @@ public class HotRodServerConfigurationParser implements ConfigurationParser {
                builder.listenerMaxQueueSize(Integer.parseInt(value));
                break;
             }
+            case MAX_BLOOM_FILTER_BITS: {
+               builder.maxBloomFilterBits(Integer.parseInt(value));
+               break;
+            }
             default: {
                ServerConfigurationParser.parseCommonConnectorAttributes(reader, i, serverBuilder, builder);
             }

@@ -500,6 +500,11 @@
                   <xs:documentation>Sets the maximum event queue size for client listeners. Exceeding this limit closes the client connection. Defaults to 512.</xs:documentation>
                </xs:annotation>
             </xs:attribute>
+            <xs:attribute name="max-bloom-filter-bits" type="xs:int" default="64000000">
+               <xs:annotation>
+                  <xs:documentation>Sets the maximum size, in bits, of the Bloom filter that a client near cache listener may request. Larger requests are rejected. Defaults to 64000000.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
          </xs:extension>
       </xs:complexContent>
    </xs:complexType>

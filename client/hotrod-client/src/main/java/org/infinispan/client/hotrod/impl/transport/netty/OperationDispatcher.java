@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -16,6 +17,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -43,12 +45,14 @@ import org.infinispan.client.hotrod.impl.Util;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.operations.AddClientListenerOperation;
+import org.infinispan.client.hotrod.impl.operations.AddPrimaryNearCacheClientListenerOperation;
 import org.infinispan.client.hotrod.impl.operations.ClientListenerOperation;
 import org.infinispan.client.hotrod.impl.operations.DelegatingHotRodOperation;
 import org.infinispan.client.hotrod.impl.operations.HotRodBulkOperation;
 import org.infinispan.client.hotrod.impl.operations.HotRodOperation;
 import org.infinispan.client.hotrod.impl.operations.NoCachePingOperation;
 import org.infinispan.client.hotrod.impl.operations.NoHotRodOperation;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.topology.CacheInfo;
 import org.infinispan.client.hotrod.impl.topology.ClusterInfo;
@@ -106,6 +110,10 @@ public class OperationDispatcher {
    private final Set<SocketAddress> connectionFailedServers;
    private final ChannelHandler channelHandler;
    private final ExecutorService executorService;
+   private final CopyOnWriteArrayList<Runnable> codecChangeListeners = new CopyOnWriteArrayList<>();
+   // Guarded by this. Keep the monitor before the topology StampedLock, including listener callbacks.
+   private final PrimaryTopologyTracker primaryTopologyTracker = new PrimaryTopologyTracker(this);
+
    private final TimeService timeService;
 
    private final ClientListenerNotifier clientListenerNotifier;
@@ -258,20 +266,26 @@ public class OperationDispatcher {
    public CompletionStage<Channel> executeAddListener(ClientListenerOperation operation, SocketAddress target) {
       // Unfortunately, we have to do this preemptively for the case when a listener has included current state
       // as that will not complete until all initial events have been received
-      clientListenerNotifier.addDispatcher(ClientEventDispatcher.create(operation,
-            target, () -> {/* TODO s*/}, operation.getRemoteCache()));
+      if (operation.isInstanceOf(AddPrimaryNearCacheClientListenerOperation.class)) {
+         // The listener owns its dispatcher. A registration that outlived its listener must not create another one.
+         if (!clientListenerNotifier.addAddress(operation.listenerId, target)) {
+            return CompletableFuture.failedFuture(new IllegalStateException("Primary listener removed"));
+         }
+      } else {
+         clientListenerNotifier.addDispatcher(operation.listenerId, target, operation,
+               (id, op) -> ClientEventDispatcher.create(op, () -> {/* TODO s*/}));
+      }
       // Note this is done here, to guarantee this is lambda is ALWAYS invoked in the event loop after completion
       // This allows a retry with a different address to be protected from concurrent events being raised
       operation.whenComplete((channel, t) -> {
          if (t != null) {
             log.errorf("Error encountered trying to add listener %s", operation.listener);
-            clientListenerNotifier.removeClientListener(operation.listenerId);
+            clientListenerNotifier.removeClientListener(operation.listenerId, target);
          } else {
             SocketAddress unresolvedAddress = ChannelRecord.of(channel);
             if (unresolvedAddress != target) {
                // we have to reinstall the dispatcher with the correct address
-               clientListenerNotifier.addDispatcher(ClientEventDispatcher.create(operation,
-                     unresolvedAddress, () -> {/* TODO s*/}, operation.getRemoteCache()));
+               clientListenerNotifier.replaceAddress(operation.listenerId, target, unresolvedAddress);
             }
             addListener(unresolvedAddress, operation.listenerId);
             clientListenerNotifier.startClientListener(operation.listenerId);
@@ -292,14 +306,23 @@ public class OperationDispatcher {
       return obj -> frbs.nextServer(failedServers);
    }
 
-   private <E> CompletionStage<E> execute(HotRodOperation<E> operation, Set<SocketAddress> opFailedServers) {
+   public <E> CompletionStage<E> execute(HotRodOperation<E> operation, Set<SocketAddress> opFailedServers) {
       Object routingObj = operation.getRoutingObject();
       SocketAddress targetAddress = null;
       if (routingObj != null) {
          targetAddress = addressForObject(routingObj, operation.getCacheName(), opFailedServers);
       }
       if (targetAddress == null) {
-         targetAddress = getBalancer(operation.getCacheName()).nextServer(opFailedServers);
+         Set<SocketAddress> exclude = opFailedServers;
+         if (!connectionFailedServers.isEmpty()) {
+            if (exclude.isEmpty()) {
+               exclude = connectionFailedServers;
+            } else {
+               exclude = new HashSet<>(exclude);
+               exclude.addAll(connectionFailedServers);
+            }
+         }
+         targetAddress = getBalancer(operation.getCacheName()).nextServer(exclude);
       }
       return executeOnSingleAddress(operation, targetAddress);
    }
@@ -338,12 +361,17 @@ public class OperationDispatcher {
    }
 
    public <E> CompletionStage<E> executeOnSingleAddress(HotRodOperation<E> operation, SocketAddress socketAddress) {
+      if (operation == null) {
+         throw new IllegalArgumentException("Operation cannot be null");
+      }
       // We do an empty check, as contains will perform hashCode on the socketAddress creating a String object
       if (!connectionFailedServers.isEmpty() && connectionFailedServers.contains(socketAddress)) {
-         SocketAddress alternative = getBalancer(operation.getCacheName()).nextServer(connectionFailedServers);
-         if (!connectionFailedServers.contains(alternative)) {
-            log.tracef("Server %s is suspected, trying %s for %s", socketAddress, alternative, operation);
-            socketAddress = alternative;
+         if (operation.supportRetry()) {
+            SocketAddress alternative = getBalancer(operation.getCacheName()).nextServer(connectionFailedServers);
+            if (!connectionFailedServers.contains(alternative)) {
+               log.tracef("Server %s is suspected, trying %s for %s", socketAddress, alternative, operation);
+               socketAddress = alternative;
+            }
          }
       }
       log.tracef("Dispatching %s to %s", operation, socketAddress);
@@ -371,7 +399,7 @@ public class OperationDispatcher {
             log.tracef("Our channel no longer exists so resubmitting operation %s", operation);
             // Note this can't use the single arg execute method as we may have received a AddClientListener
             // operation. And if we did it already registered itself so we don't call executeAddListener.
-            execute(operation, Set.of());
+            resubmit(operation, socketAddress);
          } else {
             log.tracef("Operation %s already sent to prior channel, so allowing it to complete", operation);
          }
@@ -410,9 +438,78 @@ public class OperationDispatcher {
       return channelHandler;
    }
 
+   public boolean isPrimaryNearCacheListenerSupported() {
+      if (getClientIntelligence() != ClientIntelligence.HASH_DISTRIBUTION_AWARE) {
+         return false;
+      }
+      // If any connected channel has explicitly negotiated an older protocol version that does not support
+      // primary near cache listeners (e.g. Hot Rod 4.1 during a rolling upgrade), the mode is unavailable.
+      // Channels whose codec is null have not yet completed the handshake and are treated as neutral:
+      // they do not disqualify primary mode on their own, but at least one connected (non-null) channel
+      // must be present.
+      Collection<OperationChannel> channels = channelHandler.getChannels();
+      boolean anyConnected = false;
+      for (OperationChannel ch : channels) {
+         Codec codec = ch.codec;
+         if (codec != null) {
+            if (!codec.isPrimaryNearCacheListenerSupported()) {
+               return false; // explicit older-protocol server present
+            }
+            anyConnected = true;
+         }
+      }
+      return anyConnected;
+   }
+
    public Map<SocketAddress, Set<Integer>> getPrimarySegmentsByAddress(String cacheName) {
       CacheInfo cacheInfo = getCacheInfo(cacheName);
       return cacheInfo != null ? cacheInfo.getPrimarySegments() : null;
+   }
+
+   /**
+    * Registers a listener that is notified whenever any channel's protocol codec is negotiated or changed.
+    * This can be used to react to rolling upgrade scenarios where the effective cluster protocol version changes.
+    */
+   public void addCodecChangeListener(Runnable listener) {
+      codecChangeListeners.add(listener);
+   }
+
+   public void removeCodecChangeListener(Runnable listener) {
+      codecChangeListeners.remove(listener);
+   }
+
+   /**
+    * Called by {@link org.infinispan.client.hotrod.impl.transport.netty.HeaderDecoder} whenever a channel
+    * finishes protocol negotiation and its codec is set.
+    */
+   public void notifyCodecChanged() {
+      for (Runnable listener : codecChangeListeners) {
+         try {
+            listener.run();
+         } catch (Throwable t) {
+            log.errorNotifyingCodecChangeListener(t);
+         }
+      }
+   }
+
+   public void addTopologyListener(String cacheName, NearCacheTopologyListener listener) {
+      primaryTopologyTracker.addListener(cacheName, listener);
+   }
+
+   public void removeTopologyListener(String cacheName, NearCacheTopologyListener listener) {
+      primaryTopologyTracker.removeListener(cacheName, listener);
+   }
+
+   /**
+    * Runs the action with the latest accepted topology, serialized with the topology updates and the notification of
+    * their listeners. State derived from the topology by the action can't be overwritten by an older snapshot.
+    */
+   public <T> T withLatestTopology(String cacheName, Function<CacheInfo, T> action) {
+      return primaryTopologyTracker.withLatestTopology(cacheName, action);
+   }
+
+   void notifyPrimaryChange(String cacheName, BitSet changedSegments) {
+      notifyTopologyListeners(cacheName, listener -> listener.primaryOwnersChanged(changedSegments));
    }
 
    public Collection<InetSocketAddress> getServers() {
@@ -429,37 +526,129 @@ public class OperationDispatcher {
       return priorAgeOperations != null && priorAgeOperations.contains(operation);
    }
 
+   /** Returns whether the channel still belongs to the current connection for its server. */
+   public boolean isCurrentChannel(Channel channel) {
+      OperationChannel current = channelHandler.getChannelForAddress(ChannelRecord.of(channel));
+      return channel.isActive() && current != null && current.getChannel() == channel && current.isAcceptingRequests();
+   }
+
+   /** Returns the listener channel once it has supplied an accepted topology snapshot. */
+   public CompletionStage<Channel> primaryTopologyReady(String cacheName, Channel channel) {
+      return primaryTopologyTracker.primaryTopologyReady(cacheName, channel);
+   }
+
+   /** Applies a sequenced listener push from a current connection. */
+   public void updatePrimaryTopology(String cacheName, Channel channel, int sequence, int baseSequence,
+                                    BitSet changedSegments, int topologyHash,
+                                    InetSocketAddress[] addresses, SocketAddress[][] segmentOwners,
+                                    short hashFunctionVersion) {
+      primaryTopologyTracker.updatePrimaryTopology(cacheName, channel, sequence, baseSequence, changedSegments,
+            topologyHash, addresses, segmentOwners, hashFunctionVersion);
+   }
+
+   /** Removes ordering state for a closed socket and resumes pending snapshots. */
+   public void retirePrimaryChannel(Channel channel) {
+      primaryTopologyTracker.retirePrimaryChannel(channel);
+   }
+
+   // Called with the primary topology tracker monitor held; retirement also requires the topology write lock.
+   void closeExcludedChannels(String cacheName, InetSocketAddress[] addresses) {
+      Set<SocketAddress> members = new HashSet<>(Arrays.asList(addresses));
+      // Collected first as getCacheInfo acquires the read lock, which can't be taken while holding the write lock
+      List<SocketAddress> excluded = new ArrayList<>();
+      for (SocketAddress server : getCacheInfo(cacheName).getServers()) {
+         if (!members.contains(server)) {
+            excluded.add(server);
+         }
+      }
+      if (!excluded.isEmpty()) {
+         // gracefulCloseChannel can only be invoked while holding the write lock
+         long stamp = lock.writeLock();
+         try {
+            excluded.forEach(this::gracefulCloseChannel);
+         } finally {
+            lock.unlockWrite(stamp);
+         }
+      }
+   }
+
+   /** Processes response headers only from a current socket, retiring sockets excluded by a replacement server. */
+   public void updateTopology(String cacheName, HotRodOperation<?> operation, int responseTopologyId,
+                              InetSocketAddress[] addresses, SocketAddress[][] segmentOwners,
+                              short hashFunctionVersion, Channel source) {
+      primaryTopologyTracker.updateTopology(cacheName, operation, responseTopologyId, addresses, segmentOwners,
+            hashFunctionVersion, source);
+   }
+
    public void updateTopology(String cacheName, HotRodOperation<?> operation, int responseTopologyId,
                               InetSocketAddress[] addresses, SocketAddress[][] segmentOwners, short hashFunctionVersion) {
+      primaryTopologyTracker.updateTopology(cacheName, operation, responseTopologyId, addresses, segmentOwners,
+            hashFunctionVersion);
+   }
+
+   // The tracker monitor remains held through topology publication and listener notification.
+   boolean applyTopology(String cacheName, HotRodOperation<?> operation, int responseTopologyId,
+                         InetSocketAddress[] addresses, SocketAddress[][] segmentOwners, short hashFunctionVersion,
+                         Runnable fence) {
+      CacheInfo oldCacheInfo;
+      CacheInfo newCacheInfo;
       long stamp = lock.writeLock();
       try {
-         CacheInfo cacheInfo = topologyInfo.getCacheInfo(cacheName);
-         assert cacheInfo != null : "The cache info must exist before receiving a topology update";
+         oldCacheInfo = topologyInfo.getCacheInfo(cacheName);
+         assert oldCacheInfo != null : "The cache info must exist before receiving a topology update";
+         if (priorAgeOperations != null) {
+            return false;
+         }
+         if (fence != null) {
+            // Under the write lock, so a read can't pair the fenced epochs with the owners they replace
+            fence.run();
+         }
 
-         // Only accept the update if it's from the current age and the topology id is greater than the current one
-         // Relies on TopologyInfo.switchCluster() to update the topologyAge for caches first
-         if (priorAgeOperations == null && responseTopologyId != cacheInfo.getTopologyId()) {
+         // Only accept the update if it's from the current age and differs from the current topology. The ID is
+         // opaque here and never compared numerically: it may be a consistent hash identity, or reset after a
+         // full cluster restart (ISPN-13813). Ordering is enforced by the sequence of primary listener pushes,
+         // and response headers (operation != null) are ignored while such a sequence is established.
+         if (operation == null && responseTopologyId == oldCacheInfo.getTopologyId()) {
+            // An accepted sequenced push that doesn't change the owners still lets listeners reconcile
+            newCacheInfo = oldCacheInfo;
+         } else if (responseTopologyId != oldCacheInfo.getTopologyId()) {
             List<InetSocketAddress> addressList = Arrays.asList(addresses);
             // We don't track topology ages anymore as a number
             HOTROD.newTopology(responseTopologyId, -1, addresses.length, addressList);
-            CacheInfo newCacheInfo;
             if (hashFunctionVersion >= 0) {
                SegmentConsistentHash consistentHash =
-                     createConsistentHash(segmentOwners, hashFunctionVersion, cacheInfo.getCacheName());
-               newCacheInfo = cacheInfo.withNewHash(responseTopologyId, addressList,
+                     createConsistentHash(segmentOwners, hashFunctionVersion, oldCacheInfo.getCacheName());
+               newCacheInfo = oldCacheInfo.withNewHash(responseTopologyId, addressList,
                      consistentHash, segmentOwners.length);
             } else {
-               newCacheInfo = cacheInfo.withNewServers(responseTopologyId, addressList);
+               newCacheInfo = oldCacheInfo.withNewServers(responseTopologyId, addressList);
             }
+            notifyTopologyListeners(cacheName, listener -> listener.beforeTopologyUpdate(oldCacheInfo, newCacheInfo));
             updateCacheInfo(cacheName, newCacheInfo);
          } else {
             if (log.isTraceEnabled())
                log.tracef("[%s] Ignoring outdated topology: topology id = %s, previous topology age = %s, servers = %s",
-                     cacheInfo.getCacheName(), responseTopologyId, fromPreviousAge(operation),
+                     oldCacheInfo.getCacheName(), responseTopologyId, fromPreviousAge(operation),
                      Arrays.toString(addresses));
+            return true;
          }
       } finally {
          lock.unlockWrite(stamp);
+      }
+      // Notify topology listeners outside the lock. onTopologyUpdate callbacks need to read cache info
+      // (e.g. getBalancer, getCacheInfo) which acquire the read lock. Invoking them inside the write
+      // lock would cause a self-deadlock because StampedLock is not reentrant.
+      notifyTopologyListeners(cacheName, listener -> listener.afterTopologyUpdate(oldCacheInfo, newCacheInfo));
+      return true;
+   }
+
+   private void notifyTopologyListeners(String cacheName, Consumer<NearCacheTopologyListener> action) {
+      for (NearCacheTopologyListener listener : primaryTopologyTracker.listeners(cacheName)) {
+         try {
+            action.accept(listener);
+         } catch (Throwable t) {
+            log.errorNotifyingTopologyListener(cacheName, t);
+         }
       }
    }
 
@@ -473,7 +662,7 @@ public class OperationDispatcher {
             log.tracef("[%s] Updating client hash function with %s number of segments",
                   cacheNameString, segmentOwners.length);
       }
-      return topologyInfo.createConsistentHash(segmentOwners.length, hashFunctionVersion, segmentOwners);
+      return topologyInfo.createConsistentHash(hashFunctionVersion, segmentOwners);
    }
 
    @GuardedBy("lock")
@@ -642,7 +831,7 @@ public class OperationDispatcher {
          // We have to use the overloaded execute method as we could have a ClientListener operation which
          // would have already been registered so we don't have to use the executeAddListener method
          // We have to submit on the executor as execute acquires the read lock
-         operationChannel.drainQueue(hro -> executorService.submit(() -> execute(hro, Set.of())));
+         operationChannel.drainQueue(hro -> executorService.submit(() -> resubmit(hro, server)));
 
          // Any left over pending operations are waited on before closing the channel forcibly. If an operation is
          // submitted to the queue (can't be processed as flowable is processed in the event loop) that operation
@@ -654,6 +843,18 @@ public class OperationDispatcher {
                   handleRemainingOperations(operationChannel.close(), server, false);
                })
                .subscribe(Functions.EMPTY_ACTION, t -> log.exceptionWhileClosingChannel(operationChannel.getChannel(), t));
+      }
+   }
+
+   /**
+    * Sends an operation queued for a retired channel to a different channel, if it supports retries.
+    * Operations bound to a particular owner, such as primary listener registration and removal, fail instead.
+    */
+   private void resubmit(HotRodOperation<?> operation, SocketAddress server) {
+      if (!operation.supportRetry()) {
+         operation.asCompletableFuture().completeExceptionally(log.connectionClosed(server, server));
+      } else {
+         execute(operation, Set.of());
       }
    }
 
@@ -672,7 +873,7 @@ public class OperationDispatcher {
                   handleResponse(op, -1, server, null, transportException);
                }
             } else {
-               ops.forEach(op -> execute(op, Set.of()));
+               ops.forEach(op -> resubmit(op, server));
             }
          });
       }
@@ -897,9 +1098,11 @@ public class OperationDispatcher {
          if (connectionFailedServers.contains(sa)) {
             sa = balancer.nextServer(op.getFailedServers());
          }
-         // This will replace the prior dispatcher from the previous attempt failure
-         clientListenerNotifier.addDispatcher(ClientEventDispatcher.create(aclo,
-               sa, () -> {/* TODO s*/}, aclo.getRemoteCache()));
+         for (SocketAddress failed : op.getFailedServers()) {
+            clientListenerNotifier.removeAddress(aclo.listenerId, failed);
+         }
+         clientListenerNotifier.addDispatcher(aclo.listenerId, sa, aclo,
+               (id, op1) -> ClientEventDispatcher.create(op1, () -> {/* TODO s*/}));
          executeOnSingleAddress(op, sa);
       }
    }
@@ -960,7 +1163,7 @@ public class OperationDispatcher {
       topologyInfo.forEachCache((cacheNameBytes, cacheInfo) -> {
          List<InetSocketAddress> cacheServers = cacheInfo.getServers();
          boolean currentServersHaveFailed = connectionFailedServers.containsAll(cacheServers);
-         boolean canReset = !cacheServers.equals(topologyInfo.getCluster().getInitialServers());
+         boolean canReset = !cacheServers.equals(topologyInfo.getCluster().getInitialServers()) || cacheInfo.getTopologyId() > 0;
          if (currentServersHaveFailed && canReset) {
             failedCaches.add(cacheInfo.getCacheName());
          }
@@ -1023,6 +1226,10 @@ public class OperationDispatcher {
 
    public void addCacheTopologyInfoIfAbsent(String cacheName) {
       topologyInfo.getOrCreateCacheInfo(cacheName);
+   }
+
+   public ExecutorService getExecutorService() {
+      return executorService;
    }
 
    public Set<SocketAddress> getConnectionFailedServers() {

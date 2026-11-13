@@ -101,6 +101,7 @@ public class ServerConfigurationParserTest extends AbstractConfigurationParserTe
       // Ensure HotRod and Memcached support max request limits (these positions were asserted in previous block)
       assertEquals(1027, connectors.get(0).maxContentLengthBytes());
       assertEquals(3, connectors.get(1).maxContentLengthBytes());
+      assertEquals(1234567, ((HotRodServerConfiguration) connectors.get(0)).maxBloomFilterBits());
 
       assertEquals(1029, connectors.get(2).maxContentLengthBytes());
 

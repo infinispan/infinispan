@@ -5,16 +5,20 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertStatus;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.withClientListener;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
+import java.util.BitSet;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -118,6 +122,77 @@ public class HotRodBackpressureWaterMarkTest extends HotRodSingleNodeTest {
          // All events should be written and their per-event futures completed — queue drains to 0
          eventually(() -> eventSizeRef.get() == 0, 10, TimeUnit.SECONDS);
       });
+   }
+
+   public void testTopologyEventBypassesHardCap() throws Exception {
+      HotRodClient separateClient = connectClient();
+      try {
+         TestClientListener listener = new TestClientListener() {
+            @Override
+            public byte[] getId() {
+               return new byte[]{10, 11, 12};
+            }
+         };
+         assertStatus(separateClient.addClientListener(listener, false, Optional.empty(), Optional.empty(), true), Success);
+
+         Object sender = getSender(listener.getId());
+         Channel ch = TestingUtil.extractField(sender, "ch");
+         AtomicInteger eventSizeRef = TestingUtil.extractField(sender, "eventSize");
+         AtomicReference<?> pendingTopology = TestingUtil.extractField(sender, "pendingTopology");
+
+         assertTrue(ch.isOpen(), "Channel should be open");
+
+         // Make the channel non-writable so the topology event stays queued
+         ch.config().setWriteBufferWaterMark(new WriteBufferWaterMark(1, 2));
+         ch.eventLoop().submit(() -> ch.write(ch.alloc().buffer(64).writeZero(64))).get(5, TimeUnit.SECONDS);
+         assertFalse(ch.isWritable(), "Channel should be non-writable");
+
+         eventSizeRef.set(MAX_SIZE - 1);
+
+         Object tce = newTopologyEvent(listener.getId(), 1, -1, 3);
+         sendTopologyEvent(sender, tce);
+
+         // Unlike key events, topology events must not close the channel when the queue is at the hard cap
+         assertTrue(ch.isOpen(), "Channel should remain open after a topology event at the hard cap");
+         assertEquals(MAX_SIZE - 1, eventSizeRef.get(), "A topology event is held outside of the key event queue");
+         assertSame(tce, pendingTopology.get());
+
+         // A newer event replaces the pending one, and keeps the segments changed by the replaced one
+         Object tce2 = newTopologyEvent(listener.getId(), 2, 1, 5);
+         sendTopologyEvent(sender, tce2);
+         assertEquals(MAX_SIZE - 1, eventSizeRef.get(), "Queued topology events must coalesce without growing eventSize");
+         Object coalesced = pendingTopology.get();
+         assertEquals(2, topologyEventField(coalesced, "topologySequence"));
+         assertEquals(-1, topologyEventField(coalesced, "baseSequence"));
+         BitSet expected = new BitSet();
+         expected.set(3);
+         expected.set(5);
+         assertEquals(expected, topologyEventField(coalesced, "changedSegments"));
+      } finally {
+         killClient(separateClient);
+      }
+   }
+
+   private static Object newTopologyEvent(byte[] listenerId, int sequence, int baseSequence, int changedSegment) throws Exception {
+      Class<?> tceClass = Class.forName("org.infinispan.server.hotrod.Events$TopologyChangedEvent");
+      java.lang.reflect.Constructor<?> ctor = tceClass.getDeclaredConstructors()[0];
+      ctor.setAccessible(true);
+      BitSet changed = new BitSet();
+      changed.set(changedSegment);
+      return ctor.newInstance((byte) 42, 0L, listenerId, sequence, null, null, null, baseSequence, changed);
+   }
+
+   private static void sendTopologyEvent(Object sender, Object tce) throws Exception {
+      java.lang.reflect.Method method = sender.getClass().getSuperclass().getDeclaredMethod(
+            "sendTopologyEvent", tce.getClass());
+      method.setAccessible(true);
+      method.invoke(sender, tce);
+   }
+
+   private static Object topologyEventField(Object tce, String name) throws Exception {
+      java.lang.reflect.Field field = tce.getClass().getDeclaredField(name);
+      field.setAccessible(true);
+      return field.get(tce);
    }
 
    public void testHardCapClosesChannel() throws Exception {

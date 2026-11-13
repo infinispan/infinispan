@@ -94,8 +94,6 @@ public interface InternalRemoteCache<K, V> extends RemoteCache<K, V> {
     * Add a client listener to handle near cache with bloom filter optimization
     * The listener object must be annotated with @{@link org.infinispan.client.hotrod.annotation.ClientListener} annotation.
     */
-   Channel addNearCacheListener(Object listener, int bloomBits);
-
    /**
     * Sends the current bloom filter to the listener node where a near cache listener is installed. If this
     * cache does not have near caching this will return an already completed stage.
