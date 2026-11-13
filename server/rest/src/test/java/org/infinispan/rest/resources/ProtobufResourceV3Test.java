@@ -6,9 +6,13 @@ import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN_TYPE;
 import static org.infinispan.commons.util.Util.getResourceAsString;
 import static org.infinispan.rest.assertion.ResponseAssertion.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.infinispan.client.rest.RestEntity;
 import org.infinispan.client.rest.RestResponse;
@@ -16,6 +20,9 @@ import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.security.Security;
 import org.infinispan.server.core.query.ProtobufMetadataManager;
+import org.infinispan.server.core.query.impl.indexing.IndexingMetadata;
+import org.infinispan.server.core.query.impl.indexing.infinispan.InfinispanAnnotations;
+import org.infinispan.server.core.query.impl.indexing.search5.Search5Annotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -203,6 +210,69 @@ public class ProtobufResourceV3Test extends AbstractRestResourceTest {
       RestEntity entity = RestEntity.create(MediaType.TEXT_PLAIN, "");
       RestResponse response = join(client.raw().put("/rest/v3/schemas/empty", entity));
       assertThat(response).isBadRequest();
+   }
+
+   @Test
+   public void testGetAnnotations() {
+      RestResponse response = join(client.raw().get("/rest/v3/meta/schemas/_annotations", Map.of(ACCEPT.toString(), APPLICATION_JSON_TYPE)));
+      assertThat(response).isOk();
+
+      Json jsonNode = Json.read(response.body());
+      assertTrue(jsonNode.isArray());
+      int size = jsonNode.asList().size();
+      assertTrue(size > 0);
+
+      Set<String> names = new HashSet<>();
+      Json basic = null;
+      for (int i = 0; i < size; i++) {
+         Json annot = jsonNode.at(i);
+         String name = annot.at("name").asString();
+         names.add(name);
+         if (InfinispanAnnotations.BASIC_ANNOTATION.equals(name)) {
+            basic = annot;
+         }
+      }
+
+      // Infinispan-native annotations
+      assertTrue(names.contains(IndexingMetadata.INDEXED_ANNOTATION), "Missing @Indexed annotation");
+      assertTrue(names.contains(InfinispanAnnotations.BASIC_ANNOTATION), "Missing @Basic annotation");
+      assertTrue(names.contains(InfinispanAnnotations.KEYWORD_ANNOTATION), "Missing @Keyword annotation");
+      assertTrue(names.contains(InfinispanAnnotations.TEXT_ANNOTATION), "Missing @Text annotation");
+      assertTrue(names.contains(InfinispanAnnotations.DECIMAL_ANNOTATION), "Missing @Decimal annotation");
+      assertTrue(names.contains(InfinispanAnnotations.EMBEDDED_ANNOTATION), "Missing @Embedded annotation");
+      assertTrue(names.contains(InfinispanAnnotations.VECTOR_ANNOTATION), "Missing @Vector annotation");
+      assertTrue(names.contains(InfinispanAnnotations.GEO_POINT_ANNOTATION), "Missing @GeoPoint annotation");
+      assertTrue(names.contains(InfinispanAnnotations.GEO_FIELD_ANNOTATION), "Missing @GeoField annotation");
+      assertTrue(names.contains(InfinispanAnnotations.LATITUDE_ANNOTATION), "Missing @Latitude annotation");
+      assertTrue(names.contains(InfinispanAnnotations.LONGITUDE_ANNOTATION), "Missing @Longitude annotation");
+
+      // Legacy Search5 annotations
+      assertTrue(names.contains(Search5Annotations.FIELD_ANNOTATION), "Missing @Field annotation");
+      assertTrue(names.contains(Search5Annotations.ANALYZER_ANNOTATION), "Missing @Analyzer annotation");
+      assertTrue(names.contains(Search5Annotations.SORTABLE_FIELD_ANNOTATION), "Missing @SortableField annotation");
+
+      // Internal and container annotations should be filtered out
+      assertFalse(names.contains("TypeId"), "TypeId should be filtered out");
+      assertFalse(names.contains("ProtoTypeId"), "ProtoTypeId should be filtered out");
+      assertFalse(names.contains(Search5Annotations.FIELDS_ANNOTATION), "Container annotation Fields should be filtered out");
+      assertFalse(names.contains(Search5Annotations.SORTABLE_FIELDS_ANNOTATION), "Container annotation SortableFields should be filtered out");
+      assertFalse(names.contains(InfinispanAnnotations.GEO_POINTS_ANNOTATION), "Container annotation GeoPoints should be filtered out");
+
+      // Verify structure of @Basic
+      assertNotNull(basic);
+
+      assertTrue(basic.at("target").isArray());
+      assertEquals(1, basic.at("target").asList().size());
+      assertEquals("FIELD", basic.at("target").at(0).asString());
+
+      Json attributes = basic.at("attributes");
+      assertTrue(attributes.isObject());
+      assertTrue(attributes.has(InfinispanAnnotations.NAME_ATTRIBUTE));
+      assertTrue(attributes.has(InfinispanAnnotations.SEARCHABLE_ATTRIBUTE));
+      assertTrue(attributes.has(InfinispanAnnotations.PROJECTABLE_ATTRIBUTE));
+
+      Json searchable = attributes.at(InfinispanAnnotations.SEARCHABLE_ATTRIBUTE);
+      assertEquals("BOOLEAN", searchable.at("type").asString());
    }
 
    private void checkListProtobufEndpointUrl(String fileName, String errorMessage) {
