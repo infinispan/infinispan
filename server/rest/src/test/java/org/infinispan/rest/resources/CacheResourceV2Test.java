@@ -33,9 +33,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
@@ -70,6 +73,7 @@ import org.infinispan.commons.configuration.io.NamingStrategy;
 import org.infinispan.commons.configuration.io.PropertyReplacer;
 import org.infinispan.commons.configuration.io.URLConfigurationResourceResolver;
 import org.infinispan.commons.configuration.io.yaml.YamlConfigurationReader;
+import org.infinispan.commons.dataconversion.Base16Codec;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
 import org.infinispan.commons.marshall.ProtoStreamMarshaller;
@@ -1512,6 +1516,140 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       assertThat(response).isOk();
       List<Json> entries = Json.read(response.body()).asJsonList();
       return entries.stream().collect(Collectors.toMap(j -> asString(j.at("key")), j -> asString(j.at("value"))));
+   }
+
+   @Test
+   @TestForIssue(githubKey = "18338")
+   public void testStreamEntriesWithUnconvertibleValueFallsBackToHex() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      builder.encoding().value().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT.toString());
+
+      RestResponse response = join(client.cache("serFallback").createWithConfiguration(
+            RestEntity.create(APPLICATION_JSON, cacheConfigToJson("serFallback", builder.build()))));
+      assertThat(response).isOk();
+
+      // allow the test value to be deserialized so that one entry converts normally while the other fails
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         cm.getClassAllowList().addClasses(SerializableValue.class);
+      }
+
+      SerializableValue value = new SerializableValue();
+      value.v = 42;
+      byte[] goodBytes = serialize(value);
+      // a valid stream header followed by an invalid type code: deserialization fails for this entry only
+      byte[] badBytes = {(byte) 0xAC, (byte) 0xED, 0x00, 0x05, (byte) 0xFF};
+
+      RestCacheClient cacheClient = client.cache("serFallback");
+      assertThat(join(cacheClient.put("good", RestEntity.create(MediaType.APPLICATION_SERIALIZED_OBJECT, goodBytes)))).isOk();
+      assertThat(join(cacheClient.put("bad", RestEntity.create(MediaType.APPLICATION_SERIALIZED_OBJECT, badBytes)))).isOk();
+
+      // the keys are stored as their UTF-8 bytes with no key encoding configured, so they render as hex on read-back
+      String goodKeyHex = Base16Codec.encode("good".getBytes(StandardCharsets.UTF_8));
+      String badKeyHex = Base16Codec.encode("bad".getBytes(StandardCharsets.UTF_8));
+
+      // before the fix this request aborted with an error once conversion of the bad value failed; now only that entry degrades to hex
+      response = join(cacheClient.entries(true));
+      assertThat(response).isOk();
+      List<Json> entries = Json.read(response.body()).asJsonList();
+      assertEquals(2, entries.size());
+      List<String> keys = entries.stream().map(j -> j.at("key").asString()).toList();
+      assertThat(keys).containsExactlyInAnyOrder(goodKeyHex, badKeyHex);
+
+      // values negotiate to text/plain for java-serialized storage, so a deserializable value renders as its string form
+      assertEquals("{\"v\":42}", entries.get(keys.indexOf(goodKeyHex)).at("value").asString());
+
+      // the unconvertible entry falls back to the hex representation of its raw content
+      assertEquals(Base16Codec.encode(badBytes), entries.get(keys.indexOf(badKeyHex)).at("value").asString());
+   }
+
+   public static class SerializableValue implements Serializable {
+      int v;
+
+      @Override
+      public String toString() {
+         return "{\"v\":" + v + "}";
+      }
+   }
+
+   /** a value whose writeObject() skips defaultWriteObject() and writes a nested object with its own writeObject() before primitive data (the Jetty SessionData-like layout from the issue): exercises the deserializer's nested-mark rewind end to end */
+   public static class NoDefaultWriteObjectValue implements Serializable {
+      Object a;
+      String b;
+
+      private void writeObject(ObjectOutputStream out) throws IOException {
+         out.writeObject(new ArrayList<>(List.of("x")));
+         out.writeInt(7);
+      }
+   }
+
+   @Test
+   @TestForIssue(githubKey = "18338")
+   public void testGetEntryWithNoDefaultWriteObjectValueRendersEmptyObject() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      builder.encoding().value().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT.toString());
+
+      RestResponse response = join(client.cache("serNoDefault").createWithConfiguration(
+            RestEntity.create(APPLICATION_JSON, cacheConfigToJson("serNoDefault", builder.build()))));
+      assertThat(response).isOk();
+
+      RestCacheClient cacheClient = client.cache("serNoDefault");
+      byte[] valueBytes = serialize(new NoDefaultWriteObjectValue());
+      assertThat(join(cacheClient.put("k", RestEntity.create(MediaType.APPLICATION_SERIALIZED_OBJECT, valueBytes)))).isOk();
+
+      // requesting application/json negotiates the value to APPLICATION_SERIALIZED_OBJECT -> APPLICATION_JSON, which is handled by the custom Deserializer (JsonTranscoder) rather than real Java deserialization
+      response = join(cacheClient.get("k", "application/json"));
+      assertThat(response).isOk();
+      // the no-defaultWriteObject value renders as an empty object (not hex, not an error)
+      assertEquals("{}", response.body().trim());
+   }
+
+   @Test
+   @TestForIssue(githubKey = "18338")
+   public void testStreamEntriesWithUnconvertibleKeyFallsBackToHexWhileValueConverts() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      builder.encoding().key().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT.toString());
+      builder.encoding().value().mediaType(MediaType.APPLICATION_SERIALIZED_OBJECT.toString());
+
+      RestResponse response = join(client.cache("serKeyFallback").createWithConfiguration(
+            RestEntity.create(APPLICATION_JSON, cacheConfigToJson("serKeyFallback", builder.build()))));
+      assertThat(response).isOk();
+
+      // allow the test value to be deserialized on read-back
+      for (EmbeddedCacheManager cm : cacheManagers) {
+         cm.getClassAllowList().addClasses(SerializableValue.class);
+      }
+
+      SerializableValue value = new SerializableValue();
+      value.v = 42;
+      // a valid stream header followed by an invalid type code: deserialization fails for the key only
+      byte[] badKey = {(byte) 0xAC, (byte) 0xED, 0x00, 0x05, (byte) 0xFF};
+
+      // put the entry directly in storage form so the key can hold an arbitrary byte sequence
+      AdvancedCache<Object, Object> asStored = cacheManagers.get(0).getCache("serKeyFallback").getAdvancedCache().withStorageMediaType();
+      asStored.put(badKey, serialize(value));
+
+      RestCacheClient cacheClient = client.cache("serKeyFallback");
+      response = join(cacheClient.entries(true));
+      assertThat(response).isOk();
+      List<Json> entries = Json.read(response.body()).asJsonList();
+      assertEquals(1, entries.size());
+
+      // only the key fails to convert and degrades to hex; the value is transcoded normally
+      assertEquals(Base16Codec.encode(badKey), entries.get(0).at("key").asString());
+      assertEquals("{\"v\":42}", entries.get(0).at("value").asString());
+   }
+
+   private static byte[] serialize(Object obj) {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      try (ObjectOutputStream os = new ObjectOutputStream(baos)) {
+         os.writeObject(obj);
+      } catch (IOException e) {
+         throw new IllegalStateException("Failed to serialize test value", e);
+      }
+      return baos.toByteArray();
    }
 
    @Test

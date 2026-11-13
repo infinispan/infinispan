@@ -25,6 +25,7 @@ import static java.io.ObjectStreamConstants.baseWireHandle;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
@@ -33,7 +34,10 @@ import java.io.WriteAbortedException;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -48,13 +52,18 @@ import org.infinispan.commons.dataconversion.internal.Json;
 public class Deserializer {
 
    private static final SEntity END = new SString("END");
+   // a misaligned parse can interpret garbage bytes as a length; refuse to allocate on its behalf
+   private static final int MAX_ARRAY_SIZE = 1 << 29;
+   private static final int MAX_BLOCK_DATA_LENGTH = 1 << 30;
    private final PrimitiveClassDescFactory primitiveClassDescFactory = new PrimitiveClassDescFactory();
+   private final MarkedStream markedIn;
    private final DataInputStream din;
    private final List<SEntity> handles = new ArrayList<>();
    private final Map<String, ClassDesc> classDescriptions = new HashMap<>();
 
    public Deserializer(InputStream in, boolean header) throws IOException {
-      this.din = new DataInputStream(in);
+      this.markedIn = new MarkedStream(in);
+      this.din = new DataInputStream(markedIn);
       if (header) {
          if (din.readShort() != STREAM_MAGIC || din.readShort() != STREAM_VERSION)
             throw new StreamCorruptedException("Bad stream header");
@@ -124,17 +133,46 @@ public class Deserializer {
 
    private void classData(SObject t, ObjectClassDesc cd) throws IOException {
       int flags = cd.getFlags();
-      if ((flags & SC_SERIALIZABLE) != 0) {
-         for (FieldDesc fieldDesc : cd.getFields()) {
-            t.setField(fieldDesc.getName(), fieldDesc.read());
-         }
-         if ((flags & SC_WRITE_METHOD) != 0) {
-            objectAnnotation(t);
-         }
+      if ((flags & SC_SERIALIZABLE) != 0 && (flags & SC_WRITE_METHOD) == 0) {
+         readDeclaredFields(t, cd);
+      } else if ((flags & SC_SERIALIZABLE) != 0) {
+         // A class that declares its own writeObject() produces a section containing either the default field values followed by custom data (when it called defaultWriteObject()) or only custom data. The stream does not record which is present, so try reading fields first and fall back to treating the whole section as opaque custom data when parsing fails
+         readCustomWriterSlot(t, cd);
       } else if ((flags & SC_EXTERNALIZABLE) != 0) {
          if ((flags & SC_BLOCK_DATA) == 0) throw new IOException("Can't handle externalContents");
          objectAnnotation(t);
       }
+   }
+
+   private void readDeclaredFields(SObject t, ObjectClassDesc cd) throws IOException {
+      for (FieldDesc fieldDesc : cd.getFields()) {
+         t.setField(fieldDesc.getName(), fieldDesc.read());
+      }
+   }
+
+   /**
+    * Reads the section of object data belonging to a class that declares its own writeObject(). If the fields cannot be parsed, the stream is rewound and the entire section is re-read as custom data (see {@link #classData}). Note that if hand-written blockdata happens to parse successfully as the declared fields followed by a valid annotation terminator it will be rendered as such; this ambiguity cannot be resolved without access to the class definitions.
+    */
+   private void readCustomWriterSlot(SObject t, ObjectClassDesc cd) throws IOException {
+      // the snapshots must be taken before the attempt: a failed parse mutates exactly this state (handles, classDescriptions and the object's fields) and the rollback restores it
+      Map<String, SEntity> savedFields = t.fieldSnapshot();
+      int handlesSize = handles.size();
+      Set<String> classNamesAtMark = new HashSet<>(classDescriptions.keySet());
+      int mark = markedIn.mark();
+      boolean rewound = false;
+      try {
+         readDeclaredFields(t, cd);
+         objectAnnotation(t);
+      } catch (Exception e) {
+         // writeObject did not call defaultWriteObject(): no field values are present in the stream. Rewind and re-read this section as custom data only. A nested custom writer encountered while reading the declared fields may have created its own mark, which resetToMark(mark) discards so the rewind reaches the start of this section. Any failure (not just IOException) signals a misaligned parse: garbled bytes can surface as arbitrary runtime errors (NegativeArraySizeException, ArrayIndexOutOfBoundsException, ...) while interpreting them as fields
+         markedIn.resetToMark(mark);
+         while (handles.size() > handlesSize) handles.remove(handles.size() - 1);
+         classDescriptions.keySet().retainAll(classNamesAtMark);
+         t.restoreFields(savedFields);
+         objectAnnotation(t); // if parsing the custom region also fails let it propagate: the stream is genuinely malformed
+         rewound = true;
+      }
+      if (!rewound) markedIn.releaseMark(mark);
    }
 
    private void objectAnnotation(SObject t) throws IOException {
@@ -276,6 +314,7 @@ public class Deserializer {
    private SArray newArray() throws IOException {
       ArrayClassDesc classDesc = (ArrayClassDesc) classDesc();
       int size = din.readInt();
+      if (size < 0 || size > MAX_ARRAY_SIZE) throw new StreamCorruptedException("Array size too large: " + size);
       SArray array = new SArray(classDesc.getType(), size);
       newHandle(array);
       ClassDesc componentClassDesc = classDesc.getComponentClassDesc();
@@ -335,6 +374,7 @@ public class Deserializer {
    }
 
    private SBlockData blockData(int len) throws IOException {
+      if (len < 0 || len > MAX_BLOCK_DATA_LENGTH) throw new StreamCorruptedException("Block data too large: " + len);
       byte[] data = new byte[len];
       din.readFully(data);
       return new SBlockData(data);
@@ -566,7 +606,10 @@ public class Deserializer {
       }
 
       SEntity read() throws IOException {
-         return readObject();
+         SEntity entity = readObject();
+         // block data can never appear as a direct child of the instance-data region: encountering it here means we are misaligned (e.g. reading custom writeObject data as fields) so fail loudly rather than storing garbage
+         if (entity instanceof SBlockData) throw new StreamCorruptedException("Unexpected block data in field value");
+         return entity;
       }
 
       public String toString() {
@@ -598,6 +641,134 @@ public class Deserializer {
       @Override
       public String getTypeName() {
          return classDesc.toString();
+      }
+   }
+
+   /**
+    * An {@link InputStream} supporting nested mark/reset by replaying the bytes read since the requested {@code mark()} call. Marks form a stack: each {@code mark()} records the current stream position and returns a token, {@code resetToMark(int)} rewinds to that specific mark, discarding any newer marks created in the meantime (for example by a nested custom writer), and {@code releaseMark(int)} drops a mark whose section was consumed without a rewind. Bytes are only captured while at least one mark is outstanding or a replay is being served, so memory usage is bounded by the bytes read while a mark is outstanding rather than by the size of the whole stream.
+    */
+   private static final class MarkedStream extends FilterInputStream {
+
+      private final Deque<Integer> marks = new ArrayDeque<>();
+      private final Map<Integer, Long> markPositions = new HashMap<>();
+      private int nextToken = 1;
+      // total bytes read from the underlying stream, in stream coordinates (monotonically increasing; the position seen by the consumer can be rewound)
+      private long streamPos;
+      // while a mark is outstanding, the bytes read from the underlying stream since captureBase are retained so a later resetToMark can replay them
+      private byte[] capture;
+      private long captureBase;
+      private int captureSize;
+      // snapshot served after resetToMark() before falling through to the underlying stream again; replayStart is its position in stream coordinates
+      private byte[] replay;
+      private long replayStart;
+      private int replayPos;
+
+      MarkedStream(InputStream in) {
+         super(in);
+      }
+
+      int mark() {
+         // while a replay from an earlier reset is being served the consumer position lags behind the underlying stream, so the mark must record the logical position for a later resetToMark to rewind to the right place
+         long pos = (replay != null && replayPos < replay.length) ? replayStart + replayPos : streamPos;
+         if (capture == null) {
+            captureBase = streamPos;
+            capture = new byte[256];
+            captureSize = 0;
+         }
+         int token = nextToken++;
+         marks.push(token);
+         markPositions.put(token, pos);
+         return token;
+      }
+
+      /**
+       * Drops a mark whose section was consumed successfully, without rewinding. Frees the capture buffer when no marks remain.
+       */
+      void releaseMark(int token) {
+         popMarksAbove(token);
+         if (marks.isEmpty() || marks.peek() != token) throw new IllegalStateException("Unknown or already released mark: " + token);
+         marks.pop();
+         markPositions.remove(token);
+         releaseCaptureIfPossible();
+      }
+
+      void resetToMark(int token) {
+         popMarksAbove(token);
+         if (marks.isEmpty() || marks.peek() != token) throw new IllegalStateException("Unknown or already consumed mark: " + token);
+         long pos = markPositions.remove(token);
+         marks.pop();
+         // The bytes read since the mark can span at most two stored regions: a pending replay (when the mark was created while a previous replay was being served) and the capture buffer
+         byte[] newReplay;
+         if (replay != null && replayPos < replay.length && pos >= replayStart) {
+            int firstLen = replay.length - (int) (pos - replayStart);
+            // the capture buffer may predate the replay (held open by an older mark): in that case only the tail beyond the replay is needed
+            int secondStart = (int) Math.max(0, replayStart + replay.length - captureBase);
+            int secondLen = captureSize - secondStart;
+            newReplay = new byte[firstLen + secondLen];
+            System.arraycopy(replay, (int) (pos - replayStart), newReplay, 0, firstLen);
+            if (secondLen > 0) System.arraycopy(capture, secondStart, newReplay, firstLen, secondLen);
+         } else {
+            int rel = (int) (pos - captureBase);
+            newReplay = Arrays.copyOfRange(capture, rel, captureSize);
+         }
+         this.replay = newReplay;
+         this.replayStart = pos;
+         this.replayPos = 0;
+         releaseCaptureIfPossible();
+      }
+
+      // the capture must outlive any pending replay: a mark created while a replay is being served may need to rewind to a position the replay covers, and the capture buffer may not have started before that position
+      private void releaseCaptureIfPossible() {
+         if (marks.isEmpty() && (replay == null || replayPos >= replay.length)) capture = null;
+      }
+
+      @Override
+      public int read() throws IOException {
+         if (replay != null && replayPos < replay.length) return replay[replayPos++] & 0xff;
+         int b = in.read();
+         if (b >= 0) {
+            streamPos++;
+            captureByte((byte) b);
+         }
+         return b;
+      }
+
+      @Override
+      public int read(byte[] b, int off, int len) throws IOException {
+         if (replay != null && replayPos < replay.length) {
+            int n = Math.min(len, replay.length - replayPos);
+            System.arraycopy(replay, replayPos, b, off, n);
+            replayPos += n;
+            return n;
+         }
+         int r = in.read(b, off, len);
+         if (r > 0) {
+            streamPos += r;
+            captureBytes(b, off, r);
+         }
+         return r;
+      }
+
+      private void captureByte(byte b) {
+         if (capture == null) return;
+         if (captureSize == capture.length) capture = Arrays.copyOf(capture, capture.length * 2);
+         capture[captureSize++] = b;
+      }
+
+      private void captureBytes(byte[] b, int off, int len) {
+         if (capture == null || len == 0) return;
+         int newSize = captureSize + len;
+         if (newSize > capture.length) capture = Arrays.copyOf(capture, Math.max(newSize, capture.length * 2));
+         System.arraycopy(b, off, capture, captureSize, len);
+         captureSize = newSize;
+      }
+
+      private void popMarksAbove(int token) {
+         Integer top;
+         while ((top = marks.peek()) != null && top != token) {
+            marks.pop();
+            markPositions.remove(top);
+         }
       }
    }
 }
