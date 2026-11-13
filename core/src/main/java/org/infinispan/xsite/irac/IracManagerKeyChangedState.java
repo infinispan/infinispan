@@ -6,6 +6,7 @@ import static org.infinispan.commons.util.Util.toStr;
 import java.lang.invoke.MethodHandles;
 import java.util.BitSet;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.infinispan.commands.RequestUUID;
@@ -24,6 +25,7 @@ import com.google.errorprone.annotations.concurrent.GuardedBy;
 class IracManagerKeyChangedState implements IracManagerKeyState {
 
    private static final AtomicReferenceFieldUpdater<IracManagerKeyChangedState, Status> STATUS_UPDATER = newUpdater(IracManagerKeyChangedState.class, Status.class, "status");
+   private static final AtomicIntegerFieldUpdater<IracManagerKeyChangedState> MISSING_ENTRY_UPDATER = AtomicIntegerFieldUpdater.newUpdater(IracManagerKeyChangedState.class, "missingEntryAttempts");
    private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
    final IracManagerKeyInfo keyInfo;
@@ -33,6 +35,7 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
    private final BitSet backupMissing;
 
    private volatile Status status = Status.READY;
+   private volatile int missingEntryAttempts;
 
    public IracManagerKeyChangedState(int segment, Object key, RequestUUID owner, boolean expiration, int numberOfBackups) {
       this.keyInfo = new IracManagerKeyInfo(segment, key, owner);
@@ -86,6 +89,18 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
          log.tracef("[IRAC] State.setRetry for key %s (status=%s)", toStr(getKey()), status);
       }
       STATUS_UPDATER.compareAndSet(this, Status.SENDING, Status.READY);
+   }
+
+   @Override
+   public int incrementAndGetMissingEntryAttempts() {
+      return MISSING_ENTRY_UPDATER.incrementAndGet(this);
+   }
+
+   @Override
+   public void resetMissingEntryAttempts() {
+      if (missingEntryAttempts != 0) {
+         MISSING_ENTRY_UPDATER.set(this, 0);
+      }
    }
 
    @Override

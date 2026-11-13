@@ -2508,4 +2508,11 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Ignoring topology %d for cache %s from view %d received after status request from view %d", id = 732)
    void ignoringTopologyFromOldView(int topologyId, String cacheName, int viewId, int statusRequestViewId);
+
+   @LogMessage(level = WARN)
+   @Message(value = "[IRAC] Cache '%s' is not replicating key '%s' to the backup location(s) because neither the entry " +
+         "nor its tombstone are available. The update is discarded. This message is logged only once.", id = 733)
+   @Description("An update tracked for asynchronous cross-site replication cannot be sent because the entry is no longer available, for example, because it was evicted from a cache without a store. To ensure data consistency between backup locations you should initiate state transfer to synchronize data between clusters.")
+   @Once
+   void iracDiscardingKeyWithoutEntryAndTombstone(String cacheName, Object key);
 }

@@ -61,6 +61,20 @@ interface IracManagerKeyState {
    void retry();
 
    /**
+    * Signals that neither the key's entry nor its tombstone were found while trying to send this state.
+    * <p>
+    * The entry may be temporarily unavailable, for example, while passivation is in progress after an eviction.
+    *
+    * @return The number of consecutive times the entry and the tombstone were not found.
+    */
+   int incrementAndGetMissingEntryAttempts();
+
+   /**
+    * Resets the counter returned by {@link #incrementAndGetMissingEntryAttempts()}.
+    */
+   void resetMissingEntryAttempts();
+
+   /**
     * It returns {@code true} if the state is successfully applied in all online sites.
     *
     * @return {@code true} if the state is successfully applied.
