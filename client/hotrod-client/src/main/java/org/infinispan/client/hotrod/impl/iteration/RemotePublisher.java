@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
@@ -44,8 +45,13 @@ public class RemotePublisher<K, E> implements Publisher<Map.Entry<K, E>> {
    private final int batchSize;
    private final boolean metadata;
    private final KeyTracker segmentKeyTracker;
+   private final int maxRetries;
 
    private final Set<SocketAddress> failedServers = ConcurrentHashMap.newKeySet();
+   // Number of consecutive iteration starts that timed out, reset only when the iteration makes progress.
+   // Bounding the consecutive failures rather than the total ones keeps failing over across an arbitrary number of
+   // servers possible, while still guaranteeing termination against a server that never responds.
+   private final AtomicInteger consecutiveRetries = new AtomicInteger();
 
    public RemotePublisher(CacheOperationsFactory operationsFactory, OperationDispatcher dispatcher, String filterConverterFactory,
                           Object[] filterParams, Set<Integer> segments, int batchSize, boolean metadata, DataFormat dataFormat) {
@@ -70,6 +76,7 @@ public class RemotePublisher<K, E> implements Publisher<Map.Entry<K, E>> {
       }
       this.batchSize = batchSize;
       this.metadata = metadata;
+      this.maxRetries = dispatcher.getMaxRetries();
       this.segmentKeyTracker = KeyTrackerFactory.create(dataFormat, segmentConsistentHash,
             dispatcher.getTopologyId(cacheName), segments);
    }
@@ -156,6 +163,26 @@ public class RemotePublisher<K, E> implements Publisher<Map.Entry<K, E>> {
       if (socketAddress != null) {
          failedServers.add(socketAddress);
       }
+   }
+
+   /**
+    * Records an iteration start that timed out and tells the caller whether another one may be attempted. Without
+    * this bound, a server that accepts connections but never answers would be retried forever, never completing
+    * and never reporting an error to the subscriber.
+    *
+    * @return true if the iteration start may be retried, false if the failure should be propagated.
+    */
+   boolean canRetry() {
+      return consecutiveRetries.incrementAndGet() <= maxRetries;
+   }
+
+   /**
+    * Invoked when the iteration makes progress, meaning any preceding failures were transient. Note this is driven
+    * by a successful next response rather than a successful start: resetting on a start would let a
+    * start/timeout/restart cycle repeat forever without the iteration ever advancing.
+    */
+   void resetRetries() {
+      consecutiveRetries.set(0);
    }
 
    CompletionStage<Void> sendCancel(byte[] iterationId, SocketAddress socketAddress) {

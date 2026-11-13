@@ -113,7 +113,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
             // This way when a response is processed for the timed out operation we can process the bytes properly
             incomplete.put(messageId, opTimeout.op);
             dispatcher.handleResponse(opTimeout.op, messageId, channel, null,
-                  new SocketTimeoutException(opTimeout.op + " timed out after " + configuration.socketTimeout() + " ms"));
+                  timedOut(opTimeout.op + " timed out after " + configuration.socketTimeout() + " ms"));
          } else {
             log.tracef("Rescheduling timeout checker for ~%d ms", TimeUnit.NANOSECONDS.toMillis(nanoDiff));
             channel.eventLoop().schedule(CHECK_TIMEOUTS, nanoDiff, TimeUnit.NANOSECONDS);
@@ -121,6 +121,21 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
          }
       }
 
+   }
+
+   /**
+    * Wraps a client side timeout into a {@link TransportException} carrying the address of the server the operation
+    * was sent to, mirroring what the synchronous path already does in
+    * {@link org.infinispan.client.hotrod.impl.Util#await(java.util.concurrent.CompletableFuture, long)}.
+    * <p>
+    * Consumers that classify failures by looking for a {@link HotRodClientException}, such as the remote iteration
+    * publisher, can then retry the operation instead of propagating the timeout to the caller. Note the exception
+    * carries no error status code, so {@code isServerError()} remains false and the retry handling of all other
+    * operations is unchanged.
+    */
+   private TransportException timedOut(String message) {
+      assert channel == null || channel.eventLoop().inEventLoop();
+      return new TransportException(new SocketTimeoutException(message), ChannelRecord.of(channel));
    }
 
    @Override
@@ -171,7 +186,7 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
       ScheduledFuture<?> future = channel.eventLoop().schedule(() -> {
          timeouts.remove(messageIdLong);
          dispatcher.handleResponse(op, messageIdLong, channel, null,
-               new SocketTimeoutException(this + " timed out after " + configuration.socketTimeout() + " ms"));
+               timedOut(this + " timed out after " + configuration.socketTimeout() + " ms"));
       }, timeout, TimeUnit.MILLISECONDS);
       timeouts.put(messageIdLong, future);
    }
