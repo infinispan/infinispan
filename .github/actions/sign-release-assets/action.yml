@@ -1,0 +1,76 @@
+name: Sign Release Assets
+description: Signs files with the project OpenPGP key and uploads them, together with their detached .asc signatures, to a GitHub release
+
+inputs:
+  release-tag:
+    description: "Name of the target GitHub release (tag)"
+    required: true
+  asset-paths:
+    description: "Newline-separated file paths or shell patterns; each matched file is signed and uploaded alongside its .asc signature"
+    required: true
+  gpg-armored-key:
+    description: "ASCII armored OpenPGP signing key (secret)"
+    required: true
+  gpg-passphrase:
+    description: "Passphrase of the OpenPGP signing key (secret)"
+    required: true
+  token:
+    description: "Token used to upload release assets"
+    required: true
+  clobber:
+    description: "Whether to replace existing assets with the same name, so that failed releases can be retried without manual cleanup"
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    # Windows runners get GnuPG from the Git Bash they run this action in (Git for Windows >= 2.44.0
+    # ships GnuPG); the availability check below guards against runner image changes.
+    # macOS runners usually ship GnuPG already.
+    - name: Install GnuPG on macOS runner if missing
+      if: ${{ runner.os == 'macOS' }}
+      shell: bash
+      run: command -v gpg >/dev/null 2>&1 || brew install gnupg
+
+    - name: Verify GnuPG is available
+      shell: bash
+      run: |
+        command -v gpg >/dev/null 2>&1 || { echo "::error::GnuPG (gpg) is not installed on this runner"; exit 1; }
+        gpg --version | head -1
+
+    - name: Sign assets and upload to release
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        RELEASE_TAG: ${{ inputs.release-tag }}
+        ASSET_PATHS: ${{ inputs.asset-paths }}
+        CLOBBER: ${{ inputs.clobber }}
+        MAVEN_GPG_KEY: ${{ inputs.gpg-armored-key }}
+        MAVEN_GPG_PASSPHRASE: ${{ inputs.gpg-passphrase }}
+      run: |
+        set -euo pipefail
+
+        echo "$MAVEN_GPG_KEY" | gpg --batch --import >/dev/null 2>&1 \
+          || { echo "::error::Failed to import the OpenPGP signing key"; exit 1; }
+
+        uploads=()
+        while IFS= read -r pattern || [ -n "$pattern" ]; do
+          [ -z "$pattern" ] && continue
+          matched=false
+          for file in $pattern; do
+            if [ ! -f "$file" ]; then echo "::error::Asset not found: $pattern"; exit 1; fi
+            gpg --batch --yes --pinentry-mode loopback \
+              --passphrase "$MAVEN_GPG_PASSPHRASE" \
+              --detach-sign --armor -o "${file}.asc" "$file" \
+              || { echo "::error::Failed to sign $file"; exit 1; }
+            uploads+=("$file" "${file}.asc")
+            matched=true
+          done
+          if [ "$matched" = "false" ]; then echo "::error::No files matched: $pattern"; exit 1; fi
+        done <<< "$(printf '%s' "$ASSET_PATHS")"
+
+        clobber_flag=""
+        if [ "$CLOBBER" = "true" ]; then clobber_flag="--clobber"; fi
+        # shellcheck disable=SC2086
+        gh release upload "$RELEASE_TAG" $clobber_flag "${uploads[@]}"

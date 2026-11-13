@@ -81,13 +81,17 @@ jobs:
           VERSION: ${{ inputs.version }}
           NFPM_ARCH: ${{ matrix.nfpm_arch }}
 
-      - name: Upload packages to release
-        run: |
-          gh release upload ${{ inputs.version }} \
-            artifacts/*.deb artifacts/*.rpm \
-            --clobber
-        env:
-          GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+      - name: Sign and attach packages to release
+        uses: ./.github/actions/sign-release-assets
+        with:
+          release-tag: ${{ inputs.version }}
+          asset-paths: |
+            artifacts/*.deb
+            artifacts/*.rpm
+          gpg-armored-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
+          gpg-passphrase: ${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}
+          token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+          clobber: "true"
 
   publish-linux-repos:
     needs: linux-packages

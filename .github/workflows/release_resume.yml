@@ -96,12 +96,17 @@ jobs:
         name: Build native executable
         run: ./mvnw package -Pdistribution -Pnative -am -pl ${{ steps.detect-cli.outputs.module }}
 
-      - name: Upload CLI native executable
+      - name: Sign and attach CLI native executable
         id: upload-cli-native-executable
-        run: |
-          gh release upload ${{ github.event.inputs.version }} ${{ steps.detect-cli.outputs.module }}/target/infinispan-cli-${{ github.event.inputs.version }}-${{ matrix.asset_name }}.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+        uses: ./.github/actions/sign-release-assets
+        with:
+          release-tag: ${{ github.event.inputs.version }}
+          asset-paths: |
+            ${{ steps.detect-cli.outputs.module }}/target/infinispan-cli-${{ github.event.inputs.version }}-${{ matrix.asset_name }}.zip
+          gpg-armored-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
+          gpg-passphrase: ${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}
+          token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+          clobber: "true"
 
   images:
     needs: published
