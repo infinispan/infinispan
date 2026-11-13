@@ -108,6 +108,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
 
       - name: Setup Java (baseline JDK ${{ needs.prepare-matrix.outputs.baseline-jdk }})
+        # The id lets the test step read this JDK's install path, which the alternate setup-java below cannot overwrite.
+        id: setup-baseline-jdk
         uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           java-version: ${{ needs.prepare-matrix.outputs.baseline-jdk }}
@@ -125,13 +127,21 @@ jobs:
 
       - name: Run tests with alternate JDK ${{ matrix.jdk }}
         shell: bash
+        env:
+          # Install path of the baseline JDK.
+          # It is passed as an environment variable, not interpolated into the script, so no input value is run as shell code.
+          BASELINE_JAVA_HOME: ${{ steps.setup-baseline-jdk.outputs.path }}
         run: |
-          # Set JAVA_ALT_HOME to the alternate JDK path
+          # The second setup-java points JAVA_HOME at the alternate JDK.
+          # The tests fork on it through JAVA_ALT_HOME (java-alt-test profile).
+          # Maven and its plugins (enforcer, checkstyle) must keep running on the baseline JDK.
           export JAVA_ALT_HOME=$JAVA_HOME
+          # Fail here if the path is missing.
+          # Otherwise mvnw falls back to the alternate JDK on PATH and fails later in some unrelated way.
+          export JAVA_HOME="${BASELINE_JAVA_HOME:?baseline JDK home is not set}"
           ./mvnw -q verify \
             -pl ${{ needs.prepare-matrix.outputs.modules }} \
             -Pjava-alt-test \
-            -Denforcer.skip=true \
             -Dmaven.test.failure.ignore=true \
             -Dansi.strip=true \
             -B -e
