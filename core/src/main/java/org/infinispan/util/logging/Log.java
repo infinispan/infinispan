@@ -2508,4 +2508,10 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Ignoring topology %d for cache %s from view %d received after status request from view %d", id = 732)
    void ignoringTopologyFromOldView(int topologyId, String cacheName, int viewId, int statusRequestViewId);
+
+   @LogMessage(level = WARN)
+   @Message(value = "[IRAC] Tombstone cleanup round failed for cache '%s' and will be retried: %s", id = 733)
+   @Description("A tombstone cleanup round for cross-site replication failed, for example because a cluster member did not " +
+         "respond in time. The next round retries the cleanup. If this message persists, check the health of the cluster.")
+   void warnFailedIracTask(String cacheName, Throwable t);
 }
