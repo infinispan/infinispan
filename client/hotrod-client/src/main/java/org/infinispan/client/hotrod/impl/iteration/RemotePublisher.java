@@ -9,6 +9,7 @@ import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.PrimitiveIterator;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -108,17 +109,18 @@ public class RemotePublisher<K, E> implements Publisher<Map.Entry<K, E>> {
       }
       Flowable.just(segments)
             .map(segments -> {
-               Map<SocketAddress, Set<Integer>> segmentsByAddress = dispatcher.getPrimarySegmentsByAddress(
+               Map<SocketAddress, IntSet> segmentsByAddress = dispatcher.getPrimarySegmentsByAddress(
                      operationsFactory.getRemoteCache().getName());
                Map<SocketAddress, IntSet> actualTargets = new HashMap<>(segmentsByAddress.size());
-               for (Map.Entry<SocketAddress, Set<Integer>> entry : segmentsByAddress.entrySet()) {
+               for (Map.Entry<SocketAddress, IntSet> entry : segmentsByAddress.entrySet()) {
                   SocketAddress targetAddress = entry.getKey();
                   if (failedServers.contains(targetAddress)) {
                      targetAddress = null;
                   }
                   IntSet segmentsNeeded = null;
-                  Set<Integer> targetSegments = entry.getValue();
-                  for (int targetSegment : targetSegments) {
+                  IntSet targetSegments = entry.getValue();
+                  for (PrimitiveIterator.OfInt iter = targetSegments.iterator(); iter.hasNext(); ) {
+                     int targetSegment = iter.nextInt();
                      if (segments.contains(targetSegment)) {
                         if (segmentsNeeded == null) {
                            segmentsNeeded = IntSets.mutableEmptySet();

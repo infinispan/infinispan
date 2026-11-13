@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -254,8 +255,8 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
          Address remappedOldAddress = persistentUUIDManager.getAddress(addressMapping.get(oldAddress));
          Address newAddress = newConsistentHash.getMembers().get(i);
          if (!remappedOldAddress.equals(newAddress)) return false;
-         Set<Integer> oldSegmentsForOwner = oldConsistentHash.getSegmentsForOwner(oldAddress);
-         Set<Integer> newSegmentsForOwner = newConsistentHash.getSegmentsForOwner(newAddress);
+         IntSet oldSegmentsForOwner = oldConsistentHash.getSegmentsForOwnerAsIntSet(oldAddress);
+         IntSet newSegmentsForOwner = newConsistentHash.getSegmentsForOwnerAsIntSet(newAddress);
          if (!oldSegmentsForOwner.equals(newSegmentsForOwner)) return false;
       }
 

@@ -10,11 +10,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.net.InetSocketAddress;
 import java.util.Random;
-import java.util.Set;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -107,9 +107,9 @@ public class AsymmetricRoutingTest extends HitsAwareCacheManagersTest {
       AdvancedCache<Object, Object> cache = server.getCacheManager().getCache(cacheName).getAdvancedCache();
       ConsistentHash ch = cache.getDistributionManager().getCacheTopology().getReadConsistentHash();
       assertEquals(1, ch.getNumSegments());
-      Set<Integer> segments = ch.getSegmentsForOwner(owner);
+      IntSet segments = ch.getSegmentsForOwnerAsIntSet(owner);
       assertEquals(1, segments.size());
-      assertEquals(0, segments.iterator().next().intValue());
+      assertEquals(0, segments.iterator().nextInt());
    }
 
    private void assertRequestRouting(byte[] key, String cacheName, HotRodServer server) {

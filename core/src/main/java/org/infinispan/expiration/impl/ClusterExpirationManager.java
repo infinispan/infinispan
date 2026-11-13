@@ -120,7 +120,7 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
 
          IntSet segments;
          if (topology.getReadConsistentHash().getMembers().contains(localAddress)) {
-            segments = IntSets.from(topology.getReadConsistentHash().getPrimarySegmentsForOwner(localAddress));
+            segments = topology.getReadConsistentHash().getPrimarySegmentsForOwnerAsIntSet(localAddress);
          } else {
             segments = IntSets.immutableEmptySet();
          }
