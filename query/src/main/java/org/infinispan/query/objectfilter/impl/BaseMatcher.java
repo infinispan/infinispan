@@ -7,6 +7,9 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.objectfilter.FilterCallback;
 import org.infinispan.query.objectfilter.FilterSubscription;
@@ -20,6 +23,7 @@ import org.infinispan.query.objectfilter.impl.syntax.IndexedSearchPredicateDetec
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleParsingResult;
 import org.infinispan.query.objectfilter.impl.syntax.parser.IckleQueryStringParser;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ObjectPropertyHelper;
+import org.infinispan.query.objectfilter.impl.syntax.update.QueryFunctionRegistry;
 import org.jboss.logging.Logger;
 
 /**
@@ -27,6 +31,7 @@ import org.jboss.logging.Logger;
  * @since 7.0
  */
 //todo [anistor] make package local
+@Scope(Scopes.NAMED_CACHE)
 public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>> implements Matcher {
 
    private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, BaseMatcher.class.getName());
@@ -43,12 +48,33 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    protected final ObjectPropertyHelper<TypeMetadata> propertyHelper;
 
+   /**
+    * The function registry of the owning cache manager, injected when the
+    * matcher participates in the dependency-injection container. Statements
+    * parsed here (e.g. the WHERE filter of an UPDATE statement) must validate
+    * function calls against the same registry the query engine uses, so
+    * user-defined functions are honoured and never leak across cache managers.
+    */
+   @Inject
+   protected QueryFunctionRegistry functionRegistry;
+
+   /**
+    * Fallback for matchers that are not wired by the container (e.g. ad-hoc
+    * instances in tests): built-in functions only.
+    */
+   private static final QueryFunctionRegistry BUILT_IN_ONLY = QueryFunctionRegistry.standard();
+
    protected BaseMatcher(ObjectPropertyHelper<TypeMetadata> propertyHelper) {
       this.propertyHelper = propertyHelper;
    }
 
    public ObjectPropertyHelper<TypeMetadata> getPropertyHelper() {
       return propertyHelper;
+   }
+
+   protected QueryFunctionRegistry getFunctionRegistry() {
+      QueryFunctionRegistry registry = functionRegistry;
+      return registry != null ? registry : BUILT_IN_ONLY;
    }
 
    /**
@@ -133,7 +159,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    @Override
    public ObjectFilter getObjectFilter(String queryString, List<FieldAccumulator> acc) {
-      final IckleParsingResult<TypeMetadata> parsingResult = IckleQueryStringParser.parse(queryString, propertyHelper);
+      final IckleParsingResult<TypeMetadata> parsingResult = IckleQueryStringParser.parse(queryString, propertyHelper, getFunctionRegistry());
       disallowGroupingAndAggregations(parsingResult);
 
       // if the query is a contradiction just return an ObjectFilter that rejects everything
@@ -190,7 +216,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    @Override
    public FilterSubscription registerFilter(String queryString, Map<String, Object> namedParameters,
                                             FilterCallback callback, boolean isDeltaFilter, Object... eventType) {
-      IckleParsingResult<TypeMetadata> parsingResult = IckleQueryStringParser.parse(queryString, propertyHelper);
+      IckleParsingResult<TypeMetadata> parsingResult = IckleQueryStringParser.parse(queryString, propertyHelper, getFunctionRegistry());
       disallowGroupingAndAggregations(parsingResult);
       disallowFullText(parsingResult);
 

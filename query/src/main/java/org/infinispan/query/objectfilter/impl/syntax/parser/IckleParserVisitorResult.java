@@ -2,18 +2,22 @@ package org.infinispan.query.objectfilter.impl.syntax.parser;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.infinispan.query.grammar.IckleLexer;
 import org.infinispan.query.grammar.IckleParser;
 import org.infinispan.query.grammar.IckleParserBaseVisitor;
 import org.infinispan.query.objectfilter.SortField;
 import org.infinispan.query.objectfilter.impl.logging.Log;
 import org.infinispan.query.objectfilter.impl.ql.AggregationFunction;
+import org.infinispan.query.objectfilter.impl.ql.ExpressionProjection;
 import org.infinispan.query.objectfilter.impl.ql.Function;
 import org.infinispan.query.objectfilter.impl.ql.PropertyPath;
 import org.infinispan.query.objectfilter.impl.syntax.ComparisonExpr;
@@ -22,6 +26,14 @@ import org.infinispan.query.objectfilter.impl.syntax.IndexedFieldProvider;
 import org.infinispan.query.objectfilter.impl.syntax.parser.projection.CacheValuePropertyPath;
 import org.infinispan.query.objectfilter.impl.syntax.parser.projection.ScorePropertyPath;
 import org.infinispan.query.objectfilter.impl.syntax.parser.projection.VersionPropertyPath;
+import org.infinispan.query.objectfilter.impl.syntax.update.ArithmeticOperator;
+import org.infinispan.query.objectfilter.impl.syntax.update.BinaryArithmeticUpdateValueExpr;
+import org.infinispan.query.objectfilter.impl.syntax.update.FunctionCallUpdateValueExpr;
+import org.infinispan.query.objectfilter.impl.syntax.update.NegateUpdateValueExpr;
+import org.infinispan.query.objectfilter.impl.syntax.update.PropertyRefUpdateValue;
+import org.infinispan.query.objectfilter.impl.syntax.update.QueryFunctionRegistry;
+import org.infinispan.query.objectfilter.impl.syntax.update.UpdateValueExpr;
+import org.infinispan.query.objectfilter.impl.syntax.update.UpdateValueTypeChecker;
 import org.jboss.logging.Logger;
 import org.jspecify.annotations.Nullable;
 
@@ -58,9 +70,11 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
    private List<PropertyPath<TypeDescriptor<TypeMetadata>>> projections;
    private List<Class<?>> projectedTypes;
    private List<Object> projectedNullMarkers;
+   private final QueryFunctionRegistry functionRegistry;
 
-   public IckleParserVisitorResult(String ickle, ObjectPropertyHelper propertyHelper) {
+   public IckleParserVisitorResult(String ickle, ObjectPropertyHelper propertyHelper, QueryFunctionRegistry functionRegistry) {
       this.propertyHelper = propertyHelper;
+      this.functionRegistry = functionRegistry;
       this.resultBuilder = new IckleParsingResult.Builder<>();
       resultBuilder.setQueryString(ickle);
       expressionBuilder = new VirtualExpressionBuilder<>(this, propertyHelper, aliasToPropertyPath);
@@ -115,6 +129,9 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
                   }
                } else if (ScorePropertyPath.SCORE_PROPERTY_NAME.equals(stringPath)
                      || VersionPropertyPath.VERSION_PROPERTY_NAME.equals(stringPath)) {
+                  resolvedPath = path;
+                  type = Object.class;
+               } else if (path instanceof ExpressionProjection) {
                   resolvedPath = path;
                   type = Object.class;
                } else {
@@ -202,6 +219,10 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
          visit(ctx.whereClause());
       }
 
+      if (!namedParameters.isEmpty()) {
+         resultBuilder.setParameterNames(Set.copyOf(namedParameters.keySet()));
+      }
+
       return null;
    }
 
@@ -225,8 +246,10 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
          valueCtx = ctx.collectionAssignment().updateValue();
       }
 
-      String[] propertyPath = pathText.split("\\.");
-      List<Object> values = parseUpdateValues(valueCtx);
+      PropertyPath<TypeDescriptor<TypeMetadata>> lhsPath = resolveAndValidate(buildPropertyPath(pathText));
+      String[] propertyPath = lhsPath.asArrayPath();
+      List<Object> values = buildUpdateValues(valueCtx);
+      checkUpdateValues(values, propertyPath, pathText);
 
       resultBuilder.addUpdateOperation(
             new IckleParsingResult.UpdateOperation(opType, propertyPath, values));
@@ -234,12 +257,149 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
       return null;
    }
 
-   private List<Object> parseUpdateValues(IckleParser.UpdateValueContext ctx) {
+   private List<Object> buildUpdateValues(IckleParser.UpdateValueContext ctx) {
+      if (ctx.updateExpression() != null) {
+         List<Object> values = new ArrayList<>(1);
+         values.add(buildUpdateExpression(ctx.updateExpression()));
+         return values;
+      }
+      if (ctx.LPAREN() != null) {
+         List<Object> values = new ArrayList<>();
+         for (IckleParser.UpdateValueContext sub : ctx.updateValue()) {
+            values.addAll(buildUpdateValues(sub));
+         }
+         return values;
+      }
+      // LSQUARE
       List<Object> values = new ArrayList<>();
-      for (IckleParser.ConstantContext constCtx : ctx.constant()) {
-         values.add(parseConstantValue(constCtx));
+      for (IckleParser.UpdateValueContext sub : ctx.updateValue()) {
+         values.addAll(buildUpdateValues(sub));
       }
       return values;
+   }
+
+   private void checkUpdateValues(List<Object> values, String[] propertyPath, String pathText) {
+      Class<?> targetType = propertyHelper.getPrimitivePropertyType(targetEntityMetadata, propertyPath);
+      if (targetType == null) {
+         return;
+      }
+      // Repeated (collection/map) targets: element-level checking is deferred to the runtime.
+      if (Collection.class.isAssignableFrom(targetType) || Map.class.isAssignableFrom(targetType)
+            || targetType.isArray()) {
+         return;
+      }
+      for (Object value : values) {
+         UpdateValueTypeChecker.checkAssignable(value, targetType, pathText,
+               functionRegistry,
+               p -> propertyHelper.getPrimitivePropertyType(targetEntityMetadata, p),
+               log);
+      }
+   }
+
+   private Object buildUpdateExpression(IckleParser.UpdateExpressionContext ctx) {
+      List<IckleParser.UpdateTermContext> terms = ctx.updateTerm();
+      Object result = buildUpdateTerm(terms.get(0));
+      for (int i = 1; i < terms.size(); i++) {
+         IckleParser.UpdateTermContext term = terms.get(i);
+         result = new BinaryArithmeticUpdateValueExpr(operandOperator(ctx, term), result, buildUpdateTerm(term));
+      }
+      return result;
+   }
+
+   private Object buildUpdateTerm(IckleParser.UpdateTermContext ctx) {
+      List<IckleParser.UpdateFactorContext> factors = ctx.updateFactor();
+      Object result = buildUpdateFactor(factors.get(0));
+      for (int i = 1; i < factors.size(); i++) {
+         IckleParser.UpdateFactorContext factor = factors.get(i);
+         result = new BinaryArithmeticUpdateValueExpr(operandOperator(ctx, factor), result, buildUpdateFactor(factor));
+      }
+      return result;
+   }
+
+   /**
+    * Extracts the arithmetic operator token preceding the given operand. The grammar guarantees
+    * that every operand after the first follows an operator token
+    * ({@code updateExpression: updateTerm ((PLUS|MINUS) updateTerm)*} and
+    * {@code updateTerm: updateFactor ((ASTERISK|SLASH|PERCENT) updateFactor)*}); this fails
+    * fast if the assumed tree shape ever changes instead of misreading the children.
+    */
+   private static ArithmeticOperator operandOperator(ParserRuleContext ctx, ParseTree operand) {
+      ParseTree opTree = ctx.getChild(ctx.children.indexOf(operand) - 1);
+      if (!(opTree instanceof TerminalNode op)) {
+         throw new IllegalStateException("Expected an operator token before operand, got: " + opTree.getText());
+      }
+      return switch (op.getSymbol().getType()) {
+         case IckleParser.PLUS -> ArithmeticOperator.ADD;
+         case IckleParser.MINUS -> ArithmeticOperator.SUBTRACT;
+         case IckleParser.ASTERISK -> ArithmeticOperator.MULTIPLY;
+         case IckleParser.SLASH -> ArithmeticOperator.DIVIDE;
+         case IckleParser.PERCENT -> ArithmeticOperator.MODULO;
+         default -> throw new IllegalStateException("Unexpected operator: " + op.getText());
+      };
+   }
+
+   private Object buildUpdateFactor(IckleParser.UpdateFactorContext ctx) {
+      Object primary = buildUpdatePrimary(ctx.updatePrimary());
+      if (ctx.MINUS() != null) {
+         if (primary instanceof UpdateValueExpr expr) {
+            return new NegateUpdateValueExpr(expr);
+         }
+         if (primary instanceof Long l) {
+            return -l;
+         }
+         if (primary instanceof Double d) {
+            return -d;
+         }
+         if (primary instanceof ConstantValueExpr.ParamPlaceholder) {
+            // Resolved at evaluation time; NegateUpdateValueExpr accepts a placeholder operand as-is.
+            return new NegateUpdateValueExpr(primary);
+         }
+         return new NegateUpdateValueExpr(new org.infinispan.query.objectfilter.impl.syntax.update.ConstantUpdateValue(primary));
+      }
+      if (ctx.PLUS() != null) {
+         return primary;
+      }
+      return primary;
+   }
+
+   private Object buildUpdatePrimary(IckleParser.UpdatePrimaryContext ctx) {
+      if (ctx.constant() != null) {
+         return parseConstantValue(ctx.constant());
+      }
+      if (ctx.functionCall() != null) {
+         return buildFunctionCall(ctx.functionCall());
+      }
+      if (ctx.updatePath() != null) {
+         return buildUpdatePath(ctx.updatePath());
+      }
+      // LPAREN updateExpression RPAREN
+      return buildUpdateExpression(ctx.updateExpression());
+   }
+
+   private FunctionCallUpdateValueExpr buildFunctionCall(IckleParser.FunctionCallContext ctx) {
+      String functionName = ctx.identifier().getText();
+      if (!functionRegistry.contains(functionName)) {
+         throw log.getUnknownUpdateFunctionException(functionName);
+      }
+      List<Object> args = new ArrayList<>();
+      for (IckleParser.UpdateExpressionContext argCtx : ctx.updateExpression()) {
+         args.add(buildUpdateExpression(argCtx));
+      }
+      return new FunctionCallUpdateValueExpr(functionName, args);
+   }
+
+   private PropertyRefUpdateValue buildUpdatePath(IckleParser.UpdatePathContext ctx) {
+      String pathText = ctx.dotIdentifierPath().getText();
+      String[] pathArray = pathText.split("\\.");
+      if (CacheValuePropertyPath.VALUE_PROPERTY_NAME.equals(pathArray[pathArray.length - 1])) {
+         // The synthetic "whole entity" placeholder, emitted by the engine's
+         // aggregation query rewrites. It is not a real entity property, so
+         // it must not be validated against the schema.
+         return new PropertyRefUpdateValue(pathArray);
+      }
+      PropertyPath<TypeDescriptor<TypeMetadata>> path = buildPropertyPath(pathText);
+      resolveAndValidate(path);
+      return new PropertyRefUpdateValue(pathArray);
    }
 
    private Object parseConstantValue(IckleParser.ConstantContext ctx) {
@@ -265,6 +425,9 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
       }
       if (ctx.signedNumericLiteral() != null) {
          String numText = ctx.signedNumericLiteral().getText();
+         if (numText.endsWith("L") || numText.endsWith("l")) {
+            numText = numText.substring(0, numText.length() - 1);
+         }
          if (numText.contains(".") || numText.contains("e") || numText.contains("E")) {
             return Double.parseDouble(numText);
          }
@@ -320,20 +483,24 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
          return visitChildren(ctx);
       }
 
-      String text = ctx.expression().getText();
-
-      if (text.contains("(")) {
-         return visitChildren(ctx); // Handled by other visit
+      IckleParser.SelectExpressionValueContext value = ctx.selectExpressionValue();
+      if (value.updateExpression() != null) {
+         Object expr = buildUpdateExpression(value.updateExpression());
+         if (projections == null) {
+            projections = new ArrayList<>();
+         }
+         if (expr instanceof PropertyRefUpdateValue ref) {
+            // A bare property reference: keep it a plain property projection so
+            // it can be served by the search index like any other projection.
+            projections.add(buildPropertyPath(String.join(".", ref.getPath())));
+         } else {
+            projections.add(new ExpressionProjection<>(expr));
+         }
+         return null;
       }
 
-      PropertyPath<TypeDescriptor<TypeMetadata>> path = buildPropertyPath(text);
-
-      if (projections == null) {
-         projections = new ArrayList<>();
-      }
-
-      projections.add(path);
-
+      // Aggregations, distance, score, version, size/index, elements/indices
+      // and quantified expressions are handled by their own visit methods.
       return visitChildren(ctx);
    }
 

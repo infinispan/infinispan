@@ -69,6 +69,7 @@ import org.infinispan.query.mapper.mapping.SearchMappingBuilder;
 import org.infinispan.query.mapper.mapping.SearchMappingCommonBuilding;
 import org.infinispan.query.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.query.objectfilter.impl.syntax.parser.ReflectionEntityNamesResolver;
+import org.infinispan.query.objectfilter.impl.syntax.update.QueryFunctionRegistry;
 import org.infinispan.query.stats.impl.LocalIndexStatistics;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.InternalCacheRegistry.Flag;
@@ -152,7 +153,7 @@ public class LifecycleManager implements ModuleLifecycle {
          }
 
          cr.registerComponent(ObjectReflectionMatcher.create(
-               new ReflectionEntityNamesResolver(aggregatedClassLoader), searchMapping),
+                     new ReflectionEntityNamesResolver(aggregatedClassLoader), searchMapping),
                ObjectReflectionMatcher.class);
          QueryEngine<Object> engine = new QueryEngine<>(cache, isIndexed);
          cr.registerComponent(engine, QueryEngine.class);
@@ -422,6 +423,7 @@ public class LifecycleManager implements ModuleLifecycle {
       internalCacheRegistry.registerInternalCache(QueryCache.QUERY_CACHE_NAME, QueryCache.getQueryCacheConfig().build(),
             EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE));
       gcr.registerComponent(new QueryCache(), QueryCache.class);
+      gcr.registerComponent(QueryFunctionRegistry.standard(), QueryFunctionRegistry.class);
 
       SerializationContextRegistry ctxRegistry = gcr.getComponent(SerializationContextRegistry.class);
       ctxRegistry.addContextInitializer(PERSISTENCE, new PersistenceContextInitializerImpl());

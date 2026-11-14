@@ -59,6 +59,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.annotations.Proto;
 import org.infinispan.protostream.annotations.ProtoTypeId;
+import org.infinispan.query.objectfilter.impl.syntax.update.QueryFunctionRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.remoting.transport.jgroups.NamedSocketFactory;
@@ -313,15 +314,15 @@ public class Server extends BaseServerManagement implements AutoCloseable {
          GlobalConfigurationBuilder global = configurationBuilderHolder.getGlobalConfigurationBuilder();
          global
                .shutdown()
-                  .hookBehavior(ShutdownHookBehavior.DONT_REGISTER)
+               .hookBehavior(ShutdownHookBehavior.DONT_REGISTER)
                .globalState()
-                  .enable()
-                  .persistentLocation(properties.getProperty(INFINISPAN_SERVER_DATA_PATH))
-                  .sharedPersistentLocation(properties.getProperty(INFINISPAN_SERVER_DATA_PATH))
-                  .configurationStorage(ConfigurationStorage.OVERLAY)
+               .enable()
+               .persistentLocation(properties.getProperty(INFINISPAN_SERVER_DATA_PATH))
+               .sharedPersistentLocation(properties.getProperty(INFINISPAN_SERVER_DATA_PATH))
+               .configurationStorage(ConfigurationStorage.OVERLAY)
                .security()
-                  .authorization()
-                     .auditLogger(defaultAuditLogger);
+               .authorization()
+               .auditLogger(defaultAuditLogger);
          // load the defaults first
          URL defaults = this.getClass().getClassLoader().getResource(SERVER_DEFAULTS);
          configurationBuilderHolder.read(parser.parse(defaults));
@@ -425,11 +426,11 @@ public class Server extends BaseServerManagement implements AutoCloseable {
             initialContext.bind(dataSourceConfiguration.jndiName(), dataSource);
          }
 
-         // Register ourselves with the global registry
-         GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
-         gcr.registerComponent(this, ServerManagement.class);
+          // Register ourselves with the global func
+          GlobalComponentRegistry gcr = SecurityActions.getGlobalComponentRegistry(cacheManager);
+          gcr.registerComponent(this, ServerManagement.class);
 
-         if (gcr.getGlobalConfiguration().tracing().security()) {
+          if (gcr.getGlobalConfiguration().tracing().security()) {
             defaultAuditLogger.setTelemetryService(gcr.getComponent(InfinispanTelemetry.class));
          }
 
@@ -507,15 +508,16 @@ public class Server extends BaseServerManagement implements AutoCloseable {
                   singlePortRouter.ssl().enabled() ? "https" : "http", singlePortRouter.host(), singlePortRouter.port()
             );
          }
-         cacheManagerStart.whenComplete((ignore, t) -> {
-            if (t != null) {
-               r.completeExceptionally(t);
-               return;
-            }
+          cacheManagerStart.whenComplete((ignore, t) -> {
+             if (t != null) {
+                r.completeExceptionally(t);
+                return;
+             }
 
-            try {
-               serverStateManager.start();
-               backupManager.init();
+             try {
+                extensions.applyQueryFunctions(SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(QueryFunctionRegistry.class));
+                serverStateManager.start();
+                backupManager.init();
 
                // Change status
                SecurityActions.postStartProtocolServer(protocolServers.values());

@@ -119,7 +119,25 @@ public interface Log extends BasicLogger {
    @Message(id = 28533, value = "Function %s is not supported")
    ParsingException functionNotSupportedException(String functionName);
 
-   @Message(id = 28534, value = "Spatial queries cannot be applied to property '%2$s' in type %1$s unless it is indexed as a spatial property.")
-   ParsingException spatialQueryOnNotIndexedPropertyNotSupportedException(String typeName, String propertyName);
+    @Message(id = 28534, value = "Spatial queries cannot be applied to property '%2$s' in type %1$s unless it is indexed as a spatial property.")
+    ParsingException spatialQueryOnNotIndexedPropertyNotSupportedException(String typeName, String propertyName);
+
+    @Message(id = 28535, value = "Unknown function '%s' in Ickle statement")
+    ParsingException getUnknownUpdateFunctionException(String functionName);
+
+    @Message(id = 28537, value = "Cannot assign a %s value to property '%s': incompatible with property type %s")
+    ParsingException getIncompatibleUpdateValueException(String valueType, String propertyPath, Class<?> targetType);
+
+    @Message(id = 28538, value = "Arithmetic operator %s requires numeric operands")
+    ParsingException getArithmeticRequiresNumericOperandsException(String operator);
+
+    @Message(id = 28539, value = "Value %s is not integral and cannot be assigned to integer property '%s'")
+    ParsingException getNonIntegralValueException(Number value, String propertyPath);
+
+    @Message(id = 28540, value = "Division or modulo by zero in constant expression")
+    ParsingException getConstantDivisionByZeroException();
+
+    @Message(id = 28541, value = "Value %s is out of range for property '%s' of type %s")
+    ParsingException getValueOutOfRangeException(Number value, String propertyPath, Class<?> targetType);
 
 }

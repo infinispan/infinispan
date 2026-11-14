@@ -1,0 +1,11 @@
+[id='server-custom-filters']
+:context: server-custom-filters
+= Deploying custom filters and converters to {brandname} Server
+
+Deploy custom filters and converters to {brandname} Server for use in Hot Rod and REST clients.
+
+include::{topics}/proc_using_custom_filters.adoc[leveloffset=+1]
+
+// Restore the parent context.
+ifdef::parent-context[:context: {parent-context}]
+ifndef::parent-context[:!context:]

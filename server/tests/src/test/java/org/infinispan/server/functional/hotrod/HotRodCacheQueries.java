@@ -41,7 +41,9 @@ import org.infinispan.protostream.sampledomain.bank.User;
 import org.infinispan.server.functional.ClusteredIT;
 import org.infinispan.server.functional.extensions.entities.Entities;
 import org.infinispan.server.test.api.TestClientDriver;
+import org.infinispan.server.test.artifacts.Artifacts;
 import org.infinispan.server.test.jupiter.InfinispanServer;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -265,6 +267,131 @@ public class HotRodCacheQueries {
 
       User unchanged = remoteCache.get(2);
       assertEquals("Adrian", unchanged.getName());
+   }
+
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testUpdateStatementWithUserDefinedFunction(boolean indexed) {
+      Assumptions.assumeTrue(Artifacts.artifacts().length > 0,
+                  "requires the query-functions.jar server-side artifact, which is unavailable in GraalVM native mode");
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
+      remoteCache.put(1, createUser1());
+      remoteCache.put(2, createUser2());
+
+      Query<User> query = remoteCache.query("UPDATE FROM sample_domain.User SET name = reverse(name) WHERE name = 'Tom'");
+      assertEquals(1, query.executeStatement());
+
+      User updated = remoteCache.get(1);
+      assertEquals("moT", updated.getName());
+
+      User unchanged = remoteCache.get(2);
+      assertEquals("Adrian", unchanged.getName());
+   }
+
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testSelectFunctionCallConcat(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
+      remoteCache.put(1, createUser1());
+      remoteCache.put(2, createUser2());
+
+      Query<Object> query = remoteCache.query("SELECT concat(name, ' ', surname) FROM sample_domain.User WHERE name = 'Tom'");
+      List<Object> list = query.execute().list();
+      assertEquals(1, list.size());
+      assertEquals("Tom Cat", ((Object[]) list.get(0))[0]);
+   }
+
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testSelectFunctionCallUpper(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
+      remoteCache.put(1, createUser1());
+      remoteCache.put(2, createUser2());
+
+      Query<Object> query = remoteCache.query("SELECT upper(name) FROM sample_domain.User WHERE name = 'Adrian'");
+      List<Object> list = query.execute().list();
+      assertEquals(1, list.size());
+      assertEquals("ADRIAN", ((Object[]) list.get(0))[0]);
+   }
+
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testSelectNestedFunctionCall(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
+      remoteCache.put(1, createUser1());
+      remoteCache.put(2, createUser2());
+
+      Query<Object> query = remoteCache.query("SELECT upper(concat(name, ' ', surname)) FROM sample_domain.User WHERE name = 'Tom'");
+      List<Object> list = query.execute().list();
+      assertEquals(1, list.size());
+      assertEquals("TOM CAT", ((Object[]) list.get(0))[0]);
+   }
+
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testSelectFunctionCallMultipleProjections(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
+      remoteCache.put(1, createUser1());
+      remoteCache.put(2, createUser2());
+
+      Query<Object> query = remoteCache.query("SELECT upper(name), length(surname) FROM sample_domain.User WHERE name = 'Tom'");
+      List<Object> list = query.execute().list();
+      assertEquals(1, list.size());
+      Object[] projections = (Object[]) list.get(0);
+      assertEquals("TOM", projections[0]);
+      assertEquals(3, projections[1]);
+   }
+
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testSelectFunctionCallWithParameter(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
+      remoteCache.put(1, createUser1());
+      remoteCache.put(2, createUser2());
+
+      Query<Object> query = remoteCache.query("SELECT concat(name, ' - ', :label) FROM sample_domain.User WHERE name = 'Tom'");
+      query.setParameter("label", "User");
+      List<Object> list = query.execute().list();
+      assertEquals(1, list.size());
+      assertEquals("Tom - User", ((Object[]) list.get(0))[0]);
+   }
+
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testSelectFunctionCallUserDefinedFunction(boolean indexed) {
+      Assumptions.assumeTrue(Artifacts.artifacts().length > 0,
+                  "requires the query-functions.jar server-side artifact, which is unavailable in GraalVM native mode");
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
+      remoteCache.put(1, createUser1());
+      remoteCache.put(2, createUser2());
+
+      Query<Object> query = remoteCache.query("SELECT reverse(name) FROM sample_domain.User WHERE name = 'Tom'");
+      List<Object> list = query.execute().list();
+      assertEquals(1, list.size());
+      assertEquals("moT", ((Object[]) list.get(0))[0]);
+   }
+
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testSelectFunctionCallAllRows(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
+      remoteCache.put(1, createUser1());
+      remoteCache.put(2, createUser2());
+
+      Query<Object> query = remoteCache.query("SELECT concat(name, ' ', surname) FROM sample_domain.User");
+      List<Object> list = query.execute().list();
+      assertEquals(2, list.size());
+      assertThat(list).extracting(r -> ((Object[]) r)[0]).containsExactlyInAnyOrder("Tom Cat", "Adrian Nistor");
+   }
+
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testSelectFunctionCallUnknown(boolean indexed) {
+      RemoteCache<Integer, User> remoteCache = createQueryableCache(SERVERS, indexed, TestDomainSCI.INSTANCE, User.ENTITY_NAME);
+      remoteCache.put(1, createUser1());
+
+      Query<Object> query = remoteCache.query("SELECT nonExistentFunc(name) FROM sample_domain.User WHERE name = 'Tom'");
+      assertThatThrownBy(query::execute).isInstanceOf(HotRodClientException.class);
    }
 
    @Test
