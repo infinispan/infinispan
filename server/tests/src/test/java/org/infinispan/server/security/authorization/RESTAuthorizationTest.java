@@ -59,7 +59,6 @@ import org.infinispan.client.rest.configuration.RestClientConfigurationBuilder;
 import org.infinispan.commons.configuration.Combine;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.internal.Json;
-import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
@@ -423,15 +422,14 @@ abstract class RESTAuthorizationTest {
       ext.assumeContainerMode();
 
       RestClusterClient restClient = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().cluster();
-      CompletionStage<RestResponse> distribution = restClient.distribution();
-      RestResponse distributionResponse = CompletionStages.join(distribution);
+      RestResponse distributionResponse = sync(restClient.distribution());
       assertEquals(OK, distributionResponse.status());
       Json json = Json.read(distributionResponse.body());
       List<String> nodes = json.asJsonList().stream().map(j -> j.at("node_name").asString()).toList();
 
       RestServerClient client = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().server();
       for (String name : nodes) {
-         try (RestResponse response = CompletionStages.join(client.report(name))) {
+         try (RestResponse response = sync(client.report(name), 30, TimeUnit.SECONDS)) {
             assertEquals(OK, response.status());
             assertEquals(MediaType.APPLICATION_GZIP_TYPE, response.header("content-type"));
             assertTrue(response.header("Content-Disposition").startsWith("attachment;"));
@@ -439,7 +437,7 @@ abstract class RESTAuthorizationTest {
          }
       }
 
-      RestResponse response = CompletionStages.join(client.report("not-a-node-name"));
+      RestResponse response = sync(client.report("not-a-node-name"), 30, TimeUnit.SECONDS);
       assertEquals(NOT_FOUND, response.status());
 
       for (TestUser user : EnumSet.complementOf(EnumSet.of(TestUser.ANONYMOUS, TestUser.ADMIN))) {
@@ -454,7 +452,7 @@ abstract class RESTAuthorizationTest {
 
       RestServerClient client = ext.rest().withClientConfiguration(restBuilders.get(TestUser.ADMIN)).get().server();
 
-      try (RestResponse response = CompletionStages.join(client.report())) {
+      try (RestResponse response = sync(client.report(), 30, TimeUnit.SECONDS)) {
          assertEquals(OK, response.status());
          assertEquals(MediaType.APPLICATION_GZIP_TYPE, response.header("content-type"));
          assertTrue(response.header("Content-Disposition").startsWith("attachment;"));
@@ -571,7 +569,7 @@ abstract class RESTAuthorizationTest {
       String name = ext.getMethodName();
 
       for (TestUser type : EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER)) {
-         try (RestResponse caches = CompletionStages.join(ext.rest().withClientConfiguration(restBuilders.get(type)).get().caches())) {
+         try (RestResponse caches = sync(ext.rest().withClientConfiguration(restBuilders.get(type)).get().caches())) {
             assertEquals(OK, caches.status());
             Json json = Json.read(caches.body());
             Set<String> names = json.asJsonList().stream().map(Json::asString).collect(Collectors.toSet());
@@ -581,7 +579,7 @@ abstract class RESTAuthorizationTest {
 
       // Types with no access.
       for (TestUser type : EnumSet.complementOf(EnumSet.of(TestUser.ADMIN, TestUser.OBSERVER, TestUser.DEPLOYER, TestUser.ANONYMOUS))) {
-         try (RestResponse caches = CompletionStages.join(ext.rest().withClientConfiguration(restBuilders.get(type)).get().caches())) {
+         try (RestResponse caches = sync(ext.rest().withClientConfiguration(restBuilders.get(type)).get().caches())) {
             assertEquals(OK, caches.status());
             Json json = Json.read(caches.body());
             Set<String> names = json.asJsonList().stream().map(Json::asString).collect(Collectors.toSet());

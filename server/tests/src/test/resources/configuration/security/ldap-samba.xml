@@ -7,7 +7,7 @@
               must verify credentials by binding as the user (direct verification).
               This supports PLAIN and DIGEST-SHA mechanisms; SCRAM is not possible
               because it requires server-side access to the password material. -->
-         <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389"
+         <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:${org.infinispan.test.ldap.port}"
                      principal="CN=Administrator,CN=Users,DC=infinispan,DC=org"
                      credential="strongPassword@123" direct-verification="true" connection-timeout="15s">
             <identity-mapping rdn-identifier="cn" search-dn="CN=Users,DC=infinispan,DC=org" search-recursive="true"/>
