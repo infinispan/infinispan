@@ -17,6 +17,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.jboss.marshalling.commons.GenericJBossMarshaller;
 import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.testing.Testing;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
 import org.infinispan.upgrade.RollingUpgradeManager;
@@ -65,26 +66,27 @@ public class HotRodUpgradePojoTest extends AbstractInfinispanTest {
    }
 
    @BeforeMethod
-   public void setup() throws Exception {
-      ConfigurationBuilder config = new ConfigurationBuilder();
-      config.clustering().cacheMode(CacheMode.DIST_SYNC);
-      config.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
-      config.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
+   public void setup() {
+      Testing.retryOnFailure(() -> {
+         ConfigurationBuilder config = new ConfigurationBuilder();
+         config.clustering().cacheMode(CacheMode.DIST_SYNC);
+         config.encoding().key().mediaType(APPLICATION_OBJECT_TYPE);
+         config.encoding().value().mediaType(APPLICATION_OBJECT_TYPE);
 
-      config.transaction().transactionMode(transactionMode);
-      if (transactionMode != TransactionMode.NON_TRANSACTIONAL) {
-         config.transaction().transactionMode(transactionMode).autoCommit(autoCommit)
-               .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
-      }
+         config.transaction().transactionMode(transactionMode);
+         if (transactionMode != TransactionMode.NON_TRANSACTIONAL) {
+            config.transaction().transactionMode(transactionMode).autoCommit(autoCommit)
+                  .transactionManagerLookup(new EmbeddedTransactionManagerLookup());
+         }
 
-      sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
-            .marshaller(ProtoStreamMarshaller.class)
-            .ctx(SerializationCtx.INSTANCE)
-            .cache().name(CACHE_NAME).configuredWith(config)
-            .build();
+         sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
+               .marshaller(ProtoStreamMarshaller.class)
+               .ctx(SerializationCtx.INSTANCE)
+               .cache().name(CACHE_NAME).configuredWith(config)
+               .build();
 
-      targetCluster = configureTargetCluster(config);
-
+         targetCluster = configureTargetCluster(config);
+      }, this::tearDown);
    }
 
    protected TestCluster configureTargetCluster(ConfigurationBuilder cacheConfig) {
@@ -177,8 +179,23 @@ public class HotRodUpgradePojoTest extends AbstractInfinispanTest {
 
    @AfterMethod
    public void tearDown() {
-      sourceCluster.destroy();
-      targetCluster.destroy();
+      if (sourceCluster != null) {
+         try {
+            sourceCluster.destroy();
+         } catch (Throwable t) {
+            // Log and continue so the target cluster is still destroyed.
+            log.warn("Failed to destroy the source cluster", t);
+         }
+         sourceCluster = null;
+      }
+      if (targetCluster != null) {
+         try {
+            targetCluster.destroy();
+         } catch (Throwable t) {
+            log.warn("Failed to destroy the target cluster", t);
+         }
+         targetCluster = null;
+      }
    }
 
    private void startTxIfNeeded(Cache<Object, Object> cache) throws Exception {
