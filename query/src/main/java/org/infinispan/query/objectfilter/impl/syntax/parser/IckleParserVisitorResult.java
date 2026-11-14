@@ -250,18 +250,10 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
          return ctx.booleanLiteral().TRUE() != null;
       }
       if (ctx.parameterSpecification() != null) {
-         String paramText = ctx.parameterSpecification().getText();
-         return parameterStringValue(paramText);
+         return parameterStringValue(ctx.parameterSpecification().getText());
       }
       if (ctx.stringLiteral() != null) {
-         String text = ctx.stringLiteral().getText();
-         if (text.startsWith("'") && text.endsWith("'")) {
-            text = text.substring(1, text.length() - 1);
-            text = text.replace("''", "'");
-         } else if (text.startsWith("\"") && text.endsWith("\"")) {
-            text = text.substring(1, text.length() - 1);
-         }
-         return text;
+         return unquoteString(ctx.stringLiteral().getText());
       }
       if (ctx.signedNumericLiteral() != null) {
          String numText = ctx.signedNumericLiteral().getText();
@@ -271,6 +263,18 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
          return Long.parseLong(numText);
       }
       return ctx.getText();
+   }
+
+   private static String unquoteString(String text) {
+      if (text.startsWith("'") && text.endsWith("'")) {
+         text = text.substring(1, text.length() - 1);
+         return text.replace("''", "'");
+      }
+      if (text.startsWith("\"") && text.endsWith("\"")) {
+         text = text.substring(1, text.length() - 1);
+         return text.replace("\"\"", "\"");
+      }
+      return text;
    }
 
    @Override
@@ -622,7 +626,6 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
       IckleParser.EqualityExpressionContext eqParent = (IckleParser.EqualityExpressionContext) parent.getParent();
 
       String propertyPathText = eqParent.relationalExpression().getText();
-      String value = ctx.relationalExpression().getText();
       PropertyPath<TypeDescriptor<TypeMetadata>> propertyPath = buildPropertyPath(propertyPathText);
       PropertyPath<TypeDescriptor<TypeMetadata>> property = resolveAndValidate(propertyPath);
 
@@ -639,15 +642,13 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
          default -> throw new IllegalArgumentException("Unknown comparison operator: " + ctx.op.getText());
       };
 
-      // Push NOT BEFORE adding comparison if it's !=
       boolean isNotEqual = (ctx.op.getType() == IckleLexer.NOT_EQUAL);
       if (isNotEqual) {
          expressionBuilder.pushNot();
       }
 
-      // Set currentPropertyPath temporarily for parameterValue
       currentPropertyPath = propertyPath;
-      Object comparisonValue = parameterValue(value);
+      Object comparisonValue = resolveValue(ctx.relationalExpression().additiveExpression());
 
       String rootAlias = propertyPath.getAlias();
       checkAnalyzed(property, false);
@@ -765,11 +766,9 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
             default -> throw new IllegalArgumentException("Unknown operator: " + ctx.op.getText());
          };
 
-         String value = ctx.additiveExpression().getText();
-
          currentPropertyPath = pathForParam;
 
-         Object comparisonValue = parameterValue(value);
+         Object comparisonValue = resolveValue(ctx.additiveExpression());
 
          checkAnalyzed(property, false);
 
@@ -871,23 +870,9 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
 
       // Handle LIKE operator
       if (ctx.like_key() != null) {
-         // Get property path from parent
-         PropertyPath<TypeDescriptor<TypeMetadata>> propertyPath = buildPropertyPath(propertyPathText);
+         IckleParser.AdditiveExpressionContext patternExpr = ctx.additiveExpression();
+         Object patternValue = resolveLikePattern(patternExpr);
 
-         if (property.isEmpty()) {
-            throw log.getPredicatesOnEntityAliasNotAllowedException(propertyPath.asStringPath());
-         }
-
-         // Get pattern
-         String pattern = ctx.additiveExpression().getText();
-
-         // Remove quotes
-         if (pattern.startsWith("'") && pattern.endsWith("'")) {
-            pattern = pattern.substring(1, pattern.length() - 1);
-            pattern = pattern.replace("''", "'");
-         }
-
-         // Get escape character if present
          Character escapeChar = null;
          if (ctx.likeEscape() != null) {
             String escape = ctx.likeEscape().getText();
@@ -898,7 +883,7 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
 
          checkAnalyzed(property, false);
 
-         expressionBuilder.addLike(property, pattern, escapeChar);
+         expressionBuilder.addLike(property, patternValue, escapeChar);
 
          return null;
       }
@@ -912,8 +897,8 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
       PropertyPath<TypeDescriptor<TypeMetadata>> property = resolveAndValidate(currentPropertyPath);
       checkAnalyzed(property, false);
 
-      Object lowerValue = parameterValue(ctx.lowerExpr.getText());
-      Object upperValue = parameterValue(ctx.upperExpr.getText());
+      Object lowerValue = resolveValue(ctx.lowerExpr);
+      Object upperValue = resolveValue(ctx.upperExpr);
 
       expressionBuilder.addRange(property, lowerValue, upperValue);
       return null;
@@ -926,7 +911,7 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
 
       List<Object> values = new ArrayList<>();
       for (IckleParser.AdditiveExpressionContext expr : ctx.additiveExpression()) {
-         values.add(parameterValue(expr.getText()));
+         values.add(resolveValue(expr));
       }
 
       expressionBuilder.addIn(property, values);
@@ -1225,19 +1210,16 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
          throw log.getPredicatesOnEntityAliasNotAllowedException(currentPropertyPath.asStringPath());
       }
 
-      String lowerText = ctx.lower.getText();
-      String upperText = ctx.upper.getText();
-
       Object lower = null;
       Object upper = null;
 
-      if (!"*".equals(lowerText)) {
+      if (ctx.lower.ASTERISK() == null) {
          currentPropertyPath = resolveAlias(currentPropertyPath);
-         lower = parameterValue(lowerText);
+         lower = resolveFtLiteralOrParameter(ctx.lower.ftLiteralOrParameter());
       }
 
-      if (!"*".equals(upperText)) {
-         upper = parameterValue(upperText);
+      if (ctx.upper.ASTERISK() == null) {
+         upper = resolveFtLiteralOrParameter(ctx.upper.ftLiteralOrParameter());
       }
 
       boolean includeLower = ctx.rb.LSQUARE() != null; // [ = inclusive, { = exclusive
@@ -1352,20 +1334,6 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
       return false;
    }
 
-   private void addComparisonPredicate(String value, ComparisonExpr.Type comparisonType) {
-      if (currentPropertyPath == null) {
-         throw log.getLeftSideMustBeAPropertyPath();
-      }
-      PropertyPath<TypeDescriptor<TypeMetadata>> property = resolveAlias(currentPropertyPath);
-      if (property.isEmpty()) {
-         throw log.getPredicatesOnEntityAliasNotAllowedException(currentPropertyPath.asStringPath());
-      }
-      String rootAlias = currentPropertyPath.getAlias();
-      Object comparisonValue = parameterValue(value);
-      checkAnalyzed(property, false);
-      expressionBuilder.addComparison(property, comparisonType, comparisonValue, rootAlias);
-   }
-
    private String findAggregation(ParseTree tree) {
       if (tree instanceof IckleParser.SimpleAggFunctionContext) {
          AggregationFunction aggregationFunction = getAggregationFunction((IckleParser.SimpleAggFunctionContext) tree);
@@ -1398,40 +1366,58 @@ public class IckleParserVisitorResult<TypeMetadata> extends IckleParserBaseVisit
       }
    }
 
-   private Object parameterValue(String value) {
-      // Delete quotes if present
-      if (value.startsWith("'") && value.endsWith("'")) {
-         value = value.substring(1, value.length() - 1);
-         // Unescape doubled single quotes
-         value = value.replace("''", "'");
-      } else if (value.startsWith("\"") && value.endsWith("\"")) {
-         value = value.substring(1, value.length() - 1);
-         // Unescape doubled double quotes
-         value = value.replace("\"\"", "\"");
+   private Object resolveValue(IckleParser.AdditiveExpressionContext ctx) {
+      IckleParser.AtomContext atom = ctx.atom();
+      if (atom != null && atom.constant() != null) {
+         IckleParser.ConstantContext constant = atom.constant();
+         if (constant.parameterSpecification() != null) {
+            return parameterStringValue(constant.parameterSpecification().getText());
+         }
+         if (constant.NULL() != null) {
+            return null;
+         }
+         String text = constant.stringLiteral() != null
+               ? unquoteString(constant.stringLiteral().getText())
+               : constant.getText();
+         return convertToPropertyType(text);
       }
-      if (value.startsWith(":")) {
-         // it's a named parameter
-         String paramName = value.substring(1).trim();  //todo [anistor] trim should not be required!
-         ConstantValueExpr.ParamPlaceholder namedParam = (ConstantValueExpr.ParamPlaceholder) this.namedParameters.get(paramName);
-         if (namedParam == null) {
-            namedParam = new ConstantValueExpr.ParamPlaceholder(paramName);
-            this.namedParameters.put(paramName, namedParam);
-         }
-         return namedParam;
-      } else {
-         // it's a literal value given in the query string
-         List<String> path = currentPropertyPath.getNodeNamesWithoutAlias();
-         // create the complete path in case it's a join
-         PropertyPath<TypeDescriptor<TypeMetadata>> fullPath = currentPropertyPath;
-         if (fullPath.isAlias()) {
-            PropertyPath<TypeDescriptor<TypeMetadata>> resolved = aliasToPropertyPath.get(fullPath.getAlias());
-            if (resolved != null) {
-               path.addAll(0, resolved.getNodeNamesWithoutAlias());
-            }
-         }
+      return convertToPropertyType(ctx.getText());
+   }
 
-         return propertyHelper.convertToPropertyType(targetEntityMetadata, path.toArray(new String[path.size()]), value);
+   private Object convertToPropertyType(String value) {
+      List<String> path = currentPropertyPath.getNodeNamesWithoutAlias();
+      PropertyPath<TypeDescriptor<TypeMetadata>> fullPath = currentPropertyPath;
+      if (fullPath.isAlias()) {
+         PropertyPath<TypeDescriptor<TypeMetadata>> resolved = aliasToPropertyPath.get(fullPath.getAlias());
+         if (resolved != null) {
+            path.addAll(0, resolved.getNodeNamesWithoutAlias());
+         }
       }
+      return propertyHelper.convertToPropertyType(targetEntityMetadata, path.toArray(new String[path.size()]), value);
+   }
+
+   private Object resolveFtLiteralOrParameter(IckleParser.FtLiteralOrParameterContext ctx) {
+      if (ctx.parameterSpecification() != null) {
+         return parameterStringValue(ctx.parameterSpecification().getText());
+      }
+      String text = ctx.stringLiteral() != null
+            ? unquoteString(ctx.stringLiteral().getText())
+            : ctx.getText();
+      return convertToPropertyType(text);
+   }
+
+   private Object resolveLikePattern(IckleParser.AdditiveExpressionContext ctx) {
+      IckleParser.AtomContext atom = ctx.atom();
+      if (atom != null && atom.constant() != null) {
+         IckleParser.ConstantContext constant = atom.constant();
+         if (constant.parameterSpecification() != null) {
+            return parameterStringValue(constant.parameterSpecification().getText());
+         }
+         if (constant.stringLiteral() != null) {
+            return unquoteString(constant.stringLiteral().getText());
+         }
+      }
+      return ctx.getText();
    }
 
    private void checkAnalyzed(PropertyPath<?> propertyPath, boolean expectAnalyzed) {
