@@ -11,6 +11,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.testing.Testing;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -62,23 +63,25 @@ public class HotRodUpgradeMediaTypesTest extends AbstractInfinispanTest {
    }
 
    @BeforeMethod
-   public void setup() throws Exception {
-      ConfigurationBuilder config = new ConfigurationBuilder();
-      config.clustering().cacheMode(CacheMode.DIST_SYNC);
-      if (mediaType != null) {
-         config.encoding().mediaType(mediaType.toString());
-      }
-      sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
-            .cache().name(CACHE_NAME).configuredWith(config)
-            .build();
+   public void setup() {
+      Testing.retryOnFailure(() -> {
+         ConfigurationBuilder config = new ConfigurationBuilder();
+         config.clustering().cacheMode(CacheMode.DIST_SYNC);
+         if (mediaType != null) {
+            config.encoding().mediaType(mediaType.toString());
+         }
 
-      targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
-            .cache().name(CACHE_NAME).configuredWith(config)
-            .remoteProtocolVersion(version)
-            .remotePort(sourceCluster.getHotRodPort())
-            .remoteStoreProperty(RemoteStore.MIGRATION, "true")
-            .build();
+         sourceCluster = new TestCluster.Builder().setName("sourceCluster").setNumMembers(2)
+               .cache().name(CACHE_NAME).configuredWith(config)
+               .build();
 
+         targetCluster = new TestCluster.Builder().setName("targetCluster").setNumMembers(2)
+               .cache().name(CACHE_NAME).configuredWith(config)
+               .remoteProtocolVersion(version)
+               .remotePort(sourceCluster.getHotRodPort())
+               .remoteStoreProperty(RemoteStore.MIGRATION, "true")
+               .build();
+      }, this::tearDown);
    }
 
    public void testSynchronization() throws Exception {
@@ -108,8 +111,23 @@ public class HotRodUpgradeMediaTypesTest extends AbstractInfinispanTest {
 
    @AfterMethod
    public void tearDown() {
-      sourceCluster.destroy();
-      targetCluster.destroy();
+      if (sourceCluster != null) {
+         try {
+            sourceCluster.destroy();
+         } catch (Throwable t) {
+            // Log and continue so the target cluster is still destroyed.
+            log.warn("Failed to destroy the source cluster", t);
+         }
+         sourceCluster = null;
+      }
+      if (targetCluster != null) {
+         try {
+            targetCluster.destroy();
+         } catch (Throwable t) {
+            log.warn("Failed to destroy the target cluster", t);
+         }
+         targetCluster = null;
+      }
    }
 
    private Object key(int idx) {

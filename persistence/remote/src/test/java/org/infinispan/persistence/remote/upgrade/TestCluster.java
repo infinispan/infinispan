@@ -316,40 +316,48 @@ public class TestCluster {
          List<HotRodServer> hotRodServers = new ArrayList<>();
          List<EmbeddedCacheManager> embeddedCacheManagers = new ArrayList<>();
 
-         for (int i = 0; i < numMembers; i++) {
-            GlobalConfigurationBuilder gcb = constructor.get();
-            gcb.serialization().allowList().addClasses(CustomObject.class);
-            if (ctx != null) {
-               gcb.serialization().addContextInitializer(ctx);
+         try {
+            for (int i = 0; i < numMembers; i++) {
+               GlobalConfigurationBuilder gcb = constructor.get();
+               gcb.serialization().allowList().addClasses(CustomObject.class);
+               if (ctx != null) {
+                  gcb.serialization().addContextInitializer(ctx);
+               }
+               gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
+               gcb.transport().defaultTransport().clusterName(name);
+               EmbeddedCacheManager clusteredCacheManager =
+                     createClusteredCacheManager(gcb, getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
+               embeddedCacheManagers.add(clusteredCacheManager);
+               caches.forEach((key, value) -> clusteredCacheManager.defineConfiguration(key, value.build()));
+               hotRodServers.add(HotRodClientTestingUtil.startHotRodServer(clusteredCacheManager, hotRodBuilder));
             }
-            gcb.addModule(PrivateGlobalConfigurationBuilder.class).serverMode(true);
-            gcb.transport().defaultTransport().clusterName(name);
-            EmbeddedCacheManager clusteredCacheManager =
-                  createClusteredCacheManager(gcb, getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC));
-            caches.forEach((key, value) -> clusteredCacheManager.defineConfiguration(key, value.build()));
-            embeddedCacheManagers.add(clusteredCacheManager);
-            hotRodServers.add(HotRodClientTestingUtil.startHotRodServer(clusteredCacheManager, hotRodBuilder));
-         }
 
-         embeddedCacheManagers.forEach(cm -> caches.keySet().forEach(cm::getCache));
-         waitForNoRebalanceAcrossManagers(embeddedCacheManagers.toArray(new EmbeddedCacheManager[0]));
+            embeddedCacheManagers.forEach(cm -> caches.keySet().forEach(cm::getCache));
+            waitForNoRebalanceAcrossManagers(embeddedCacheManagers.toArray(new EmbeddedCacheManager[0]));
 
-         int port = hotRodServers.get(0).getPort();
-         org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
-         clientBuilder.addServer().port(port).host("localhost");
-         if (ctx != null) {
-            clientBuilder.addContextInitializer(ctx);
+            int port = hotRodServers.get(0).getPort();
+            org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+            clientBuilder.addServer().port(port).host("localhost");
+            if (ctx != null) {
+               clientBuilder.addContextInitializer(ctx);
+            }
+            if (trustStoreFileName != null) {
+               clientBuilder.security().ssl().enable().trustStoreFileName(trustStoreFileName).trustStorePassword(trustStorePassword).hostnameValidation(false);
+            }
+            if (keyStoreFileName != null) {
+               clientBuilder.security().ssl().keyStoreFileName(keyStoreFileName).keyStorePassword(keyStorePassword);
+            }
+            clientBuilder.marshaller(Objects.requireNonNullElse(marshaller, GenericJBossMarshaller.class));
+            clientBuilder.addJavaSerialAllowList(".*");
+            clientBuilder.withProperties(hrClientProps);
+            return new TestCluster(hotRodServers, embeddedCacheManagers, new RemoteCacheManager(clientBuilder.build()));
+         } catch (Throwable t) {
+            // The caller never receives a TestCluster to destroy, so release what was started here.
+            // Otherwise, the running members keep their ports and sockets bound, and a retry of the setup fails again.
+            HotRodClientTestingUtil.killServers(hotRodServers.toArray(new HotRodServer[0]));
+            TestingUtil.killCacheManagers(embeddedCacheManagers);
+            throw t;
          }
-         if (trustStoreFileName != null) {
-            clientBuilder.security().ssl().enable().trustStoreFileName(trustStoreFileName).trustStorePassword(trustStorePassword).hostnameValidation(false);
-         }
-         if (keyStoreFileName != null) {
-            clientBuilder.security().ssl().keyStoreFileName(keyStoreFileName).keyStorePassword(keyStorePassword);
-         }
-         clientBuilder.marshaller(Objects.requireNonNullElse(marshaller, GenericJBossMarshaller.class));
-         clientBuilder.addJavaSerialAllowList(".*");
-         clientBuilder.withProperties(hrClientProps);
-         return new TestCluster(hotRodServers, embeddedCacheManagers, new RemoteCacheManager(clientBuilder.build()));
       }
 
    }

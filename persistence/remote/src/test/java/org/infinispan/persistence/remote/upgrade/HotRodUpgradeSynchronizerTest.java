@@ -29,6 +29,7 @@ import org.infinispan.persistence.remote.RemoteStore;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.testing.Testing;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -47,11 +48,10 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
    protected static final ProtocolVersion NEW_PROTOCOL_VERSION = ProtocolVersion.DEFAULT_PROTOCOL_VERSION;
 
     @BeforeMethod(alwaysRun = true)
-    public void setup() throws Exception {
+    public void setup() {
        if (!reuseClustersAcrossMethods()) {
           // Original behaviour: build fresh clusters for every test method.
-          sourceCluster = createSourceCluster();
-          targetCluster = configureTargetCluster();
+          createClusters();
           return;
        }
 
@@ -61,8 +61,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
        // resetting state avoids that churn entirely. Tests that add their migration remote store dynamically re-establish it via
        // connectTargetCluster(), which each test invokes before synchronizing.
         if (sourceCluster == null) {
-           sourceCluster = createSourceCluster();
-           targetCluster = configureTargetCluster();
+           createClusters();
         } else {
            // A previous test's disconnectSource cleared the migration remote store(s); re-establish them so this method can sync.
            sourceCluster.cleanAllCaches();
@@ -70,6 +69,21 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
            reconnectMigration(targetCluster);
         }
     }
+
+   /**
+    * Creates the source and target clusters, retrying when the creation fails.
+    * <p>
+    * A failure in a TestNG configuration method is not retried by surefire's rerun, so a transient failure, such as a
+    * {@link java.net.BindException} on a JGroups multicast socket, would otherwise be reported as a hard failure. Between
+    * attempts, {@link #destroyClusters()} removes any cluster created before the failure.
+    * </p>
+    */
+   private void createClusters() {
+      Testing.retryOnFailure(() -> {
+         sourceCluster = createSourceCluster();
+         targetCluster = configureTargetCluster();
+      }, this::destroyClusters);
+   }
 
     /**
      * Whether the source and target clusters should be created once per class (in {@link #setup()}) and reused across all test methods,
