@@ -721,18 +721,7 @@ class Encoder2x implements VersionedEncoder {
       return Optional.empty();
    }
 
-   private Optional<AbstractTopologyResponse> generateTopologyResponse(short clientIntel, int responseTopologyId, Cache<Address, ServerAddress> addressCache, CacheMode cacheMode, CacheTopology cacheTopology) {
-      // If the topology cache is incomplete, we assume that a node has joined but hasn't added his HotRod
-      // endpoint address to the topology cache yet. We delay the topology update until the next client
-      // request by returning null here (so the client topology id stays the same).
-      // If a new client connects while the join is in progress, though, we still have to generate a topology
-      // response. Same if we have cache manager that is a member of the cluster but doesn't have a HotRod
-      // endpoint (aka a storage-only node), and a HotRod server shuts down.
-      // Our workaround is to send a "partial" topology update when the topology cache is incomplete, but the
-      // difference between the client topology id and the server topology id is 2 or more. The partial update
-      // will have the topology id of the server - 1, so it won't prevent a regular topology update if/when
-      // the topology cache is updated.
-      List<Address> cacheMembers = cacheTopology.getActualMembers();
+   private Optional<AbstractTopologyResponse> generateTopologyResponse(short clientIntel, int clientTopologyId, Cache<Address, ServerAddress> addressCache, CacheMode cacheMode, CacheTopology cacheTopology) {
       Map<Address, ServerAddress> serverEndpoints;
       try {
          serverEndpoints = new HashMap<>(addressCache);
@@ -740,27 +729,84 @@ class Encoder2x implements VersionedEncoder {
          // Address cache has been shut down, ignore the exception and don't send a topology update
          return Optional.empty();
       }
+      return generateTopologyResponse(clientIntel, clientTopologyId, serverEndpoints, cacheMode, cacheTopology);
+   }
 
-      int clientTopologyId = cacheTopology.getReadConsistentHash().hashCode();
+   /**
+    * Build the topology response to send back to the client, taking into account that the topology (address)
+    * cache may still be incomplete.
+    * <p>
+    * When the topology cache is incomplete, a cache member hasn't added its Hot Rod endpoint address to the
+    * topology cache yet. There are two distinct situations:
+    * <ul>
+    *    <li>A rebalance is in progress ({@link CacheTopology#getPendingCH()} is not {@code null}): the missing
+    *    endpoint most likely belongs to a node that is still joining, so we postpone the update (return
+    *    {@link Optional#empty()}) and retry on the next client request. The pending consistent hash stays in
+    *    place, so the client is eventually told about the final topology once the join completes.</li>
+    *    <li>No rebalance is in progress: the missing member will never register an endpoint (for example a
+    *    storage-only node, i.e. a cluster member without a Hot Rod endpoint). Postponing forever would starve
+    *    clients that are behind, so we send a <em>partial</em> topology update containing only the endpoints we
+    *    do know about. The partial update uses a topology id derived from the partial view so that it differs
+    *    from the full topology id and doesn't suppress a later full update, while repeated requests that report
+    *    the same partial view are treated as "no change".</li>
+    * </ul>
+    * <p>
+    * Package-private and static so the retry/partial logic can be unit tested in isolation.
+    */
+   static Optional<AbstractTopologyResponse> generateTopologyResponse(short clientIntel, int clientTopologyId,
+         Map<Address, ServerAddress> serverEndpoints, CacheMode cacheMode, CacheTopology cacheTopology) {
+      List<Address> cacheMembers = cacheTopology.getActualMembers();
+      int serverTopologyId = cacheTopology.getReadConsistentHash().hashCode();
       if (log.isTraceEnabled()) {
-         log.tracef("Check for partial topologies: endpoints=%s, client-topology=%s, server-topology=%s, server-client-topology=%s",
-               serverEndpoints, responseTopologyId, cacheTopology.getTopologyId(), clientTopologyId);
+         log.tracef("Check for partial topologies: endpoints=%s, client-topology=%s, server-topology=%s, server-hash-topology=%s",
+               serverEndpoints, clientTopologyId, cacheTopology.getTopologyId(), serverTopologyId);
       }
 
+      int responseTopologyId = serverTopologyId;
       if (!serverEndpoints.keySet().containsAll(cacheMembers)) {
-         if (log.isTraceEnabled()) log.trace("Postpone topology update");
-         return Optional.empty(); // Postpone topology update
-      }
+         if (cacheTopology.getPendingCH() != null) {
+            // Rebalance in progress: wait for the joining node(s) to register and retry on the next request.
+            if (log.isTraceEnabled())
+               log.trace("Postpone topology update: address cache is incomplete while a rebalance is in progress");
+            return Optional.empty();
+         }
 
-      if (log.isTraceEnabled()) log.tracef("Send client topology update with topology id %s", clientTopologyId);
+         // No rebalance in progress but a member is still missing (e.g. a storage-only node). Send a partial
+         // topology update with the endpoints we do know about instead of starving the client.
+         serverEndpoints.keySet().retainAll(cacheMembers);
+         if (serverEndpoints.isEmpty()) {
+            // We don't know any endpoint for the current members yet, retry on the next request.
+            if (log.isTraceEnabled()) log.trace("Postpone topology update: no known endpoints for the current members");
+            return Optional.empty();
+         }
+
+         responseTopologyId = partialTopologyId(serverTopologyId, serverEndpoints.keySet());
+         if (responseTopologyId == clientTopologyId) {
+            // The client already has this partial view, nothing changed.
+            if (log.isTraceEnabled()) log.trace("Client already has the current partial topology, no change");
+            return Optional.empty();
+         }
+         if (log.isTraceEnabled()) log.tracef("Send partial client topology update with topology id %s", responseTopologyId);
+      } else if (log.isTraceEnabled()) {
+         log.tracef("Send client topology update with topology id %s", responseTopologyId);
+      }
 
       if (clientIntel == Constants.INTELLIGENCE_HASH_DISTRIBUTION_AWARE && !cacheMode.isInvalidation()) {
          int numSegments = cacheTopology.getReadConsistentHash().getNumSegments();
-         return Optional.of(new HashDistAware20Response(clientTopologyId, serverEndpoints, numSegments,
+         return Optional.of(new HashDistAware20Response(responseTopologyId, serverEndpoints, numSegments,
                Constants.DEFAULT_CONSISTENT_HASH_VERSION));
       } else {
-         return Optional.of(new TopologyAwareResponse(clientTopologyId, serverEndpoints, 0));
+         return Optional.of(new TopologyAwareResponse(responseTopologyId, serverEndpoints, 0));
       }
+   }
+
+   /**
+    * Compute a topology id for a partial topology update that is guaranteed to differ from the full
+    * {@code serverTopologyId}, so that a later complete update is not suppressed on the client.
+    */
+   private static int partialTopologyId(int serverTopologyId, Set<Address> knownMembers) {
+      int partialId = serverTopologyId * 31 + knownMembers.hashCode();
+      return partialId == serverTopologyId ? partialId - 1 : partialId;
    }
 
    private static Optional<Integer> projectionInfo(List<CacheEntry> entries, byte version) {
