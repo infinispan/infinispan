@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
@@ -138,7 +139,8 @@ class PrimaryNearCacheTestFixture {
 
    void assertCacheable(int key, boolean cacheable) {
       when(remote.getWithMetadataAsync(eq(key), any())).thenReturn(CompletableFuture.completedFuture(result("v" + key)));
-      assertThat(cache.getWithMetadataAsync(key).join().getValue()).isEqualTo("v" + key);
+      assertThat(cache.getWithMetadataAsync(key)).succeedsWithin(10, TimeUnit.SECONDS)
+            .extracting(value -> value.getValue()).isEqualTo("v" + key);
       if (cacheable) {
          assertThat(near.get(key)).as("Key %d should be cached", key).isNotNull();
       } else {

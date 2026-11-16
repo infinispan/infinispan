@@ -5,12 +5,10 @@ import static org.infinispan.client.hotrod.logging.Log.HOTROD;
 import java.lang.invoke.MethodHandles;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -24,7 +22,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.infinispan.client.hotrod.MetadataValue;
@@ -53,6 +50,9 @@ import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
 
 import io.netty.channel.Channel;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.processors.FlowableProcessor;
+import io.reactivex.rxjava3.processors.UnicastProcessor;
 
 /**
  * Near {@link org.infinispan.client.hotrod.RemoteCache} implementation that keeps a local in-memory
@@ -166,7 +166,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    }
 
    /** A bloom filter update that owns the odd version of a listener, until it releases it. */
-   private record ClaimedVersion(ServerListenerState state, SocketAddress address, int version) { }
+   private record ClaimedVersion(ServerListenerState state, SocketAddress address, Channel channel, int version) { }
 
    // Guards reserving and activating listeners and detaching servers that lost their segments.
    // Network operations and waits never happen while held.
@@ -174,9 +174,11 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    // Retain inactive states while their servers remain primary owners: presence records an attempted registration,
    // not just a live listener. Removing a failed owner's state would make the next topology retry its listener.
    private final ConcurrentMap<SocketAddress, ServerListenerState> serverListenerStates = new ConcurrentHashMap<>();
-   // Guarded by primaryListenerLock. The last registration or removal queued for a server. They all use the same
-   // listener ID, so they run one after the other, and an old cleanup can't remove a newer registration.
-   private final Map<SocketAddress, CompletableFuture<Void>> serverTails = new HashMap<>();
+   private record ListenerTask(SocketAddress address, Maybe<?> action) { }
+
+   // Each address has one sequential queue for registration, removal, and Bloom updates.
+   // Groups are retained for the lifetime of this cache, including when an owner loses and regains its segments.
+   private final FlowableProcessor<ListenerTask> listenerTasks = UnicastProcessor.<ListenerTask>create().toSerialized();
    private final NearCacheTopologyListener topologyListener = new NearCacheTopologyListener() {
       @Override
       public void beforeTopologyUpdate(CacheInfo previous, CacheInfo next) {
@@ -218,6 +220,13 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
       this.nearcache = nearcache;
       this.bloomFilterUpdateVersion = nearcache.getBloomFilterBits() > 0 ? new AtomicInteger() : null;
       this.cacheOperationsFactory = remoteCache.getOperationsFactory().newFactoryFor(this);
+      listenerTasks.groupBy(ListenerTask::address)
+            // Drain each group independently so a busy server cannot exhaust groupBy's upstream demand.
+            .flatMapCompletable(group -> group.onBackpressureBuffer()
+                        .concatMapMaybe(ListenerTask::action).ignoreElements(),
+                  false, Integer.MAX_VALUE)
+            .subscribe(() -> {
+            }, log::primaryListenerOperationQueueFailed);
    }
 
    public CacheOperationsFactory getOperationsFactory() {
@@ -301,40 +310,18 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    }
 
    /**
-    * Runs the task once all the registrations and removals queued earlier for the server are complete.
-    * Registrations and removals for a server never overlap.
+    * Runs the task once all the listener operations queued earlier for the server are complete.
+    * Listener operations for a server never overlap.
     */
    private <T> CompletableFuture<T> runExclusively(SocketAddress server, Supplier<CompletionStage<T>> task) {
       CompletableFuture<T> result = new CompletableFuture<>();
-      CompletableFuture<Void> done = new CompletableFuture<>();
-      CompletableFuture<Void> previous;
-      synchronized (primaryListenerLock) {
-         previous = serverTails.put(server, done);
-      }
-      Runnable run = () -> {
-         CompletionStage<T> stage;
-         try {
-            stage = task.get();
-         } catch (Throwable t) {
-            stage = CompletableFuture.failedFuture(t);
-         }
-         stage.whenComplete((value, t) -> {
-            synchronized (primaryListenerLock) {
-               serverTails.remove(server, done);
-            }
-            done.complete(null);
-            if (t != null) {
-               result.completeExceptionally(t);
-            } else {
-               result.complete(value);
-            }
-         });
-      };
-      if (previous == null) {
-         run.run();
-      } else {
-         previous.whenComplete((ignore, t) -> run.run());
-      }
+      Maybe<T> action = Maybe.defer(() -> Maybe.fromCompletionStage(task.get()))
+            .doOnSuccess(result::complete)
+            .doOnComplete(() -> result.complete(null))
+            .doOnError(result::completeExceptionally)
+            // A failed operation must not terminate the queue for this server or the other servers.
+            .onErrorComplete();
+      listenerTasks.onNext(new ListenerTask(server, action));
       return result;
    }
 
@@ -357,7 +344,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
                   }
                   cln.removeClientListener(listenerId, server);
                   getDispatcher().removeListener(server, listenerId);
-                  return (Void) null;
+                  return null;
                });
       } catch (Exception e) {
          if (trace) log.tracef(e, "Error sending remove primary listener to %s", server);
@@ -376,8 +363,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
    }
 
    private static void assertUnresolved(SocketAddress address) {
-      assert address == null || !(address instanceof InetSocketAddress isa) || isa.isUnresolved()
-            : "Address must be unresolved: " + address;
+      assert !(address instanceof InetSocketAddress isa) || isa.isUnresolved() : "Address must be unresolved: " + address;
    }
 
    // Invoked under primaryListenerLock, only for newly tracked owners.
@@ -444,19 +430,22 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
     * removed from the server. Its segments remain uncached while the server remains a primary owner.
     */
    private void disablePrimaryOwner(SocketAddress address, ServerListenerState listenerState) {
-      byte[] listenerId;
+      CompletableFuture<Void> start = new CompletableFuture<>();
       synchronized (primaryListenerLock) {
          if (serverListenerStates.get(address) != listenerState) {
             return;
          }
          // The update that failed releases its own version
          listenerState.setInactive();
-         listenerId = nearListenerId;
+         byte[] listenerId = nearListenerId;
+         if (listenerId != null) {
+            // Queue cleanup before a replacement can register, but start network work outside the lock.
+            runExclusively(address, () -> start.thenCompose(ignore -> unregisterFromServer(address, listenerId)));
+         }
       }
       invalidateOwnerSegments(address);
-      if (listenerId != null) {
-         unregisterExclusively(address, listenerId);
-      }
+      // Completing the gate can run listener removal synchronously, including reads triggered during cleanup.
+      start.complete(null);
    }
 
    public int getCurrentVersion() {
@@ -507,10 +496,9 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
                   .thenApply(GetWithMetadataOperation.GetWithMetadataResult::value);
          }
          // Store channel to validate it hasn't changed after get completes
-         Channel channelUsed = primaryChannel;
          return super.getWithMetadataAsync(key, primaryChannel)
                .thenApply(v -> storeInNearCacheOrRemove(key, calculatingPlaceholder, v,
-                     isPrimaryResultValid(key, v, primaryServer, prevVersion, channelUsed, modeGen)))
+                     isPrimaryResultValid(key, v, primaryServer, prevVersion, primaryChannel, modeGen)))
                .toCompletableFuture();
       } else {
          Channel clusterChannel = this.listenerChannel;
@@ -735,53 +723,66 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
 
    @Override
    public CompletionStage<Void> updateBloomFilter() {
-      if (bloomFilterUpdateVersion == null && nearcache.getBloomFilterBits() <= 0) {
+      if (bloomFilterUpdateVersion == null) {
          return CompletableFutures.completedNull();
       }
-      Function<byte[], CompletionStage<Void>> send;
-      Runnable release;
-      if (isPrimaryMode()) {
-         // Make the versions odd first so reads cannot populate the near cache while the bits are calculated
-         List<ClaimedVersion> claims = new ArrayList<>();
-         for (Map.Entry<SocketAddress, ServerListenerState> entry : serverListenerStates.entrySet()) {
-            ServerListenerState state = entry.getValue();
-            if (!state.isActive()) {
-               continue;
+      CompletableFuture<byte[]> bitsFuture = new CompletableFuture<>();
+      CompletionStage<Void> update;
+      synchronized (primaryListenerLock) {
+         if (isPrimaryMode()) {
+            AggregateCompletionStage<Void> completionStage = CompletionStages.aggregateCompletionStage();
+            boolean hasClaims = false;
+            for (Map.Entry<SocketAddress, ServerListenerState> entry : serverListenerStates.entrySet()) {
+               ServerListenerState state = entry.getValue();
+               Channel channel = state.getChannel();
+               if (channel == null || !channel.isActive()) {
+                  continue;
+               }
+               int claimed = state.claimVersion();
+               if (claimed >= 0) {
+                  hasClaims = true;
+                  ClaimedVersion claim = new ClaimedVersion(state, entry.getKey(), channel, claimed);
+                  CompletableFuture<Void> claimDone = new CompletableFuture<>();
+                  // Release the version before aggregate completion can invoke caller callbacks.
+                  completionStage.dependsOn(claimDone.whenComplete((ignore, t) -> state.releaseVersion(claimed)));
+                  // Reserve the send before ownership changes can queue cleanup or replacement registration.
+                  runExclusively(claim.address(), () -> bitsFuture.thenCompose(bits ->
+                              bits == null ? CompletableFutures.completedNull() : sendPrimaryBloomFilter(bits, claim, claimDone)))
+                        .whenComplete((ignore, t) -> {
+                           if (t != null) {
+                              claimDone.completeExceptionally(t);
+                           }
+                        });
+               } else if (trace) {
+                  log.tracef("Already have a concurrent bloom filter update for server %s - skipping", entry.getKey());
+               }
             }
-            int claimed = state.claimVersion();
-            if (claimed >= 0) {
-               claims.add(new ClaimedVersion(state, entry.getKey(), claimed));
-            } else if (trace) {
-               log.tracef("Already have a concurrent bloom filter update for server %s - skipping", entry.getKey());
+            if (!hasClaims) {
+               return CompletableFutures.completedNull();
             }
-         }
-         if (claims.isEmpty()) {
-            return CompletableFutures.completedNull();
-         }
-         send = bits -> bits == null ? CompletableFutures.completedNull() : sendPrimaryBloomFilters(bits, claims);
-         release = () -> releaseClaims(claims);
-      } else {
-         // Not being able to claim the even version means we have a concurrent update - so skip
-         int claimed = claim(bloomFilterUpdateVersion);
-         if (claimed < 0) {
-            if (trace) {
-               log.tracef("Already have a concurrent bloom filter update for listenerId(%s) - skipping",
-                     Util.printArray(nearcache.getListenerId()));
+            update = completionStage.freeze();
+         } else {
+            // Not being able to claim the even version means we have a concurrent update - so skip
+            int claimed = claim(bloomFilterUpdateVersion);
+            if (claimed < 0) {
+               if (trace) {
+                  log.tracef("Already have a concurrent bloom filter update for listenerId(%s) - skipping",
+                        Util.printArray(nearcache.getListenerId()));
+               }
+               return CompletableFutures.completedNull();
             }
-            return CompletableFuture.completedFuture(null);
+            update = bitsFuture.thenCompose(this::sendClusterBloomFilter)
+                  .whenComplete((ignore, t) -> release(bloomFilterUpdateVersion, claimed));
          }
-         release = () -> release(bloomFilterUpdateVersion, claimed);
-         send = this::sendClusterBloomFilter;
       }
-      // All claimed versions are odd before the calculation, so reads cannot populate the near cache.
-      CompletableFuture<byte[]> bitsFuture;
+      // All claimed versions are odd, and calculation and network work run outside the listener lock.
       try {
-         bitsFuture = CompletableFuture.supplyAsync(nearcache::calculateBloomBits, getDispatcher().getExecutorService());
+         bitsFuture.completeAsync(nearcache::calculateBloomBits, getDispatcher().getExecutorService());
       } catch (Throwable t) {
-         release.run();
-         return CompletableFuture.failedFuture(t);
+         // Unblock every reserved send, including when the executor rejects the calculation.
+         bitsFuture.completeExceptionally(t);
       }
-      return bitsFuture.thenCompose(send).whenComplete((ignore, t) -> release.run());
+      return update;
    }
 
    private CompletionStage<Void> sendClusterBloomFilter(byte[] bloomFilterBits) {
@@ -794,34 +795,65 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
       return getDispatcher().executeOnSingleAddress(op, ChannelRecord.of(listenerChannel));
    }
 
-   private static void releaseClaims(List<ClaimedVersion> claims) {
-      claims.forEach(claim -> claim.state().releaseVersion(claim.version()));
-   }
-
    /**
-    * Sends the bloom filter to the owners. An owner the update can't be sent to is not usable any more: its segments
-    * are fenced and its listener stays unused while the server remains a primary owner.
+    * Sends the bloom filter to the claimed owner. A send failure fences the owner's segments and leaves its listener
+    * unused while the server remains a primary owner.
     */
-   private CompletionStage<Void> sendPrimaryBloomFilters(byte[] bloomFilterBits, List<ClaimedVersion> claims) {
-      AggregateCompletionStage<Void> completionStage = CompletionStages.aggregateCompletionStage();
-      CacheOperationsFactory operationsFactory = getOperationsFactory();
-      for (ClaimedVersion claim : claims) {
-         CompletionStage<Void> stage;
-         try {
-            HotRodOperation<Void> op = operationsFactory.newUpdateBloomFilterOperation(bloomFilterBits);
-            stage = getDispatcher().executeOnSingleAddress(op, claim.address());
-         } catch (Throwable t) {
-            stage = CompletableFuture.failedFuture(t);
+   private CompletionStage<Void> sendPrimaryBloomFilter(byte[] bloomFilterBits, ClaimedVersion claim, CompletableFuture<Void> claimDone) {
+      ServerListenerState currentState;
+      boolean valid;
+      synchronized (primaryListenerLock) {
+         if (!isPrimaryMode()) {
+            claimDone.complete(null);
+            return CompletableFutures.completedNull();
          }
-         completionStage.dependsOn(stage.whenComplete((ignore, t) -> {
-            if (t != null) {
-               log.tracef(t, "Failed to update bloom filter on primary server %s; disabling its listener", claim.address());
-               disablePrimaryOwner(claim.address(), claim.state());
-            }
-            claim.state().releaseVersion(claim.version());
-         }).toCompletableFuture());
+         currentState = serverListenerStates.get(claim.address());
+         valid = currentState == claim.state()
+               && claim.state().getChannel() == claim.channel() && claim.channel().isActive()
+               && claim.state().getVersion() == claim.version();
       }
-      return completionStage.freeze();
+      if (!valid) {
+         if (currentState == null) {
+            claimDone.complete(null);
+            return CompletableFutures.completedNull();
+         }
+         // Registration initializes the replacement's bloom filter. Let the queue advance so it can run.
+         if (!currentState.isActive()) {
+            currentState.registration.whenComplete((ch, t) -> {
+               if (t != null) {
+                  claimDone.completeExceptionally(t);
+               } else {
+                  claimDone.complete(null);
+               }
+            });
+            return CompletableFutures.completedNull();
+         }
+      }
+      int sendVersion = valid ? claim.version() : currentState.claimVersion();
+      if (sendVersion < 0) {
+         claimDone.complete(null);
+         return CompletableFutures.completedNull();
+      }
+      CompletionStage<Void> stage;
+      try {
+         HotRodOperation<Void> op = getOperationsFactory().newUpdateBloomFilterOperation(bloomFilterBits);
+         stage = getDispatcher().executeOnSingleAddress(op, claim.address());
+      } catch (Throwable t) {
+         stage = CompletableFuture.failedFuture(t);
+      }
+      return stage.whenComplete((ignore, t) -> {
+         if (t != null) {
+            log.tracef(t, "Failed to update bloom filter on primary server %s; disabling its listener", claim.address());
+            disablePrimaryOwner(claim.address(), currentState);
+         }
+         // Restore caching before notifying callers, including synchronous completion callbacks.
+         currentState.releaseVersion(sendVersion);
+         if (t != null) {
+            claimDone.completeExceptionally(t);
+         } else {
+            claimDone.complete(null);
+         }
+      });
    }
 
    public SocketAddress getBloomListenerAddress() {
@@ -1205,7 +1237,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
          return;
       }
       byte[] listenerId;
-      Map<SocketAddress, Boolean> detached = new HashMap<>();
+      CompletableFuture<Void> start = new CompletableFuture<>();
       Map<SocketAddress, ServerListenerState> toRegister = new HashMap<>();
       // Detaching an owner and deciding about it are done under the lock that registrations are completed with
       synchronized (primaryListenerLock) {
@@ -1217,7 +1249,11 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
             Map.Entry<SocketAddress, ServerListenerState> entry = it.next();
             if (!primarySegments.containsKey(entry.getKey())) {
                ServerListenerState listenerState = entry.getValue();
-               detached.put(entry.getKey(), listenerState.isActive());
+               if (listenerState.isActive()) {
+                  SocketAddress server = entry.getKey();
+                  // Reserve cleanup under the lock; the shared start future defers network work until it is released.
+                  runExclusively(server, () -> start.thenCompose(ignore -> unregisterFromServer(server, listenerId)));
+               }
                listenerState.setInactive();
                it.remove();
             }
@@ -1230,11 +1266,7 @@ public class InvalidatedNearRemoteCache<K, V> extends DelegatingRemoteCache<K, V
          }
       }
       // A registration in flight for a detached owner notices that it was detached, and removes itself
-      detached.forEach((server, wasActive) -> {
-         if (wasActive) {
-            unregisterExclusively(server, listenerId);
-         }
-      });
+      start.complete(null);
       toRegister.forEach(this::registerPrimaryListenerOnServer);
    }
 

@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCacheTestingUtil.getServerChannel;
 import static org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCacheTestingUtil.isNearCacheHit;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -12,6 +14,9 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -23,6 +28,8 @@ import org.infinispan.client.hotrod.impl.topology.CacheInfo;
 import org.infinispan.client.hotrod.impl.transport.netty.OperationDispatcher;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.marshall.WrappedByteArray;
+import org.infinispan.commons.util.BloomFilter;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -146,6 +153,77 @@ public class PrimaryNearCacheLoseAndRegainSegmentsTest extends MultiHotRodServer
 
    public void testServerLosesAndRegainsAllPrimarySegmentsWithBloomFilter() {
       doTestLoseAndRegain(true);
+   }
+
+   public void testReplacementInitializesBloomFilterAfterStaleUpdate() throws Exception {
+      RemoteCache<Integer, String> clientCache = createNearClient(true).getCache();
+      InvalidatedNearRemoteCache<Integer, String> inrc = (InvalidatedNearRemoteCache<Integer, String>) clientCache;
+      SocketAddress addr0 = segmentOwnerAddress(inrc, 0);
+      SocketAddress addr1 = segmentOwnerAddress(inrc, 1);
+      Integer key0 = findKeyForServer(inrc, addr0);
+      Integer key1 = findKeyForServer(inrc, addr1);
+      clientCache.put(key0, "v0");
+      clientCache.put(key1, "v1");
+      eventually(() -> isNearCacheHit(clientCache, key0));
+      eventually(() -> isNearCacheHit(clientCache, key1));
+
+      NearCacheService<Integer, String> original = TestingUtil.extractField(inrc, "nearcache");
+      NearCacheService<Integer, String> near = spy(original);
+      Map<SocketAddress, ?> states = TestingUtil.extractField(inrc, "serverListenerStates");
+      Object previousState = states.get(addr1);
+      var channel = getServerChannel(inrc, addr1);
+      CountDownLatch calculating = new CountDownLatch(1);
+      CountDownLatch resume = new CountDownLatch(1);
+      AtomicBoolean firstCalculation = new AtomicBoolean(true);
+      doAnswer(invocation -> {
+         if (firstCalculation.getAndSet(false)) {
+            calculating.countDown();
+            assertThat(resume.await(30, TimeUnit.SECONDS)).isTrue();
+         }
+         return invocation.callRealMethod();
+      }).when(near).calculateBloomBits();
+      TestingUtil.replaceField(near, "nearcache", inrc, InvalidatedNearRemoteCache.class);
+      try {
+         var update = inrc.updateBloomFilter().toCompletableFuture();
+         assertThat(calculating.await(10, TimeUnit.SECONDS)).isTrue();
+         changeOwners(ALL_ON_FIRST_OWNERS);
+         eventually(() -> !primarySegments(inrc).containsKey(addr1));
+         eventually(() -> !states.containsKey(addr1));
+         eventually(() -> near.get(key1) == null);
+         changeOwners(SPLIT_OWNERS);
+         eventually(() -> primarySegments(inrc).containsKey(addr1));
+         eventually(() -> states.containsKey(addr1) && states.get(addr1) != previousState);
+         assertThat(update).isNotDone();
+
+         resume.countDown();
+         update.get(10, TimeUnit.SECONDS);
+         eventually(() -> isNearCacheHit(clientCache, key1));
+         assertThat(getServerChannel(inrc, addr1)).isSameAs(channel);
+
+         // Registration supplies retained entries, and reads after activation add newly cached keys to the server filter.
+         Map<WrappedByteArray, Object> senders = TestingUtil.extractField(
+               serverForAddress(addr1).getClientListenerRegistry(), "eventSenders");
+         Object sender = senders.get(new WrappedByteArray(near.getListenerId()));
+         assertThat(sender).isNotNull();
+         BloomFilter<byte[]> filter = TestingUtil.extractField(sender, "bloomFilter");
+         assertThat(filter.possiblyPresent(inrc.keyToBytes(key0)))
+               .as("Registration includes entries retained across the topology change").isTrue();
+         assertThat(filter.possiblyPresent(inrc.keyToBytes(key1)))
+               .as("Reads after activation add newly cached keys").isTrue();
+         assertThat(near.get(key0).getValue()).isEqualTo("v0");
+         assertThat(near.get(key1).getValue()).isEqualTo("v1");
+
+         // Reads after activation add key1 to the server filter; writes must invalidate both cached values.
+         serverForAddress(addr1).getCacheManager().getCache().put(key1, "v1-updated");
+         eventually(() -> near.get(key1) == null);
+         assertThat(clientCache.get(key1)).isEqualTo("v1-updated");
+         serverForAddress(addr0).getCacheManager().getCache().put(key0, "v0-updated");
+         eventually(() -> near.get(key0) == null);
+         assertThat(clientCache.get(key0)).isEqualTo("v0-updated");
+      } finally {
+         resume.countDown();
+         TestingUtil.replaceField(original, "nearcache", inrc, InvalidatedNearRemoteCache.class);
+      }
    }
 
    private void doTestLoseAndRegain(boolean bloom) {
