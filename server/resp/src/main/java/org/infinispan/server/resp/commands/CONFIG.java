@@ -1,7 +1,5 @@
 package org.infinispan.server.resp.commands;
 
-import static org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY;
-
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -36,13 +34,13 @@ public class CONFIG extends RespCommand implements Resp3Command {
                handler.writer().map(Map.of(rawName, "no"), Resp3Type.BULK_STRING, Resp3Type.SIMPLE_STRING);
                break;
             case "databases":
-               handler.writer().string("16");
+               handler.writer().map(Map.of(rawName, "16"), Resp3Type.BULK_STRING);
                break;
             default:
                if (name.indexOf('*') != -1 || name.indexOf('?') != -1) {
                   handler.writer().customError("CONFIG blob pattern matching not implemented");
                } else {
-                  handler.writer().map(Map.of(rawName, EMPTY_BYTE_ARRAY), Resp3Type.BULK_STRING);
+                  handler.writer().map(Map.of(), Resp3Type.BULK_STRING);
                }
          }
       } else if ("SET".equalsIgnoreCase(getOrSet)) {
