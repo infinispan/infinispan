@@ -5,20 +5,12 @@ import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCac
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.doAnswer;
 
 import java.util.Collections;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 
-import org.infinispan.Cache;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
@@ -27,15 +19,10 @@ import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.functional.EntryView;
 import org.infinispan.functional.FunctionalMap;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponse;
-import org.infinispan.remoting.responses.SuccessfulObjResponse;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.impl.RequestRepository;
-import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.test.transport.StateResponseHolder;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
@@ -107,9 +94,8 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       // the InternalCacheEntries in its state are the same instances of data stored in DataContainer
       // - therefore when the command is blocked on sender the command itself would be mutated by applying
       // the transaction below.
-      CountDownLatch applyStateProceedLatch = new CountDownLatch(1);
-      CountDownLatch applyStateStartedLatch = new CountDownLatch(1);
-      blockStateTransfer(cache(2), applyStateStartedLatch, applyStateProceedLatch);
+      // The holder keeps the response aside without blocking the JGroups thread that receives it.
+      StateResponseHolder holder = StateResponseHolder.install(manager(2), testExecutor(), 15, TimeUnit.SECONDS);
 
       tm(2).begin();
       FunctionalMap.ReadWriteMap<String, Integer> rw = FunctionalMap.create(this.<String, Integer>cache(2).getAdvancedCache()).toReadWriteMap();
@@ -126,11 +112,7 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
          cache(3);
       });
 
-      try {
-         assertTrue(applyStateStartedLatch.await(10, TimeUnit.SECONDS));
-      } catch (InterruptedException e) {
-         throw new RuntimeException(e);
-      }
+      holder.awaitHeld(10, TimeUnit.SECONDS);
 
       DistributionInfo distributionInfo = cache(2).getAdvancedCache().getDistributionManager().getCacheTopology().getDistribution("key");
       assertFalse(distributionInfo.isReadOwner());
@@ -139,7 +121,8 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       tm(2).resume(tx);
       tm(2).commit();
 
-      applyStateProceedLatch.countDown();
+      // Fails if the held response was already delivered on hold timeout.
+      holder.release();
 
       future.get(10, TimeUnit.SECONDS);
 
@@ -154,9 +137,8 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       // the InternalCacheEntries in its state are the same instances of data stored in DataContainer
       // - therefore when the command is blocked on sender the command itself would be mutated by applying
       // the transaction below.
-      CountDownLatch applyStateProceedLatch = new CountDownLatch(1);
-      CountDownLatch applyStateStartedLatch = new CountDownLatch(1);
-      blockStateTransfer(cache(2), applyStateStartedLatch, applyStateProceedLatch);
+      // The holder keeps the response aside without blocking the JGroups thread that receives it.
+      StateResponseHolder holder = StateResponseHolder.install(manager(2), testExecutor(), 15, TimeUnit.SECONDS);
 
       chf.setOwnerIndexes(0, 2);
       EmbeddedCacheManager cm = createClusteredCacheManager(false, ControlledConsistentHashFactory.SCI.INSTANCE,
@@ -167,11 +149,7 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
          cache(3);
       });
 
-      try {
-         assertTrue(applyStateStartedLatch.await(10, TimeUnit.SECONDS));
-      } catch (InterruptedException e) {
-         throw new RuntimeException(e);
-      }
+      holder.awaitHeld(10, TimeUnit.SECONDS);
 
       DistributionInfo distributionInfo = cache(2).getAdvancedCache().getDistributionManager().getCacheTopology()
             .getDistribution("key");
@@ -184,7 +162,8 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
          return null;
       });
 
-      applyStateProceedLatch.countDown();
+      // Fails if the held response was already delivered on hold timeout.
+      holder.release();
 
       future.get(10, TimeUnit.SECONDS);
 
@@ -202,23 +181,5 @@ public class FunctionalTxTest extends MultipleCacheManagersTest {
       int value = view.find().orElse(0);
       view.set(value + param);
       return value;
-   }
-
-   private static void blockStateTransfer(Cache<?,?> cache, CountDownLatch started, CountDownLatch proceed) {
-      Transport transport = TestingUtil.extractComponent(cache, Transport.class);
-      RequestRepository requestRepository = Mocks.replaceFieldWithSpy(transport, "requests");
-
-      doAnswer(invocation -> {
-         started.countDown();
-         try {
-            if (!proceed.await(15, TimeUnit.SECONDS)) {
-               throw CompletableFutures.asCompletionException(new TimeoutException());
-            }
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-         }
-         return invocation.callRealMethod();
-      }).when(requestRepository).addResponse(anyLong(), any(), argThat(r ->
-            r.isSuccessful() && r instanceof SuccessfulObjResponse<?> sor && sor.getResponseValue() instanceof PublisherResponse));
    }
 }

@@ -3,35 +3,23 @@ package org.infinispan.statetransfer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.doAnswer;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import org.infinispan.Cache;
-import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.IsolationLevel;
 import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.LocalizedCacheTopology;
-import org.infinispan.reactive.publisher.impl.commands.batch.PublisherResponse;
-import org.infinispan.remoting.responses.SuccessfulObjResponse;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.impl.RequestRepository;
-import org.infinispan.test.Mocks;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.infinispan.test.transport.StateResponseHolder;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.EmbeddedTransactionManagerLookup;
@@ -152,12 +140,10 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
          assertEquals("before_st_" + i, cache(2).get(i));
       }
 
-      CountDownLatch applyStateProceedLatch = new CountDownLatch(1);
-      CountDownLatch applyStateStartedLatch1 = new CountDownLatch(1);
-      blockStateTransfer(advancedCache(0), applyStateStartedLatch1, applyStateProceedLatch);
-
-      CountDownLatch applyStateStartedLatch2 = new CountDownLatch(1);
-      blockStateTransfer(advancedCache(2), applyStateStartedLatch2, applyStateProceedLatch);
+      // Hold the state received by nodes A and C until the operation below is done, without blocking their
+      // JGroups threads.
+      StateResponseHolder holderA = StateResponseHolder.install(manager(0), testExecutor(), 15, TimeUnit.SECONDS);
+      StateResponseHolder holderC = StateResponseHolder.install(manager(2), testExecutor(), 15, TimeUnit.SECONDS);
 
       // The indexes will only be used after node 1 is killed
       consistentHashFactory.setOwnerIndexes(new int[][]{{0, 1}, {1, 0}});
@@ -169,12 +155,8 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
       DataContainer<Object, Object> dc2 = advancedCache(2).getDataContainer();
 
       // wait for state transfer on nodes A and C to progress to the point where data segments are about to be applied
-      if (!applyStateStartedLatch1.await(15, TimeUnit.SECONDS)) {
-         throw new TimeoutException();
-      }
-      if (!applyStateStartedLatch2.await(15, TimeUnit.SECONDS)) {
-         throw new TimeoutException();
-      }
+      holderA.awaitHeld(15, TimeUnit.SECONDS);
+      holderC.awaitHeld(15, TimeUnit.SECONDS);
 
       if (op == Operation.CLEAR) {
          log.info("Clearing cache ..");
@@ -220,8 +202,9 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
          log.info("Finished updating keys");
       }
 
-      // allow state transfer to apply state
-      applyStateProceedLatch.countDown();
+      // allow state transfer to apply state; fails if a held response was already delivered on hold timeout
+      holderA.release();
+      holderC.release();
 
       // wait for apply state to end
       TestingUtil.waitForNoRebalance(cache(0), cache(2));
@@ -273,23 +256,5 @@ public class DistStateTransferOnLeaveConsistencyTest extends MultipleCacheManage
             assertEquals(expected, cache(2).get(i));
          }
       }
-   }
-
-   private static void blockStateTransfer(Cache<?,?> cache, CountDownLatch started, CountDownLatch proceed) {
-      Transport transport = TestingUtil.extractComponent(cache, Transport.class);
-      RequestRepository requestRepository = Mocks.replaceFieldWithSpy(transport, "requests");
-
-      doAnswer(invocation -> {
-         started.countDown();
-         try {
-            if (!proceed.await(15, TimeUnit.SECONDS)) {
-               throw CompletableFutures.asCompletionException(new TimeoutException());
-            }
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-         }
-         return invocation.callRealMethod();
-      }).when(requestRepository).addResponse(anyLong(), any(), argThat(r ->
-            r.isSuccessful() && r instanceof SuccessfulObjResponse<?> sor && sor.getResponseValue() instanceof PublisherResponse));
    }
 }
