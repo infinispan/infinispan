@@ -64,7 +64,7 @@ jobs:
         name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3.0.0
 
-      - uses: graalvm/setup-graalvm@f70bc8032f90a104502824a54bcb94b6f01715bc # v1
+      - uses: graalvm/setup-graalvm@d6eca2595046623d69d636041513c80abf745406 # v1
         with:
           version: '25.0'
           distribution: 'graalvm'
@@ -115,7 +115,7 @@ jobs:
   operator:
     needs: images
     if: contains(github.event.inputs.version, '.Final')
-    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@5ec68cb9f269bd595e1fbfb67d679554404f6ffc # main
+    uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@5c435af6657a3b236974a1ff66fcae1be3cece48 # main
     secrets: inherit
     with:
       image: quay.io/infinispan/server:${{ github.ref_name }}
