@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -283,6 +284,18 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       RedisCommands<String, String> redis = redisConnection.sync();
       assertThat(redis.configGet("DATABASES")).isEqualTo(Map.of("databases", "16"));
       assertThat(redis.configGet("AppendOnly")).isEqualTo(Map.of("appendonly", "no"));
+   }
+
+   public void testCommandList() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add("LIST");
+      List<Object> names = redis.dispatch(new SimpleCommand("COMMAND"), new ArrayOutput<>(StringCodec.UTF8), args);
+      // A flat list of names, not the nested command details returned by COMMAND
+      assertThat(names).allMatch(String.class::isInstance);
+      assertThat(names).hasSize(redis.commandCount().intValue());
+      assertThat(names).doesNotHaveDuplicates();
+      assertThat(names).allMatch(n -> n.equals(((String) n).toLowerCase(Locale.ROOT)));
+      assertThat(names).contains("get", "set", "command");
    }
 
    public void testAuth() {

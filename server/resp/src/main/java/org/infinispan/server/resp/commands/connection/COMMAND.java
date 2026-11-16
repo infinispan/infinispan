@@ -3,6 +3,7 @@ package org.infinispan.server.resp.commands.connection;
 import static org.infinispan.server.resp.RespUtil.ascii;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CompletionStage;
 
 import org.infinispan.server.resp.AclCategory;
@@ -73,7 +74,10 @@ public class COMMAND extends RespCommand implements Resp3Command {
             case "LIST":
                if (arguments.size() == 1) {
                   // print them all
-                  writer.write(SERIALIZER);
+                  List<String> names = Commands.all().stream()
+                        .map(c -> c.getName().toLowerCase(Locale.ROOT))
+                        .toList();
+                  writer.array(names, Resp3Type.BULK_STRING);
                } else {
                   // TODO: handle FILTERBY MODULE|ACLCAT|PATTERN
                   writer.customError("syntax error");
