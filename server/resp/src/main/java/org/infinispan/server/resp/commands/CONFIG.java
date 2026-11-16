@@ -2,6 +2,7 @@ package org.infinispan.server.resp.commands;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
@@ -26,15 +27,15 @@ public class CONFIG extends RespCommand implements Resp3Command {
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler, ChannelHandlerContext ctx, List<byte[]> arguments) {
       String getOrSet = new String(arguments.get(0), StandardCharsets.UTF_8);
       String name = new String(arguments.get(1), StandardCharsets.UTF_8);
-      byte[] rawName = arguments.get(1);
+      String canonicalName = name.toLowerCase(Locale.ROOT);
 
       if ("GET".equalsIgnoreCase(getOrSet)) {
-         switch (name.toLowerCase()) {
+         switch (canonicalName) {
             case "appendonly":
-               handler.writer().map(Map.of(rawName, "no"), Resp3Type.BULK_STRING, Resp3Type.SIMPLE_STRING);
+               handler.writer().map(Map.of(canonicalName, "no"), Resp3Type.BULK_STRING, Resp3Type.SIMPLE_STRING);
                break;
             case "databases":
-               handler.writer().map(Map.of(rawName, "16"), Resp3Type.BULK_STRING);
+               handler.writer().map(Map.of(canonicalName, "16"), Resp3Type.BULK_STRING);
                break;
             default:
                if (name.indexOf('*') != -1 || name.indexOf('?') != -1) {
