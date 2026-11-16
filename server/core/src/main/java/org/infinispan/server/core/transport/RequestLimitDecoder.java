@@ -80,4 +80,19 @@ public abstract class RequestLimitDecoder extends ByteToMessageDecoder {
    public int currentRequestBytes() {
       return currentBuf == null ? carriedRequestBytes : carriedRequestBytes + currentBuf.readerIndex() - posBefore;
    }
+
+   /**
+    * Discards whatever is left of the buffer being decoded.
+    *
+    * <p>
+    * A protocol that closes the connection because of a malformed or oversized request must call this, otherwise the
+    * decode loop keeps parsing the remaining bytes of the rejected request as if they were valid protocol data.
+    * It has no effect outside a decode invocation.
+    * </p>
+    */
+   protected void discardInput() {
+      if (currentBuf != null) {
+         currentBuf.skipBytes(currentBuf.readableBytes());
+      }
+   }
 }

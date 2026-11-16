@@ -56,12 +56,15 @@ exceptionally {
       log.requestTooLarge(ctx.channel(), maxContentLength, currentRequestBytes());
       if (log.isTraceEnabled()) log.trace("Request too large", tlfe);
       closing = true;
+      // The rest of the input belongs to the rejected request, it must not be parsed
+      discardInput();
       ctx.close();
       return;
    } else if (t instanceof AllocationLimitException sle) {
       log.warn(t.toString());
       if (log.isTraceEnabled()) log.trace("Illegal request", sle);
       closing = true;
+      discardInput();
       ctx.close();
       return;
    }

@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.infinispan.server.hotrod.OperationStatus.Success;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.assertSuccess;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.killClient;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.channels.ClosedChannelException;
@@ -159,34 +158,51 @@ public class HotRodRequestLimitTest extends HotRodSingleNodeTest {
       Op tooLongOp = new Op(0xA0, client.protocolVersion(), (byte) 0x01, client.defaultCacheName(),
             new byte[]{1, 2}, -1, -1, value, 0, 0, (byte) 1, 0);
 
+      // Same key as the too large operation, which is never applied, so the key must end up with this value
+      byte[] firstKey = new byte[]{1, 2};
+      byte[] firstValue = new byte[]{3, 4};
       Op firstOp = new Op(0xA0, client.protocolVersion(), (byte) 0x01, client.defaultCacheName(),
-            new byte[]{1, 2}, -1, -1, new byte[]{3, 4}, 0, 0, (byte) 1, 0);
+            firstKey, -1, -1, firstValue, 0, 0, (byte) 1, 0);
+
+      ClientHandler handler = (ClientHandler) client.getChannel().pipeline().last();
+
+      // The responses have to be awaited before writing, a response that arrives first is simply dropped
+      CompletionStage<TestResponse> responseStage = handler.waitForResponse(firstOp.id);
+      CompletionStage<TestResponse> errorStage = handler.waitForResponse(tooLongOp.id);
 
       client.writeOps(firstOp, tooLongOp)
             .get(10, TimeUnit.SECONDS);
 
-      ClientHandler handler = (ClientHandler) client.getChannel().pipeline().last();
-      // Channel can be killed before we even get the response
-      if (handler == null) {
-         assertFalse(client.getChannel().isActive());
-         return;
+      try {
+         // The first operation should work fine
+         TestResponse response = responseStage.toCompletableFuture().get(client.rspTimeoutSeconds, TimeUnit.SECONDS);
+         HotRodTestingUtil.assertStatus(response, Success);
+      } catch (ExecutionException e) {
+         // The first operation runs asynchronously.
+         // The server can close the channel because of the second operation before the first response is written.
+         // Only a timeout means the first response was lost.
+         Exceptions.assertException(ExecutionException.class, ClosedChannelException.class, e);
       }
 
-      // The first operation should work fine
-      CompletionStage<TestResponse> responseStage = handler.waitForResponse(firstOp.id);
       try {
-         // It is possible for this to also throw the ClosedChannelException in some cases
-         responseStage.toCompletableFuture().get(client.rspTimeoutSeconds, TimeUnit.SECONDS);
-
-         CompletionStage<TestResponse> errorStage = handler.waitForResponse(tooLongOp.id);
-
          errorStage.toCompletableFuture().get(client.rspTimeoutSeconds, TimeUnit.SECONDS);
          fail("Test should have failed, but did not");
       } catch (ExecutionException e) {
          Exceptions.assertException(ExecutionException.class, ClosedChannelException.class, e);
       } catch (TimeoutException e) {
-         // If it is a Timeout that is fine as well, as some machines the socket detection takes too long
+         // The server rejects the request only by closing the connection, and some machines take long to detect it.
+         // A timeout is fine as long as the close is eventually observed, a connection left open was never rejected.
+         eventually(() -> !client.getChannel().isActive());
       }
+
+      // The first operation was handed to the cache before the server closed the connection, so it must be applied
+      // even when its response was lost. It may still be running in that case, hence the eventually.
+      restartClient();
+      // Compared as text so a failure reports the status and value that were actually read
+      eventuallyEquals(Success + " " + Arrays.toString(firstValue), () -> {
+         TestGetResponse response = client().get(firstKey, 0);
+         return response.status + " " + response.data.map(Arrays::toString).orElse("<no value>");
+      });
    }
 
    public void testExcessDataDoesNotCorruptSubsequentConnection() {
@@ -238,22 +254,18 @@ public class HotRodRequestLimitTest extends HotRodSingleNodeTest {
       Op secondOp = new Op(0xA0, client.protocolVersion(), (byte) 0x01, client.defaultCacheName(),
             secondKey, -1, -1, secondValue, 0, 0, (byte) 1, 0);
 
-      // Pipeline both operations - this ensures they're written together
-      // so the second request's bytes arrive in the same socket read as the tail of the first
-      client.writeOps(firstOp, secondOp)
-            .get(10, TimeUnit.SECONDS);
-
       ClientHandler handler = (ClientHandler) client.getChannel().pipeline().last();
-      // Channel can be killed before we even get the response
-      if (handler == null) {
-         assertFalse(client.getChannel().isActive());
-         return;
-      }
 
-      // The first operation should work fine and write the entry
+      // The responses have to be awaited before writing, a response that arrives first is simply dropped
       CompletionStage<TestResponse> firstResponseStage = handler.waitForResponse(firstOp.id);
       CompletionStage<TestResponse> secondResponseStage = handler.waitForResponse(secondOp.id);
 
+      // Pipeline both operations, this ensures they're written together
+      // So the second request's bytes arrive in the same socket read as the tail of the first
+      client.writeOps(firstOp, secondOp)
+            .get(10, TimeUnit.SECONDS);
+
+      // The first operation should work fine and write the entry
       TestResponse firstResponse = firstResponseStage.toCompletableFuture().get(client.rspTimeoutSeconds, TimeUnit.SECONDS);
       HotRodTestingUtil.assertStatus(firstResponse, Success);
       // The second operation should also succeed since it's small
