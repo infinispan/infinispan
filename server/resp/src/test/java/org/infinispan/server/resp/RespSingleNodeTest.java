@@ -279,6 +279,12 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
       assertThat(redis.configGet("nosuchparam")).isEmpty();
    }
 
+   public void testConfigGetRepliesWithCanonicalName() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThat(redis.configGet("DATABASES")).isEqualTo(Map.of("databases", "16"));
+      assertThat(redis.configGet("AppendOnly")).isEqualTo(Map.of("appendonly", "no"));
+   }
+
    public void testAuth() {
       RedisCommands<String, String> redis = redisConnection.sync();
       Exceptions.expectException(RedisCommandExecutionException.class,
