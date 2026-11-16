@@ -291,6 +291,31 @@ public class PrimaryNearCacheLifecycleTest extends AbstractInfinispanTest {
       verify(f.dispatcher, times(1)).executeOnSingleAddress(f.removeOp, A);
    }
 
+   public void testBusyOwnerQueueDoesNotDelayOtherOwners() {
+      var f = new PrimaryNearCacheTestFixture(false);
+      f.start(A, B);
+      CompletableFuture<Void> cleanup = new CompletableFuture<>();
+      when(f.dispatcher.executeOnSingleAddress(f.removeOp, A)).thenReturn(cleanup);
+      try {
+         // Queue more operations than the reactive stream's default prefetch while A's cleanup is pending.
+         CacheInfo withoutA = info(hash(B, B));
+         CacheInfo withA = info(hash(A, B));
+         for (int i = 0; i < 256; ++i) {
+            f.accept(withoutA);
+            f.accept(withA);
+         }
+
+         f.accept(info(hash(A, C)));
+
+         verify(f.dispatcher).executeAddListener(any(ClientListenerOperation.class), eq(C));
+         f.assertCacheable(1, true);
+         f.assertCacheable(0, false);
+      } finally {
+         cleanup.complete(null);
+      }
+      f.assertCacheable(2, true);
+   }
+
    public void testDetachedReservationDoesNotRetryRegainedOwner() {
       var f = new PrimaryNearCacheTestFixture(false);
       f.start(A);

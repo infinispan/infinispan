@@ -477,4 +477,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Error notifying topology listener for cache '%s'", id = 4133)
    void errorNotifyingTopologyListener(String cacheName, @Cause Throwable cause);
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Primary listener operation queue failed", id = 4134)
+   void primaryListenerOperationQueueFailed(@Cause Throwable cause);
+
 }
