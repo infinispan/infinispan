@@ -2,6 +2,7 @@ package org.infinispan.server.resp.scripting;
 
 import static org.infinispan.server.resp.scripting.LuaContext.sha1hex;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -150,7 +151,16 @@ public class LuaTaskEngine implements TaskEngine {
       }
       switch (lua.type(-1)) {
          case STRING:
-            handler.writer().string(lua.toString(-1));
+            // Read the raw bytes: Lua strings may contain arbitrary binary data (e.g. cmsgpack or struct output),
+            // which would be truncated at the first NUL byte by the String conversion.
+            ByteBuffer bytes = lua.toBuffer(-1);
+            if (bytes == null) {
+               handler.writer().nulls();
+            } else {
+               byte[] value = new byte[bytes.remaining()];
+               bytes.get(value);
+               handler.writer().string(value);
+            }
             break;
          case BOOLEAN:
             handler.writer().booleans(lua.toBoolean(-1));
