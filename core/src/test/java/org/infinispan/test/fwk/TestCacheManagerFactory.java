@@ -7,6 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.net.BindException;
 import java.net.URL;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -47,6 +48,7 @@ import org.infinispan.testing.TestResourceTracker;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.jgroups.protocols.UDP;
 
 /**
  * CacheManagers in unit tests should be created with this factory, in order to avoid resource clashes. See
@@ -91,9 +93,9 @@ public class TestCacheManagerFactory {
          ConfigurationBuilderHolder holder =
                new ConfigurationBuilderHolder(Thread.currentThread().getContextClassLoader(), gcb);
          holder.getNamedConfigurationBuilders().put(gcb.defaultCacheName().get(), c);
-         defaultCacheManager = new DefaultCacheManager(holder, start);
+         defaultCacheManager = createCacheManager(globalConfiguration, () -> new DefaultCacheManager(holder, start));
       } else {
-         defaultCacheManager = new DefaultCacheManager(gcb.build(), start);
+         defaultCacheManager = createCacheManager(globalConfiguration, () -> new DefaultCacheManager(gcb.build(), start));
       }
       TestResourceTracker.addResource(new CacheManagerCleaner(defaultCacheManager));
       return defaultCacheManager;
@@ -105,10 +107,76 @@ public class TestCacheManagerFactory {
          amendDefaultCache(gcb);
       }
       setNodeName(gcb);
-      checkJmx(gcb.build());
-      DefaultCacheManager defaultCacheManager = new DefaultCacheManager(holder, start);
+      GlobalConfiguration globalConfiguration = gcb.build();
+      checkJmx(globalConfiguration);
+      DefaultCacheManager defaultCacheManager = createCacheManager(globalConfiguration, () -> new DefaultCacheManager(holder, start));
       TestResourceTracker.addResource(new CacheManagerCleaner(defaultCacheManager));
       return defaultCacheManager;
+   }
+
+   /**
+    * Creates a cache manager, reporting the owners of the test multicast ports when the JGroups UDP transport fails to
+    * bind one of them.
+    * <p>
+    * The report covers only managers started by the constructor ({@code start=true}). A manager started later
+    * through {@link DefaultCacheManager#start()} fails without it.
+    * </p>
+    *
+    * @param configuration the global configuration of the cache manager, naming the multicast endpoint in the report
+    * @param constructor   creates the cache manager
+    * @return the cache manager created by {@code constructor}
+    * @throws RuntimeException the failure of {@code constructor}, rethrown unchanged after the report is logged
+    */
+   private static DefaultCacheManager createCacheManager(GlobalConfiguration configuration,
+                                                         Supplier<DefaultCacheManager> constructor) {
+      try {
+         return constructor.get();
+      } catch (RuntimeException e) {
+         if (causedByUdpBindFailure(e)) {
+            String stack = configuration.transport().properties().getProperty(JGroupsTransport.CONFIGURATION_STRING);
+            String description = UdpPortOwners.describe(JGroupsConfigBuilder.MCAST_PORT_BASE, JGroupsConfigBuilder.MCAST_PORT_LAST);
+            log.errorf("JGroups UDP transport failed to bind %s. UDP multicast range of the test stacks: %s",
+                  JGroupsConfigBuilder.mcastEndpoint(stack), description);
+         }
+         throw e;
+      }
+   }
+
+   /**
+    * Returns whether a failure was caused by the JGroups UDP transport failing to bind a socket.
+    * <p>
+    * Only these failures can involve the multicast ports of the test stacks. Bind failures elsewhere, such as in a
+    * TCP stack, aren't related to them.
+    * </p>
+    *
+    * @param failure the failure to inspect
+    * @return {@code true} if the failure or one of its causes is a {@link BindException} thrown while running in
+    *         {@link UDP}
+    */
+   private static boolean causedByUdpBindFailure(Throwable failure) {
+      for (Throwable t = failure; t != null; t = t.getCause()) {
+         if (t instanceof BindException && thrownFrom(t, UDP.class)) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   /**
+    * Returns whether a throwable was created while a method of a class was running.
+    *
+    * @param t     the throwable to inspect
+    * @param clazz the class to look for in the stack trace
+    * @return {@code true} if a frame of the throwable's stack trace belongs to {@code clazz}
+    */
+   private static boolean thrownFrom(Throwable t, Class<?> clazz) {
+      // JGroups binds every UDP socket from UDP.createSockets, so its frame is in the trace of any bind failure there
+      for (StackTraceElement frame : t.getStackTrace()) {
+         if (frame.getClassName().equals(clazz.getName())) {
+            return true;
+         }
+      }
+      return false;
    }
 
    public static EmbeddedCacheManager fromXml(String xmlFile) throws IOException {

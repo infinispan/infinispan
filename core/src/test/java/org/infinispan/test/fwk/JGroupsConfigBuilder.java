@@ -18,6 +18,9 @@ import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.UDP;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.VERIFY_SUSPECT;
 import static org.infinispan.test.fwk.JGroupsConfigBuilder.ProtocolType.VERIFY_SUSPECT2;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +46,19 @@ public class JGroupsConfigBuilder {
    public static final int BASE_TCP_PORT = 7900;
    public static final int MAX_NODES_PER_SITE = 50;
    private static final int MAX_SITES_PER_THREAD = 4;
+   /**
+    * The first multicast port of the UDP test stacks. Each cluster gets the port {@code MCAST_PORT_BASE + offset}
+    * together with the group {@code 239.10.10.<offset>}, so offsets, and the ports, are limited to 256.
+    * <p>
+    * The ports are kept below the ephemeral port range of the operating system ({@code 32768-60999} by default on
+    * Linux, {@code 49152-65535} on others).
+    * </p>
+    */
+   static final int MCAST_PORT_BASE = 32000;
+   /**
+    * The last multicast port the UDP test stacks can use, matching the last group {@code 239.10.10.255}.
+    */
+   static final int MCAST_PORT_LAST = MCAST_PORT_BASE + 255;
    public static final int MAX_NODES_PER_THREAD = MAX_NODES_PER_SITE * MAX_SITES_PER_THREAD;
 
    public static final String JGROUPS_STACK;
@@ -176,10 +192,14 @@ public class JGroupsConfigBuilder {
          siteIndex = 0;
       }
       int clusterOffset = udpIndex * MAX_SITES_PER_THREAD + siteIndex;
+      // Each cluster needs its own group and port, we can't wrap the ports and possibly join different clusters.
+      if (clusterOffset > MCAST_PORT_LAST - MCAST_PORT_BASE)
+         throw new IllegalStateException("UDP cluster offset " + clusterOffset + " exceeds the "
+               + (MCAST_PORT_LAST - MCAST_PORT_BASE + 1) + " multicast groups available to tests");
 
       Map<String, String> props = udp.getProperties();
       props.put("mcast_addr", "239.10.10." + clusterOffset);
-      props.put("mcast_port", String.valueOf(46000 + clusterOffset));
+      props.put("mcast_port", String.valueOf(MCAST_PORT_BASE + clusterOffset));
       replaceProperties(jgroupsCfg, props, UDP);
    }
 
@@ -256,6 +276,39 @@ public class JGroupsConfigBuilder {
       }
 
       return new JGroupsProtocolCfg(protoMap, configurator, transportType);
+   }
+
+   /**
+    * Returns the multicast endpoint a JGroups UDP stack binds.
+    * <p>
+    * Used to name the endpoint when a cache manager fails to start, so the method never throws.
+    * </p>
+    *
+    * @param stack the stack as XML, as set in
+    *              {@link org.infinispan.remoting.transport.jgroups.JGroupsTransport#CONFIGURATION_STRING}, or
+    *              {@code null} when the cache manager configures its stack another way
+    * @return {@code mcast_addr:mcast_port} of the stack's {@code UDP} protocol, or {@code "unknown"} if the stack is
+    *         missing, can't be parsed or has no {@code UDP} protocol
+    */
+   static String mcastEndpoint(String stack) {
+      if (stack == null) {
+         return "unknown";
+      }
+      try {
+         // Parsed the same way JGroupsTransport parses it when creating the channel
+         XmlConfigurator configurator = XmlConfigurator.getInstance(
+               new ByteArrayInputStream(stack.getBytes(StandardCharsets.UTF_8)));
+         for (ProtocolConfiguration protocol : configurator.getProtocolStack()) {
+            if (getProtocolType(protocol.getProtocolName()) == UDP) {
+               Map<String, String> properties = protocol.getProperties();
+               return properties.get("mcast_addr") + ":" + properties.get("mcast_port");
+            }
+         }
+         return "unknown";
+      } catch (IOException | RuntimeException e) {
+         // getProtocolType throws for protocols outside ProtocolType, the parser for malformed stacks
+         return "unknown (" + e + ")";
+      }
    }
 
    private static ProtocolType getProtocolType(String name) {
