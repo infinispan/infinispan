@@ -1,5 +1,123 @@
 {
   "definitions" : [ {
+    "protopath" : "org:/:infinispan:/:multimap:/:persistence.multimap.proto",
+    "def" : {
+      "enums" : [ ],
+      "messages" : [ {
+        "name" : "SetBucket",
+        "type_id" : 5305,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "wrappedValues",
+          "type" : "MultimapObjectWrapper",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "ListBucket",
+        "type_id" : 5302,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "wrappedValues",
+          "type" : "org.infinispan.persistence.core.MarshallableUserObject",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "Bucket",
+        "type_id" : 5300,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "wrappedValues",
+          "type" : "org.infinispan.persistence.core.MarshallableUserObject",
+          "is_repeated" : true
+        } ]
+      }, {
+        "name" : "MultimapObjectWrapper",
+        "type_id" : 5306,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "wrapper",
+          "type" : "org.infinispan.persistence.core.MarshallableUserObject",
+          "optional" : true
+        } ]
+      }, {
+        "name" : "SortedSetBucket",
+        "type_id" : 5307,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "wrappedValues",
+          "type" : "ScoredValue",
+          "is_repeated" : true
+        } ],
+        "messages" : [ {
+          "name" : "IndexValue",
+          "type_id" : 5309,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "score",
+            "type" : "double",
+            "optional" : true,
+            "options" : [ {
+              "name" : "default",
+              "value" : "0.0"
+            } ]
+          }, {
+            "id" : 2,
+            "name" : "index",
+            "type" : "int64",
+            "optional" : true,
+            "options" : [ {
+              "name" : "default",
+              "value" : "0"
+            } ]
+          } ]
+        } ]
+      }, {
+        "name" : "HashMapBucket",
+        "type_id" : 5303,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "wrappedValues",
+          "type" : "HashMapBucket.BucketEntry",
+          "is_repeated" : true
+        } ],
+        "messages" : [ {
+          "name" : "BucketEntry",
+          "type_id" : 5304,
+          "fields" : [ {
+            "id" : 1,
+            "name" : "wrappedKey",
+            "type" : "org.infinispan.persistence.core.MarshallableUserObject",
+            "optional" : true
+          }, {
+            "id" : 2,
+            "name" : "wrappedValue",
+            "type" : "org.infinispan.persistence.core.MarshallableUserObject",
+            "optional" : true
+          } ]
+        } ]
+      }, {
+        "name" : "ScoredValue",
+        "type_id" : 5308,
+        "fields" : [ {
+          "id" : 1,
+          "name" : "score",
+          "type" : "double",
+          "optional" : true
+        }, {
+          "id" : 2,
+          "name" : "wrappedValue",
+          "type" : "MultimapObjectWrapper",
+          "optional" : true
+        } ]
+      } ],
+      "imports" : [ {
+        "path" : "persistence.core.proto"
+      } ],
+      "package" : {
+        "name" : "org.infinispan.persistence.multimap"
+      }
+    }
+  }, {
     "protopath" : "org:/:infinispan:/:multimap:/:global.multimap.proto",
     "def" : {
       "enums" : [ {
@@ -591,124 +709,6 @@
       } ],
       "package" : {
         "name" : "org.infinispan.global.multimap"
-      }
-    }
-  }, {
-    "protopath" : "org:/:infinispan:/:multimap:/:persistence.multimap.proto",
-    "def" : {
-      "enums" : [ ],
-      "messages" : [ {
-        "name" : "SetBucket",
-        "type_id" : 5305,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "wrappedValues",
-          "type" : "MultimapObjectWrapper",
-          "is_repeated" : true
-        } ]
-      }, {
-        "name" : "ListBucket",
-        "type_id" : 5302,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "wrappedValues",
-          "type" : "org.infinispan.persistence.core.MarshallableUserObject",
-          "is_repeated" : true
-        } ]
-      }, {
-        "name" : "Bucket",
-        "type_id" : 5300,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "wrappedValues",
-          "type" : "org.infinispan.persistence.core.MarshallableUserObject",
-          "is_repeated" : true
-        } ]
-      }, {
-        "name" : "MultimapObjectWrapper",
-        "type_id" : 5306,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "wrapper",
-          "type" : "org.infinispan.persistence.core.MarshallableUserObject",
-          "optional" : true
-        } ]
-      }, {
-        "name" : "SortedSetBucket",
-        "type_id" : 5307,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "wrappedValues",
-          "type" : "ScoredValue",
-          "is_repeated" : true
-        } ],
-        "messages" : [ {
-          "name" : "IndexValue",
-          "type_id" : 5309,
-          "fields" : [ {
-            "id" : 1,
-            "name" : "score",
-            "type" : "double",
-            "optional" : true,
-            "options" : [ {
-              "name" : "default",
-              "value" : "0.0"
-            } ]
-          }, {
-            "id" : 2,
-            "name" : "index",
-            "type" : "int64",
-            "optional" : true,
-            "options" : [ {
-              "name" : "default",
-              "value" : "0"
-            } ]
-          } ]
-        } ]
-      }, {
-        "name" : "HashMapBucket",
-        "type_id" : 5303,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "wrappedValues",
-          "type" : "HashMapBucket.BucketEntry",
-          "is_repeated" : true
-        } ],
-        "messages" : [ {
-          "name" : "BucketEntry",
-          "type_id" : 5304,
-          "fields" : [ {
-            "id" : 1,
-            "name" : "wrappedKey",
-            "type" : "org.infinispan.persistence.core.MarshallableUserObject",
-            "optional" : true
-          }, {
-            "id" : 2,
-            "name" : "wrappedValue",
-            "type" : "org.infinispan.persistence.core.MarshallableUserObject",
-            "optional" : true
-          } ]
-        } ]
-      }, {
-        "name" : "ScoredValue",
-        "type_id" : 5308,
-        "fields" : [ {
-          "id" : 1,
-          "name" : "score",
-          "type" : "double",
-          "optional" : true
-        }, {
-          "id" : 2,
-          "name" : "wrappedValue",
-          "type" : "MultimapObjectWrapper",
-          "optional" : true
-        } ]
-      } ],
-      "imports" : [ {
-        "path" : "persistence.core.proto"
-      } ],
-      "package" : {
-        "name" : "org.infinispan.persistence.multimap"
       }
     }
   } ]
