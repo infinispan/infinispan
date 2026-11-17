@@ -44,7 +44,7 @@ public class LuaContext implements AutoCloseable {
 
    private static final String REDIS_API_NAME = "redis";
 
-   private static final Set<String> LIBRARIES_ALLOW_LIST = Set.of("string", "math", "table", "os");
+   private static final Set<String> LIBRARIES_ALLOW_LIST = Set.of("string", "math", "table", "os", "bit", "cjson", "cmsgpack", "struct");
    private static final Set<String> REDIS_API_ALLOW_LIST = Set.of("redis", "__redis__err__handler", "KEYS", "ARGV");
    private static final Set<String> LUA_BUILTINS_ALLOW_LIST = Set.of("xpcall", "tostring", "setmetatable", "next", "assert", "tonumber", "rawequal", "collectgarbage", "getmetatable", "rawset", "pcall", "coroutine", "type", "_G", "select", "unpack", "gcinfo", "pairs", "rawget", "loadstring", "ipairs", "_VERSION", "load", "error");
    private static final Set<String> ALLOW_LISTS;
