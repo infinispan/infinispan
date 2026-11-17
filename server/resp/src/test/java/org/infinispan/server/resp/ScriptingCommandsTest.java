@@ -145,6 +145,86 @@ public class ScriptingCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testBitLibraryIsAvailable() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // The bit library is available as a table of functions
+      String type = redis.eval("return type(bit)", ScriptOutputType.VALUE);
+      assertThat(type).isEqualTo("table");
+      // Basic bitwise operations
+      Long and = redis.eval("return bit.band(0xFF, 0x0F)", ScriptOutputType.INTEGER);
+      assertEquals(15L, and);
+      Long or = redis.eval("return bit.bor(0xF0, 0x0F)", ScriptOutputType.INTEGER);
+      assertEquals(255L, or);
+      Long xor = redis.eval("return bit.bxor(0xFF, 0x0F)", ScriptOutputType.INTEGER);
+      assertEquals(240L, xor);
+      Long lshift = redis.eval("return bit.lshift(1, 4)", ScriptOutputType.INTEGER);
+      assertEquals(16L, lshift);
+      Long rshift = redis.eval("return bit.rshift(256, 1)", ScriptOutputType.INTEGER);
+      assertEquals(128L, rshift);
+      Long bnot = redis.eval("return bit.bnot(0)", ScriptOutputType.INTEGER);
+      assertEquals(-1L, bnot);
+   }
+
+   @Test
+   public void testCjsonLibraryIsAvailable() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // The cjson library is available as a table of functions
+      String type = redis.eval("return type(cjson)", ScriptOutputType.VALUE);
+      assertThat(type).isEqualTo("table");
+      // Decode a JSON document with scalars, a nested array and null
+      Long a = redis.eval("""
+            local t = cjson.decode('{"a": 1, "b": "two", "c": [true, false, null]}')
+            return t.a
+            """, ScriptOutputType.INTEGER);
+      assertEquals(1L, a);
+      String b = redis.eval("""
+            local t = cjson.decode('{"a": 1, "b": "two", "c": [true, false, null]}')
+            return t.b
+            """, ScriptOutputType.VALUE);
+      assertEquals("two", b);
+      Boolean c = redis.eval("""
+            local t = cjson.decode('{"c": [true, false, null]}')
+            return t.c[1] == true and t.c[2] == false and t.c[3] == cjson.null
+            """, ScriptOutputType.BOOLEAN);
+      assertTrue(c);
+      // Encode a Lua table and check the round trip
+      String encoded = redis.eval("""
+            return cjson.encode({a = 1, b = {2, 3}})
+            """, ScriptOutputType.VALUE);
+      assertThat(encoded).contains("\"a\":1");
+      assertThat(encoded).contains("[2,3]");
+      Boolean roundTrip = redis.eval("""
+            local u = cjson.decode(cjson.encode({a = 1, b = {2, 3}}))
+            return u.a == 1 and u.b[1] == 2 and u.b[2] == 3 and #u.b == 2
+            """, ScriptOutputType.BOOLEAN);
+      assertTrue(roundTrip);
+   }
+
+   @Test
+   public void testCmsgpackLibraryIsAvailable() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // The cmsgpack library is available as a table of functions
+      String type = redis.eval("return type(cmsgpack)", ScriptOutputType.VALUE);
+      assertThat(type).isEqualTo("table");
+      // Pack a table and unpack it back
+      String s = redis.eval("""
+            local unpacked = cmsgpack.unpack(cmsgpack.pack({1, 2, "three", 4.5}))
+            return unpacked[3]
+            """, ScriptOutputType.VALUE);
+      assertEquals("three", s);
+      Long i = redis.eval("""
+            local unpacked = cmsgpack.unpack(cmsgpack.pack({1, 2, "three", 4.5}))
+            return unpacked[1]
+            """, ScriptOutputType.INTEGER);
+      assertEquals(1L, i);
+      String dbl = redis.eval("""
+            local unpacked = cmsgpack.unpack(cmsgpack.pack({1, 2, "three", 4.5}))
+            return tostring(unpacked[4])
+            """, ScriptOutputType.VALUE);
+      assertEquals("4.5", dbl);
+   }
+
+   @Test
    public void testMissingGlobalRaisesError() {
       RedisCommands<String, String> redis = redisConnection.sync();
       assertThatThrownBy(() ->
