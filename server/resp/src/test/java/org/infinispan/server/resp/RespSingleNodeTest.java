@@ -48,6 +48,7 @@ import io.lettuce.core.ScanArgs;
 import io.lettuce.core.SetArgs;
 import io.lettuce.core.SortArgs;
 import io.lettuce.core.TransactionResult;
+import io.lettuce.core.XReadArgs;
 import io.lettuce.core.ZAddArgs;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.RedisCodec;
@@ -289,7 +290,7 @@ public class RespSingleNodeTest extends SingleNodeRespBaseTest {
    public void testNotImplementedCommand() {
       RedisCommands<String, String> redis = redisConnection.sync();
       Exceptions.expectException(RedisCommandExecutionException.class, "ERR unknown command",
-            () -> redis.xdel("not-supported", "should error"));
+            () -> redis.xgroupCreate(XReadArgs.StreamOffset.from("not-supported", "0-0"), "group"));
    }
 
    public void testPipeline() throws ExecutionException, InterruptedException, TimeoutException {

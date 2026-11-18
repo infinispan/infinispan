@@ -208,6 +208,15 @@ import org.infinispan.server.resp.commands.sortedset.ZSCAN;
 import org.infinispan.server.resp.commands.sortedset.ZSCORE;
 import org.infinispan.server.resp.commands.sortedset.ZUNION;
 import org.infinispan.server.resp.commands.sortedset.ZUNIONSTORE;
+import org.infinispan.server.resp.commands.stream.XADD;
+import org.infinispan.server.resp.commands.stream.XDEL;
+import org.infinispan.server.resp.commands.stream.XINFO;
+import org.infinispan.server.resp.commands.stream.XLEN;
+import org.infinispan.server.resp.commands.stream.XRANGE;
+import org.infinispan.server.resp.commands.stream.XREAD;
+import org.infinispan.server.resp.commands.stream.XREVRANGE;
+import org.infinispan.server.resp.commands.stream.XSETID;
+import org.infinispan.server.resp.commands.stream.XTRIM;
 import org.infinispan.server.resp.commands.string.APPEND;
 import org.infinispan.server.resp.commands.string.COPY;
 import org.infinispan.server.resp.commands.string.DECR;
@@ -290,6 +299,8 @@ public final class Commands {
       ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE(), new TOUCH(), new TIME(), new TOPKRESERVE(), new TOPKADD(), new TOPKINCRBY(), new TOPKQUERY(), new TOPKLIST(), new TOPKINFO(), new TOPKCOUNT()};
       ALL_COMMANDS[20] = new RespCommand[]{new UNLINK(), new UNSUBSCRIBE(), new UNWATCH()};
       ALL_COMMANDS[22] = new RespCommand[]{new WATCH()};
+      ALL_COMMANDS[23] = new RespCommand[]{new XADD(), new XDEL(), new XLEN(), new XRANGE(), new XREAD(),
+            new XREVRANGE(), new XTRIM(), new XSETID(), new XINFO()};
       ALL_COMMANDS[25] = new RespCommand[]{new ZADD(), new ZCARD(), new ZCOUNT(), new ZLEXCOUNT(), new ZDIFF(),
             new ZDIFFSTORE(), new ZINCRBY(), new ZINTER(), new ZINTERCARD(), new ZINTERSTORE(), new ZMPOP(),
             new ZPOPMAX(), new ZPOPMIN(), new ZRANGE(), new ZRANGESTORE(), new ZREVRANGE(), new ZRANGEBYSCORE(),
