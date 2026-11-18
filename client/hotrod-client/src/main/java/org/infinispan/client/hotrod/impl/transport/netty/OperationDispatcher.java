@@ -609,10 +609,17 @@ public class OperationDispatcher {
          // opaque here and never compared numerically: it may be a consistent hash identity, or reset after a
          // full cluster restart (ISPN-13813). Ordering is enforced by the sequence of primary listener pushes,
          // and response headers (operation != null) are ignored while such a sequence is established.
-         if (operation == null && responseTopologyId == oldCacheInfo.getTopologyId()) {
+         boolean topologyChanged = responseTopologyId != oldCacheInfo.getTopologyId();
+         if (!topologyChanged && operation == null && hashFunctionVersion >= 0) {
+            // A sequenced push is authoritative even when different owners have the same topology hash.
+            topologyChanged = !(oldCacheInfo.getConsistentHash() instanceof SegmentConsistentHash previousHash)
+                  || !Arrays.deepEquals(previousHash.getSegmentOwners(), segmentOwners)
+                  || !oldCacheInfo.getServers().equals(Arrays.asList(addresses));
+         }
+         if (operation == null && !topologyChanged) {
             // An accepted sequenced push that doesn't change the owners still lets listeners reconcile
             newCacheInfo = oldCacheInfo;
-         } else if (responseTopologyId != oldCacheInfo.getTopologyId()) {
+         } else if (topologyChanged) {
             List<InetSocketAddress> addressList = Arrays.asList(addresses);
             // We don't track topology ages anymore as a number
             HOTROD.newTopology(responseTopologyId, -1, addresses.length, addressList);

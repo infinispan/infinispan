@@ -82,7 +82,7 @@ final class PrimaryTopologyTracker {
     * Applies a sequenced listener push only while its source is a current connection. The server topology
     * {@code sequence} is the only ordering authority, while {@code topologyHash} just identifies the consistent hash.
     * The push carries the segments whose primary owner changed since {@code baseSequence}, which is the sequence
-    * the server last sent on that connection, or {@code -1} when the connection has no earlier history.
+    * the server last sent for that listener registration, or {@code -1} when the registration has no earlier history.
     */
    synchronized void updatePrimaryTopology(String cacheName, Channel channel, int sequence, int baseSequence,
                                            BitSet changedSegments, int topologyHash,
@@ -122,10 +122,13 @@ final class PrimaryTopologyTracker {
       if (update.sequence > topology.sequence) {
          // The segments are fenced before the topology is published, even if it has the same owners as the current
          // one, as owners can change and change back between two accepted pushes. The history of the push is only
-         // trusted when it starts at or before the accepted sequence. Otherwise any segment could have changed
-         // unnoticed, so all of them are fenced. Nothing is fenced for the first sequence accepted, as the
-         // listener activation reconciles against the latest accepted topology.
-         boolean covered = update.baseSequence >= 0 && update.baseSequence <= topology.sequence;
+         // trusted when it starts at or before the accepted sequence. Consecutive server topology IDs cannot hide
+         // an intermediate ownership change, so beforeTopologyUpdate's owner comparison suffices even when a new
+         // listener has no history. With a gap and no covering history, all segments are fenced.
+         // Nothing is fenced for the first sequence accepted, as listener activation reconciles against the latest
+         // accepted topology.
+         boolean covered = update.baseSequence >= 0 && update.baseSequence <= topology.sequence
+               || update.sequence == topology.sequence + 1;
          Runnable fence = topology.sequence >= 0 && (!covered || !update.changedSegments.isEmpty())
                ? () -> dispatcher.notifyPrimaryChange(cacheName, covered ? update.changedSegments : null)
                : null;

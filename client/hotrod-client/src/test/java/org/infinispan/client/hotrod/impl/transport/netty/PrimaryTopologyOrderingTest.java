@@ -387,6 +387,60 @@ public class PrimaryTopologyOrderingTest extends AbstractInfinispanTest {
       assertThat(fenced).containsExactly((BitSet) null);
    }
 
+   public void testConsecutiveRegistrationSnapshotDoesNotFenceUnchangedOwners() {
+      OperationDispatcher dispatcher = dispatcher();
+      Channel a = connect(dispatcher, A);
+      Channel b = connect(dispatcher, B);
+      NearCacheTopologyListener listener = mock(NearCacheTopologyListener.class);
+      dispatcher.addTopologyListener("", listener);
+      push(dispatcher, a, 100, 123, A);
+      clearInvocations(listener);
+
+      // A new listener snapshots the final rebalance phase before the existing listener sends it.
+      push(dispatcher, b, 101, -1, new BitSet(), 123, A);
+
+      verify(listener, never()).primaryOwnersChanged(any());
+      verify(listener).afterTopologyUpdate(any(), any());
+      assertThat(dispatcher.primaryTopologyReady("", b).toCompletableFuture()).isCompletedWithValue(b);
+      // The old listener's notification for the same phase must now be ignored.
+      clearInvocations(listener);
+      push(dispatcher, a, 101, 100, new BitSet(), 123, A);
+      verifyNoInteractions(listener);
+   }
+
+   public void testRegistrationSnapshotWithSequenceGapFencesEverySegment() {
+      OperationDispatcher dispatcher = dispatcher();
+      Channel a = connect(dispatcher, A);
+      Channel b = connect(dispatcher, B);
+      NearCacheTopologyListener listener = mock(NearCacheTopologyListener.class);
+      dispatcher.addTopologyListener("", listener);
+      push(dispatcher, a, 100, 123, A);
+      clearInvocations(listener);
+
+      // Identical final owners cannot rule out a move away and back in the missing topology.
+      push(dispatcher, b, 102, -1, new BitSet(), 123, A);
+
+      verify(listener).primaryOwnersChanged(null);
+   }
+
+   public void testConsecutiveRegistrationSnapshotWithHashCollisionUpdatesOwners() {
+      OperationDispatcher dispatcher = dispatcher();
+      Channel a = connect(dispatcher, A);
+      Channel b = connect(dispatcher, B);
+      NearCacheTopologyListener listener = mock(NearCacheTopologyListener.class);
+      dispatcher.addTopologyListener("", listener);
+      push(dispatcher, a, 100, 123, A);
+      clearInvocations(listener);
+
+      // Different owners can have the same hash. The sequence still makes this snapshot authoritative.
+      push(dispatcher, b, 101, -1, new BitSet(), 123, B);
+
+      assertThat(primary(dispatcher)).isEqualTo(B);
+      verify(listener).beforeTopologyUpdate(any(), any());
+      verify(listener).afterTopologyUpdate(any(), any());
+      assertThat(dispatcher.primaryTopologyReady("", b).toCompletableFuture()).isCompletedWithValue(b);
+   }
+
    public void testNothingIsFencedWhenNoPrimaryOwnerChanged() {
       OperationDispatcher dispatcher = dispatcher();
       Channel a = connect(dispatcher, A);
