@@ -11,6 +11,7 @@ import org.infinispan.client.hotrod.event.impl.ClientListenerNotifier;
 
 public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
    final BlockingQueue<MockEvent> events;
+   private NearCache<K, V> delegate;
 
    MockNearCacheService(NearCacheConfiguration cfg, BlockingQueue<MockEvent> events, ClientListenerNotifier listenerNotifier) {
       super(cfg, listenerNotifier);
@@ -19,8 +20,12 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
 
    @Override
    protected NearCache<K, V> createNearCache(NearCacheConfiguration config, BiConsumer<K, MetadataValue<V>> biConsumer) {
-      NearCache<K, V> delegate = super.createNearCache(config, biConsumer);
+      delegate = super.createNearCache(config, biConsumer);
       return new MockNearCache<>(delegate, events);
+   }
+
+   MetadataValue<V> peek(K key) {
+      return delegate.get(key);
    }
 
    abstract static class MockEvent {}
