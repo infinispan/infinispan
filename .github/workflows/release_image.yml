@@ -127,7 +127,9 @@ jobs:
         if: ${{ inputs.push }}
         run: |
           mkdir -p "$RUNNER_TEMP/docker-config"
-          cp "$REGISTRY_AUTH_FILE" "$RUNNER_TEMP/docker-config/config.json"
+          # Podman stores Docker Hub credentials under "docker.io", cosign looks them up under the legacy index URL
+          jq 'if .auths["docker.io"] then .auths["https://index.docker.io/v1/"] = .auths["docker.io"] else . end' \
+            "$REGISTRY_AUTH_FILE" > "$RUNNER_TEMP/docker-config/config.json"
           echo "DOCKER_CONFIG=$RUNNER_TEMP/docker-config" >> "$GITHUB_ENV"
 
       - name: Generate SBOM
