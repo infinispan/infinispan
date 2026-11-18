@@ -5,7 +5,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.infinispan.reactive.internal.disposables.SequentialDisposable;
 import org.infinispan.reactive.internal.subscriptions.SubscriptionHelper;
 import org.infinispan.reactive.internal.util.BackpressureHelper;
 import org.infinispan.util.logging.Log;
@@ -24,9 +23,9 @@ import io.reactivex.rxjava3.plugins.RxJavaPlugins;
  * A timeout operator that only arms the timer after the downstream has called {@code request(n)}.
  * <p>
  * Unlike the standard RxJava {@code timeout()} operator which starts timing from subscription,
- * this operator defers the timer until demand exists. The timer resets on each emitted item and
- * stops when outstanding demand drops to zero. This prevents spurious timeouts when subscribers
- * use backpressure and delay their requests.
+ * this operator defers the timer until demand exists. The timer resets on each emitted item, and a
+ * timer that expires while there is no outstanding demand is ignored. This prevents spurious timeouts
+ * when subscribers use backpressure and delay their requests.
  *
  * @param <T> the element type
  */
@@ -61,6 +60,12 @@ public final class FlowableTimeoutAfterRequest<T> extends Flowable<T> {
 
       static final long TERMINATED_INDEX = Long.MIN_VALUE;
 
+      /**
+       * Installed once the subscription no longer wants a timer. Its generation is above every real one, so no
+       * late arrival can replace it.
+       */
+      static final Timer DISPOSED = new Timer(Long.MAX_VALUE, Disposable.disposed());
+
       final Subscriber<? super T> downstream;
       final long timeout;
       final TimeUnit unit;
@@ -69,7 +74,7 @@ public final class FlowableTimeoutAfterRequest<T> extends Flowable<T> {
 
       final AtomicLong requested = new AtomicLong();
       final AtomicReference<Subscription> upstream = new AtomicReference<>();
-      final SequentialDisposable timerTask = new SequentialDisposable();
+      final AtomicReference<Timer> timerTask = new AtomicReference<>();
 
       TimeoutSubscriber(Subscriber<? super T> downstream, long timeout, TimeUnit unit,
             Scheduler.Worker worker, Publisher<? extends T> onTimeout) {
@@ -111,32 +116,39 @@ public final class FlowableTimeoutAfterRequest<T> extends Flowable<T> {
             log.tracef("TimeoutAfterRequest[%08x] cancelled", System.identityHashCode(this));
          }
          SubscriptionHelper.cancel(upstream);
-         timerTask.dispose();
+         disposeTimer();
          worker.dispose();
       }
 
       @Override
       public void onNext(T t) {
-         if (get() == TERMINATED_INDEX) {
+         long generation = get();
+         if (generation == TERMINATED_INDEX) {
             return;
          }
 
-         long remaining = BackpressureHelper.produced(requested, 1);
+         BackpressureHelper.produced(requested, 1);
          downstream.onNext(t);
 
-         if (remaining > 0) {
+         // The timer must never be stopped from here. Doing that based on the demand left before the delivery
+         // would discard a timer armed by a request() made during the delivery, and the subscription would never
+         // time out. A timer that fires while there is no outstanding demand is ignored by onTimeout instead.
+         //
+         // Arming is only needed when nothing else armed during the delivery. A downstream that replenishes the
+         // demand from inside onNext has already armed a fresh timer, and arming a second one here would reset
+         // the same window twice and schedule a task per item for nothing.
+         if (get() != generation) {
             if (log.isTraceEnabled()) {
-               log.tracef("TimeoutAfterRequest[%08x] received item, remaining demand: %d, resetting timer",
-                     System.identityHashCode(this), remaining);
-            }
-            scheduleTimeout();
-         } else {
-            if (log.isTraceEnabled()) {
-               log.tracef("TimeoutAfterRequest[%08x] received item, no remaining demand, stopping timer",
+               log.tracef("TimeoutAfterRequest[%08x] received item, timer already re-armed by the downstream",
                      System.identityHashCode(this));
             }
-            timerTask.update(null);
+            return;
          }
+         if (log.isTraceEnabled()) {
+            log.tracef("TimeoutAfterRequest[%08x] received item, remaining demand: %d, resetting timer",
+                  System.identityHashCode(this), requested.get());
+         }
+         scheduleTimeout();
       }
 
       @Override
@@ -148,7 +160,7 @@ public final class FlowableTimeoutAfterRequest<T> extends Flowable<T> {
          if (log.isTraceEnabled()) {
             log.tracef("TimeoutAfterRequest[%08x] upstream error: %s", System.identityHashCode(this), t);
          }
-         timerTask.dispose();
+         disposeTimer();
          worker.dispose();
          downstream.onError(t);
       }
@@ -161,7 +173,7 @@ public final class FlowableTimeoutAfterRequest<T> extends Flowable<T> {
          if (log.isTraceEnabled()) {
             log.tracef("TimeoutAfterRequest[%08x] upstream completed", System.identityHashCode(this));
          }
-         timerTask.dispose();
+         disposeTimer();
          worker.dispose();
          downstream.onComplete();
       }
@@ -188,7 +200,42 @@ public final class FlowableTimeoutAfterRequest<T> extends Flowable<T> {
          } while (!compareAndSet(current, next));
          long finalNext = next;
          Disposable d = worker.schedule(() -> onTimeout(finalNext), timeout, unit);
-         timerTask.update(d);
+         installTimer(finalNext, d);
+      }
+
+      /**
+       * Installs a freshly scheduled task unless a newer one is already installed.
+       * <p>
+       * Taking a generation and installing a task are separate steps, and onNext and request() arm the timer from
+       * different threads, so two callers can be between the two steps at the same time and their installs can
+       * land in the opposite order to their generations. Comparing the installed generation and replacing it has
+       * to be a single atomic step: an older task that overwrote a newer one would be discarded as stale by
+       * onTimeout, leaving the subscription with outstanding demand and no timer at all.
+       * </p>
+       */
+      void installTimer(long generation, Disposable task) {
+         for (;;) {
+            Timer current = timerTask.get();
+            if (current != null && current.generation() >= generation) {
+               // A newer timer is already armed, or the subscription is finished with timers.
+               task.dispose();
+               return;
+            }
+            if (timerTask.compareAndSet(current, new Timer(generation, task))) {
+               if (current != null) {
+                  current.task().dispose();
+               }
+               return;
+            }
+         }
+      }
+
+      /** Stops timing for good: whatever is armed is cancelled and nothing can arm again. */
+      void disposeTimer() {
+         Timer current = timerTask.getAndSet(DISPOSED);
+         if (current != null) {
+            current.task().dispose();
+         }
       }
 
       void onTimeout(long expectedIdx) {
@@ -219,6 +266,12 @@ public final class FlowableTimeoutAfterRequest<T> extends Flowable<T> {
          }
       }
    }
+
+   /**
+    * A scheduled timeout task together with the generation it was armed for, so that the two can be compared and
+    * replaced as one atomic value.
+    */
+   record Timer(long generation, Disposable task) { }
 
    record OnTimeoutSubscriber<T>(Subscriber<? super T> downstream) implements FlowableSubscriber<T> {
 

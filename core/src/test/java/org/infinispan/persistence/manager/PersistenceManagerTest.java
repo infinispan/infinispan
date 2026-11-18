@@ -33,7 +33,9 @@ import org.infinispan.testing.Exceptions;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
 
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 
 /**
@@ -48,6 +50,9 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
    private boolean transactional;
 
    private static final int EMIT_TIMEOUT_MS = 200;
+
+   // Number of operations a bounded consumer keeps in flight, like the mass indexer does.
+   private static final int BOUNDED_CONCURRENCY = 1;
 
    private PersistenceManagerTest transactional(boolean transactional) {
       this.transactional = transactional;
@@ -229,6 +234,34 @@ public class PersistenceManagerTest extends SingleCacheManagerTest {
 
       subscriber.assertError(org.infinispan.commons.TimeoutException.class);
       assertFalse(persistenceManager.anyLocksHeld());
+   }
+
+   /**
+    * The mass indexer consumes the store with a bounded number of index updates in flight, which replenishes the
+    * demand one entry at a time from inside {@code onNext}. The store timeout must still be raised when the store
+    * stops emitting.
+    */
+   public void testEmitTooSlowWithBoundedConcurrencyConsumer() throws InterruptedException {
+      PersistenceManagerImpl persistenceManager = (PersistenceManagerImpl) extractComponent(cache, PersistenceManager.class);
+      KeyPartitioner keyPartitioner = extractComponent(cache, KeyPartitioner.class);
+      for (int i = 0; i < 5; ++i) {
+         insertEntry(persistenceManager, keyPartitioner, "slow" + i, "v");
+      }
+
+      DelayStore store1 = getStore(cache, 0, true);
+      // One entry is held back, the others are emitted as the consumer asks for them.
+      store1.delayBeforeEmit(1);
+
+      TestObserver<Void> observer = Flowable.fromPublisher(persistenceManager.publishEntries(true, true))
+            // Mirrors LocalMassIndexer: a bounded number of operations in flight, each completing immediately.
+            .flatMapCompletable(ignore -> Completable.complete(), false, BOUNDED_CONCURRENCY)
+            .test();
+
+      assertTrue(observer.await(15, TimeUnit.SECONDS), "Consumer should have completed with error");
+      observer.assertError(org.infinispan.commons.TimeoutException.class);
+
+      store1.endDelay();
+      eventually(() -> !persistenceManager.anyLocksHeld());
    }
 
    @Override
