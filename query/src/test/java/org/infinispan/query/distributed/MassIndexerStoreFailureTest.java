@@ -33,11 +33,12 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.distributed.MassIndexerStoreFailureTest")
 public class MassIndexerStoreFailureTest extends SingleCacheManagerTest {
 
-   // The in-memory entries are published before the store entries, so the store failure, or stall, only arrives
-   // after all of them were iterated. There must be more entries than the reindex consumes when it starts, so the
-   // failure arrives later, while index updates complete.
-   // The implementation consumes up to 100 * 128 entries at start.
-   private static final int NUM_ENTITIES = 20_000;
+   // The publisher emits every in-memory entry before it subscribes to the store, so the store failure, or stall,
+   // always arrives after the reindex has indexed them, while the updates of the store entries are still in flight.
+   // That ordering does not depend on the size of the cache, so keep the count low: the whole reindex has to fit in
+   // the deadline of assertReindexFails(), and a larger cache spends that budget indexing the in-memory entries
+   // before it ever reaches the store.
+   private static final int NUM_ENTITIES = 2_000;
 
    private static final int PUT_BATCH_SIZE = 1_000;
 
