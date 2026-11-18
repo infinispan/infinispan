@@ -197,7 +197,9 @@ public class PrimaryNearCacheLoseAndRegainSegmentsTest extends MultiHotRodServer
       serverForAddress(addr1).getCacheManager().getCache().put(key1, "v1-updated");
       eventually(() -> "v1-updated".equals(clientCache.get(key1)));
 
-      // And the other server was not affected
+      // A fresh listener snapshot has no topology history and may invalidate every segment.
+      // Repopulate the unchanged segment and verify that its listener still caches and invalidates reads.
+      assertThat(clientCache.get(key0)).isEqualTo("v0");
       assertThat(isNearCacheHit(clientCache, key0)).isTrue();
       serverForAddress(addr0).getCacheManager().getCache().put(key0, "v0-updated");
       eventually(() -> "v0-updated".equals(clientCache.get(key0)));
