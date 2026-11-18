@@ -555,7 +555,11 @@ abstract class RESTAuthorizationTest {
          boolean followRedirects = !cfg.security().authentication().mechanism().equals("SPNEGO");
          RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder().read(cfg, Combine.DEFAULT).clearServers().followRedirects(followRedirects);
          InetSocketAddress serverAddress = ext.getServerDriver().getServerSocket(0, 11222);
-         builder.addServer().host(serverAddress.getHostName()).port(serverAddress.getPort());
+         // Use getHostString() to avoid a reverse DNS lookup: getHostName() may resolve the container
+         // IP to a name that is not present in the server certificate SANs (e.g. ip-x-x-x-x.ec2.internal
+         // on EC2 CI runners), causing TLS hostname verification to fail. The certificate SANs cover the
+         // container IP, which is exactly what getHostString() returns.
+         builder.addServer().host(serverAddress.getHostString()).port(serverAddress.getPort());
          RestClient client = ext.rest().withClientConfiguration(builder).get();
          assertStatus(followRedirects ? OK : TEMPORARY_REDIRECT, client.raw().get("/rest/v2/login"));
          Json acl = Json.read(assertStatus(OK, client.raw().get("/rest/v2/security/user/acl")));
