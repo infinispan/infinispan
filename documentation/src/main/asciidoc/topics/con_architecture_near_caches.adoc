@@ -47,7 +47,8 @@ Before accepting an update, the client checks that its source socket is still th
 Within the current set of server connections, only a higher sequence advances the topology.
 An equal sequence can complete a registration without replacing the installed topology.
 If the update's history covers the previously accepted sequence, the client invalidates the reported changed segments before publishing the routing topology.
-If history is missing or starts after the accepted sequence, the client invalidates every segment conservatively.
+For consecutive server topology sequences, comparing the old and new primary owners also identifies the changed segments, even if a newly registered listener has no history.
+If there is a sequence gap and history is missing or starts after the accepted sequence, the client invalidates every segment conservatively.
 The first accepted sequence relies on registration reconciliation rather than invalidating every segment.
 
 A replacement connection can report a lower sequence after a full cluster restart.

@@ -379,6 +379,51 @@ public class PrimaryNearCacheLoseAndRegainSegmentsTest extends MultiHotRodServer
       assertThat(statistics.getNearCacheHits()).isEqualTo(hits);
    }
 
+   public void testConsecutiveSnapshotWithoutHistory() {
+      doTestConsecutiveSnapshotWithoutHistory(false);
+   }
+
+   public void testConsecutiveSnapshotWithoutHistoryWithBloomFilter() {
+      doTestConsecutiveSnapshotWithoutHistory(true);
+   }
+
+   private void doTestConsecutiveSnapshotWithoutHistory(boolean bloom) {
+      RemoteCacheManager clientManager = createNearClient(bloom);
+      RemoteCache<Integer, String> clientCache = clientManager.getCache();
+      InvalidatedNearRemoteCache<Integer, String> inrc = (InvalidatedNearRemoteCache<Integer, String>) clientCache;
+      SocketAddress addr0 = segmentOwnerAddress(inrc, 0);
+      SocketAddress addr1 = segmentOwnerAddress(inrc, 1);
+      Integer key0 = findKeyForServer(inrc, addr0);
+      Integer key1 = findKeyForServer(inrc, addr1);
+      clientCache.put(key0, "v0");
+      clientCache.put(key1, "v1");
+      assertThat(clientCache.get(key0)).isEqualTo("v0");
+      assertThat(clientCache.get(key1)).isEqualTo("v1");
+      assertThat(isNearCacheHit(clientCache, key0)).isTrue();
+      assertThat(isNearCacheHit(clientCache, key1)).isTrue();
+
+      CacheInfo before = inrc.getDispatcher().getCacheInfo(inrc.getName());
+      int sequence = acceptedSequence(inrc);
+      SocketAddress[][] owners = ((SegmentConsistentHash) before.getConsistentHash()).getSegmentOwners();
+      // The final rebalance phase advances the sequence but keeps the same read owners.
+      push(inrc, addr1, sequence + 1, -1, new BitSet(), before.getTopologyId(), owners);
+      assertThat(acceptedSequence(inrc)).isEqualTo(sequence + 1);
+      assertThat(isNearCacheHit(clientCache, key0)).isTrue();
+      assertThat(isNearCacheHit(clientCache, key1)).isTrue();
+
+      // Even with a colliding hash, comparing owners must invalidate the segment that moved.
+      SocketAddress[][] changedOwners = owners.clone();
+      changedOwners[1] = new SocketAddress[]{addr0};
+      push(inrc, addr0, sequence + 2, -1, new BitSet(), before.getTopologyId(), changedOwners);
+      assertThat(acceptedSequence(inrc)).isEqualTo(sequence + 2);
+      assertThat(inrc.getPrimaryOwner(key1)).isEqualTo(addr0);
+      assertThat(isNearCacheHit(clientCache, key0)).isTrue();
+      var statistics = clientCache.clientStatistics();
+      long misses = statistics.getNearCacheMisses();
+      assertThat(clientCache.get(key1)).isEqualTo("v1");
+      assertThat(statistics.getNearCacheMisses()).isEqualTo(misses + 1);
+   }
+
    private static BitSet allSegments() {
       BitSet all = new BitSet();
       all.set(0, SPLIT_OWNERS.length);
