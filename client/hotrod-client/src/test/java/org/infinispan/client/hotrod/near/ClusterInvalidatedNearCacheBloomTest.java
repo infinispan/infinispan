@@ -46,7 +46,15 @@ public class ClusterInvalidatedNearCacheBloomTest extends MultiHotRodServersTest
    @BeforeMethod
    void beforeMethod() {
       assertClients.forEach(AssertsNearCache::expectNoNearEvents);
-      assertClients.forEach(ac -> CompletionStages.join(ac.remote.updateBloomFilter()));
+      assertClients.forEach(ac -> {
+         // Reset the removal counter as well, so automatic bloom updates cannot leak between tests.
+         ac.nearCacheService.get().clear();
+         ac.expectNearClearInClient(ac);
+         // Clearing can itself trigger an automatic update. Wait before sending the empty filter.
+         eventually(() -> !ac.hasPendingBloomUpdate());
+         CompletionStages.join(ac.remote.updateBloomFilter());
+         ac.expectNoNearEvents();
+      });
    }
 
    @AfterMethod
