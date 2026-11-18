@@ -33,10 +33,10 @@ public class AssertsNearCache<K, V> {
    final BlockingQueue<MockEvent> events;
    final RemoteCacheManager manager;
    final NearCacheMode nearCacheMode;
-   final AtomicReference<NearCacheService<K, V>> nearCacheService;
+   final AtomicReference<MockNearCacheService<K, V>> nearCacheService;
 
    private AssertsNearCache(RemoteCacheManager manager, String cacheName, Cache<byte[], ?> server,
-                            BlockingQueue<MockEvent> events, AtomicReference<NearCacheService<K, V>> nearCacheService) {
+                            BlockingQueue<MockEvent> events, AtomicReference<MockNearCacheService<K, V>> nearCacheService) {
       this.manager = manager;
       this.remote = (InternalRemoteCache<K, V>) (cacheName == null ? manager.getCache() : manager.getCache(cacheName));
       this.server = server;
@@ -51,7 +51,7 @@ public class AssertsNearCache<K, V> {
 
    static <K, V> AssertsNearCache<K, V> create(Cache<byte[], ?> server, String cacheName, ConfigurationBuilder builder) {
       final BlockingQueue<MockEvent> events = new ArrayBlockingQueue<>(128);
-      AtomicReference<NearCacheService<K, V>> nearCacheServiceRef = new AtomicReference<>();
+      AtomicReference<MockNearCacheService<K, V>> nearCacheServiceRef = new AtomicReference<>();
       RemoteCacheManager manager = new RemoteCacheManager(builder.build()) {
          @Override
          protected <KK, VV> NearCacheService<KK, VV> createNearCacheService(String cacheName, NearCacheConfiguration cfg) {
@@ -67,6 +67,11 @@ public class AssertsNearCache<K, V> {
    AssertsNearCache<K, V> get(K key, V expected) {
       assertEquals(expected, remote.get(key));
       return this;
+   }
+
+   V peekNearCache(K key) {
+      MetadataValue<V> value = nearCacheService.get().peek(key);
+      return value == null ? null : value.getValue();
    }
 
    AssertsNearCache<K, V> getAsync(K key, V expected) throws ExecutionException, InterruptedException {

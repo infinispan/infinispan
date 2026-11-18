@@ -142,12 +142,12 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
 
    public void testServerBloomFilterUpdate() throws InterruptedException {
       assertClient.put(1, "v1").expectNearPreemptiveRemove(1);
-      assertClient.get(1, "v1").expectNearGetMissWithValue(1, "v1");
+      getEventuallyCached(1, "v1");
 
       int nonConflictKey = findNextKey(bloomFilter, 1, false);
 
       assertClient.put(nonConflictKey, "v1").expectNearPreemptiveRemove(nonConflictKey);
-      assertClient.get(nonConflictKey, "v1").expectNearGetMissWithValue(nonConflictKey, "v1");
+      getEventuallyCached(nonConflictKey, "v1");
 
       boolean serverBloomFilterUpdated = false;
       for (int i = 0; i < 10; ++i) {
@@ -171,6 +171,20 @@ public class InvalidatedNearCacheBloomTest extends SingleHotRodServerTest {
       }
 
       assertTrue(serverBloomFilterUpdated, "The server bloom filter was never updated and we got remove events every time");
+   }
+
+   private void getEventuallyCached(int key, String value) {
+      // Bloom updates can suppress population in either primary or cluster listener mode.
+      eventually(() -> {
+         assertClient.get(key, value);
+         if (value.equals(assertClient.peekNearCache(key))) {
+            assertClient.expectNearGetMissWithValue(key, value).expectNoNearEvents();
+            return true;
+         }
+         // A read during an update removes its placeholder instead of caching the value.
+         assertClient.expectNearGetMiss(key).expectNoNearEvents();
+         return false;
+      });
    }
 
    private void drainAsyncEvents() {
