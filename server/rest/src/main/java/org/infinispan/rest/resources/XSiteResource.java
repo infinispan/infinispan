@@ -70,6 +70,8 @@ public class XSiteResource implements ResourceHandler {
    private static final BiFunction<GlobalXSiteAdminOperations, String, Map<String, String>> START_PUSH_ALL_CACHES = GlobalXSiteAdminOperations::pushStateAllCaches;
    private static final BiFunction<GlobalXSiteAdminOperations, String, Map<String, String>> CANCEL_PUSH_ALL_CACHES = GlobalXSiteAdminOperations::cancelPushStateAllCaches;
 
+   protected static final String QUEUE_CLEANUP_MIN_AGE = "min-age";
+
    protected final InvocationHelper invocationHelper;
 
    public XSiteResource(InvocationHelper invocationHelper) {
@@ -212,6 +214,34 @@ public class XSiteResource implements ResourceHandler {
 
    protected CompletionStage<RestResponse> clearPushStateStatus(RestRequest restRequest) {
       return statusOperation(restRequest, CLEAR_PUSH_STATUS);
+   }
+
+   protected CompletionStage<RestResponse> startQueueCleanup(RestRequest request) {
+      long minAgeMillis = parseMinAge(request.getParameter(QUEUE_CLEANUP_MIN_AGE));
+      return statusOperation(request, ops -> ops.startQueueCleanup(minAgeMillis));
+   }
+
+   protected CompletionStage<RestResponse> queueCleanupStatus(RestRequest request) {
+      return statusOperation(request, XSiteAdminOperations::queueCleanupStatus);
+   }
+
+   protected CompletionStage<RestResponse> cancelQueueCleanup(RestRequest request) {
+      return statusOperation(request, XSiteAdminOperations::cancelQueueCleanup);
+   }
+
+   private static long parseMinAge(String value) {
+      if (value == null || value.isEmpty()) {
+         throw Log.REST.missingArgument(QUEUE_CLEANUP_MIN_AGE);
+      }
+      try {
+         long minAgeMillis = Long.parseLong(value);
+         if (minAgeMillis >= 0) {
+            return minAgeMillis;
+         }
+      } catch (NumberFormatException ignored) {
+         // reported below
+      }
+      throw Log.REST.illegalArgument(QUEUE_CLEANUP_MIN_AGE, value);
    }
 
    protected CompletionStage<RestResponse> cancelReceiveState(RestRequest restRequest) {

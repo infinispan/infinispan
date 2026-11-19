@@ -28,15 +28,17 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
 
    final IracManagerKeyInfo keyInfo;
    private final boolean expiration;
+   private final long trackedAt;
 
    @GuardedBy("backupMissing")
    private final BitSet backupMissing;
 
    private volatile Status status = Status.READY;
 
-   public IracManagerKeyChangedState(int segment, Object key, RequestUUID owner, boolean expiration, int numberOfBackups) {
-      this.keyInfo = new IracManagerKeyInfo(segment, key, owner);
+   public IracManagerKeyChangedState(IracManagerKeyInfo keyInfo, boolean expiration, int numberOfBackups, long trackedAt) {
+      this.keyInfo = keyInfo;
       this.expiration = expiration;
+      this.trackedAt = trackedAt;
       BitSet backupMissing = new BitSet(numberOfBackups);
       backupMissing.set(0, numberOfBackups);
       this.backupMissing = backupMissing;
@@ -70,6 +72,11 @@ class IracManagerKeyChangedState implements IracManagerKeyState {
    @Override
    public boolean isStateTransfer() {
       return false;
+   }
+
+   @Override
+   public long getTrackedAt() {
+      return trackedAt;
    }
 
    @Override

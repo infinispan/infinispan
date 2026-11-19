@@ -5,12 +5,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.irac.IracQueueCleanupCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.stat.MetricInfo;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
@@ -32,11 +34,14 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ResponseCollector;
+import org.infinispan.remoting.transport.ResponseCollectors;
 import org.infinispan.remoting.transport.ValidResponseCollector;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.Authorizer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.irac.IracManager;
+import org.infinispan.xsite.irac.IracQueueCleanupStatus;
 import org.infinispan.xsite.response.AutoStateTransferResponse;
 import org.infinispan.xsite.response.AutoStateTransferResponseCollector;
 import org.infinispan.xsite.statetransfer.StateTransferStatus;
@@ -71,6 +76,7 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
    @Inject TakeOfflineManager takeOfflineManager;
    @Inject Authorizer authorizer;
    @Inject DistributionManager distributionManager;
+   @Inject IracManager iracManager;
 
    public static String siteStatusToString(SiteStatus status, Function<CacheMixedSiteStatus, String> mixedFunction) {
       if (status.isOffline()) {
@@ -358,6 +364,42 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
       return rpcManager.getTransport().getMembers().size();
    }
 
+   @ManagedOperation(displayName = "Cleanup Queue",
+         description = "Starts, in all nodes, the removal of keys queued for asynchronous cross-site replication that have neither an entry nor a tombstone.",
+         name = "CleanupQueue")
+   public Map<String, IracQueueCleanupStatus> startQueueCleanup(
+         @Parameter(name = "minAgeMillis", description = "The minimum time, in milliseconds, a key must be queued to be checked") long minAgeMillis) {
+      if (minAgeMillis < 0) {
+         throw new IllegalArgumentException("minAgeMillis must be non-negative: " + minAgeMillis);
+      }
+      return queueCleanup(IracQueueCleanupCommand.START, minAgeMillis);
+   }
+
+   @ManagedOperation(displayName = "Cancel Cleanup Queue",
+         description = "Cancels the queue cleanup in all nodes.",
+         name = "CancelCleanupQueue")
+   public Map<String, IracQueueCleanupStatus> cancelQueueCleanup() {
+      return queueCleanup(IracQueueCleanupCommand.CANCEL, 0);
+   }
+
+   @ManagedOperation(displayName = "Cleanup Queue Status",
+         description = "Returns the queue size and the queue cleanup status in all nodes.",
+         name = "CleanupQueueStatus")
+   public Map<String, IracQueueCleanupStatus> queueCleanupStatus() {
+      return queueCleanup(IracQueueCleanupCommand.STATUS, 0);
+   }
+
+   private Map<String, IracQueueCleanupStatus> queueCleanup(byte action, long minAgeMillis) {
+      authorizer.checkPermission(AuthorizationPermission.ADMIN);
+      IracQueueCleanupCommand command = commandsFactory.buildIracQueueCleanupCommand(action, minAgeMillis);
+      CompletionStage<Map<String, IracQueueCleanupStatus>> rsp = rpcManager.invokeCommandOnAll(command,
+            new QueueCleanupResponseCollector(), rpcManager.getSyncRpcOptions());
+      IracQueueCleanupStatus local = command.invokeLocal(iracManager);
+      Map<String, IracQueueCleanupStatus> result = rpcManager.blocking(rsp);
+      result.put(String.valueOf(rpcManager.getAddress()), local);
+      return result;
+   }
+
    @Override
    public Collection<MetricInfo> getCustomMetrics(GlobalMetricsConfiguration configuration) {
       return takeOfflineManager.getCustomMetrics(configuration);
@@ -368,6 +410,33 @@ public class XSiteAdminOperations implements CustomMetricsSupplier {
    }
 
    private record XSiteResponse(List<Address> errors) {
+   }
+
+   private static class QueueCleanupResponseCollector extends ValidResponseCollector<Map<String, IracQueueCleanupStatus>> {
+
+      private final Map<String, IracQueueCleanupStatus> statuses = new TreeMap<>();
+
+      @Override
+      public Map<String, IracQueueCleanupStatus> finish() {
+         return statuses;
+      }
+
+      @Override
+      protected Map<String, IracQueueCleanupStatus> addValidResponse(Address sender, ValidResponse response) {
+         statuses.put(String.valueOf(sender), (IracQueueCleanupStatus) response.getResponseValue());
+         return null;
+      }
+
+      @Override
+      protected Map<String, IracQueueCleanupStatus> addTargetNotFound(Address sender) {
+         //ignore leavers
+         return null;
+      }
+
+      @Override
+      protected Map<String, IracQueueCleanupStatus> addException(Address sender, Exception exception) {
+         throw ResponseCollectors.wrapRemoteException(sender, exception);
+      }
    }
 
    private static class VoidResponseCollector extends ValidResponseCollector<XSiteResponse> {

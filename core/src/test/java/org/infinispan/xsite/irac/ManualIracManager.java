@@ -202,6 +202,11 @@ public class ManualIracManager extends ControlledIracManager {
       }
 
       @Override
+      public long getTrackedAt() {
+         return 0;
+      }
+
+      @Override
       public boolean canSend() {
          return false;
       }

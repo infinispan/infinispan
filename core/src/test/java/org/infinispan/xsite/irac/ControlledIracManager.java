@@ -109,6 +109,21 @@ public class ControlledIracManager implements IracManager {
       actual.checkStaleKeys(origin, keys);
    }
 
+   @Override
+   public IracQueueCleanupStatus startQueueCleanup(long minAgeMillis) {
+      return actual.startQueueCleanup(minAgeMillis);
+   }
+
+   @Override
+   public IracQueueCleanupStatus cancelQueueCleanup() {
+      return actual.cancelQueueCleanup();
+   }
+
+   @Override
+   public IracQueueCleanupStatus queueCleanupStatus() {
+      return actual.queueCleanupStatus();
+   }
+
    protected Optional<DefaultIracManager> asDefaultIracManager() {
       return actual instanceof DefaultIracManager ? Optional.of((DefaultIracManager) actual) : Optional.empty();
    }

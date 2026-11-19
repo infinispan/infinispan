@@ -86,4 +86,9 @@ interface IracManagerKeyState {
     * @return true if successfully sent, false otherwise.
     */
    boolean wasSuccessful(IracXSiteBackup site);
+
+   /**
+    * @return The {@link org.infinispan.commons.time.TimeService#time()} when the key was queued.
+    */
+   long getTrackedAt();
 }

@@ -14,8 +14,8 @@ class IracManagerStateTransferState extends IracManagerKeyChangedState {
 
    private final CompletableFuture<Void> completableFuture = new CompletableFuture<>();
 
-   public IracManagerStateTransferState(int segment, Object key, int numberOfBackups) {
-      super(segment, key, RequestUUID.NO_REQUEST, false, numberOfBackups);
+   public IracManagerStateTransferState(int segment, Object key, int numberOfBackups, long trackedAt) {
+      super(new IracManagerKeyInfo(segment, key, RequestUUID.NO_REQUEST), false, numberOfBackups, trackedAt);
    }
 
    @Override

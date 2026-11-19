@@ -31,6 +31,7 @@ import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
 import org.infinispan.commands.irac.IracPrimaryPendingKeyCheckCommand;
+import org.infinispan.commands.irac.IracQueueCleanupCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
@@ -679,4 +680,6 @@ public interface CommandsFactory {
    IracTombstoneCheckRequest buildIracTombstoneCheckRequest(List<Object> keys);
 
    IracPrimaryPendingKeyCheckCommand buildIracPrimaryPendingKeyCheckCommand(List<IracManagerKeyInfo> keys);
+
+   IracQueueCleanupCommand buildIracQueueCleanupCommand(byte action, long minAgeMillis);
 }
