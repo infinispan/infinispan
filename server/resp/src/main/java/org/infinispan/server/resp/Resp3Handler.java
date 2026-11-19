@@ -110,7 +110,7 @@ public class Resp3Handler extends Resp3AuthHandler {
    }
 
    public void checkPermission(AuthorizationPermission authorizationPermission) {
-      AuthorizationManager authorizationManager = cache().getAuthorizationManager();
+      AuthorizationManager authorizationManager = SecurityActions.getCacheAuthorizationManager(cache());
       if (authorizationManager != null) {
          authorizationManager.checkPermission(authorizationPermission);
       }
