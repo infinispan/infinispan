@@ -105,6 +105,23 @@ jobs:
           upload-artifact: false
           upload-release-assets: false
 
+      - name: Verify the OpenJDK package in the SBOM
+        run: |
+          set -euo pipefail
+          # The SBOM must contain the OpenJDK package, otherwise it cannot be attributed by container scanners
+          jq -e '[(.packages // [])[] | select((.name // "") | endswith("-openjdk"))] | length > 0' ./sbom.spdx.json
+
+      - name: Remove the published tag if the SBOM check fails
+        if: failure()
+        run: |
+          set -euo pipefail
+          QTOKEN="${{ secrets.QUAY_TOKEN_TEST }}"
+          QREPO_ID=$(curl -fsSL -H "Authorization: Bearer $QTOKEN" "https://quay.io/api/v1/repo/by_path/quay.io/infinispan-test/server" | jq -r '.id')
+          # Delete the tag only if it was published by this run
+          if [ "$(curl -fsS -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $QTOKEN" "https://quay.io/api/v1/repo/${QREPO_ID}/tags/${{ inputs.tag }}")" = "200" ]; then
+            curl -fsSL -X DELETE -H "Authorization: Bearer $QTOKEN" "https://quay.io/api/v1/repo/${QREPO_ID}/tag/${{ inputs.tag }}"
+          fi
+
       - name: Create SBOM attestation
         run: |
           set -euo pipefail

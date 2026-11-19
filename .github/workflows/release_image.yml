@@ -143,6 +143,30 @@ jobs:
           upload-artifact: false
           upload-release-assets: false
 
+      - name: Verify the OpenJDK package in the SBOM
+        if: ${{ inputs.push }}
+        run: |
+          set -euo pipefail
+          # The SBOM must contain the OpenJDK package, otherwise it cannot be attributed by container scanners
+          jq -e '[(.packages // [])[] | select((.name // "") | endswith("-openjdk"))] | length > 0' ./sbom.spdx.json
+
+      - name: Remove the published tags if the SBOM check fails
+        if: ${{ failure() && inputs.push }}
+        run: |
+          set -euo pipefail
+          QTOKEN="${{ secrets.QUAY_TOKEN }}"
+          QREPO_ID=$(curl -fsSL -H "Authorization: Bearer $QTOKEN" "https://quay.io/api/v1/repo/by_path/quay.io/infinispan/server" | jq -r '.id')
+          DTOKEN="${{ secrets.DOCKERTOKEN_TOKEN }}"
+          for TAG in ${IMAGE_TAGS}; do
+            # Delete each tag only if it was published by this run
+            if [ "$(curl -fsS -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $QTOKEN" "https://quay.io/api/v1/repo/${QREPO_ID}/tags/${TAG}")" = "200" ]; then
+              curl -fsSL -X DELETE -H "Authorization: Bearer $QTOKEN" "https://quay.io/api/v1/repo/${QREPO_ID}/tag/${TAG}"
+            fi
+            if [ "$(curl -fsS -o /dev/null -w '%{http_code}' -H "Authorization: $DTOKEN" "https://hub.docker.com/v2/repositories/infinispan/server/tags/${TAG}/")" = "200" ]; then
+              curl -fsSL -X DELETE -H "Authorization: $DTOKEN" "https://hub.docker.com/v2/repositories/infinispan/server/tags/${TAG}/"
+            fi
+          done
+
       - name: Create SBOM attestations
         if: ${{ inputs.push }}
         run: |
