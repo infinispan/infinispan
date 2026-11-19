@@ -40,8 +40,12 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class BLMOVEM extends AbstractLMOVEM implements Resp3Command {
    public BLMOVEM() {
-      super(-6,
+      this(-6,
             AclCategory.WRITE.mask() | AclCategory.LIST.mask() | AclCategory.SLOW.mask() | AclCategory.BLOCKING.mask());
+   }
+
+   protected BLMOVEM(int arity, long aclMask) {
+      super(arity, aclMask);
    }
 
    @Override
@@ -50,19 +54,28 @@ public class BLMOVEM extends AbstractLMOVEM implements Resp3Command {
       LmovemConfig config = parseArguments(handler, arguments, true);
       if (config == null) return handler.myStage();
 
+      return handler.stageToReturn(moveOrBlock(handler, ctx, config), ctx, ResponseWriter.ARRAY_BULK_STRING_OR_NIL);
+   }
+
+   /**
+    * Moves immediately if the source has elements, otherwise blocks until it does or the timeout expires.
+    * Inside MULTI it never blocks.
+    */
+   protected CompletionStage<Collection<byte[]>> moveOrBlock(Resp3Handler handler, ChannelHandlerContext ctx,
+                                                             LmovemConfig config) {
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
-      CompletionStage<Collection<byte[]>> moveStage = executeLmovem("BLMOVEM", listMultimap, config);
+      CompletionStage<Collection<byte[]>> moveStage = executeLmovem(getName(), listMultimap, config);
 
       if (TransactionContext.isInTransactionContext(ctx)) {
-         return handler.stageToReturn(moveStage, ctx, ResponseWriter.ARRAY_BULK_STRING_OR_NIL);
+         return moveStage;
       }
 
-      return handler.stageToReturn(moveStage.thenCompose(v -> {
+      return moveStage.thenCompose(v -> {
          if (v != null && !v.isEmpty()) {
             return CompletableFuture.completedFuture(v);
          }
          return addSubscriber(config, handler);
-      }), ctx, ResponseWriter.ARRAY_BULK_STRING_OR_NIL);
+      });
    }
 
    private CompletableFuture<Collection<byte[]>> addSubscriber(LmovemConfig config, Resp3Handler handler) {
