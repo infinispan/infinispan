@@ -566,7 +566,19 @@ public class OperationDispatcher {
          // gracefulCloseChannel can only be invoked while holding the write lock
          long stamp = lock.writeLock();
          try {
-            excluded.forEach(this::gracefulCloseChannel);
+            for (SocketAddress server : excluded) {
+               // The topology of cacheName is not updated here, so it is ignored when checking whether the server is
+               // still used. Connections are shared by all caches, so the connection is closed only when no other
+               // cache still uses the server (ISPN-18549).
+               if (topologyInfo.isServerInUse(server, cacheName)) {
+                  if (log.isTraceEnabled()) {
+                     log.tracef("[%s] Excluded server %s still used by another cache, keeping its connection open",
+                           cacheName, server);
+                  }
+               } else {
+                  gracefulCloseChannel(server);
+               }
+            }
          } finally {
             lock.unlockWrite(stamp);
          }
@@ -693,11 +705,22 @@ public class OperationDispatcher {
       // Then update the server list for new operations
       topologyInfo.updateCacheInfo(cacheName, oldCacheInfo, newCacheInfo);
 
-      // And finally remove the failed servers
+      // And finally close the connections to the servers that are no longer used. Connections are shared by all
+      // caches of the RemoteCacheManager, so a server dropped from this cache may still be used by another cache
+      // running on a different set of servers. Closing the connection in that case would needlessly thrash healthy
+      // connections when the caches have an asymmetric topology, so it is closed only once the last cache stops
+      // using the server (ISPN-18549).
       for (SocketAddress server : removedServers) {
-         HOTROD.removingServer(server);
          connectionFailedServers.remove(server);
-         gracefulCloseChannel(server);
+         if (topologyInfo.isServerInUse(server, null)) {
+            if (log.isTraceEnabled()) {
+               log.tracef("[%s] Server %s removed from this cache but still used by another cache, keeping its connection open",
+                     newCacheInfo.getCacheName(), server);
+            }
+         } else {
+            HOTROD.removingServer(server);
+            gracefulCloseChannel(server);
+         }
       }
    }
 

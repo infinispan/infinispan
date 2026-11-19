@@ -74,6 +74,30 @@ public final class TopologyInfo {
       return caches.values().stream().flatMap(ct -> ct.getServers().stream()).collect(Collectors.toSet());
    }
 
+   /**
+    * Checks whether any cache (optionally ignoring a single one) still lists the given server in its current topology.
+    *
+    * <p>Connections are shared by every cache of a {@code RemoteCacheManager}, so a server dropped from one cache's
+    * topology may still be required by another cache running on a different (asymmetric) set of servers. This is used
+    * to keep a shared connection open until the last cache using the server stops doing so.</p>
+    *
+    * @param server           the server address to look for
+    * @param ignoredCacheName a cache to exclude from the check, or {@code null} to consider every cache
+    * @return {@code true} if at least one of the considered caches still lists the server
+    */
+   public boolean isServerInUse(SocketAddress server, String ignoredCacheName) {
+      String ignored = ignoredCacheName == null ? null : nameOrDefault(ignoredCacheName);
+      for (Map.Entry<String, CacheInfo> entry : caches.entrySet()) {
+         if (ignored != null && entry.getKey().equals(ignored)) {
+            continue;
+         }
+         if (entry.getValue().getServers().contains(server)) {
+            return true;
+         }
+      }
+      return false;
+   }
+
    public SegmentConsistentHash createConsistentHash(short hashFunctionVersion, SocketAddress[][] segmentOwners) {
       SegmentConsistentHash hash = null;
       if (hashFunctionVersion > 0) {
