@@ -92,6 +92,12 @@ jobs:
   publish-linux-repos:
     needs: linux-packages
     runs-on: ubuntu-latest
+    # Serialize across releases: two overlapping runs would sync the same server
+    # state and the later upload's repository indexes would omit the other
+    # release's packages.
+    concurrency:
+      group: publish-linux-repos
+      cancel-in-progress: false
     env:
       SFTP_HOST: filemgmt.jboss.org
       SFTP_USER: infinispan
@@ -120,11 +126,20 @@ jobs:
           # ${SFTP_HOST} is behind a load balancer whose backends present different host keys, so the
           # full set of valid keys is pinned in filemgmt-known-hosts instead of using ssh-keyscan.
           cp .github/workflows/filemgmt-known-hosts ~/.ssh/known_hosts
+          # Each backend advertises only its own host keys via the hostkeys-00@openssh.com
+          # extension, and UpdateHostKeys would rewrite known_hosts to that single backend's
+          # keys, deleting the pinned keys of the other backends and failing the next
+          # connection the load balancer routes elsewhere.
+          printf 'Host %s\n\tUpdateHostKeys no\n' "${SFTP_HOST}" >> ~/.ssh/config
 
       - name: Sync existing repo from server
         run: |
           mkdir -p repo/yum/x86_64 repo/yum/aarch64 repo/apt/pool/main
-          # Download existing packages (ignore errors on first run)
+          # Download the packages already published on the server: they are re-uploaded
+          # together with the new release's files, so an incomplete download would
+          # silently drop older versions from the published repositories. On a pristine
+          # server the first cd fails and aborts the batch, hence the || true; the
+          # verification below then ensures the download is complete.
           sftp -b - "${SFTP_USER}@${SFTP_HOST}" << SFTP || true
           lcd repo/yum/x86_64
           cd ${REMOTE_BASE}/yum/x86_64
@@ -136,6 +151,71 @@ jobs:
           cd ${REMOTE_BASE}/apt/pool/main
           mget *.deb
           SFTP
+          # A package directory may only be missing when the repository as a whole is
+          # absent (pristine server): on an established server a missing directory or
+          # an incomplete download must fail the job instead of silently publishing a
+          # repository that omits older versions.
+          established=false
+          rc=0
+          base_listing=$(echo "ls ${REMOTE_BASE}" | sftp -b - "${SFTP_USER}@${SFTP_HOST}" 2>&1) || rc=$?
+          if [ "${rc}" -eq 1 ] && printf '%s\n' "${base_listing}" | grep -Eq 'not found|No such file'; then
+            echo "::warning::${REMOTE_BASE} does not exist on ${SFTP_HOST} yet, publishing a fresh repository"
+          elif [ "${rc}" -ne 0 ]; then
+            echo "::error::Failed to list ${REMOTE_BASE} on ${SFTP_HOST}, sftp exited ${rc}"
+            printf '%s\n' "${base_listing}" | sed 's/^/  /'
+            exit 1
+          else
+            established=true
+          fi
+          # Fail unless every package file visible on the server also exists locally,
+          # with the same size in bytes.
+          verify_dir() {
+            remote_dir=$1 local_dir=$2 pattern=$3
+            rc=0
+            listing=$(echo "ls -l ${remote_dir}" | sftp -b - "${SFTP_USER}@${SFTP_HOST}" 2>&1) || rc=$?
+            if [ "${rc}" -eq 1 ] && printf '%s\n' "${listing}" | grep -Eq 'not found|No such file'; then
+              if [ "${established}" = true ]; then
+                echo "::error::${remote_dir} is missing from the established repository at ${REMOTE_BASE}"
+                exit 1
+              fi
+              return 0
+            fi
+            if [ "${rc}" -ne 0 ]; then
+              echo "::error::Failed to list ${remote_dir} on ${SFTP_HOST}, sftp exited ${rc}"
+              printf '%s\n' "${listing}" | sed 's/^/  /'
+              exit 1
+            fi
+            # ls -l prints one line per entry prefixed with the file type ('-' for
+            # files, 'd' for directories such as repodata); the echoed batch commands
+            # and the merged sftp diagnostics never start with '-'. Depending on the
+            # server the name is a bare file name or a full path, and names may
+            # contain spaces, so only the leading fields are parsed.
+            missing=0
+            while IFS= read -r entry; do
+              size=$(printf '%s\n' "${entry}" | awk '{print $5}')
+              remote_file=$(printf '%s\n' "${entry}" | awk '{ $1=$2=$3=$4=$5=$6=$7=$8=""; sub(/^ +/, ""); print }')
+              # shellcheck disable=SC2254
+              case "${remote_file}" in
+                ${pattern})
+                  file="${local_dir}/$(basename "${remote_file}")"
+                  if [ -f "${file}" ]; then
+                    local_size=$(stat -c %s "${file}")
+                    if [ "${local_size}" != "${size}" ]; then
+                      echo "::error::${file} is truncated: ${local_size} of ${size} bytes"
+                      missing=1
+                    fi
+                  else
+                    echo "::error::${remote_dir}/$(basename "${remote_file}") exists on the server but was not synced"
+                    missing=1
+                  fi
+                  ;;
+              esac
+            done <<< "$(printf '%s\n' "${listing}" | grep '^-')"
+            return "${missing}"
+          }
+          verify_dir "${REMOTE_BASE}/yum/x86_64" repo/yum/x86_64 '*.rpm'
+          verify_dir "${REMOTE_BASE}/yum/aarch64" repo/yum/aarch64 '*.rpm'
+          verify_dir "${REMOTE_BASE}/apt/pool/main" repo/apt/pool/main '*.deb'
 
       - name: Download new packages from release
         run: |
