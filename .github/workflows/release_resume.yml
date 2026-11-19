@@ -265,3 +265,25 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           gh variable set "RELEASE_$(echo '${{ inputs.version }}' | cut -f 1-2 -d '.' | tr . _)_VERSION" -b "$(echo ${{ inputs.version }} | cut -f 1 -d '-')" --org infinispan --visibility all;
+
+  # Best effort: keeps the example artifact version in KEYS on main current after a latest
+  # release, including one completed through this resume workflow. Never blocks or fails
+  # the resume itself.
+  update-signing-statement:
+    needs: published
+    if: ${{ inputs.type == 'latest' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    concurrency:
+      # Serialize with the equivalent job of the release workflow and with other resume
+      # runs, so that concurrent KEYS updates cannot conflict on main.
+      group: update-signing-statement
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+
+      - name: Update example artifact version in KEYS
+        uses: ./.github/actions/update-signing-statement
+        with:
+          release-version: ${{ inputs.version }}
+          token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}

@@ -417,3 +417,24 @@ jobs:
         run: |
           gh variable set RELEASE -b "$(echo ${{ needs.release.outputs.nextVersion }} | cut -f 1 -d '-')" --org infinispan  --visibility all;
           gh variable set "RELEASE_$(echo '${{ needs.release.outputs.version }}' | cut -f 1-2 -d '.' | tr . _)_VERSION" -b "$(echo '${{ needs.release.outputs.version }}' | cut -f 1-2 -d '.').1" --org infinispan --visibility all;
+
+  # Best effort: keeps the example artifact version in KEYS on main current after a latest release.
+  # Runs only once Maven Central publication is confirmed, and never blocks or fails the release itself.
+  update-signing-statement:
+    needs: [published, release]
+    if: ${{ inputs.type == 'latest' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    concurrency:
+      # Serialize with the equivalent job of the resume workflow and with other release runs,
+      # so that concurrent KEYS updates cannot conflict on main.
+      group: update-signing-statement
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+
+      - name: Update example artifact version in KEYS
+        uses: ./.github/actions/update-signing-statement
+        with:
+          release-version: ${{ needs.release.outputs.version }}
+          token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
