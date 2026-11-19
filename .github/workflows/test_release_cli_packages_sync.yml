@@ -1,0 +1,24 @@
+name: Test CLI package repository sync
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/release_cli_packages.yml
+      - .github/workflows/test_release_cli_packages_sync.yml
+      - .github/scripts/test-release-cli-packages-sync.sh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync-verification:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+
+      - name: Install sshd
+        run: sudo apt-get update && sudo apt-get install -y openssh-server
+
+      - name: Run sync verification tests
+        run: .github/scripts/test-release-cli-packages-sync.sh

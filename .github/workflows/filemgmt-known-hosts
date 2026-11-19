@@ -5,6 +5,11 @@
 # so its output is an unpredictable mix. Pin every distinct key observed instead.
 # Regenerate by scanning repeatedly until no new keys appear (e.g. 20 attempts), then keep the unique set:
 #   for i in $(seq 1 20); do ssh-keyscan filemgmt.jboss.org; sleep 1; done | grep -v '^#' | sort -u
+#
+# Keep UpdateHostKeys disabled for this host (see the Configure SSH step of
+# release_cli_packages.yml): after authentication a backend advertises only its own keys
+# via the hostkeys-00@openssh.com extension, and ssh would otherwise rewrite known_hosts
+# to that single backend's keys, silently deleting the pinned keys of every other backend.
 
 # HqAtNUvhMybkEFubneHegmnkLxFi5LU3m2Y1xt7/KOw (ecdsa-sha2-nistp256)
 filemgmt.jboss.org ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBC6eaH60JKdFI7gPNvTLhoFgK3/mtcNjk7OXfh21bxsC3rRuF4Mwk59qM/rwZjwA4E2yWdH9Phsm5z1nnsZmqlc=
