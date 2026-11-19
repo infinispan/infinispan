@@ -59,8 +59,9 @@ public class CacheStatusResponse implements Serializable {
             && cacheTopology == null
             && stableTopology == null
             && availabilityMode == null
-            && current == null
-            && previous == null;
+            // Null collections are marshalled as empty lists.
+            && (current == null || current.isEmpty())
+            && (previous == null || previous.isEmpty());
    }
 
    public CacheJoinInfo getCacheJoinInfo() {

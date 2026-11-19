@@ -98,6 +98,8 @@ import com.google.errorprone.annotations.concurrent.GuardedBy;
 public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalStateProvider {
    static final Log log = LogFactory.getLog(LocalTopologyManagerImpl.class);
 
+   static final int NO_STABLE_TOPOLOGY_ID = -1;
+
    @Inject Transport transport;
    @Inject
    @ComponentName(NON_BLOCKING_EXECUTOR)
@@ -211,10 +213,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          // After that, the new node can send another join request, that should return with a new topology and start rebalance.
          if (entry.getKey().isEmpty()) {
             LocalCacheStatus lcs = runningCaches.get(cacheName);
-            CompletionStage<CacheTopology> joining = lcs.getStableTopologyCompletion().thenCompose(ignore -> {
-               log.debugf("Resume join for cache %s after stable topology finished", cacheName);
-               return join(cacheName, lcs);
-            });
+            CompletionStage<CacheTopology> joining = rejoinAfter(cacheName, lcs, lcs.getStableTopologyCompletion());
             return CompletionStages.handleAndCompose(joining, (res, t) -> {
 
                // We mark either way after finishing the join request.
@@ -228,6 +227,26 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
          }
 
          return CompletableFuture.completedFuture(entry.getValue());
+      });
+   }
+
+   private CompletionStage<CacheTopology> rejoinAfter(String cacheName, LocalCacheStatus lcs, CompletionStage<Void> delay) {
+      return delay.thenCompose(ignore -> {
+         log.debugf("Resume join for cache %s after stable topology installed", cacheName);
+         CompletionStage<Void> nextStableTopology = lcs.nextStableTopology();
+         return orderOnCache(cacheName, () -> {
+            if (runningCaches.get(cacheName) != lcs)
+               throw new IllegalStateException("Cache status changed while joining");
+
+            long timeout = lcs.getJoinInfo().getTimeout();
+            long deadline = timeService.expectedEndTime(timeout, MILLISECONDS);
+            return sendJoinRequest(cacheName, lcs.getJoinInfo(), timeout, deadline)
+                  .thenCompose(res -> res.isEmpty()
+                        ? CompletableFuture.completedFuture(KeyValuePair.of(res, (CacheTopology) null))
+                        : handleJoinResponse(cacheName, lcs, res).thenApply(ct -> KeyValuePair.of(res, ct)));
+         }).thenCompose(entry -> entry.getKey().isEmpty()
+               ? rejoinAfter(cacheName, lcs, nextStableTopology)
+               : CompletableFuture.completedFuture(entry.getValue()));
       });
    }
 
@@ -1120,6 +1139,9 @@ class LocalCacheStatus {
    private volatile CacheTopology stableTopology;
    private volatile boolean waitingRecovery;
 
+   // Completes and replaced every time a new stable topology is installed.
+   private volatile CompletableFuture<Void> nextStableTopology = new CompletableFuture<>();
+
    LocalCacheStatus(CacheJoinInfo joinInfo,
                     CacheTopologyHandler handler,
                     PartitionHandlingManager phm,
@@ -1193,6 +1215,24 @@ class LocalCacheStatus {
          stable.complete(stableTopology.wasTopologyRestoredFromState());
          handler.onTopologyReceived(stableTopology);
       }
+
+      // Replaced under synchronisation of the running caches.
+      CompletableFuture<Void> installed = nextStableTopology;
+      nextStableTopology = new CompletableFuture<>();
+      installed.complete(null);
+   }
+
+   /**
+    * Returns a stage for the next stable topology installation.
+    * <p>
+    * Each call returns the stage for the first installation after the call, so callers must obtain it before the
+    * action that may cause the installation.
+    * </p>
+    *
+    * @return a stage that completes when this node installs its next stable topology.
+    */
+   CompletionStage<Void> nextStableTopology() {
+      return nextStableTopology;
    }
 
    List<Address> knownMembers() {

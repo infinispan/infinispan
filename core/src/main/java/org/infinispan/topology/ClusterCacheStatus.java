@@ -830,6 +830,13 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                if (status == ComponentStatus.INSTANTIATED) {
                   return CacheStatusResponse.empty();
                }
+
+               // The recovery is complete only after every restored member confirms the stable topology, not when the
+               // previous topology is restored.
+               // We reply with an empty cache status response so the joiner resends the request after the stable topology completes.
+               // A restored member that lost its state may still rejoin.
+               if (isRestoringStableTopology() && !restoredMembers.contains(joinInfo.getPersistentUUID()))
+                  return CacheStatusResponse.empty();
             } else if (persistentState.get().getChecksum() != joinInfo.getPersistentStateChecksum().get()) {
                throw CLUSTER.nodeWithIncompatibleStateJoiningCache(joiner, cacheName);
             }
