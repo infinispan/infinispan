@@ -109,6 +109,13 @@ LESS:           '<';
 LESS_EQUAL:     '<=';
 AND:            '&&';
 OR:             '||';
+// Competes with REGEXP_LITERAL below: the lexer applies longest-match, so when
+// a second '/' appears later on the same line the text between the two slashes
+// is lexed as a regular expression literal instead of two division operators.
+// An arithmetic expression therefore supports at most one division operator per
+// line. Documented limitation, pinned by UpdateGrammarTest.
+SLASH:          '/';
+PERCENT:        '%';
 
 // ============================================================================
 // DELIMITERS
@@ -199,6 +206,10 @@ fragment UNICODE_ESCAPE:
     '\\' 'u' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT
     ;
 
+// A /regexp/ term for full-text queries. Wins by longest-match over the SLASH
+// division operator whenever a second '/' follows on the same line; the body
+// cannot span a line break, which is why the conflict is line-based.
+// See the comment on SLASH above.
 REGEXP_LITERAL:
     '/' ( ~[\r\n\\/] | '\\' ~[\r\n] )* '/'
     ;

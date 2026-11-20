@@ -210,3 +210,6 @@ mvn verify -pl core -Psmoke -Dcheckstyle.skip
 # Run stress tests (excluded by default)
 mvn verify -pl core -Ptest-stress -Dcheckstyle.skip
 ```
+
+## Performance benchmarks
+Performance benchmarks are NOT part of this repository. They live in the sibling `../infinispan-benchmarks` repository (JMH modules, one per subsystem — e.g. `query/` for query benchmarks). Put any new benchmark there.
