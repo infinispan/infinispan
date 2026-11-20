@@ -2,7 +2,6 @@ package org.infinispan.server.resp.commands.list;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -61,12 +60,12 @@ public abstract class AbstractLMOVEM extends RespCommand {
 
       long timeout = 0;
       if (withTimeout) {
-         long timeoutSeconds = ArgumentUtils.toLong(arguments.get(4));
+         double timeoutSeconds = ArgumentUtils.toDouble(arguments.get(4));
          if (timeoutSeconds < 0) {
             handler.writer().mustBePositive();
             return null;
          }
-         timeout = Duration.of(timeoutSeconds, ChronoUnit.SECONDS).toMillis();
+         timeout = (long) (timeoutSeconds * Duration.ofSeconds(1).toMillis());
       }
 
       int count = 1;
