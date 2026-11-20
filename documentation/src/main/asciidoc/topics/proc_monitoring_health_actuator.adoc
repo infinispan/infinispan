@@ -1,0 +1,77 @@
+[id='monitoring-health-actuator_{context}']
+= Monitoring Cluster Health
+The embedded starter contributes a Spring Boot Actuator health indicator that reports the state of the Cache Manager, the health of each cache, and the version that each cluster member runs.
+
+Use this indicator to drive container orchestration probes and to verify in-place rolling upgrades from outside the application process.
+
+.Procedure
+
+. Add the following to your `pom.xml` file:
++
+[source,xml,options="nowrap",subs="attributes+"]
+----
+include::dependencies_maven/sb_actuator.xml[]
+----
++
+. Expose the health endpoint in your `application.properties` file:
++
+[source,properties,options="nowrap",subs="attributes+"]
+----
+management.endpoints.web.exposure.include=health
+management.endpoint.health.show-details=always
+----
++
+. Poll the `/actuator/health` endpoint.
+
+.Verification
+
+The `infinispanEmbedded` component reports details such as the following:
+
+[source,json,options="nowrap",subs="attributes+"]
+----
+include::json/spring_boot_embedded_health.json[]
+----
+
+The `members` array and the `rolling_upgrade` flag mirror the `GET /v2/cluster/members` endpoint of {brandname} Server, so the same tooling can verify an upgrade in both deployment modes.
+Each member advertises its own version, so {brandname} resolves the membership from the local cluster view.
+Polling the endpoint never sends a cluster-wide request and never blocks when a member is unreachable.
+
+[NOTE]
+====
+The `version` detail at the top level is the full version of the local node, such as `16.4.0.Final`.
+The `version` detail of each member is the `major.minor.patch` version that the address of the member advertises, such as `16.4.0`.
+The `physical_addresses` detail lists the addresses of the local node only, because resolving the addresses of the other members requires a cluster-wide request.
+====
+
+The indicator maps the health of the cluster onto the status of the component as follows:
+
+|===
+|Cluster health |Status
+
+|`HEALTHY`
+|`UP`
+
+|`HEALTHY_REBALANCING`
+|`UP`
+
+|`INITIALIZING`
+|`OUT_OF_SERVICE`
+
+|`DEGRADED`
+|`DOWN`
+
+|`FAILED`
+|`DOWN`
+|===
+
+A rebalancing cluster continues to serve requests, so the default mapping keeps the application up for the duration of a rolling upgrade.
+Set `infinispan.embedded.health.rebalancing-status` to `OUT_OF_SERVICE` or to `DOWN` if you want readiness probes to remove the node from the load balancer while the cluster rebalances.
+
+[TIP]
+====
+Set `infinispan.embedded.health.membership.enabled` to `false` to leave the membership out of the details, or set `infinispan.embedded.health.enabled` to `false` to disable the built-in indicator and register your own bean instead.
+====
+
+[role="_additional-resources"]
+.Additional resources
+* link:#spring-application-properties[Application Properties]

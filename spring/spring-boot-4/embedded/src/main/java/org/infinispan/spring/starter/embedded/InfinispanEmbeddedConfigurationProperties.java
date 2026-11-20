@@ -28,6 +28,11 @@ public class InfinispanEmbeddedConfigurationProperties {
     */
    private String clusterName = DEFAULT_CLUSTER_NAME;
 
+   /**
+    * Health indicator configuration.
+    */
+   private final HealthProperties health = new HealthProperties();
+
    public String getConfigXml() {
       return configXml;
    }
@@ -66,5 +71,80 @@ public class InfinispanEmbeddedConfigurationProperties {
 
    public boolean isReactive() {
       return reactive;
+   }
+
+   public HealthProperties getHealth() {
+      return health;
+   }
+
+   /**
+    * Configuration of the Actuator health indicator contributed by the embedded starter.
+    */
+   public static class HealthProperties {
+
+      /**
+       * Enable the health indicator for the embedded Cache Manager.
+       */
+      private boolean enabled = true;
+
+      /**
+       * The status to report while the cluster is rebalancing. Rebalancing clusters keep serving requests, so the
+       * default keeps the application up and avoids a readiness probe flapping throughout a rolling upgrade.
+       */
+      private RebalancingStatus rebalancingStatus = RebalancingStatus.UP;
+
+      /**
+       * Cluster membership details.
+       */
+      private final MembershipProperties membership = new MembershipProperties();
+
+      public boolean isEnabled() {
+         return enabled;
+      }
+
+      public void setEnabled(boolean enabled) {
+         this.enabled = enabled;
+      }
+
+      public RebalancingStatus getRebalancingStatus() {
+         return rebalancingStatus;
+      }
+
+      public void setRebalancingStatus(RebalancingStatus rebalancingStatus) {
+         this.rebalancingStatus = rebalancingStatus;
+      }
+
+      public MembershipProperties getMembership() {
+         return membership;
+      }
+   }
+
+   /**
+    * Configuration of the cluster membership details of the health indicator.
+    */
+   public static class MembershipProperties {
+
+      /**
+       * Include the address and the version of every cluster member in the health details. The membership is
+       * resolved from the local cluster view, so no cluster-wide request is performed.
+       */
+      private boolean enabled = true;
+
+      public boolean isEnabled() {
+         return enabled;
+      }
+
+      public void setEnabled(boolean enabled) {
+         this.enabled = enabled;
+      }
+   }
+
+   /**
+    * The health statuses that can be reported while the cluster is rebalancing.
+    */
+   public enum RebalancingStatus {
+      UP,
+      OUT_OF_SERVICE,
+      DOWN
    }
 }
