@@ -152,6 +152,11 @@ public abstract class AbstractGlobalStateRestartTest extends MultipleCacheManage
             assertThat(extraneousCreate).isNotNull();
             extraneousCreate.get(10, TimeUnit.SECONDS);
 
+            // The members joined, but each one completes the restored stable topology on its own.
+            // Using the cache before then fails with ISPN000689.
+            eventually(() -> cacheManagers.stream()
+                  .map(ecm -> TestingUtil.extractGlobalComponent(ecm, LocalTopologyManager.class))
+                  .noneMatch(ltm -> ltm.isCacheRecoveringShutdown(CACHE_NAME)), 30, TimeUnit.SECONDS);
             checkClusterRestartedCorrectly(addressMappings);
             checkData();
          }

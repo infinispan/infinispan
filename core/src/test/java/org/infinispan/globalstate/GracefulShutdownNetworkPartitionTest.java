@@ -70,7 +70,10 @@ public class GracefulShutdownNetworkPartitionTest extends BaseStatefulPartitionH
             .map(ecm -> extractGlobalComponent(ecm, LocalTopologyManager.class))
             .allMatch(localTopologyManager -> {
                CacheTopology ct = localTopologyManager.getCacheTopology(CACHE_NAME);
-               return ct != null && ct.getMembers().size() == numMembersInCluster;
+               // The topology alone is not enough.
+               // The cache is usable only after the restored stable topology completes.
+               return ct != null && ct.getMembers().size() == numMembersInCluster
+                     && !localTopologyManager.isCacheRecoveringShutdown(CACHE_NAME);
             }), 30, TimeUnit.SECONDS);
 
       int survivingData = cache(0, CACHE_NAME).size();
