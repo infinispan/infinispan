@@ -284,16 +284,41 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    public void validate() {
       Attribute<TimeQuantity> reaperWakeUpInterval = attributes.attribute(REAPER_WAKE_UP_INTERVAL);
       Attribute<TimeQuantity> completedTxTimeout = attributes.attribute(COMPLETED_TX_TIMEOUT);
-      if (reaperWakeUpInterval.get().longValue()< 0)
+      Attribute<TimeQuantity> cacheStopTimeout = attributes.attribute(CACHE_STOP_TIMEOUT);
+      if (reaperWakeUpInterval.get().longValue() <= 0)
          throw CONFIG.invalidReaperWakeUpInterval(reaperWakeUpInterval.get().longValue());
-      if (completedTxTimeout.get().longValue() < 0)
+      if (completedTxTimeout.get().longValue() <= 0)
          throw CONFIG.invalidCompletedTxTimeout(completedTxTimeout.get().longValue());
+      if (cacheStopTimeout.get().longValue() < 0)
+         throw CONFIG.invalidCacheStopTimeout(cacheStopTimeout.get().longValue());
       CacheMode cacheMode = clustering().cacheMode();
       if (!attributes.attribute(NOTIFICATIONS).get() && !getBuilder().template()) {
          CONFIG.transactionNotificationsDisabled();
       }
-      if (resolveMode().isTransactional() && !cacheMode.isSynchronous()) {
+      boolean isTransactional = resolveMode().isTransactional();
+      if (isTransactional && !cacheMode.isSynchronous()) {
          throw CONFIG.unsupportedAsyncCacheMode(cacheMode);
+      }
+      if (isTransactional) {
+         Attribute<TimeQuantity> lockTimeout = locking().attributes().attribute(LockingConfiguration.LOCK_ACQUISITION_TIMEOUT);
+         if (cacheStopTimeout.get().longValue() < lockTimeout.get().longValue()) {
+            CONFIG.cacheStopTimeoutTooShort(cacheStopTimeout.get().toString(), "lock acquisition", lockTimeout.get().toString());
+         }
+      }
+      if (isTransactional && cacheMode.isClustered()) {
+         Attribute<TimeQuantity> remoteTimeout = clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT);
+         long completedTxTimeoutVal = completedTxTimeout.get().longValue();
+         long remoteTimeoutVal = remoteTimeout.get().longValue();
+         if (remoteTimeoutVal < 0 || cacheStopTimeout.get().longValue() < remoteTimeoutVal) {
+            CONFIG.cacheStopTimeoutTooShort(cacheStopTimeout.get().toString(), "remote", remoteTimeout.get().toString());
+         }
+         if (completedTxTimeoutVal >= 0) {
+            if (remoteTimeoutVal < 0 || completedTxTimeoutVal < remoteTimeoutVal) {
+               throw CONFIG.invalidCompletedTxTimeoutLessThanRemoteTimeout(completedTxTimeout.get().toString(), remoteTimeout.get().toString());
+            } else if (completedTxTimeoutVal == remoteTimeoutVal) {
+               CONFIG.completedTxTimeoutEqualsRemoteTimeout(completedTxTimeout.get().toString(), remoteTimeout.get().toString());
+            }
+         }
       }
       recovery.validate();
    }

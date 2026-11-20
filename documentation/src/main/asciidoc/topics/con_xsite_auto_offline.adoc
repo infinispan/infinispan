@@ -11,6 +11,9 @@ Requests fail when a response is not received or a connection between cluster is
 
 Backup configurations include timeout values for operations to replicate data between clusters.
 If operations do not complete before the timeout expires, {brandname} records them as failures.
+For synchronous backups, the backup `timeout` must be greater than zero milliseconds, including when you update it at runtime.
+Zero and negative values are rejected because they would allow the backup operation to wait indefinitely.
+Set the backup timeout below the cache `remote-timeout` so that cross-site failures can be reported before the remote call times out.
 
 In the following example, operations to replicate data to NYC are recorded as failures if they do not complete after 10 seconds:
 

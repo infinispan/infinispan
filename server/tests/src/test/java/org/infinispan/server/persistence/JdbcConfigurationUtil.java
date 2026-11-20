@@ -44,6 +44,7 @@ public class JdbcConfigurationUtil {
    }
 
    public JdbcConfigurationUtil setLockingConfigurations() {
+      configurationBuilder.clustering().remoteTimeout(30000);
       configurationBuilder.locking().isolationLevel(IsolationLevel.READ_COMMITTED).lockAcquisitionTimeout(20000).concurrencyLevel(500).useLockStriping(false);
       return this;
    }

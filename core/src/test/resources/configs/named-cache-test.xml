@@ -46,10 +46,10 @@
       <local-cache name="transactional2">
          <transaction transaction-manager-lookup="org.infinispan.test.tx.TestLookup" stop-timeout="10000" locking="PESSIMISTIC" auto-commit="false" />
       </local-cache>
-      <invalidation-cache name="syncInval">
+      <invalidation-cache name="syncInval" remote-timeout="25000">
          <locking acquire-timeout="20000"/>
       </invalidation-cache>
-      <invalidation-cache name="asyncInval" mode="ASYNC">
+      <invalidation-cache name="asyncInval" mode="ASYNC" remote-timeout="25000">
          <locking acquire-timeout="20000"/>
       </invalidation-cache>
       <replicated-cache name="syncRepl" mode="SYNC" remote-timeout="15000">

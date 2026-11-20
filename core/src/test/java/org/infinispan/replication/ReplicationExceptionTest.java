@@ -33,6 +33,8 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() {
       ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      configuration.clustering().remoteTimeout(65000);
+      configuration.transaction().completedTxTimeout(120000);
       configuration.locking()
             .isolationLevel(IsolationLevel.REPEATABLE_READ)
             .lockAcquisitionTimeout(60000L)
@@ -41,6 +43,7 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
       waitForClusterToForm("syncReplCache");
 
       ConfigurationBuilder noTx = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      noTx.clustering().remoteTimeout(65000);
       noTx.locking()
             .isolationLevel(IsolationLevel.REPEATABLE_READ)
             .lockAcquisitionTimeout(60000L);

@@ -63,7 +63,8 @@ public class OnePhaseXATest extends AbstractInfinispanTest {
 
       ConfigurationBuilder c = new ConfigurationBuilder();
       c.clustering().cacheMode(CacheMode.REPL_SYNC)
-            .remoteTimeout(30000)
+            .remoteTimeout(65000)
+            .transaction().completedTxTimeout(120000)
             .transaction().invocationBatching().enable()
             .locking().lockAcquisitionTimeout(60000).useLockStriping(false);
       EmbeddedCacheManager container = TestCacheManagerFactory.createClusteredCacheManager(gc, c);

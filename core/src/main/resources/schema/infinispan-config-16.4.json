@@ -859,7 +859,7 @@
         },
         "remote-timeout": {
           "type": "string",
-          "description": "In SYNC mode, the timeout used to wait for an acknowledgment when making a remote call."
+          "description": "In SYNC mode, the timeout used to wait for an acknowledgment when making a remote call. Must be greater than zero milliseconds; infinite timeouts are not supported."
         },
         "partition-handling": {
           "$ref": "#/$defs/PartitionHandling"
@@ -1545,7 +1545,7 @@
         },
         "timeout": {
           "type": "string",
-          "description": "Specifies timeout for synchronous and asynchronous backup operations.",
+          "description": "Specifies timeout for synchronous and asynchronous backup operations. For synchronous backups, must be greater than zero milliseconds; infinite timeouts are not supported.",
           "default": "${Backup.timeout}"
         },
         "two-phase-commit": {

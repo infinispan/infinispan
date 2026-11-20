@@ -152,7 +152,7 @@
             <object size="20000"/>
          </memory>
       </local-cache>
-      <invalidation-cache name="invalid" mode="SYNC" statistics="true">
+      <invalidation-cache name="invalid" remote-timeout="35000" mode="SYNC" statistics="true">
          <locking acquire-timeout="30500" concurrency-level="2500" isolation="READ_UNCOMMITTED" striping="true"/>
          <transaction mode="BATCH" stop-timeout="60500"  locking="OPTIMISTIC"/>
          <expiration interval="10500" lifespan="11" max-idle="6"/>
@@ -160,7 +160,7 @@
             <binary size="20500"/>
          </memory>
       </invalidation-cache>
-      <replicated-cache name="repl" mode="SYNC" statistics="true" segments="10"
+      <replicated-cache name="repl" mode="SYNC" remote-timeout="35000" statistics="true" segments="10"
                         consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
                         key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
          <encoding>
@@ -430,7 +430,7 @@
          <expiration interval="11000"/>
       </local-cache>
 
-      <invalidation-cache-configuration name="invalidation-template" mode="SYNC" statistics="true">
+      <invalidation-cache-configuration name="invalidation-template" remote-timeout="35000" mode="SYNC" statistics="true">
          <locking acquire-timeout="30500" concurrency-level="2500" isolation="READ_UNCOMMITTED" striping="true"/>
          <transaction mode="BATCH" stop-timeout="60500"  locking="OPTIMISTIC"/>
          <expiration interval="10500" lifespan="11" max-idle="6"/>
@@ -440,7 +440,7 @@
       </invalidation-cache-configuration>
       <invalidation-cache name="invalidation-instance" configuration="invalidation-template" />
 
-      <replicated-cache-configuration name="repl-template" mode="SYNC" statistics="true"
+      <replicated-cache-configuration name="repl-template" mode="SYNC" remote-timeout="35000" statistics="true"
             segments="200" consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory"
             key-partitioner="org.infinispan.distribution.ch.impl.HashFunctionPartitioner">
          <encoding>

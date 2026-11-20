@@ -68,8 +68,30 @@ public class BackupConfiguration extends ConfigurationElement<BackupConfiguratio
       return strategy() == BackupStrategy.SYNC;
    }
 
+   static void validateReplicationTimeout(BackupStrategy strategy, TimeQuantity timeout) {
+      if (strategy == BackupStrategy.SYNC && timeout.longValue() <= 0) {
+         throw org.infinispan.commons.logging.Log.CONFIG.attributeMustBeGreaterThanZero(timeout, Attribute.TIMEOUT);
+      }
+   }
+
+   /**
+    * Returns the cross-site replication timeout in milliseconds.
+    * For synchronous backups, this timeout must be greater than zero.
+    */
    public long replicationTimeout() {
       return attributes.attribute(REPLICATION_TIMEOUT).get().longValue();
+   }
+
+   @Override
+   public void validateUpdate(String parentName, BackupConfiguration other) {
+      validateReplicationTimeout(other.strategy(), other.attributes.attribute(REPLICATION_TIMEOUT).get());
+      super.validateUpdate(parentName, other);
+   }
+
+   @Override
+   public void update(String parentName, BackupConfiguration other) {
+      validateReplicationTimeout(other.strategy(), other.attributes.attribute(REPLICATION_TIMEOUT).get());
+      super.update(parentName, other);
    }
 
    /**

@@ -142,6 +142,7 @@ public class InfinispanNodeFailureTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder configuration = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      configuration.clustering().remoteTimeout(30000);
       configuration.locking()
             .useLockStriping(false)
             .isolationLevel(IsolationLevel.READ_COMMITTED)
