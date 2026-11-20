@@ -736,6 +736,38 @@ public class StringCommandsTest extends SingleNodeRespBaseTest {
       assertThat(result3).isNotEqualTo(result1);
    }
 
+   /**
+    * Clients compute XXH3-64 digests locally, so DIGEST, DELEX and SET must agree with digests known in advance, not
+    * just with each other. The value and digest are the test vector from redis/redis#14496.
+    */
+   @Test
+   public void testDigestMatchesClientComputedDigest() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      String value = "v8lf0c11xh8ymlqztfd3eeq16kfn4sspw7fqmnuuq3k3t75em5wdizgcdw7uc26nnf961u2jkfzkjytls2kwlj7626sd";
+      String digest = "00006c38adf31777";
+
+      redis.set("digest-known", value);
+      CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).addKey("digest-known");
+      assertThat(redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), args)).isEqualTo(digest);
+
+      redis.set("digest-empty", "");
+      args = new CommandArgs<>(StringCodec.UTF8).addKey("digest-empty");
+      assertThat(redis.dispatch(new SimpleCommand("DIGEST"), new ValueOutput<>(StringCodec.UTF8), args)).isEqualTo("2d06800538d394c2");
+
+      args = new CommandArgs<>(StringCodec.UTF8).addKey("digest-known").add("newvalue").add("IFDEQ").add(digest);
+      assertThat(redis.dispatch(new SimpleCommand("SET"), new io.lettuce.core.output.StatusOutput<>(StringCodec.UTF8), args)).isEqualTo("OK");
+      assertThat(redis.get("digest-known")).isEqualTo("newvalue");
+
+      redis.set("digest-known", value);
+      args = new CommandArgs<>(StringCodec.UTF8).addKey("digest-known").add("IFDNE").add(digest);
+      assertThat(redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args)).isEqualTo(0L);
+      assertThat(redis.get("digest-known")).isEqualTo(value);
+
+      args = new CommandArgs<>(StringCodec.UTF8).addKey("digest-known").add("IFDEQ").add(digest);
+      assertThat(redis.dispatch(new SimpleCommand("DELEX"), new io.lettuce.core.output.IntegerOutput<>(StringCodec.UTF8), args)).isEqualTo(1L);
+      assertThat(redis.get("digest-known")).isNull();
+   }
+
    @Test
    public void testDelex() {
       RedisCommands<String, String> redis = redisConnection.sync();

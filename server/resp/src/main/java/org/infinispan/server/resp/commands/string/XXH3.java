@@ -12,19 +12,43 @@ public final class XXH3 {
 
    private static final char[] HEX_CHARS = "0123456789abcdef".toCharArray();
 
-   // XXH3-64 implementation constants
-   private static final long XXH_PRIME64_1 = 0x9E3779B185EBCA87L;
-   private static final long XXH_PRIME64_2 = 0xC2B2AE3D27D4EB4FL;
-   private static final long XXH_PRIME64_3 = 0x165667B19E3779F9L;
-   private static final long XXH_PRIME64_4 = 0x85EBCA77C2B2AE63L;
-   private static final long XXH_PRIME64_5 = 0x27D4EB2F165667C5L;
+   private static final long PRIME32_1 = 0x9E3779B1L;
+   private static final long PRIME32_2 = 0x85EBCA77L;
+   private static final long PRIME32_3 = 0xC2B2AE3DL;
+   private static final long PRIME64_1 = 0x9E3779B185EBCA87L;
+   private static final long PRIME64_2 = 0xC2B2AE3D27D4EB4FL;
+   private static final long PRIME64_3 = 0x165667B19E3779F9L;
+   private static final long PRIME64_4 = 0x85EBCA77C2B2AE63L;
+   private static final long PRIME64_5 = 0x27D4EB2F165667C5L;
+   private static final long PRIME_MX1 = 0x165667919E3779F9L;
+   private static final long PRIME_MX2 = 0x9FB21C651E98DF25L;
 
-   // XXH3 secret (first 64 bytes of the default secret)
-   private static final long[] XXH3_SECRET = {
-         0xbe4ba423396cfeb8L, 0x1cad21f72c81017cL,
-         0xdb979083e96dd4deL, 0x1f67b3b7a4a44072L,
-         0x78e5c0cc4ee679cbL, 0x2172ffcc7dd05a82L,
-         0x8e2443f7744608b8L, 0x4c263a81e69035e0L
+   // The default 192-byte secret (kSecret in xxhash.h)
+   private static final byte[] SECRET = {
+         (byte) 0xb8, (byte) 0xfe, (byte) 0x6c, (byte) 0x39, (byte) 0x23, (byte) 0xa4, (byte) 0x4b, (byte) 0xbe,
+         (byte) 0x7c, (byte) 0x01, (byte) 0x81, (byte) 0x2c, (byte) 0xf7, (byte) 0x21, (byte) 0xad, (byte) 0x1c,
+         (byte) 0xde, (byte) 0xd4, (byte) 0x6d, (byte) 0xe9, (byte) 0x83, (byte) 0x90, (byte) 0x97, (byte) 0xdb,
+         (byte) 0x72, (byte) 0x40, (byte) 0xa4, (byte) 0xa4, (byte) 0xb7, (byte) 0xb3, (byte) 0x67, (byte) 0x1f,
+         (byte) 0xcb, (byte) 0x79, (byte) 0xe6, (byte) 0x4e, (byte) 0xcc, (byte) 0xc0, (byte) 0xe5, (byte) 0x78,
+         (byte) 0x82, (byte) 0x5a, (byte) 0xd0, (byte) 0x7d, (byte) 0xcc, (byte) 0xff, (byte) 0x72, (byte) 0x21,
+         (byte) 0xb8, (byte) 0x08, (byte) 0x46, (byte) 0x74, (byte) 0xf7, (byte) 0x43, (byte) 0x24, (byte) 0x8e,
+         (byte) 0xe0, (byte) 0x35, (byte) 0x90, (byte) 0xe6, (byte) 0x81, (byte) 0x3a, (byte) 0x26, (byte) 0x4c,
+         (byte) 0x3c, (byte) 0x28, (byte) 0x52, (byte) 0xbb, (byte) 0x91, (byte) 0xc3, (byte) 0x00, (byte) 0xcb,
+         (byte) 0x88, (byte) 0xd0, (byte) 0x65, (byte) 0x8b, (byte) 0x1b, (byte) 0x53, (byte) 0x2e, (byte) 0xa3,
+         (byte) 0x71, (byte) 0x64, (byte) 0x48, (byte) 0x97, (byte) 0xa2, (byte) 0x0d, (byte) 0xf9, (byte) 0x4e,
+         (byte) 0x38, (byte) 0x19, (byte) 0xef, (byte) 0x46, (byte) 0xa9, (byte) 0xde, (byte) 0xac, (byte) 0xd8,
+         (byte) 0xa8, (byte) 0xfa, (byte) 0x76, (byte) 0x3f, (byte) 0xe3, (byte) 0x9c, (byte) 0x34, (byte) 0x3f,
+         (byte) 0xf9, (byte) 0xdc, (byte) 0xbb, (byte) 0xc7, (byte) 0xc7, (byte) 0x0b, (byte) 0x4f, (byte) 0x1d,
+         (byte) 0x8a, (byte) 0x51, (byte) 0xe0, (byte) 0x4b, (byte) 0xcd, (byte) 0xb4, (byte) 0x59, (byte) 0x31,
+         (byte) 0xc8, (byte) 0x9f, (byte) 0x7e, (byte) 0xc9, (byte) 0xd9, (byte) 0x78, (byte) 0x73, (byte) 0x64,
+         (byte) 0xea, (byte) 0xc5, (byte) 0xac, (byte) 0x83, (byte) 0x34, (byte) 0xd3, (byte) 0xeb, (byte) 0xc3,
+         (byte) 0xc5, (byte) 0x81, (byte) 0xa0, (byte) 0xff, (byte) 0xfa, (byte) 0x13, (byte) 0x63, (byte) 0xeb,
+         (byte) 0x17, (byte) 0x0d, (byte) 0xdd, (byte) 0x51, (byte) 0xb7, (byte) 0xf0, (byte) 0xda, (byte) 0x49,
+         (byte) 0xd3, (byte) 0x16, (byte) 0x55, (byte) 0x26, (byte) 0x29, (byte) 0xd4, (byte) 0x68, (byte) 0x9e,
+         (byte) 0x2b, (byte) 0x16, (byte) 0xbe, (byte) 0x58, (byte) 0x7d, (byte) 0x47, (byte) 0xa1, (byte) 0xfc,
+         (byte) 0x8f, (byte) 0xf8, (byte) 0xb8, (byte) 0xd1, (byte) 0x7a, (byte) 0xd0, (byte) 0x31, (byte) 0xce,
+         (byte) 0x45, (byte) 0xcb, (byte) 0x3a, (byte) 0x8f, (byte) 0x95, (byte) 0x16, (byte) 0x04, (byte) 0x28,
+         (byte) 0xaf, (byte) 0xd7, (byte) 0xfb, (byte) 0xca, (byte) 0xbb, (byte) 0x4b, (byte) 0x40, (byte) 0x7e
    };
 
    private XXH3() {
@@ -40,13 +64,13 @@ public final class XXH3 {
       int len = input.length;
 
       if (len <= 16) {
-         return xxh3_len_0to16(input, len);
+         return len0to16(input, len);
       } else if (len <= 128) {
-         return xxh3_len_17to128(input, len);
+         return len17to128(input, len);
       } else if (len <= 240) {
-         return xxh3_len_129to240(input, len);
+         return len129to240(input, len);
       } else {
-         return xxh3_hashLong(input, len);
+         return hashLong(input, len);
       }
    }
 
@@ -89,164 +113,138 @@ public final class XXH3 {
       }
    }
 
-   private static long xxh3_len_0to16(byte[] input, int len) {
+   private static long len0to16(byte[] input, int len) {
       if (len > 8) {
-         long lo = readLE64(input, 0) ^ (XXH3_SECRET[0] ^ XXH3_SECRET[1]);
-         long hi = readLE64(input, len - 8) ^ (XXH3_SECRET[1] ^ XXH3_SECRET[2]);
-         long acc = len + Long.reverseBytes(lo) + hi + xxh3_mul128_fold64(lo, hi);
-         return xxh3_avalanche(acc);
+         long inputLo = readLE64(input, 0) ^ (readLE64(SECRET, 24) ^ readLE64(SECRET, 32));
+         long inputHi = readLE64(input, len - 8) ^ (readLE64(SECRET, 40) ^ readLE64(SECRET, 48));
+         long acc = len + Long.reverseBytes(inputLo) + inputHi + mul128Fold64(inputLo, inputHi);
+         return avalanche(acc);
       } else if (len >= 4) {
-         long input1 = Integer.toUnsignedLong(readLE32(input, 0));
-         long input2 = Integer.toUnsignedLong(readLE32(input, len - 4));
-         long keyed = ((input2 + (input1 << 32)) ^ (XXH3_SECRET[0] ^ XXH3_SECRET[1]));
-         return xxh3_rrmxmx(keyed, len);
+         long input1 = readLE32(input, 0);
+         long input2 = readLE32(input, len - 4);
+         long keyed = (input2 + (input1 << 32)) ^ (readLE64(SECRET, 8) ^ readLE64(SECRET, 16));
+         return rrmxmx(keyed, len);
       } else if (len > 0) {
          int c1 = input[0] & 0xFF;
          int c2 = input[len >> 1] & 0xFF;
          int c3 = input[len - 1] & 0xFF;
-         int combined = (c1 << 16) | (c2 << 24) | c3 | (len << 8);
-         long keyed = (Integer.toUnsignedLong(combined)) ^ (XXH3_SECRET[0] ^ XXH3_SECRET[1]);
-         return xxh64_avalanche(keyed);
+         long combined = Integer.toUnsignedLong((c1 << 16) | (c2 << 24) | c3 | (len << 8));
+         return xxh64Avalanche(combined ^ (readLE32(SECRET, 0) ^ readLE32(SECRET, 4)));
       }
-      return xxh64_avalanche(XXH3_SECRET[0] ^ XXH3_SECRET[1]);
+      return xxh64Avalanche(readLE64(SECRET, 56) ^ readLE64(SECRET, 64));
    }
 
-   private static long xxh3_len_17to128(byte[] input, int len) {
-      long acc = len * XXH_PRIME64_1;
-      int nbRounds = ((len - 1) / 32);
-      for (int i = 0; i < nbRounds; i++) {
-         acc += xxh3_mix16B(input, i * 32, i * 2);
-         acc += xxh3_mix16B(input, len - 16 - i * 32, i * 2 + 1);
+   private static long len17to128(byte[] input, int len) {
+      long acc = len * PRIME64_1;
+      if (len > 32) {
+         if (len > 64) {
+            if (len > 96) {
+               acc += mix16B(input, 48, 96);
+               acc += mix16B(input, len - 64, 112);
+            }
+            acc += mix16B(input, 32, 64);
+            acc += mix16B(input, len - 48, 80);
+         }
+         acc += mix16B(input, 16, 32);
+         acc += mix16B(input, len - 32, 48);
       }
-      if ((len & 31) > 16) {
-         acc += xxh3_mix16B(input, (nbRounds * 32), nbRounds * 2);
-         acc += xxh3_mix16B(input, len - 16, nbRounds * 2 + 1);
-      } else {
-         acc += xxh3_mix16B(input, len - 32, nbRounds * 2);
-         acc += xxh3_mix16B(input, len - 16, nbRounds * 2 + 1);
-      }
-      return xxh3_avalanche(acc);
+      acc += mix16B(input, 0, 0);
+      acc += mix16B(input, len - 16, 16);
+      return avalanche(acc);
    }
 
-   private static long xxh3_len_129to240(byte[] input, int len) {
-      long acc = len * XXH_PRIME64_1;
-      int nbRounds = len / 16;
+   private static long len129to240(byte[] input, int len) {
+      long acc = len * PRIME64_1;
       for (int i = 0; i < 8; i++) {
-         acc += xxh3_mix16B(input, i * 16, i);
+         acc += mix16B(input, 16 * i, 16 * i);
       }
-      acc = xxh3_avalanche(acc);
+      acc = avalanche(acc);
+      int nbRounds = len / 16;
       for (int i = 8; i < nbRounds; i++) {
-         acc += xxh3_mix16B(input, i * 16, i - 8);
+         acc += mix16B(input, 16 * i, 16 * (i - 8) + 3);
       }
-      acc += xxh3_mix16B(input, len - 16, (nbRounds - 8) % 8);
-      return xxh3_avalanche(acc);
+      // XXH3_SECRET_SIZE_MIN - XXH3_MIDSIZE_LASTOFFSET
+      acc += mix16B(input, len - 16, 136 - 17);
+      return avalanche(acc);
    }
 
-   private static long xxh3_hashLong(byte[] input, int len) {
-      // Simplified long input handling using stripe processing
-      long acc0 = XXH_PRIME64_1;
-      long acc1 = XXH_PRIME64_2;
-      long acc2 = XXH_PRIME64_3;
-      long acc3 = XXH_PRIME64_4;
-      long acc4 = XXH_PRIME64_5;
-      long acc5 = XXH_PRIME64_1 ^ XXH_PRIME64_2;
-      long acc6 = XXH_PRIME64_2 ^ XXH_PRIME64_3;
-      long acc7 = XXH_PRIME64_3 ^ XXH_PRIME64_4;
-
-      int stripes = (len - 1) / 64;
-      for (int s = 0; s < stripes; s++) {
-         int offset = s * 64;
-         acc0 = xxh3_accumulate_lane(acc0, input, offset, 0);
-         acc1 = xxh3_accumulate_lane(acc1, input, offset + 8, 1);
-         acc2 = xxh3_accumulate_lane(acc2, input, offset + 16, 2);
-         acc3 = xxh3_accumulate_lane(acc3, input, offset + 24, 3);
-         acc4 = xxh3_accumulate_lane(acc4, input, offset + 32, 4 % 8);
-         acc5 = xxh3_accumulate_lane(acc5, input, offset + 40, 5 % 8);
-         acc6 = xxh3_accumulate_lane(acc6, input, offset + 48, 6 % 8);
-         acc7 = xxh3_accumulate_lane(acc7, input, offset + 56, 7 % 8);
+   private static long hashLong(byte[] input, int len) {
+      long[] acc = {PRIME32_3, PRIME64_1, PRIME64_2, PRIME64_3, PRIME64_4, PRIME32_2, PRIME64_5, PRIME32_1};
+      // Blocks of 16 stripes of 64 bytes, scrambling the accumulators after each block
+      int nbBlocks = (len - 1) / 1024;
+      for (int n = 0; n < nbBlocks; n++) {
+         for (int s = 0; s < 16; s++) {
+            accumulate512(acc, input, n * 1024 + s * 64, s * 8);
+         }
+         scramble(acc);
       }
-
-      // Process remaining bytes
-      int remaining = len - stripes * 64;
-      if (remaining > 0) {
-         int lastOffset = len - 64;
-         acc0 = xxh3_accumulate_lane(acc0, input, lastOffset, 0);
-         acc1 = xxh3_accumulate_lane(acc1, input, lastOffset + 8, 1);
-         acc2 = xxh3_accumulate_lane(acc2, input, lastOffset + 16, 2);
-         acc3 = xxh3_accumulate_lane(acc3, input, lastOffset + 24, 3);
-         acc4 = xxh3_accumulate_lane(acc4, input, lastOffset + 32, 4 % 8);
-         acc5 = xxh3_accumulate_lane(acc5, input, lastOffset + 40, 5 % 8);
-         acc6 = xxh3_accumulate_lane(acc6, input, lastOffset + 48, 6 % 8);
-         acc7 = xxh3_accumulate_lane(acc7, input, lastOffset + 56, 7 % 8);
+      // The stripes of the last, partial block
+      int nbStripes = ((len - 1) - nbBlocks * 1024) / 64;
+      for (int s = 0; s < nbStripes; s++) {
+         accumulate512(acc, input, nbBlocks * 1024 + s * 64, s * 8);
       }
-
-      long result = len * XXH_PRIME64_1;
-      result += xxh3_mix_acc(acc0, 0);
-      result += xxh3_mix_acc(acc1, 1);
-      result += xxh3_mix_acc(acc2, 2);
-      result += xxh3_mix_acc(acc3, 3);
-      result += xxh3_mix_acc(acc4, 4);
-      result += xxh3_mix_acc(acc5, 5);
-      result += xxh3_mix_acc(acc6, 6);
-      result += xxh3_mix_acc(acc7, 7);
-
-      return xxh3_avalanche(result);
+      // The last 64 bytes, always
+      accumulate512(acc, input, len - 64, 192 - 64 - 7);
+      long result = len * PRIME64_1;
+      for (int i = 0; i < 4; i++) {
+         result += mul128Fold64(acc[2 * i] ^ readLE64(SECRET, 11 + 16 * i), acc[2 * i + 1] ^ readLE64(SECRET, 11 + 16 * i + 8));
+      }
+      return avalanche(result);
    }
 
-   private static long xxh3_accumulate_lane(long acc, byte[] input, int offset, int lane) {
-      long dataVal = readLE64(input, offset);
-      long dataKey = dataVal ^ XXH3_SECRET[lane % 8];
-      acc += dataVal + xxh3_mul128_fold64(dataKey & 0xFFFFFFFFL, dataKey >>> 32);
-      return acc;
+   private static void accumulate512(long[] acc, byte[] input, int inputOffset, int secretOffset) {
+      for (int i = 0; i < 8; i++) {
+         long dataVal = readLE64(input, inputOffset + 8 * i);
+         long dataKey = dataVal ^ readLE64(SECRET, secretOffset + 8 * i);
+         acc[i ^ 1] += dataVal;
+         acc[i] += (dataKey & 0xFFFFFFFFL) * (dataKey >>> 32);
+      }
    }
 
-   private static long xxh3_mix_acc(long acc, int lane) {
-      return (acc ^ (acc >>> 47) ^ XXH3_SECRET[lane % 8]) * XXH_PRIME64_1;
+   private static void scramble(long[] acc) {
+      for (int i = 0; i < 8; i++) {
+         long a = acc[i];
+         a ^= a >>> 47;
+         a ^= readLE64(SECRET, 128 + 8 * i);
+         a *= PRIME32_1;
+         acc[i] = a;
+      }
    }
 
-   private static long xxh3_mix16B(byte[] input, int offset, int secretIndex) {
-      long lo = readLE64(input, offset);
-      long hi = readLE64(input, offset + 8);
-      return xxh3_mul128_fold64(
-            lo ^ XXH3_SECRET[secretIndex % 8],
-            hi ^ XXH3_SECRET[(secretIndex + 1) % 8]
-      );
+   private static long mix16B(byte[] input, int inputOffset, int secretOffset) {
+      return mul128Fold64(readLE64(input, inputOffset) ^ readLE64(SECRET, secretOffset),
+            readLE64(input, inputOffset + 8) ^ readLE64(SECRET, secretOffset + 8));
    }
 
-   private static long xxh3_mul128_fold64(long lo, long hi) {
-      // Multiply two 64-bit values and fold the 128-bit result to 64 bits
-      long loXlo = (lo & 0xFFFFFFFFL) * (hi & 0xFFFFFFFFL);
-      long hiXlo = (lo >>> 32) * (hi & 0xFFFFFFFFL);
-      long loXhi = (lo & 0xFFFFFFFFL) * (hi >>> 32);
-      long hiXhi = (lo >>> 32) * (hi >>> 32);
-      long cross = (loXlo >>> 32) + (hiXlo & 0xFFFFFFFFL) + loXhi;
-      long upper = (hiXlo >>> 32) + (cross >>> 32) + hiXhi;
-      long lower = (cross << 32) | (loXlo & 0xFFFFFFFFL);
-      return lower ^ upper;
+   /**
+    * Multiplies two 64-bit values into 128 bits and XORs the two halves.
+    * Math.unsignedMultiplyHigh needs Java 18, so this corrects the signed high half instead.
+    */
+   private static long mul128Fold64(long a, long b) {
+      long high = Math.multiplyHigh(a, b) + ((a >> 63) & b) + ((b >> 63) & a);
+      return (a * b) ^ high;
    }
 
-   private static long xxh3_avalanche(long h64) {
-      h64 ^= h64 >>> 37;
-      h64 *= 0x165667919E3779F9L;
-      h64 ^= h64 >>> 32;
-      return h64;
+   private static long avalanche(long h) {
+      h ^= h >>> 37;
+      h *= PRIME_MX1;
+      return h ^ (h >>> 32);
    }
 
-   private static long xxh3_rrmxmx(long h64, int len) {
-      h64 ^= Long.rotateLeft(h64, 49) ^ Long.rotateLeft(h64, 24);
-      h64 *= 0x9FB21C651E98DF25L;
-      h64 ^= (h64 >>> 35) + len;
-      h64 *= 0x9FB21C651E98DF25L;
-      return h64 ^ (h64 >>> 28);
+   private static long rrmxmx(long h, int len) {
+      h ^= Long.rotateLeft(h, 49) ^ Long.rotateLeft(h, 24);
+      h *= PRIME_MX2;
+      h ^= (h >>> 35) + len;
+      h *= PRIME_MX2;
+      return h ^ (h >>> 28);
    }
 
-   private static long xxh64_avalanche(long h64) {
-      h64 ^= h64 >>> 33;
-      h64 *= XXH_PRIME64_2;
-      h64 ^= h64 >>> 29;
-      h64 *= XXH_PRIME64_3;
-      h64 ^= h64 >>> 32;
-      return h64;
+   private static long xxh64Avalanche(long h) {
+      h ^= h >>> 33;
+      h *= PRIME64_2;
+      h ^= h >>> 29;
+      h *= PRIME64_3;
+      return h ^ (h >>> 32);
    }
 
    private static long readLE64(byte[] buf, int offset) {
@@ -260,10 +258,10 @@ public final class XXH3 {
             | ((buf[offset + 7] & 0xFFL) << 56);
    }
 
-   private static int readLE32(byte[] buf, int offset) {
-      return (buf[offset] & 0xFF)
-            | ((buf[offset + 1] & 0xFF) << 8)
-            | ((buf[offset + 2] & 0xFF) << 16)
-            | ((buf[offset + 3] & 0xFF) << 24);
+   private static long readLE32(byte[] buf, int offset) {
+      return (buf[offset] & 0xFFL)
+            | ((buf[offset + 1] & 0xFFL) << 8)
+            | ((buf[offset + 2] & 0xFFL) << 16)
+            | ((buf[offset + 3] & 0xFFL) << 24);
    }
 }
