@@ -3,7 +3,6 @@ package org.infinispan.container.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-
 import org.infinispan.Cache;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.configuration.cache.CacheMode;

@@ -14,4 +14,19 @@ If your clients use a larger `maxEntries`, or Bloom filters sized with a larger 
 <hotrod-connector name="hotrod" max-bloom-filter-bits="128000000"/>
 ----
 
-Otherwise the listener registration fails and the client cannot use the near cache.
+Otherwise, the listener registration fails and the client cannot use the near cache.
+
+=== Security
+
+==== Exception deserialization gated by deserialization allow-list
+
+Remote exception types carried inside `MarshallableThrowable` payloads are now checked before instantiation.
+Previously, any `Throwable` subtype was reconstructed without restriction, which could allow an attacker to trigger class initialization of arbitrary `Throwable` subtypes on the receiving node (CWE-470).
+
+Starting with {brandname} 16.4, the exception class name is validated before the class is loaded.
+Classes from standard JDK packages (`java.lang`, `java.util`, `java.io`) and {brandname} packages (`org.infinispan`) are allowed by default.
+All other exception class names must be present in the configured deserialization allow-list.
+If the class is not permitted, a `RemoteException` is returned instead.
+
+If your application throws custom exception types from packages outside these defaults that propagate across {brandname} cluster nodes, you must add those classes to the deserialization allow-list.
+Refer to link:{../encoding/encoding.html#adding-deserialization-allowlist_marshaller-implementations}[Allowing deserialization of Java classes] for configuration details.
