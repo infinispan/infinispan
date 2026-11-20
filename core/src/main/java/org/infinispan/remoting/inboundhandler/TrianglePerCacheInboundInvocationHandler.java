@@ -18,7 +18,9 @@ import org.infinispan.remoting.inboundhandler.action.ActionState;
 import org.infinispan.remoting.inboundhandler.action.DefaultReadyAction;
 import org.infinispan.remoting.inboundhandler.action.ReadyAction;
 import org.infinispan.remoting.inboundhandler.action.TriangleOrderAction;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.BlockingRunnable;
 import org.infinispan.util.concurrent.CommandAckCollector;
 import org.infinispan.util.logging.Log;
@@ -155,6 +157,8 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
             false) {
          @Override
          public boolean isReady() {
+            // A stopped cache answers the write without applying it.
+            if (handler.isStopped()) return true;
             return super.isReady() && readyAction.isReady();
          }
 
@@ -167,10 +171,15 @@ public class TrianglePerCacheInboundInvocationHandler extends BasePerCacheInboun
          @Override
          protected void afterInvoke() {
             super.afterInvoke();
-            readyAction.onFinally();
             BackupWriteCommand backupCommand = (BackupWriteCommand) command;
-            sendBackupAck(backupCommand.getCommandInvocationId(), commandTopologyId, backupCommand.getSegmentId(),
-                  backupCommand.getFlags());
+            if (response == CacheNotFoundResponse.INSTANCE) {
+               // The write was not applied, so the originator must retry in the next topology.
+               onBackupException(backupCommand, OutdatedTopologyException.RETRY_NEXT_TOPOLOGY, readyAction);
+            } else {
+               readyAction.onFinally();
+               sendBackupAck(backupCommand.getCommandInvocationId(), commandTopologyId, backupCommand.getSegmentId(),
+                     backupCommand.getFlags());
+            }
          }
       };
    }

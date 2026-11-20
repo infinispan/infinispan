@@ -28,6 +28,10 @@ public class DefaultTopologyRunnable extends BaseBlockingRunnable {
 
    @Override
    public boolean isReady() {
+      if (handler.isStopped()) {
+         // The cache installs no further topology, so waiting for one would only end in a timeout
+         return true;
+      }
       return switch (topologyMode) {
          case READY_TOPOLOGY -> handler.getStateTransferLock().topologyReceived(waitTopology());
          case READY_TX_DATA -> handler.getStateTransferLock().transactionDataReceived(waitTopology());
@@ -37,6 +41,9 @@ public class DefaultTopologyRunnable extends BaseBlockingRunnable {
 
    @Override
    protected CompletionStage<CacheNotFoundResponse> beforeInvoke() {
+      if (handler.isStopped()) {
+         return CompletableFuture.completedFuture(CacheNotFoundResponse.INSTANCE);
+      }
       CompletionStage<Void> stage = null;
       switch (topologyMode) {
          case WAIT_TOPOLOGY:
@@ -49,7 +56,8 @@ public class DefaultTopologyRunnable extends BaseBlockingRunnable {
             break;
       }
       if (stage != null && !CompletionStages.isCompletedSuccessfully(stage)) {
-         return stage.thenApply(nil -> handler.isCommandSentBeforeFirstTopology(commandTopologyId) ?
+         // The wait is also completed when the cache stops
+         return stage.thenApply(nil -> handler.isStopped() || handler.isCommandSentBeforeFirstTopology(commandTopologyId) ?
                CacheNotFoundResponse.INSTANCE :
                null);
       } else {
