@@ -252,7 +252,7 @@ logicalAndExpression
 	;
 
 negatedExpression
-   :  not_key^ negatedExpression
+   :  not_key^ {enterNesting();} negatedExpression {exitNesting();}
    |  equalityExpression
    ;
 
@@ -394,7 +394,7 @@ collectionExpression
    ;
 
 vectorSearch
-   : LSQUARE! expressionOrVector RSQUARE!
+   : LSQUARE! {enterNesting();} expressionOrVector {exitNesting();} RSQUARE!
    ;
 
 atom
@@ -407,7 +407,7 @@ atom
    |  constant
    |  parameterSpecification { if (!isParameterUsageEnabled()) throw new RecognitionException(input); }
 	//validate using Scopes if it is enabled or not to use parameterSpecification.. if not generate an exception
-   |  LPAREN! expressionOrVector RPAREN!
+   |  LPAREN! {enterNesting();} expressionOrVector {exitNesting();} RPAREN!
    |  vectorSearch
    ;
 
@@ -447,9 +447,9 @@ vectorExpr
 identPrimary
 	: 	IDENTIFIER
 		(	DOT^ IDENTIFIER
-		|	LSQUARE^ expression RSQUARE!
+		|	LSQUARE^ {enterNesting();} expression {exitNesting();} RSQUARE!
 		|	LSQUARE^ RSQUARE!
-		|	LPAREN^ exprList RPAREN!
+		|	LPAREN^ {enterNesting();} exprList {exitNesting();} RPAREN!
 		)*
 	;
 
@@ -507,7 +507,7 @@ dotIdentifierPath
 path
 	:	IDENTIFIER
 		(	DOT^ IDENTIFIER
-		|	LSQUARE^ expression RSQUARE!
+		|	LSQUARE^ {enterNesting();} expression {exitNesting();} RSQUARE!
 		|	LSQUARE^ RSQUARE!
 		)*
 	;
@@ -818,7 +818,7 @@ ftBoost
 ftTermOrQuery
    :  ftTerm
    |  ftRange
-   |  LPAREN! ftConjunction (ftOr^ ftConjunction)* RPAREN!
+   |  LPAREN! {enterNesting();} ftConjunction (ftOr^ ftConjunction)* {exitNesting();} RPAREN!
    ;
 
 ftTerm

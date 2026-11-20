@@ -23,10 +23,12 @@ import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.TokenStream;
 import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.tree.CommonTreeNodeStream;
+import org.infinispan.query.impl.LifecycleManager;
 import org.infinispan.query.objectfilter.ParsingException;
 import org.infinispan.query.objectfilter.impl.logging.Log;
 import org.infinispan.query.objectfilter.impl.ql.parse.IckleLexer;
 import org.infinispan.query.objectfilter.impl.ql.parse.IckleParser;
+import org.infinispan.query.objectfilter.impl.ql.parse.NestingDepthExceededException;
 import org.infinispan.query.objectfilter.impl.ql.parse.QueryRenderer;
 import org.infinispan.query.objectfilter.impl.ql.parse.QueryResolver;
 import org.jboss.logging.Logger;
@@ -47,6 +49,18 @@ public final class QueryParser {
 
    private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, QueryParser.class.getName());
 
+   private static final int DEFAULT_MAX_NESTING_DEPTH = 100;
+   private static final int maxNestingDepth = resolveMaxNestingDepth();
+
+   private static int resolveMaxNestingDepth() {
+      int value = Integer.getInteger(LifecycleManager.MAX_NESTING_DEPTH_SYS_PROP, DEFAULT_MAX_NESTING_DEPTH);
+      if (value < 0) {
+         log.invalidNestingDepth(value, DEFAULT_MAX_NESTING_DEPTH);
+         return DEFAULT_MAX_NESTING_DEPTH;
+      }
+      return value;
+   }
+
    /**
     * Parses the given query string.
     *
@@ -58,6 +72,7 @@ public final class QueryParser {
       IckleLexer lexer = new IckleLexer(new ANTLRStringStream(queryString));
       CommonTokenStream tokens = new CommonTokenStream(lexer);
       IckleParser parser = new IckleParser(tokens);
+      parser.setMaxNestingDepth(maxNestingDepth);
 
       try {
          // parser.statement() is the entry point for evaluation of any kind of statement
@@ -71,6 +86,8 @@ public final class QueryParser {
          tree = resolve(tokens, tree, resolverDelegate);
          tree = render(tokens, tree, rendererDelegate);
          return tree;
+      } catch (NestingDepthExceededException e) {
+         throw log.queryNestingDepthExceeded(e.depth, e.maxDepth, LifecycleManager.MAX_NESTING_DEPTH_SYS_PROP);
       } catch (RecognitionException e) {
          throw log.getQuerySyntaxException(queryString, e);
       }

@@ -93,6 +93,11 @@ public class LifecycleManager implements ModuleLifecycle {
     */
    public static final String MAX_BOOLEAN_CLAUSES_SYS_PROP = "infinispan.query.lucene.max-boolean-clauses";
 
+   /**
+    * Optional integer system property that limits the maximum nesting depth of Ickle queries.
+    */
+   public static final String MAX_NESTING_DEPTH_SYS_PROP = "infinispan.query.max-nesting-depth";
+
    private volatile boolean remoteQueryEnabled = false;
 
    /**
