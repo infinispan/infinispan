@@ -384,6 +384,10 @@ public interface Log extends BasicLogger {
    @Message(value = "Invalid active count after closing channel %s", id = 4106)
    void invalidActiveCountAfterClose(Channel channel);
 
+   @LogMessage(level = INFO)
+   @Message(value = "AUTO client intelligence: degrading to BASIC mode for caches %s due to topology connection failures", id = 4128)
+   void degradingToBasicIntelligence(Collection<String> cacheName);
+
    @LogMessage(level = WARN)
    @Message(value = "Invalid created count after closing channel %s", id = 4107)
    void invalidCreatedCountAfterClose(Channel channel);
