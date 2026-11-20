@@ -56,6 +56,19 @@ abstract class ParserBase extends Parser {
 
    private int unaliasedCount = 0;
 
+   private int nestingDepth;
+   private int maxNestingDepth = 100;
+
+   public void setMaxNestingDepth(int max) { this.maxNestingDepth = max; }
+
+   protected final void enterNesting() {
+      if (++nestingDepth > maxNestingDepth) {
+         throw new NestingDepthExceededException(nestingDepth, maxNestingDepth);
+      }
+   }
+
+   protected final void exitNesting() { nestingDepth--; }
+
    protected ParserBase(TokenStream input, RecognizerSharedState state) {
       super(input, state);
    }
