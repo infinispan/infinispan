@@ -595,6 +595,9 @@
         }, {
           "name" : "PERSISTENCE_AVAILABILITY_CHANGED",
           "integer" : 15
+        }, {
+          "name" : "SEGMENTS_LOST",
+          "integer" : 16
         } ]
       }, {
         "name" : "ValueMatcher",

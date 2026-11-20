@@ -45,6 +45,7 @@ Event <|-- TopologyChangedEvent
 Event <|-- DataRehashedEvent
 Event <|-- PartitionStatusChangedEvent
 Event <|-- PersistenceAvailabilityChangedEvent
+Event <|-- SegmentsLostEvent
 
 Event <|-- TransactionCompletedEvent
 Event <|-- TransactionRegisteredEvent
@@ -250,10 +251,36 @@ The clustered listener flow:
 . When a cache entry changes on a remote node, the `RemoteClusterListener` applies the filter and converter locally, then sends the resulting `ClusterEvent` to the origin node.
 . The origin's `CacheNotifier` delivers the event to the original application listener.
 
-Clustered listeners support four event types: `CacheEntryCreated`, `CacheEntryModified`, `CacheEntryRemoved`, and `CacheEntryExpired`.
+Clustered listeners support four entry event types: `CacheEntryCreated`, `CacheEntryModified`, `CacheEntryRemoved`, and `CacheEntryExpired`.
 Only POST events are delivered (not PRE).
 
 If the origin node leaves the cluster, all `RemoteClusterListener` instances installed for that listener are automatically removed.
+
+== Segment loss notifications
+
+A clustered listener can also declare a `@SegmentsLost` method, which is called when one or more segments lose every owner.
+This happens when all the owners of a segment leave or crash before the data can be rebalanced, for example when a distributed cache configured with `numOwners=2` loses two nodes at the same time.
+The surviving nodes install a topology in which those segments are assigned to new, empty owners, and no `CacheEntryRemoved` event is raised for the entries that disappeared, because no remove operation took place.
+`SegmentsLostEvent.getSegments()` returns the affected segments, so listeners that maintain derived state (near caches, search indexes, projections) can discard the keys that belong to them.
+
+[source,java]
+----
+@Listener(clustered = true)
+public class MyListener {
+
+   @SegmentsLost
+   public void onSegmentsLost(SegmentsLostEvent<String, String> event) {
+      // event.getSegments() no longer have any data in the cluster
+   }
+}
+----
+
+Unlike the entry events, this one is not collected from the other nodes: every node raises it locally from its own topology update, so a clustered listener is notified exactly once, by the node it was registered on.
+
+No event is raised in two cases where the data is not actually gone:
+
+* The cache has a *shared store*. The new owners read the entries back from it, and a shared store can be neither passivating nor purged on startup, so its contents outlive the nodes that wrote them. Private stores do not prevent the event, as they are lost with the node that owned them.
+* The cache entered *degraded mode*. Its consistent hash is left unchanged because the data returns when the partitions merge; use `@PartitionStatusChanged` to observe those transitions.
 
 == Initial state transfer
 

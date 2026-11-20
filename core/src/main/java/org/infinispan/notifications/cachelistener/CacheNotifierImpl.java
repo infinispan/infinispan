@@ -13,6 +13,7 @@ import static org.infinispan.notifications.cachelistener.event.Event.Type.CACHE_
 import static org.infinispan.notifications.cachelistener.event.Event.Type.DATA_REHASHED;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.PARTITION_STATUS_CHANGED;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.PERSISTENCE_AVAILABILITY_CHANGED;
+import static org.infinispan.notifications.cachelistener.event.Event.Type.SEGMENTS_LOST;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.TOPOLOGY_CHANGED;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.TRANSACTION_COMPLETED;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.TRANSACTION_REGISTERED;
@@ -46,6 +47,7 @@ import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.dataconversion.Transcoder;
 import org.infinispan.commons.util.EnumUtil;
+import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
@@ -88,6 +90,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.annotation.DataRehashed;
 import org.infinispan.notifications.cachelistener.annotation.PartitionStatusChanged;
 import org.infinispan.notifications.cachelistener.annotation.PersistenceAvailabilityChanged;
+import org.infinispan.notifications.cachelistener.annotation.SegmentsLost;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.annotation.TransactionCompleted;
 import org.infinispan.notifications.cachelistener.annotation.TransactionRegistered;
@@ -112,6 +115,7 @@ import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEvent;
 import org.infinispan.notifications.cachelistener.event.PersistenceAvailabilityChangedEvent;
+import org.infinispan.notifications.cachelistener.event.SegmentsLostEvent;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent;
 import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent;
@@ -168,8 +172,8 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
 
    private static final Log log = LogFactory.getLog(CacheNotifierImpl.class);
 
-   private static final Map<Class<? extends Annotation>, Class<?>> allowedListeners = new HashMap<>(16);
-   private static final Map<Class<? extends Annotation>, Class<?>> clusterAllowedListeners = new HashMap<>(4);
+   private static final Map<Class<? extends Annotation>, Class<?>> allowedListeners = new HashMap<>(17);
+   private static final Map<Class<? extends Annotation>, Class<?>> clusterAllowedListeners = new HashMap<>(5);
 
    static {
       allowedListeners.put(CacheEntryCreated.class, CacheEntryCreatedEvent.class);
@@ -188,11 +192,13 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
       allowedListeners.put(TopologyChanged.class, TopologyChangedEvent.class);
       allowedListeners.put(PartitionStatusChanged.class, PartitionStatusChangedEvent.class);
       allowedListeners.put(PersistenceAvailabilityChanged.class, PersistenceAvailabilityChangedEvent.class);
+      allowedListeners.put(SegmentsLost.class, SegmentsLostEvent.class);
 
       clusterAllowedListeners.put(CacheEntryCreated.class, CacheEntryCreatedEvent.class);
       clusterAllowedListeners.put(CacheEntryModified.class, CacheEntryModifiedEvent.class);
       clusterAllowedListeners.put(CacheEntryRemoved.class, CacheEntryRemovedEvent.class);
       clusterAllowedListeners.put(CacheEntryExpired.class, CacheEntryExpiredEvent.class);
+      clusterAllowedListeners.put(SegmentsLost.class, SegmentsLostEvent.class);
    }
 
    final List<CacheEntryListenerInvocation<K, V>> cacheEntryCreatedListeners = new CopyOnWriteArrayList<>();
@@ -211,6 +217,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
    final List<CacheEntryListenerInvocation<K, V>> topologyChangedListeners = new CopyOnWriteArrayList<>();
    final List<CacheEntryListenerInvocation<K, V>> partitionChangedListeners = new CopyOnWriteArrayList<>();
    final List<CacheEntryListenerInvocation<K, V>> persistenceChangedListeners = new CopyOnWriteArrayList<>();
+   final List<CacheEntryListenerInvocation<K, V>> segmentsLostListeners = new CopyOnWriteArrayList<>();
 
    @Inject TransactionManager transactionManager;
    @Inject Configuration config;
@@ -261,6 +268,7 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
       listenersMap.put(TopologyChanged.class, topologyChangedListeners);
       listenersMap.put(PartitionStatusChanged.class, partitionChangedListeners);
       listenersMap.put(PersistenceAvailabilityChanged.class, persistenceChangedListeners);
+      listenersMap.put(SegmentsLost.class, segmentsLostListeners);
    }
 
    @Start
@@ -882,6 +890,26 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
       e.setAvailabilityMode(mode);
       AggregateCompletionStage aggregateCompletionStage = null;
       for (CacheEntryListenerInvocation<K, V> listener : partitionChangedListeners) {
+         aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage, listener.invoke(e));
+      }
+      return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
+   }
+
+   @Override
+   public CompletionStage<Void> notifySegmentsLost(IntSet segments, int newTopologyId) {
+      if (!segmentsLostListeners.isEmpty()) {
+         return resumeOnCPU(doNotifySegmentsLost(segments, newTopologyId), newTopologyId);
+      }
+      return CompletableFutures.completedNull();
+   }
+
+   private CompletionStage<Void> doNotifySegmentsLost(IntSet segments, int newTopologyId) {
+      EventImpl<K, V> e = EventImpl.createEvent(cache.wired(), SEGMENTS_LOST);
+      e.setPre(false);
+      e.setSegments(segments);
+      e.setNewTopologyId(newTopologyId);
+      AggregateCompletionStage<Void> aggregateCompletionStage = null;
+      for (CacheEntryListenerInvocation<K, V> listener : segmentsLostListeners) {
          aggregateCompletionStage = composeStageIfNeeded(aggregateCompletionStage, listener.invoke(e));
       }
       return aggregateCompletionStage != null ? aggregateCompletionStage.freeze() : CompletableFutures.completedNull();
@@ -1562,8 +1590,9 @@ public class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K, V>, C
          CacheEntryListenerInvocation<K, V> returnValue;
 
          if (includeCurrentState) {
-            // If it is a clustered listener and distributed cache we can do some extra optimizations
-            if (clustered) {
+            // If it is a clustered listener and distributed cache we can do some extra optimizations.
+            // SegmentsLost is not an entry event, so it must never go through the initial state queueing handler.
+            if (clustered && annotation != SegmentsLost.class) {
                QueueingSegmentListener handler = segmentHandler.get(identifier);
                if (handler == null) {
                   int segments = config.clustering().hash().numSegments();
