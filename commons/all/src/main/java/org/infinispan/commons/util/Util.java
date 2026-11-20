@@ -993,6 +993,16 @@ public final class Util {
          return re;
    }
 
+   public static Throwable getRootCauseWithMessage(Throwable re) {
+      if (re == null) return null;
+      Throwable cause = re.getCause();
+      if (cause != null) {
+         Throwable rootCause = getRootCauseWithMessage(cause);
+         return rootCause.getMessage() == null ? re : rootCause;
+      } else
+         return re;
+   }
+
    public static Marshaller getJBossMarshaller(ClassLoader classLoader, ClassAllowList classAllowList) {
       try {
          Class<?> marshallerClass = classLoader.loadClass(GENERIC_JBOSS_MARSHALLING_CLASS);

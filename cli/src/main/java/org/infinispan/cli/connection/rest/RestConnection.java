@@ -100,7 +100,7 @@ public class RestConnection implements Connection, Closeable {
 
    @Override
    public void connect(String username, String password) throws IOException {
-      builder.security().authentication().enable().username(username).password(password);
+      credentials(username, password);
       client = RestClient.forConfiguration(builder.build());
       connectInternal();
    }
@@ -113,6 +113,11 @@ public class RestConnection implements Connection, Closeable {
       activeResource = Resource.getRootResource(this).getChild(ContainersResource.NAME, containerName);
       connected = true;
       refreshServerInfo();
+   }
+
+   @Override
+   public void credentials(String username, String password) {
+      builder.security().authentication().enable().username(username).password(password);
    }
 
    private RestResponse fetch(Supplier<CompletionStage<RestResponse>> responseFutureSupplier) throws IOException {

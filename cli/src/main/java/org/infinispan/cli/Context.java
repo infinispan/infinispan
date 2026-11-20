@@ -9,7 +9,6 @@ import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.invocation.CommandInvocation;
 import org.aesh.command.registry.CommandRegistry;
-import org.aesh.command.shell.Shell;
 import org.aesh.console.AeshContext;
 import org.aesh.console.ReadlineConsole;
 import org.infinispan.cli.connection.Connection;
@@ -25,8 +24,6 @@ import org.infinispan.commons.dataconversion.MediaType;
  */
 public interface Context extends AeshContext {
    Path configPath();
-
-   boolean isConnected();
 
    void setProperty(String key, String value);
 
@@ -46,32 +43,24 @@ public interface Context extends AeshContext {
 
    void setSslContext(SSLContextSettings sslContext);
 
-   /**
-    * Connects to a server
-    *
-    * @param shell
-    * @param connectionString
-    */
-   void connect(Shell shell, String connectionString);
-
-   /**
-    * Connect to a server using the supplied username and password
-    *
-    * @param shell
-    * @param connectionString
-    * @param username
-    * @param password
-    */
-   void connect(Shell shell, String connectionString, String username, String password);
-
    void setRegistry(CommandRegistry<? extends CommandInvocation> registry);
 
    /**
-    * Returns the current {@link Connection}
-    *
-    * @return
+    * Sets
+    */
+   void setConnection(String connectionString);
+
+   /**
+    * Connect to a server using the supplied username and password
+    */
+   void setConnection(String connectionString, String username, String password);
+
+   /**
+    * Returns the current {@link Connection}, establishing it if needed
     */
    Connection connection();
+
+   boolean isConnected();
 
    /**
     * Disconnects from the server
@@ -89,6 +78,8 @@ public interface Context extends AeshContext {
    void refreshPrompt();
 
    CommandResult changeResource(Class<? extends Resource> fromResource, String resourceType, String name) throws CommandException;
+
+   String readPassword(String prompt, String confirmPrompt) throws InterruptedException;
 
    enum Property {
       TRUSTALL,

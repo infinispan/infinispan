@@ -11,6 +11,7 @@ import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.option.Argument;
 import org.aesh.command.option.Option;
+import org.infinispan.cli.Context;
 import org.infinispan.cli.benchmark.BenchmarkMode;
 import org.infinispan.cli.benchmark.BenchmarkRunner;
 import org.infinispan.cli.benchmark.BenchmarkTask;
@@ -73,15 +74,16 @@ public class Benchmark extends CliCommand {
 
    @Override
    public CommandResult exec(ContextAwareCommandInvocation invocation) throws CommandException {
+      Context context = invocation.getContext();
       if (this.uri == null) {
-         if (invocation.getContext().isConnected()) {
+         if (context.isConnected()) {
             this.uri = invocation.getContext().connection().getURI();
          } else {
             throw new IllegalArgumentException("You must specify a URI");
          }
       }
       if (!this.uri.contains("://")) {
-         Bookmark.ResolvedBookmark bookmark = Bookmark.resolve(invocation, this.uri);
+         Bookmark.ResolvedBookmark bookmark = Bookmark.resolve(context, this.uri);
          if (bookmark == null) {
             throw new IllegalArgumentException("Bookmark '" + this.uri + "' not found and argument is not a valid URI");
          }

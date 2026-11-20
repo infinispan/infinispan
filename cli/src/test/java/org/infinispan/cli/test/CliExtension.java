@@ -18,7 +18,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
-import org.aesh.command.CommandException;
 import org.aesh.command.CommandResult;
 import org.aesh.command.Executor;
 import org.aesh.command.invocation.CommandInvocation;
@@ -133,7 +132,7 @@ public class CliExtension implements BeforeEachCallback, AfterEachCallback {
                p.destroyForcibly();
                throw new RuntimeException("CLI process timed out after 30 seconds");
             }
-            return new BatchCliTerminal(p.exitValue(),  shell.getBuffer());
+            return new BatchCliTerminal(p.exitValue(), shell.getBuffer());
          } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Failed to execute CLI process", e);
          }
@@ -197,13 +196,13 @@ public class CliExtension implements BeforeEachCallback, AfterEachCallback {
       }
 
       @Override
-      public boolean isConnected() {
-         return connection != null;
+      public Connection connection() {
+         return connection;
       }
 
       @Override
-      public Connection connection() {
-         return connection;
+      public boolean isConnected() {
+         return connection.isConnected();
       }
 
       @Override
@@ -240,11 +239,11 @@ public class CliExtension implements BeforeEachCallback, AfterEachCallback {
       }
 
       @Override
-      public void connect(Shell shell, String connectionString) {
+      public void setConnection(String connectionString) {
       }
 
       @Override
-      public void connect(Shell shell, String connectionString, String username, String password) {
+      public void setConnection(String connectionString, String username, String password) {
       }
 
       @Override
@@ -282,7 +281,12 @@ public class CliExtension implements BeforeEachCallback, AfterEachCallback {
       }
 
       @Override
-      public CommandResult changeResource(Class<? extends Resource> fromResource, String resourceType, String name) throws CommandException {
+      public CommandResult changeResource(Class<? extends Resource> fromResource, String resourceType, String name) {
+         return null;
+      }
+
+      @Override
+      public String readPassword(String prompt, String confirmPrompt) {
          return null;
       }
 
@@ -500,6 +504,10 @@ public class CliExtension implements BeforeEachCallback, AfterEachCallback {
       @Override
       public Collection<String> getConnectorNames() {
          return null;
+      }
+
+      @Override
+      public void credentials(String username, String password) {
       }
 
       @Override

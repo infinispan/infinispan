@@ -9,7 +9,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.NoSuchElementException;
 
-import org.aesh.command.CommandException;
 import org.aesh.command.parser.RequiredOptionException;
 import org.infinispan.cli.completers.EncryptionCompleter;
 import org.infinispan.cli.completers.ExposeCompleter;
@@ -49,8 +48,8 @@ public interface Messages {
    @Message("The user is not allowed to access the server resource: %s")
    AccessDeniedException forbidden(String s);
 
-   @Message("Error while configuring SSL")
-   String keyStoreError(@Cause Exception e);
+   @Message("Error while configuring SSL: %s")
+   String keyStoreError(String s);
 
    @Message("No such resource '%s'")
    IllegalArgumentException noSuchResource(String name);
@@ -276,10 +275,10 @@ public interface Messages {
    String generatedPassword(String password);
 
    @Message("Failed to store credentials")
-   CommandException failedToStoreCredentials(@Cause CredentialStoreException e);
+   IllegalStateException failedToStoreCredentials(@Cause CredentialStoreException e);
 
    @Message("A URL is required. Either provide --url or run this command while connected to a server.")
-   CommandException bookmarkUrlRequired();
+   IllegalArgumentException bookmarkUrlRequired();
 
    @Message("Bookmark '%s' saved")
    String bookmarkSaved(String name);
@@ -300,19 +299,19 @@ public interface Messages {
    String cannotRemoveCredentials(String message);
 
    @Message("Failed to load bookmarks")
-   CommandException bookmarkLoadFailure(@Cause IOException e);
+   IllegalStateException bookmarkLoadFailure(@Cause IOException e);
 
    @Message("Failed to save bookmarks")
-   CommandException bookmarkSaveFailure(@Cause IOException e);
+   IllegalStateException bookmarkSaveFailure(@Cause IOException e);
 
    @Message("Enter bookmark master password: ")
    String bookmarkMasterPassword();
 
    @Message("Failed to read credentials")
-   CommandException cannotReadCredentials(@Cause CredentialStoreException e);
+   IllegalStateException cannotReadCredentials(@Cause CredentialStoreException e);
 
    @Message("Unsupported protocol '%s'. Only 'http' and 'https' are supported.")
-   CommandException unsupportedProtocol(String protocol);
+   IllegalArgumentException unsupportedProtocol(String protocol);
 
    @Message("Skipping dependency '%s': already present in lib")
    String skippingExistingDependency(String artifactId);
