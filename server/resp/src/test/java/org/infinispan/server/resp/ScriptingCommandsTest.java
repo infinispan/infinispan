@@ -145,6 +145,125 @@ public class ScriptingCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testBitLibraryIsAvailable() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // The bit library is available as a table of functions
+      String type = redis.eval("return type(bit)", ScriptOutputType.VALUE);
+      assertThat(type).isEqualTo("table");
+      // Basic bitwise operations
+      Long and = redis.eval("return bit.band(0xFF, 0x0F)", ScriptOutputType.INTEGER);
+      assertEquals(15L, and);
+      Long or = redis.eval("return bit.bor(0xF0, 0x0F)", ScriptOutputType.INTEGER);
+      assertEquals(255L, or);
+      Long xor = redis.eval("return bit.bxor(0xFF, 0x0F)", ScriptOutputType.INTEGER);
+      assertEquals(240L, xor);
+      Long lshift = redis.eval("return bit.lshift(1, 4)", ScriptOutputType.INTEGER);
+      assertEquals(16L, lshift);
+      Long rshift = redis.eval("return bit.rshift(256, 1)", ScriptOutputType.INTEGER);
+      assertEquals(128L, rshift);
+      Long bnot = redis.eval("return bit.bnot(0)", ScriptOutputType.INTEGER);
+      assertEquals(-1L, bnot);
+   }
+
+   @Test
+   public void testCjsonLibraryIsAvailable() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // The cjson library is available as a table of functions
+      String type = redis.eval("return type(cjson)", ScriptOutputType.VALUE);
+      assertThat(type).isEqualTo("table");
+      // Decode a JSON document with scalars, a nested array and null
+      Long a = redis.eval("""
+            local t = cjson.decode('{"a": 1, "b": "two", "c": [true, false, null]}')
+            return t.a
+            """, ScriptOutputType.INTEGER);
+      assertEquals(1L, a);
+      String b = redis.eval("""
+            local t = cjson.decode('{"a": 1, "b": "two", "c": [true, false, null]}')
+            return t.b
+            """, ScriptOutputType.VALUE);
+      assertEquals("two", b);
+      Boolean c = redis.eval("""
+            local t = cjson.decode('{"c": [true, false, null]}')
+            return t.c[1] == true and t.c[2] == false and t.c[3] == cjson.null
+            """, ScriptOutputType.BOOLEAN);
+      assertTrue(c);
+      // Encode a Lua table and check the round trip
+      String encoded = redis.eval("""
+            return cjson.encode({a = 1, b = {2, 3}})
+            """, ScriptOutputType.VALUE);
+      assertThat(encoded).contains("\"a\":1");
+      assertThat(encoded).contains("[2,3]");
+      Boolean roundTrip = redis.eval("""
+            local u = cjson.decode(cjson.encode({a = 1, b = {2, 3}}))
+            return u.a == 1 and u.b[1] == 2 and u.b[2] == 3 and #u.b == 2
+            """, ScriptOutputType.BOOLEAN);
+      assertTrue(roundTrip);
+   }
+
+   @Test
+   public void testCmsgpackLibraryIsAvailable() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // The cmsgpack library is available as a table of functions
+      String type = redis.eval("return type(cmsgpack)", ScriptOutputType.VALUE);
+      assertThat(type).isEqualTo("table");
+      // Pack a table and unpack it back
+      String s = redis.eval("""
+            local unpacked = cmsgpack.unpack(cmsgpack.pack({1, 2, "three", 4.5}))
+            return unpacked[3]
+            """, ScriptOutputType.VALUE);
+      assertEquals("three", s);
+      Long i = redis.eval("""
+            local unpacked = cmsgpack.unpack(cmsgpack.pack({1, 2, "three", 4.5}))
+            return unpacked[1]
+            """, ScriptOutputType.INTEGER);
+      assertEquals(1L, i);
+      String dbl = redis.eval("""
+            local unpacked = cmsgpack.unpack(cmsgpack.pack({1, 2, "three", 4.5}))
+            return tostring(unpacked[4])
+            """, ScriptOutputType.VALUE);
+      assertEquals("4.5", dbl);
+   }
+
+   @Test
+   public void testStructLibraryIsAvailable() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // The struct library is available as a table of functions
+      String type = redis.eval("return type(struct)", ScriptOutputType.VALUE);
+      assertThat(type).isEqualTo("table");
+      // pack two unsigned shorts -> 4 bytes
+      Long len = redis.eval("return #struct.pack('HH', 1, 2)", ScriptOutputType.INTEGER);
+      assertEquals(4L, len);
+      // pack/unpack round-trip (big-endian uint32)
+      Long v = redis.eval("return struct.unpack('>I4', struct.pack('>I4', 42))", ScriptOutputType.INTEGER);
+      assertEquals(42L, v);
+      Boolean roundTrip = redis.eval("""
+            local a, b = struct.unpack('HH', struct.pack('HH', 1, 2))
+            return a == 1 and b == 2
+            """, ScriptOutputType.BOOLEAN);
+      assertTrue(roundTrip);
+      // Returning the packed binary string directly must preserve embedded NUL bytes.
+      // struct.pack('HH', 1, 2) on little-endian is the 4 bytes 0x01 0x00 0x02 0x00; it must not be
+      // truncated at the first NUL.
+      String packed = redis.eval("return struct.pack('HH', 1, 2)", ScriptOutputType.VALUE);
+      assertThat(packed).hasSize(4);
+      assertThat(packed.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1))
+            .containsExactly(0x01, 0x00, 0x02, 0x00);
+   }
+
+   @Test
+   public void testBinaryArgvWithEmbeddedNul() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // ARGV entries must reach the script as raw bytes, including embedded NUL bytes. The 4-byte
+      // argument 0x01 0x00 0x02 0x00 unpacks as two little-endian unsigned shorts (1 and 2), with the
+      // final value being the next read position (5). A corrupted argument (e.g. NUL rewritten as
+      // 0xC0 0x80 by modified UTF-8 encoding) would instead yield 49153 and 640.
+      String argv = "\u0001\u0000\u0002\u0000";
+      List<Object> out = redis.eval("return { struct.unpack('HH', ARGV[1]) }",
+            ScriptOutputType.MULTI, new String[]{}, argv);
+      assertThat(out).containsExactly(1L, 2L, 5L);
+   }
+
+   @Test
    public void testMissingGlobalRaisesError() {
       RedisCommands<String, String> redis = redisConnection.sync();
       assertThatThrownBy(() ->

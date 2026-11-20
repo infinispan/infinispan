@@ -2,6 +2,7 @@ package org.infinispan.server.resp.scripting;
 
 import static org.infinispan.server.resp.scripting.LuaContext.sha1hex;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +29,7 @@ import org.infinispan.util.concurrent.BlockingManager;
 
 import io.netty.channel.ChannelHandlerContext;
 import party.iroiro.luajava.Lua;
+import party.iroiro.luajava.LuaException;
 import party.iroiro.luajava.lua51.Lua51Consts;
 
 /**
@@ -47,7 +49,7 @@ public class LuaTaskEngine implements TaskEngine {
       pool.shutdown();
    }
 
-   public CompletionStage<Void> eval(Resp3Handler handler, ChannelHandlerContext ctx, String code, String[] keys, String[] args, long flags) {
+   public CompletionStage<Void> eval(Resp3Handler handler, ChannelHandlerContext ctx, String code, byte[][] keys, byte[][] args, long flags) {
       handler.checkPermission(AuthorizationPermission.EXEC);
       return handler.getBlockingManager().supplyBlocking(() -> {
          LuaContext luaCtx = pool.borrow();
@@ -77,7 +79,7 @@ public class LuaTaskEngine implements TaskEngine {
       }, ctx.channel().eventLoop());
    }
 
-   public CompletionStage<Void> evalSha(Resp3Handler handler, ChannelHandlerContext ctx, String sha, String[] keys, String[] args, long flags) {
+   public CompletionStage<Void> evalSha(Resp3Handler handler, ChannelHandlerContext ctx, String sha, byte[][] keys, byte[][] args, long flags) {
       handler.checkPermission(AuthorizationPermission.EXEC);
       return handler.getBlockingManager().supplyBlocking(() -> {
          LuaContext luaCtx = pool.borrow();
@@ -112,7 +114,7 @@ public class LuaTaskEngine implements TaskEngine {
       }, ctx.channel().eventLoop());
    }
 
-   private void runScript(LuaContext luaCtx, Resp3Handler handler, ChannelHandlerContext ctx, LuaCode script, String[] keys, String[] args, long flags) {
+   private void runScript(LuaContext luaCtx, Resp3Handler handler, ChannelHandlerContext ctx, LuaCode script, byte[][] keys, byte[][] args, long flags) {
       luaCtx.handler = handler;
       luaCtx.ctx = ctx;
       luaCtx.flags = flags;
@@ -138,6 +140,19 @@ public class LuaTaskEngine implements TaskEngine {
    }
 
    /**
+    * Read the Lua string at the given stack index as a raw byte array, preserving any embedded NUL bytes.
+    */
+   private static byte[] toByteArray(Lua lua, int index) {
+      ByteBuffer buffer = lua.toBuffer(index);
+      if (buffer == null) {
+         return org.infinispan.commons.util.Util.EMPTY_BYTE_ARRAY;
+      }
+      byte[] bytes = new byte[buffer.remaining()];
+      buffer.get(bytes);
+      return bytes;
+   }
+
+   /**
     * Convert the response found on the Lua stack to a RESP response
     */
    private void luaToResp(Lua lua, Resp3Handler handler) {
@@ -150,7 +165,10 @@ public class LuaTaskEngine implements TaskEngine {
       }
       switch (lua.type(-1)) {
          case STRING:
-            handler.writer().string(lua.toString(-1));
+            // Lua strings are byte arrays that may contain embedded NUL bytes (e.g. the output of
+            // struct.pack, string.dump or cmsgpack.pack). Reading them with toString() would truncate
+            // at the first NUL, so use toBuffer() to preserve the raw bytes.
+            handler.writer().string(toByteArray(lua, -1));
             break;
          case BOOLEAN:
             handler.writer().booleans(lua.toBoolean(-1));
@@ -284,26 +302,51 @@ public class LuaTaskEngine implements TaskEngine {
       return "f_" + sha;
    }
 
-   private void runScript(Lua lua, LuaCode script, String[] keys, String[] args) {
+   private void runScript(Lua lua, LuaCode script, byte[][] keys, byte[][] args) {
       // Populate the ARGV table and set it as a global
-      lua.newTable();
-      for (int i = 0; i < args.length; i++) {
-         lua.push(args[i]);
-         lua.rawSetI(-2, i + 1);
-      }
+      pushBinaryArray(lua, args);
       lua.setGlobal("ARGV");
       // Populate the KEYS table and set it as a global
-      lua.newTable();
-      for (int i = 0; i < keys.length; i++) {
-         lua.push(keys[i]);
-         lua.rawSetI(-2, i + 1);
-      }
+      pushBinaryArray(lua, keys);
       lua.setGlobal("KEYS");
       lua.getGlobal("__redis__err__handler");
       lua.getField(Lua51Consts.LUA_REGISTRYINDEX, fName(script.sha()));
       // Invoke the function using the supplied error handler which will need to be popped from the stack after
       // the return value has been processed
       lua.getLuaNatives().lua_pcall(lua.getPointer(), 0, 1, -2);
+   }
+
+   /**
+    * Build a Lua table containing the given binary values and leave it on top of the Lua stack.
+    * <p>
+    * KEYS and ARGV entries may contain arbitrary bytes, including NUL and bytes above 0x7F. The luajava
+    * {@code push(String)} primitive encodes Java strings as JNI modified UTF-8, which cannot represent
+    * those bytes (for example a NUL byte becomes the two bytes {@code 0xC0 0x80}, corrupting the value).
+    * To transfer the exact bytes we instead compile a small Lua chunk whose source is pure ASCII and uses
+    * decimal escapes ({@code \ddd}) for every byte, then run it to obtain a table of the original binary
+    * strings.
+    */
+   private static void pushBinaryArray(Lua lua, byte[][] values) {
+      StringBuilder sb = new StringBuilder();
+      sb.append("return {");
+      for (byte[] value : values) {
+         sb.append('"');
+         for (byte b : value) {
+            int v = b & 0xFF;
+            sb.append('\\')
+                  .append((char) ('0' + v / 100))
+                  .append((char) ('0' + (v / 10) % 10))
+                  .append((char) ('0' + v % 10));
+         }
+         sb.append("\",");
+      }
+      sb.append('}');
+      try {
+         lua.load(sb.toString()); // compile the pure-ASCII chunk
+         lua.pCall(0, 1);         // run it, leaving the table of binary strings on the stack
+      } catch (LuaException e) {
+         throw new CacheException(e);
+      }
    }
 
    public LuaCode scriptLoad(String script, boolean persistent) {

@@ -16,7 +16,7 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class EVAL_RO extends EVAL {
 
-   protected CompletionStage<RespRequestHandler> performEval(Resp3Handler handler, ChannelHandlerContext ctx, String script, String[] keys, String[] argv) {
+   protected CompletionStage<RespRequestHandler> performEval(Resp3Handler handler, ChannelHandlerContext ctx, String script, byte[][] keys, byte[][] argv) {
       try {
          return handler
                .stageToReturn(handler.respServer().luaEngine().eval(handler, ctx, script, keys, argv, ScriptFlags.NO_WRITES.value())
