@@ -2,8 +2,9 @@
 
 This repository contains various artifacts to create Infinispan Server images.
 
-The container descriptor uses a multi-stage approach to create a minimal, hardened, and secure container images, with a
+The container descriptor uses a multi-stage approach to create a minimal, hardened, and secure container image, with a
 significantly reduced attack surface.
+The image registers the bundled OpenJDK as a package, so that you can attribute it and track its vulnerabilities with container scanners.
 
 ## Building the images
 
@@ -46,7 +47,9 @@ The following build arguments are supported:
 | `BASE_IMAGE`      | N/A                        | the base image used by the container image (defaults to `scratch`)                                                                                                                    |
 | `BRAND_NAME`      | `infinispan.brand.name`    | the brand name used by the container image labels (defaults to `Infinispan`)                                                                                                          |
 | `BRAND_VERSION`   | `infinispan.brand.version` | the brand version used by the container image labels (required)                                                                                                                       |
-| `JDK_DIST`        | `jdk.dist`                 | a local or remote `zip`, `tar.gz`, or `rpm` distribution of OpenJDK. If not specified, the Temuring OpenJDK will be donwloaded from Adoptium. Ignored if `JAVA_PACKAGE` is specified. |
+| `JDK_DIST`        | `jdk.dist`                 | a local or remote `zip`, `tar.gz`, or `rpm` distribution of OpenJDK. If not specified, the Temurin OpenJDK will be downloaded from Adoptium. Ignored if `OPENJDK_PACKAGE` is specified. |
+| `JDK_MAJOR`       | `jdk.major`                | the major version of the Temurin OpenJDK to download when `JDK_DIST` is an empty file (defaults to `25`) |
+| `JDK_CHANNEL`     | `jdk.channel`              | the release channel (`ga` or `ea`) of the Temurin OpenJDK to download when `JDK_DIST` is an empty file (defaults to `ga`) |
 | `OPENJDK_PACKAGE` | N/A                        | the name of an OpenJDK package provided by the builder repository (currently RHEL 10.x) (optional)                                                                                    |
 | `SERVER_DIST`     | `server.dist`              | a local or remote `zip` distribution of Infinispan Server (required)                                                                                                                  |
 
