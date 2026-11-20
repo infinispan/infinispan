@@ -100,11 +100,15 @@ The value must be greater than zero.
 Default is `__recoveryInfoCacheName__`.
 * `stop-timeout` - the time in millisecond to wait for ongoing transaction when the cache is stopping. Default is  `30000`.
 The value must be greater than or equal to zero.
+For transactional caches, {brandname} logs a warning if this value is shorter than `acquire-timeout` or, for clustered caches, `remote-timeout`, because in-flight transactions might not finish before the cache stops.
+You can still configure a shorter timeout, including zero, to bound shutdown time.
 * `transaction-manager-lookup` - configures the fully qualified class name of a class that looks up a reference to a `jakarta.transaction.TransactionManager`.
 Default is `org.infinispan.transaction.lookup.GenericTransactionManagerLookup`.
 
 For clustered caches, set the cache `remote-timeout` higher than the locking `acquire-timeout` so that remote operations can report lock acquisition failures before timing out.
 {brandname} rejects a lower remote timeout and logs a warning when the values are equal.
+For distributed and replicated caches, a finite state transfer `timeout` must be strictly greater than `remote-timeout`.
+For clustered caches, a finite transport `lock-timeout` (`distributedSyncTimeout`) must also be strictly greater than `remote-timeout`.
 
 
 For more details on how Two-Phase-Commit (2PC) is implemented in {brandname} and how locks are being acquired see the section below.

@@ -143,10 +143,8 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
          long distSyncTimeout = globalConfig.transport().distributedSyncTimeout();
          long remoteTimeout = attributes.attribute(REMOTE_TIMEOUT).get().longValue();
          if (distSyncTimeout >= 0) {
-            if (remoteTimeout < 0 || distSyncTimeout < remoteTimeout) {
+            if (remoteTimeout < 0 || distSyncTimeout <= remoteTimeout) {
                throw CONFIG.invalidDistributedSyncTimeout(TimeQuantity.valueOf(distSyncTimeout).toString(), attributes.attribute(REMOTE_TIMEOUT).get().toString());
-            } else if (distSyncTimeout == remoteTimeout) {
-               CONFIG.distributedSyncTimeoutEqualsRemoteTimeout(TimeQuantity.valueOf(distSyncTimeout).toString(), attributes.attribute(REMOTE_TIMEOUT).get().toString());
             }
          }
       }

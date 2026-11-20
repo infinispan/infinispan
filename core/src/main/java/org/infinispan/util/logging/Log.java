@@ -2176,7 +2176,7 @@ public interface Log extends BasicLogger {
    @Description("Before it starts automatic cross-site state transfer operations, the coordinator node checks all local nodes to determine if state transfer is necessary. This error occurs when the coordinator node gets an exception from one or more local nodes. Check that nodes in the cluster are online and operating as expected.")
    void unableToStartXSiteAutStateTransfer(String cacheName, String targetSite, @Cause Throwable t);
 
-   @Message(value = "State transfer timeout (%s) must be greater than or equal to the remote timeout (%s)", id = 636)
+   @Message(value = "State transfer timeout (%s) must be greater than the remote timeout (%s)", id = 636)
    CacheConfigurationException invalidStateTransferTimeout(String stateTransferTimeout, String remoteTimeout);
 
    @Message(value = "Timeout waiting for topology %d, current topology is %d", id = 637)
@@ -2535,14 +2535,18 @@ public interface Log extends BasicLogger {
    @Message(value = "Completed transaction timeout (%s) is equal to remote timeout (%s). Remote transactions may be purged prematurely.", id = 738)
    void completedTxTimeoutEqualsRemoteTimeout(String completedTxTimeout, String remoteTimeout);
 
-   @LogMessage(level = WARN)
-   @Message(value = "State transfer timeout (%s) is equal to remote timeout (%s). State transfer may fail on a single slow RPC.", id = 739)
-   void stateTransferTimeoutEqualsRemoteTimeout(String stateTransferTimeout, String remoteTimeout);
+   // id = 739 no longer used
 
-   @Message(value = "Transport distributedSyncTimeout (%s) cannot be less than cache remote timeout (%s)", id = 740)
+   @Message(value = "Transport distributedSyncTimeout (%s) must be greater than cache remote timeout (%s)", id = 740)
    CacheConfigurationException invalidDistributedSyncTimeout(String distributedSyncTimeout, String remoteTimeout);
 
+   // id = 741 no longer used
+
    @LogMessage(level = WARN)
-   @Message(value = "Transport distributedSyncTimeout (%s) is equal to cache remote timeout (%s). Cluster topology operations may time out before cache operations.", id = 741)
-   void distributedSyncTimeoutEqualsRemoteTimeout(String distributedSyncTimeout, String remoteTimeout);
+   @Message(value = "Cache stop timeout (%s) is less than %s timeout (%s). In-flight transactions may be aborted during cache stop.", id = 744)
+   void cacheStopTimeoutTooShort(String cacheStopTimeout, String operation, String timeout);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Backup site '%s' replication timeout (%s) is greater than or equal to lock acquisition timeout (%s). Concurrent writes may time out waiting for locks held during cross-site replication.", id = 745)
+   void backupReplicationTimeoutTooLong(String siteName, String replicationTimeout, String lockTimeout);
 }

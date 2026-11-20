@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.testing.skip.StringLogAppender;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -218,5 +219,37 @@ public class XSiteCacheConfigurationTest {
       cb.sites().addBackup().site(LON).strategy(BackupConfiguration.BackupStrategy.SYNC).replicationTimeout(-1);
       Configuration config = cb.build();
       assertThat(config).isNotNull();
+   }
+
+   @DataProvider(name = "backupLockTimeouts")
+   public Object[][] backupLockTimeouts() {
+      return new Object[][] {
+            {BackupConfiguration.BackupStrategy.SYNC, 15000L, 10000L, 5000L, false},
+            {BackupConfiguration.BackupStrategy.SYNC, 15000L, 10000L, 10000L, true},
+            {BackupConfiguration.BackupStrategy.SYNC, 15000L, 10000L, 12000L, true},
+            {BackupConfiguration.BackupStrategy.SYNC, -1L, 10000L, 5000L, false},
+            {BackupConfiguration.BackupStrategy.SYNC, -1L, 10000L, -1L, true},
+            {BackupConfiguration.BackupStrategy.SYNC, 15000L, 0L, 12000L, false},
+            {BackupConfiguration.BackupStrategy.SYNC, 15000L, -1L, 12000L, false},
+            {BackupConfiguration.BackupStrategy.ASYNC, 15000L, 10000L, 12000L, false}
+      };
+   }
+
+   @Test(dataProvider = "backupLockTimeouts")
+   public void testBackupLockTimeoutOrdering(BackupConfiguration.BackupStrategy strategy, long remoteTimeout,
+                                             long lockTimeout, long backupTimeout, boolean warning) {
+      StringLogAppender logAppender = new StringLogAppender("org.infinispan.CONFIG", Level.WARN,
+            t -> true, PatternLayout.newBuilder().setPattern("%m").build());
+      logAppender.install();
+      try {
+         ConfigurationBuilder cb = new ConfigurationBuilder();
+         cb.clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(remoteTimeout).stateTransfer().timeout(-1);
+         cb.locking().lockAcquisitionTimeout(lockTimeout);
+         cb.sites().addBackup().site(LON).strategy(strategy).replicationTimeout(backupTimeout);
+         cb.build();
+         assertThat(logAppender).filteredOn(line -> line.contains("ISPN000745")).hasSize(warning ? 1 : 0);
+      } finally {
+         logAppender.uninstall();
+      }
    }
 }

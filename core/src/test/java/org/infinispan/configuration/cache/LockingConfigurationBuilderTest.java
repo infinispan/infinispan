@@ -3,10 +3,16 @@ package org.infinispan.configuration.cache;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.concurrent.TimeUnit;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.TimeoutException;
+import org.infinispan.commons.time.DefaultTimeService;
 import org.infinispan.testing.skip.StringLogAppender;
+import org.infinispan.util.concurrent.locks.LockPromise;
+import org.infinispan.util.concurrent.locks.impl.InfinispanLock;
 import org.testng.annotations.Test;
 
 /**
@@ -115,6 +121,23 @@ public class LockingConfigurationBuilderTest {
             .locking().lockAcquisitionTimeout(-1)
             .build();
       assertThat(config.locking().lockAcquisitionTimeout()).isEqualTo(-1);
+   }
+
+   public void testNegativeLockTimeoutExpiresImmediatelyUnderContention() throws InterruptedException {
+      Configuration config = new ConfigurationBuilder()
+            .clustering().cacheMode(CacheMode.DIST_SYNC)
+            .locking().lockAcquisitionTimeout(-1)
+            .build();
+      InfinispanLock lock = new InfinispanLock(Runnable::run, DefaultTimeService.INSTANCE);
+      lock.acquire("owner", 0, TimeUnit.MILLISECONDS).lock();
+      try {
+         LockPromise contender = lock.acquire("contender", config.locking().lockAcquisitionTimeout(), TimeUnit.MILLISECONDS);
+         assertThat(contender.isAvailable()).isTrue();
+         assertThatThrownBy(contender::lock).isInstanceOf(TimeoutException.class);
+      } finally {
+         lock.release("contender");
+         lock.release("owner");
+      }
    }
 
    public void testClusteredCacheAllowsInfiniteRemoteTimeoutWithFiniteLockTimeout() {

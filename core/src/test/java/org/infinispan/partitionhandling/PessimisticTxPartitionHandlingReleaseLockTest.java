@@ -23,6 +23,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.conflict.MergePolicy;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.MagicKey;
@@ -70,6 +71,13 @@ public class PessimisticTxPartitionHandlingReleaseLockTest extends MultipleCache
       builder.clustering().stateTransfer().timeout(5, TimeUnit.MINUTES);
       builder.transaction().completedTxTimeout(TimeUnit.MINUTES.toMillis(5));
       createClusteredCaches(5, TestDataSCI.INSTANCE, builder, new TransportFlags().withFD(true).withMerge(true));
+   }
+
+   @Override
+   protected GlobalConfigurationBuilder defaultGlobalConfigurationBuilder() {
+      GlobalConfigurationBuilder builder = super.defaultGlobalConfigurationBuilder();
+      builder.transport().distributedSyncTimeout(5, TimeUnit.MINUTES);
+      return builder;
    }
 
    public void testLockReleased() throws Exception {

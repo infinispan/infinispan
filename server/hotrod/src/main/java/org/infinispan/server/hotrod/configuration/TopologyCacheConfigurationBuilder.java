@@ -55,6 +55,7 @@ public class TopologyCacheConfigurationBuilder implements Builder<TopologyCacheC
       Attribute<TimeQuantity> replTimeoutAttr = attributes.attribute(TopologyCacheConfiguration.TOPOLOGY_REPL_TIMEOUT);
       long lockTimeoutVal = lockTimeoutAttr.get().longValue();
       long replTimeoutVal = replTimeoutAttr.get().longValue();
+      // The topology cache uses core locking, where non-positive timeouts mean immediate acquisition.
       if (replTimeoutVal >= 0) {
          if (replTimeoutVal < lockTimeoutVal) {
             throw Log.CONFIG.invalidTopologyTimeout(replTimeoutAttr.get().toString(), lockTimeoutAttr.get().toString());

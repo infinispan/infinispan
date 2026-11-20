@@ -3,13 +3,10 @@ package org.infinispan.configuration.cache;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-import org.infinispan.testing.skip.StringLogAppender;
 import org.testng.annotations.Test;
 
 /**
@@ -39,22 +36,21 @@ public class StateTransferConfigurationBuilderTest {
             .hasMessageContaining("ISPN000636");
    }
 
-   public void testStateTransferTimeoutEqualsRemoteTimeoutWarns() {
-      StringLogAppender logAppender = new StringLogAppender("org.infinispan.CONFIG",
-            Level.WARN,
-            t -> true,
-            PatternLayout.newBuilder().setPattern("%m").build());
-      logAppender.install();
-      try {
-         Configuration config = new ConfigurationBuilder()
-               .clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(15000)
-               .stateTransfer().timeout(15000)
-               .build();
-         assertThat(config).isNotNull();
-         assertThat(logAppender).anyMatch(line -> line.contains("ISPN000739"));
-      } finally {
-         logAppender.uninstall();
-      }
+   public void testStateTransferTimeoutEqualsRemoteTimeoutThrows() {
+      assertThatThrownBy(() -> new ConfigurationBuilder()
+            .clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(15000)
+            .stateTransfer().timeout(15000)
+            .build())
+            .isInstanceOf(CacheConfigurationException.class)
+            .hasMessageContaining("ISPN000636");
+   }
+
+   public void testStateTransferTimeoutJustAboveRemoteTimeout() {
+      Configuration config = new ConfigurationBuilder()
+            .clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(15000)
+            .stateTransfer().timeout(15001)
+            .build();
+      assertThat(config.clustering().stateTransfer().timeout()).isEqualTo(15001);
    }
 
    public void testDistributedSyncTimeoutLessThanRemoteTimeoutThrows() {
@@ -70,7 +66,7 @@ public class StateTransferConfigurationBuilderTest {
             .hasMessageContaining("ISPN000740");
    }
 
-   public void testDistributedSyncTimeoutEqualsRemoteTimeoutWarns() {
+   public void testDistributedSyncTimeoutEqualsRemoteTimeoutThrows() {
       GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
             .transport().transport(new JGroupsTransport()).distributedSyncTimeout(15000)
             .build();
@@ -78,17 +74,18 @@ public class StateTransferConfigurationBuilderTest {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(15000);
 
-      StringLogAppender logAppender = new StringLogAppender("org.infinispan.CONFIG",
-            Level.WARN,
-            t -> true,
-            PatternLayout.newBuilder().setPattern("%m").build());
-      logAppender.install();
-      try {
-         cb.validate(globalConfig);
-         assertThat(logAppender).anyMatch(line -> line.contains("ISPN000741"));
-      } finally {
-         logAppender.uninstall();
-      }
+      assertThatThrownBy(() -> cb.validate(globalConfig))
+            .isInstanceOf(CacheConfigurationException.class)
+            .hasMessageContaining("ISPN000740");
+   }
+
+   public void testDistributedSyncTimeoutJustAboveRemoteTimeout() {
+      GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
+            .transport().transport(new JGroupsTransport()).distributedSyncTimeout(15001)
+            .build();
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(15000);
+      cb.validate(globalConfig);
    }
 
    public void testLocalCacheAllowsLowerDistributedSyncTimeout() {

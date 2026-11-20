@@ -186,6 +186,11 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
             Attribute<TimeQuantity> remoteTimeoutAttr = clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT);
             long replTimeoutVal = replTimeoutAttr.get().longValue();
             long remoteTimeoutVal = remoteTimeoutAttr.get().longValue();
+            Attribute<TimeQuantity> lockTimeoutAttr = locking().attributes().attribute(LockingConfiguration.LOCK_ACQUISITION_TIMEOUT);
+            long lockTimeoutVal = lockTimeoutAttr.get().longValue();
+            if (lockTimeoutVal > 0 && (replTimeoutVal < 0 || replTimeoutVal >= lockTimeoutVal)) {
+               CONFIG.backupReplicationTimeoutTooLong(siteName, replTimeoutAttr.get().toString(), lockTimeoutAttr.get().toString());
+            }
             if (remoteTimeoutVal >= 0) {
                if (replTimeoutVal < 0 || remoteTimeoutVal < replTimeoutVal) {
                   throw CONFIG.invalidBackupReplicationTimeout(remoteTimeoutAttr.get().toString(), siteName, replTimeoutAttr.get().toString());

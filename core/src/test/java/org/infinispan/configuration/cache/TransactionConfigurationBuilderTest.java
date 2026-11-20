@@ -8,6 +8,7 @@ import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.testing.skip.StringLogAppender;
 import org.infinispan.transaction.TransactionMode;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -76,6 +77,39 @@ public class TransactionConfigurationBuilderTest {
             .build();
       assertThat(config).isNotNull();
       assertThat(config.transaction().cacheStopTimeout()).isEqualTo(0);
+   }
+
+   @DataProvider(name = "cacheStopTimeouts")
+   public Object[][] cacheStopTimeouts() {
+      return new Object[][] {
+            {CacheMode.DIST_SYNC, TransactionMode.TRANSACTIONAL, 5000L, 2},
+            {CacheMode.INVALIDATION_SYNC, TransactionMode.TRANSACTIONAL, 12000L, 1},
+            {CacheMode.REPL_SYNC, TransactionMode.TRANSACTIONAL, 15000L, 0},
+            {CacheMode.DIST_SYNC, TransactionMode.TRANSACTIONAL, 30000L, 0},
+            {CacheMode.LOCAL, TransactionMode.TRANSACTIONAL, 5000L, 1},
+            {CacheMode.LOCAL, TransactionMode.TRANSACTIONAL, 0L, 1},
+            {CacheMode.LOCAL, TransactionMode.TRANSACTIONAL, 10000L, 0},
+            {CacheMode.DIST_SYNC, TransactionMode.NON_TRANSACTIONAL, 0L, 0}
+      };
+   }
+
+   @Test(dataProvider = "cacheStopTimeouts")
+   public void testCacheStopTimeoutOrdering(CacheMode cacheMode, TransactionMode transactionMode,
+                                            long stopTimeout, int warnings) {
+      StringLogAppender logAppender = new StringLogAppender("org.infinispan.CONFIG", Level.WARN,
+            t -> true, PatternLayout.newBuilder().setPattern("%m").build());
+      logAppender.install();
+      try {
+         Configuration config = new ConfigurationBuilder()
+               .clustering().cacheMode(cacheMode).remoteTimeout(15000)
+               .locking().lockAcquisitionTimeout(10000)
+               .transaction().transactionMode(transactionMode).cacheStopTimeout(stopTimeout)
+               .build();
+         assertThat(config.transaction().cacheStopTimeout()).isEqualTo(stopTimeout);
+         assertThat(logAppender).filteredOn(line -> line.contains("ISPN000744")).hasSize(warnings);
+      } finally {
+         logAppender.uninstall();
+      }
    }
 
    public void testClusteredTxCompletedTxTimeoutLessThanRemoteTimeoutThrows() {

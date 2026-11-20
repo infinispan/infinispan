@@ -27,6 +27,10 @@ For example, `timeout="1000"` and `wait-time="2000"` allow each attempt one seco
 Both values must be greater than zero.
 ====
 
+For synchronous backups, {brandname} logs a warning when the backup replication timeout is greater than or equal to a positive locking `acquire-timeout`.
+Concurrent writes might time out waiting for locks held during cross-site replication.
+This warning concerns the backup `timeout` attribute, which is separate from the state transfer `timeout` attribute.
+
 [discrete]
 == State transfer configuration
 

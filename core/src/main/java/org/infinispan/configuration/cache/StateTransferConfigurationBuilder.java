@@ -134,10 +134,8 @@ public class StateTransferConfigurationBuilder extends
          long stateTransferTimeoutVal = timeoutAttribute.get().longValue();
          long remoteTimeoutVal = remoteTimeoutAttribute.get().longValue();
          if (stateTransferTimeoutVal >= 0) {
-            if (remoteTimeoutVal < 0 || stateTransferTimeoutVal < remoteTimeoutVal) {
+            if (remoteTimeoutVal < 0 || stateTransferTimeoutVal <= remoteTimeoutVal) {
                throw CONFIG.invalidStateTransferTimeout(timeoutAttribute.get().toString(), remoteTimeoutAttribute.get().toString());
-            } else if (stateTransferTimeoutVal == remoteTimeoutVal) {
-               CONFIG.stateTransferTimeoutEqualsRemoteTimeout(timeoutAttribute.get().toString(), remoteTimeoutAttribute.get().toString());
             }
          }
       }

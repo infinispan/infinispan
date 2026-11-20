@@ -121,6 +121,7 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
          Attribute<TimeQuantity> remoteTimeout = getBuilder().clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT);
          long lockTimeoutVal = lockAcquisitionTimeout.get().longValue();
          long remoteTimeoutVal = remoteTimeout.get().longValue();
+         // Non-positive lock timeouts mean immediate acquisition, not an infinite wait.
          if (remoteTimeoutVal >= 0) {
             if (remoteTimeoutVal < lockTimeoutVal) {
                throw CONFIG.invalidRemoteTimeout(remoteTimeout.get().toString(), lockAcquisitionTimeout.get().toString());
