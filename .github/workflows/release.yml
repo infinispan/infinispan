@@ -149,11 +149,15 @@ jobs:
          env:
             GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
 
-      - name: Attach server distribution
-        run: |
-          gh release upload ${{ steps.resolve-versions.outputs.RELEASE_VERSION }} distribution/target/distribution/infinispan-server-${{ steps.resolve-versions.outputs.RELEASE_VERSION }}.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+      # The distribution is signed and attached by the sign-server-dist job. Signing is kept
+      # out of this job because it checks out inputs.branch, which may predate the signing
+      # action, and so that the signing credentials never run on its build code.
+      - name: Upload server distribution
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: infinispan-server-dist
+          path: distribution/target/distribution/infinispan-server-${{ steps.resolve-versions.outputs.RELEASE_VERSION }}.zip
+          if-no-files-found: error
 
       - name: Check SBOM availability
         id: sbom-check
@@ -259,12 +263,77 @@ jobs:
         name: Build native executable
         run: ./mvnw package -Pdistribution -Pnative -am -pl ${{ steps.detect-cli.outputs.module }} ${{ matrix.native_extra_args }}
 
+      # The built archive is passed to the sign-cli-assets job, which signs and attaches it.
+      # Keeping the credentials out of this job means tag-controlled build code never executes
+      # on a runner that holds the GPG key, passphrase or release token.
       - name: Upload CLI native executable
-        id: upload-cli-native-executable
-        run: |
-          gh release upload ${{ needs.release.outputs.version }} ${{ steps.detect-cli.outputs.module }}/target/infinispan-cli-${{ needs.release.outputs.version }}-${{ matrix.asset_name }}.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: infinispan-cli-${{ matrix.asset_name }}
+          path: ${{ steps.detect-cli.outputs.module }}/target/infinispan-cli-${{ needs.release.outputs.version }}-${{ matrix.asset_name }}.zip
+          if-no-files-found: error
+
+  # Signs and attaches the CLI native executables built by native-cli. This is a separate job
+  # that does not check out the release tag, for two reasons:
+  # - the signing credentials never run on a runner that executed tag-controlled build code;
+  # - the signing action is always loaded from the workflow's own revision, so it is available
+  #   even for tags that predate it.
+  sign-cli-assets:
+    needs: [native-cli, release]
+    runs-on: ubuntu-latest
+    concurrency:
+      # Keyed on the resolved version so that it serializes with the sign-cli-assets job of
+      # the resume workflow even when this release was dispatched without an explicit version.
+      group: sign-cli-assets-${{ needs.release.outputs.version }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+
+      - name: Download CLI native executables
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: cli-assets
+          pattern: infinispan-cli-*
+
+      - name: Sign and attach CLI native executables
+        uses: ./.github/actions/sign-release-assets
+        with:
+          release-tag: ${{ needs.release.outputs.version }}
+          asset-paths: cli-assets/*/*.zip
+          gpg-armored-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
+          gpg-passphrase: ${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}
+          token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+          clobber: "true"
+
+  # Signs and attaches the server distribution built by the release job. Kept out of the
+  # release job so that the signing action is loaded from the workflow's own revision
+  # instead of the inputs.branch checkout, which may predate the action.
+  sign-server-dist:
+    needs: [release]
+    runs-on: ubuntu-latest
+    concurrency:
+      # Keyed on the resolved version so that it serializes with the server-dist job of the
+      # resume workflow even when this release was dispatched without an explicit version.
+      group: sign-server-assets-${{ needs.release.outputs.version }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+
+      - name: Download server distribution
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: infinispan-server-dist
+          path: server-dist
+
+      - name: Sign and attach server distribution
+        uses: ./.github/actions/sign-release-assets
+        with:
+          release-tag: ${{ needs.release.outputs.version }}
+          asset-paths: server-dist/*.zip
+          gpg-armored-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
+          gpg-passphrase: ${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}
+          token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+          clobber: "true"
 
   images:
     needs: [published, release]
@@ -302,16 +371,16 @@ jobs:
 
 
   cli-packages:
-    needs: [native-cli, release]
-    if: needs.native-cli.result == 'success'
+    needs: [sign-cli-assets, release]
+    if: needs.sign-cli-assets.result == 'success'
     uses: ./.github/workflows/release_cli_packages.yml
     secrets: inherit
     with:
       version: ${{ needs.release.outputs.version }}
 
   update-website:
-    needs: [published, native-cli, release]
-    if: always() && needs.published.result == 'success'
+    needs: [published, sign-cli-assets, sign-server-dist, release]
+    if: always() && needs.published.result == 'success' && needs.sign-cli-assets.result == 'success' && needs.sign-server-dist.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Update website release data
@@ -348,3 +417,24 @@ jobs:
         run: |
           gh variable set RELEASE -b "$(echo ${{ needs.release.outputs.nextVersion }} | cut -f 1 -d '-')" --org infinispan  --visibility all;
           gh variable set "RELEASE_$(echo '${{ needs.release.outputs.version }}' | cut -f 1-2 -d '.' | tr . _)_VERSION" -b "$(echo '${{ needs.release.outputs.version }}' | cut -f 1-2 -d '.').1" --org infinispan --visibility all;
+
+  # Best effort: keeps the example artifact version in KEYS on main current after a latest release.
+  # Runs only once Maven Central publication is confirmed, and never blocks or fails the release itself.
+  update-signing-statement:
+    needs: [published, release]
+    if: ${{ inputs.type == 'latest' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    concurrency:
+      # Serialize with the equivalent job of the resume workflow and with other release runs,
+      # so that concurrent KEYS updates cannot conflict on main.
+      group: update-signing-statement
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+
+      - name: Update example artifact version in KEYS
+        uses: ./.github/actions/update-signing-statement
+        with:
+          release-version: ${{ needs.release.outputs.version }}
+          token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
