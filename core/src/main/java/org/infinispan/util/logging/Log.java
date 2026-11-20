@@ -2508,4 +2508,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Ignoring topology %d for cache %s from view %d received after status request from view %d", id = 732)
    void ignoringTopologyFromOldView(int topologyId, String cacheName, int viewId, int statusRequestViewId);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Failed to re-assert cache '%s' into the cluster configuration on startup. The cache is defined and started " +
+         "locally from persisted state but may require a restart to install cluster-wide", id = 733)
+   void failedToReAssertCacheConfiguration(String cacheName, @Cause Throwable cause);
 }

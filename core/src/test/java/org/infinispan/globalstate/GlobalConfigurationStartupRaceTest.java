@@ -12,15 +12,17 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
+import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.api.CacheContainerAdmin;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.globalstate.impl.OverlayLocalConfigurationStorage;
+import org.infinispan.interceptors.DDAsyncInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -50,6 +52,8 @@ public class GlobalConfigurationStartupRaceTest extends AbstractInfinispanTest {
    private static final String HELD = "held";
    private static final String PROCEED = "proceed";
    private static final String UPDATE_RECEIVED = "update-received";
+   private static final String REPLY_HELD = "reply-held";
+   private static final String RELEASE_REPLY = "release-reply";
 
    public void testCreateCacheWhileJoinerStarts(Method m) throws Exception {
       CheckPoint checkPoint = new CheckPoint();
@@ -159,37 +163,40 @@ public class GlobalConfigurationStartupRaceTest extends AbstractInfinispanTest {
       }
    }
 
-   public void testUpdateCacheWhileJoinerReassertsPersistedCaches(Method m) throws Exception {
+   public void testUpdateCacheWhileJoinerReassertsCacheCreatedAfterStateTransfer(Method m) throws Exception {
       CheckPoint checkPoint = new CheckPoint();
       EmbeddedCacheManager cm1 = statefulManager(m, "1", null);
       EmbeddedCacheManager cm2 = statefulManager(m, "2",
-            () -> new BlockOnReassertOverlayLocalConfigurationStorage(checkPoint, CACHE_NAME, testExecutor()));
+            () -> new BlockOnReassertOverlayLocalConfigurationStorage(checkPoint, CACHE_NAME));
       try {
          cm1.start();
-         // cm2 receives the cache through CONFIG state transfer and also has it persisted locally.
-         cm1.administration().createCache(CACHE_NAME, cacheConfiguration(1000));
-         // Held after the listener is installed, while re-asserting the persisted cache with the value its
-         // putIfAbsent returned from CONFIG (1000).
+         // cm2 has the cache persisted locally, but not in CONFIG, so it re-asserts the cache.
+         // Held after it found the cache absent from CONFIG, before the re-assert writes it.
          Future<Void> joinerStart = startAndHoldInStartupWindow(cm2, checkPoint);
-         TestingUtil.extractGlobalComponent(cm2, GlobalConfigurationManager.class).getStateCache()
-               .addListener(new UpdateProbe(checkPoint));
+         ScopedState key = new ScopedState(ScopeType.CACHE.toString(), CACHE_NAME);
+         TestingUtil.extractInterceptorChain(TestingUtil.extractGlobalComponent(cm2, GlobalConfigurationManager.class).getStateCache())
+               .addInterceptor(new HoldPutIfAbsentReplyInterceptor(checkPoint, key, testExecutor()), 0);
 
-         Future<?> update = fork(() -> cm1.administration()
-               .withFlags(CacheContainerAdmin.AdminFlag.UPDATE)
-               .getOrCreateCache(CACHE_NAME, cacheConfiguration(2000)));
-         // The update reached cm2 while it is still defining the value returned before the update.
-         checkPoint.awaitStrict(UPDATE_RECEIVED, 10, SECONDS);
-
-         // The re-assert resumes with the value it read before the update, which must not replace the update.
+         // The cache reaches CONFIG after cm2 found it absent, so the re-assert returns the value created here (1000).
+         fork(() -> cm1.administration().createCache(CACHE_NAME, cacheConfiguration(1000))).get(10, SECONDS);
          checkPoint.trigger(PROCEED);
+         checkPoint.awaitStrict(REPLY_HELD, 10, SECONDS);
+
+         // The update reaches cm2 before the re-assert defines the value it returned.
+         fork(() -> cm1.administration()
+               .withFlags(CacheContainerAdmin.AdminFlag.UPDATE)
+               .getOrCreateCache(CACHE_NAME, cacheConfiguration(2000))).get(10, SECONDS);
+
+         // The re-assert resumes with the value it returned before the update, which must not replace the update.
+         checkPoint.trigger(RELEASE_REPLY);
          joinerStart.get(10, SECONDS);
-         update.get(10, SECONDS);
 
          assertThat(cm1.getCacheConfiguration(CACHE_NAME).memory().maxCount()).isEqualTo(2000);
          assertThat(cm2.cacheExists(CACHE_NAME)).isTrue();
          assertThat(cm2.getCacheConfiguration(CACHE_NAME).memory().maxCount()).isEqualTo(2000);
       } finally {
          checkPoint.triggerForever(PROCEED);
+         checkPoint.triggerForever(RELEASE_REPLY);
          TestingUtil.killCacheManagers(cm1, cm2);
       }
    }
@@ -284,22 +291,20 @@ public class GlobalConfigurationStartupRaceTest extends AbstractInfinispanTest {
 
    /**
     * Overlay storage that reports the given cache as persisted by a previous run, and pauses the node's startup the
-    * second time it defines that cache.
+    * first time it validates the flags of a CONFIG write.
     * <p>
-    * During startup, the first definition comes from the entry received by CONFIG state transfer. The second one is the
-    * re-assert of the persisted cache, defining the value returned by its {@code putIfAbsent} on the CONFIG cache. The
-    * re-assert might run on a non-blocking thread, so the pause does not block the thread.
+    * During startup, that is the re-assert of the persisted cache: after the node found the cache absent from its
+    * CONFIG cache, and before the re-assert writes it.
+    * </p>
     */
    static class BlockOnReassertOverlayLocalConfigurationStorage extends OverlayLocalConfigurationStorage {
       private final CheckPoint checkPoint;
       private final String cacheName;
-      private final Executor executor;
-      private final AtomicInteger defines = new AtomicInteger();
+      private final AtomicBoolean held = new AtomicBoolean();
 
-      BlockOnReassertOverlayLocalConfigurationStorage(CheckPoint checkPoint, String cacheName, Executor executor) {
+      BlockOnReassertOverlayLocalConfigurationStorage(CheckPoint checkPoint, String cacheName) {
          this.checkPoint = checkPoint;
          this.cacheName = cacheName;
-         this.executor = executor;
       }
 
       @Override
@@ -310,14 +315,49 @@ public class GlobalConfigurationStartupRaceTest extends AbstractInfinispanTest {
       }
 
       @Override
-      public CompletionStage<Void> defineCacheConfiguration(String name, String template, Configuration configuration,
-                                                            EnumSet<CacheContainerAdmin.AdminFlag> flags) {
-         if (cacheName.equals(name) && defines.incrementAndGet() == 2) {
+      public void validateFlags(EnumSet<CacheContainerAdmin.AdminFlag> flags) {
+         if (held.compareAndSet(false, true)) {
             checkPoint.trigger(HELD);
-            return checkPoint.future(PROCEED, 10, SECONDS, executor)
-                  .thenCompose(ignore -> super.defineCacheConfiguration(name, template, configuration, flags));
+            try {
+               checkPoint.awaitStrict(PROCEED, 10, SECONDS);
+            } catch (Exception e) {
+               throw new IllegalStateException("Startup was not released", e);
+            }
          }
-         return super.defineCacheConfiguration(name, template, configuration, flags);
+         super.validateFlags(flags);
+      }
+   }
+
+   /**
+    * Holds the reply of the node's own {@code putIfAbsent} for the given CONFIG key until {@link #RELEASE_REPLY} is
+    * triggered, and signals {@link #REPLY_HELD} once the reply is held.
+    * <p>
+    * The write has already completed in the cluster when the reply is held, so the node receives the value the write
+    * returned only after the release. The hold does not block a thread. Installed at the top of the chain, it only
+    * matches the command on its originator.
+    * </p>
+    */
+   static final class HoldPutIfAbsentReplyInterceptor extends DDAsyncInterceptor {
+      private final CheckPoint checkPoint;
+      private final ScopedState key;
+      private final Executor executor;
+      private final AtomicBoolean held = new AtomicBoolean();
+
+      HoldPutIfAbsentReplyInterceptor(CheckPoint checkPoint, ScopedState key, Executor executor) {
+         this.checkPoint = checkPoint;
+         this.key = key;
+         this.executor = executor;
+      }
+
+      @Override
+      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) {
+         if (!ctx.isOriginLocal() || !command.isPutIfAbsent() || !key.equals(command.getKey()) || !held.compareAndSet(false, true))
+            return invokeNext(ctx, command);
+
+         return invokeNextThenApply(ctx, command, (rCtx, rCommand, rv) -> {
+            checkPoint.trigger(REPLY_HELD);
+            return asyncValue(checkPoint.future(RELEASE_REPLY, 10, SECONDS, executor).thenApply(ignore -> rv));
+         });
       }
    }
 

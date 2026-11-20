@@ -602,10 +602,7 @@ public class DefaultCacheManager extends InternalCacheManager {
       }
    }
 
-   /**
-    * @return a null return value means the cache was created by someone else before we got the lock
-    */
-   private <K, V> Cache<K, V> wireAndStartCache(String cacheName) {
+   private Configuration validateStartable(String cacheName) {
       Configuration c = configurationManager.getConfiguration(cacheName);
       if (c == null) {
          throw CONFIG.noSuchCacheConfiguration(cacheName);
@@ -618,6 +615,14 @@ public class DefaultCacheManager extends InternalCacheManager {
       if (c.isTemplate()) {
          throw CONFIG.templateConfigurationStartAttempt(cacheName);
       }
+      return c;
+   }
+
+   /**
+    * @return a null return value means the cache was created by someone else before we got the lock
+    */
+   private <K, V> Cache<K, V> wireAndStartCache(String cacheName) {
+      Configuration c = validateStartable(cacheName);
 
       CompletableFuture<Cache<?, ?>> cacheFuture = new CompletableFuture<>();
       CompletableFuture<Cache<?, ?>> oldFuture = caches.computeIfAbsent(cacheName, name -> {
@@ -637,6 +642,10 @@ public class DefaultCacheManager extends InternalCacheManager {
          throw ((CacheException) ce.getCause());
       }
 
+      return completeCacheStart(cacheName, c, cacheFuture, cache);
+   }
+
+   private <K, V> Cache<K, V> completeCacheStart(String cacheName, Configuration c, CompletableFuture<Cache<?, ?>> cf, Cache<K, V> cache) {
       try {
          log.debugf("Creating cache %s on %s", cacheName, identifierString());
          if (cache == null) {
@@ -651,7 +660,7 @@ public class DefaultCacheManager extends InternalCacheManager {
                cr.getStatus() != ComponentStatus.RUNNING && cr.getStatus() != ComponentStatus.INITIALIZING;
          // start the cache-level components
          cache.start();
-         cacheFuture.complete(cache);
+         cf.complete(cache);
          boolean needToNotifyCacheStarted = notStartedYet && cr.getStatus() == ComponentStatus.RUNNING;
          if (needToNotifyCacheStarted) {
             globalComponentRegistry.notifyCacheStarted(cacheName);
@@ -659,12 +668,35 @@ public class DefaultCacheManager extends InternalCacheManager {
          log.tracef("Cache %s is ready", cacheName);
          return cache;
       } catch (CacheException e) {
-         cacheFuture.completeExceptionally(e);
+         cf.completeExceptionally(e);
          throw e;
       } catch (Throwable t) {
-         cacheFuture.completeExceptionally(new CacheException(t));
+         cf.completeExceptionally(new CacheException(t));
          throw t;
       }
+   }
+
+   @Override
+   protected CompletionStage<Void> internalCreateCache(String cacheName, BlockingManager blockingManager) {
+      Configuration c = validateStartable(cacheName);
+      CompletableFuture<Cache<?, ?>> curr = new CompletableFuture<>();
+      CompletableFuture<Cache<?, ?>> prev = caches.computeIfAbsent(cacheName, name -> {
+         assertIsNotTerminated();
+         return curr;
+      });
+      if (prev != curr) {
+         // Another caller already registered the cache to start.
+         return prev.thenApply(CompletableFutures.toNullFunction());
+      }
+      // This caller registered the cache to start.
+      // Offload the start procedure to the blocking manager to perform it asynchronously.
+      return blockingManager.runBlocking(() -> completeCacheStartPrivileged(cacheName, c, curr), "create-cache-" + cacheName);
+   }
+
+   private void completeCacheStartPrivileged(String cacheName, Configuration configuration, CompletableFuture<Cache<?, ?>> cf) {
+      // Use a dedicated method to call privileged so the caller package is still org.infinispan.
+      // Invoking directly from a lambda is not accepted since the caller will be lambda from JDK's internal.
+      Security.doPrivileged(() -> completeCacheStart(cacheName, configuration, cf, null));
    }
 
    @Override

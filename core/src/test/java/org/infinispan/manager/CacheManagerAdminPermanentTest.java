@@ -76,7 +76,7 @@ public class CacheManagerAdminPermanentTest extends CacheManagerAdminTest {
       checkCacheExistenceAcrossCluster("b", false);
 
       manager(0).administration().createCache("c", configuration);
-
+      waitForClusterToForm("c");
       checkConsistencyAcrossCluster("c", configuration);
 
       createStatefulCacheManager("C", false);
