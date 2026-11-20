@@ -4,9 +4,18 @@
 Relay nodes are the nodes in {brandname} clusters that are responsible for sending and receiving requests from backup locations.
 If a node is not a relay node, it must forward backup requests to a local relay node.
 
-For optimal performance, you should configure all nodes as relay nodes.
-This increases the speed of backup requests because each node in the cluster can backup to remote clusters directly without having to forward backup requests to local relay nodes.
+For optimal performance, configure all nodes as relay nodes. 
+This increases the speed of backup requests because each node in the cluster can send backup requests directly to remote clusters without forwarding them to local relay nodes.
 
+To configure all nodes as relay nodes, set the `max_site_masters` attribute of the JGroups `RELAY2` protocol to a value greater than the number of nodes in the cluster.
+
+For an example of a JGroups `RELAY2` configuration, see xref:configuring-cluster-transport-cross-site_configuring-cross-site-replication[Configuring cluster transport for cross-site replication].
+
+[NOTE]
+====
+If you use two-phase commit with cross-site replication, configure exactly one relay node per cluster.
+For more information, see xref:cross-site-backup-strategies_cross-site-replication[Backup strategies].
+====
 
 [NOTE]
 ====
