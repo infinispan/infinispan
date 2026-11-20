@@ -203,4 +203,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Update schema finished", id = 12054)
    void updateSchemaFinished();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Failed to convert the content of cache '%s' while streaming; rendering it as hex instead", id = 12055)
+   void streamingConversionFailed(String cacheName, @Cause Throwable t);
 }

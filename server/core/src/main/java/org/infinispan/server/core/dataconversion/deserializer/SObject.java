@@ -25,6 +25,16 @@ public class SObject extends SEntity {
       return fields.get(name);
    }
 
+   // snapshot/restore support for rewinding a failed parse attempt (see Deserializer.readCustomWriterSlot)
+   Map<String, SEntity> fieldSnapshot() {
+      return new LinkedHashMap<>(fields);
+   }
+
+   void restoreFields(Map<String, SEntity> snapshot) {
+      fields.clear();
+      fields.putAll(snapshot);
+   }
+
    @Override
    public Json json() {
       Stack<SEntity> stack = SEntity.items.get();
