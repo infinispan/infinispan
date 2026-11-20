@@ -17,6 +17,7 @@ public class NodeVersion implements Comparable<NodeVersion> {
 
    public static final NodeVersion SIXTEEN = new NodeVersion((byte) 16, (byte) 0, (byte) 0);
    public static final NodeVersion SIXTEEN_THREE = new NodeVersion((byte) 16, (byte) 3, (byte) 0);
+   public static final NodeVersion SIXTEEN_FOUR = new NodeVersion((byte) 16, (byte) 4, (byte) 0);
    public static final NodeVersion INSTANCE;
 
    static {

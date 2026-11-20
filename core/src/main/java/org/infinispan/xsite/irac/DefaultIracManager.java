@@ -28,6 +28,7 @@ import org.infinispan.commands.RequestUUID;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commons.time.TimeService;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
@@ -121,6 +122,11 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    private final IracExecutor iracExecutor;
    private final int batchSize;
    private volatile boolean hasClear;
+   private TimeService timeService;
+   private IracQueueCleanup queueCleanup;
+   private IracQueueCleanup.Settings queueCleanupSettings = new IracQueueCleanup.Settings(0,
+         IracQueueCleanup.Settings.DEFAULT_GRACE_PERIOD_MILLIS, IracQueueCleanup.Settings.DEFAULT_BATCH_SIZE,
+         IracQueueCleanup.Settings.DEFAULT_PAUSE_MILLIS);
 
    private boolean statisticsEnabled;
    private final LongAdder discardCounts = new LongAdder();
@@ -141,10 +147,13 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
    @Inject
    public void inject(@ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService executorService,
-                      @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR) Executor blockingExecutor) {
+                      @ComponentName(KnownComponentNames.BLOCKING_EXECUTOR) Executor blockingExecutor,
+                      TimeService timeService) {
       // using the inject method here in order to decrease the class size
       iracExecutor.setExecutor(blockingExecutor);
       setBackOff(backup -> new ExponentialBackOffImpl(executorService));
+      this.timeService = timeService;
+      queueCleanup = new IracQueueCleanup(new QueueView(), timeService, executorService);
    }
 
    @Start
@@ -154,12 +163,12 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
    @Override
    public void trackUpdatedKey(int segment, Object key, RequestUUID owner) {
-      trackState(new IracManagerKeyChangedState(segment, key, owner, false, asyncBackups.size()));
+      trackState(new IracManagerKeyChangedState(new IracManagerKeyInfo(segment, key, owner), false, asyncBackups.size(), timeService.time()));
    }
 
    @Override
    public void trackExpiredKey(int segment, Object key, RequestUUID owner) {
-      trackState(new IracManagerKeyChangedState(segment, key, owner, true, asyncBackups.size()));
+      trackState(new IracManagerKeyChangedState(new IracManagerKeyInfo(segment, key, owner), true, asyncBackups.size(), timeService.time()));
    }
 
    @Override
@@ -172,7 +181,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       LocalizedCacheTopology topology = clusteringDependentLogic.getCacheTopology();
       for (XSiteState state : stateList) {
          int segment = topology.getSegment(state.key());
-         IracManagerStateTransferState iracState = new IracManagerStateTransferState(segment, state.key(), asyncBackups.size());
+         IracManagerStateTransferState iracState = new IracManagerStateTransferState(segment, state.key(), asyncBackups.size(), timeService.time());
          // better be safe to avoid losing data
          updatedKeys.put(iracState.getKey(), iracState);
          cf.dependsOn(iracState.getCompletionStage());
@@ -246,7 +255,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    @Override
    public void receiveState(int segment, Object key, RequestUUID owner, IracMetadata tombstone) {
       iracTombstoneManager.storeTombstoneIfAbsent(segment, key, tombstone);
-      updatedKeys.putIfAbsent(key, new IracManagerKeyChangedState(segment, key, owner, false, asyncBackups.size()));
+      updatedKeys.putIfAbsent(key, new IracManagerKeyChangedState(new IracManagerKeyInfo(segment, key, owner), false, asyncBackups.size(), timeService.time()));
       iracExecutor.run();
    }
 
@@ -368,6 +377,26 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
 
    public boolean isEmpty() {
       return updatedKeys.isEmpty();
+   }
+
+   // package-private for testing purposes
+   void setQueueCleanupSettings(IracQueueCleanup.Settings settings) {
+      queueCleanupSettings = settings;
+   }
+
+   @Override
+   public IracQueueCleanupStatus startQueueCleanup(long minAgeMillis) {
+      return queueCleanup.start(queueCleanupSettings.withMinAge(minAgeMillis));
+   }
+
+   @Override
+   public IracQueueCleanupStatus cancelQueueCleanup() {
+      return queueCleanup.cancel();
+   }
+
+   @Override
+   public IracQueueCleanupStatus queueCleanupStatus() {
+      return queueCleanup.status();
    }
 
    private boolean canStateBeSent(IracManagerKeyState state) {
@@ -748,6 +777,46 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       }
       IracCleanupKeysCommand cmd = commandsFactory.buildIracCleanupKeyCommand(toCleanup);
       rpcManager.sendTo(origin, cmd, DeliverOrder.NONE);
+   }
+
+   private class QueueView implements IracQueueCleanup.Queue {
+
+      @Override
+      public String cacheName() {
+         return commandsFactory.getCacheName();
+      }
+
+      @Override
+      public Collection<IracManagerKeyState> snapshot() {
+         return List.copyOf(updatedKeys.values());
+      }
+
+      @Override
+      public IracManagerKeyState current(Object key) {
+         return updatedKeys.get(key);
+      }
+
+      @Override
+      public boolean isPrimary(int segment) {
+         return clusteringDependentLogic.getCacheTopology().getSegmentDistribution(segment).isPrimary();
+      }
+
+      @Override
+      public CompletionStage<Boolean> isMissing(IracManagerKeyState state) {
+         // same load as fetchEntry(): from memory or, if not found, from the store.
+         return clusteringDependentLogic.getEntryLoader()
+               .loadAndStoreInDataContainer(state.getKey(), state.getSegment())
+               .thenApply(entry -> entry == null && iracTombstoneManager.getTombstone(state.getKey()) == null);
+      }
+
+      @Override
+      public void remove(Collection<IracManagerKeyState> states) {
+         if (log.isTraceEnabled()) {
+            log.tracef("[IRAC] Queue cleanup removing keys without an entry and without a tombstone: %s", Util.toStr(states));
+         }
+         states.forEach(IracManagerKeyState::discard);
+         removeStateFromCluster(states);
+      }
    }
 
    private record IracStateData(IracManagerKeyState state, InternalCacheEntry<Object, Object> entry,

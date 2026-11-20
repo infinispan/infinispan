@@ -2508,4 +2508,11 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Ignoring topology %d for cache %s from view %d received after status request from view %d", id = 732)
    void ignoringTopologyFromOldView(int topologyId, String cacheName, int viewId, int statusRequestViewId);
+
+   @LogMessage(level = WARN)
+   @Message(value = "[IRAC] Queue cleanup for cache '%s' completed. Checked %d key(s), removed %d key(s) without an entry and without a tombstone", id = 734)
+   @Description("An administrator started the cleanup of the asynchronous cross-site replication queue. The removed keys had " +
+         "neither an entry, in memory or in a persistent store, nor a tombstone, in two checks, so there was nothing to send " +
+         "to the backup sites for them. No action is required.")
+   void iracQueueCleanupCompleted(String cacheName, long checked, long removed);
 }

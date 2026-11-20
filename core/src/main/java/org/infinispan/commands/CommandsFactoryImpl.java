@@ -31,6 +31,7 @@ import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.irac.IracCleanupKeysCommand;
 import org.infinispan.commands.irac.IracMetadataRequestCommand;
 import org.infinispan.commands.irac.IracPrimaryPendingKeyCheckCommand;
+import org.infinispan.commands.irac.IracQueueCleanupCommand;
 import org.infinispan.commands.irac.IracRequestStateCommand;
 import org.infinispan.commands.irac.IracStateResponseCommand;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
@@ -782,5 +783,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public IracPrimaryPendingKeyCheckCommand buildIracPrimaryPendingKeyCheckCommand(List<IracManagerKeyInfo> keys) {
       return new IracPrimaryPendingKeyCheckCommand(cacheName, keys);
+   }
+
+   @Override
+   public IracQueueCleanupCommand buildIracQueueCleanupCommand(byte action, long minAgeMillis) {
+      return new IracQueueCleanupCommand(cacheName, action, minAgeMillis);
    }
 }

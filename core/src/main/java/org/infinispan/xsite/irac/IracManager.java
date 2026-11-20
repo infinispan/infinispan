@@ -159,4 +159,27 @@ public interface IracManager {
     * @param keys   The list of key information to be inspected for stale entries.
     */
    void checkStaleKeys(Address origin, Collection<IracManagerKeyInfo> keys);
+
+   /**
+    * Starts the removal of the queued keys without an entry and without a tombstone, in this node only.
+    * <p>
+    * Only keys queued for at least {@code minAgeMillis}, and for which this node is the primary owner, are checked. The
+    * cleanup runs in the background; it is a no-op if a cleanup is already running.
+    *
+    * @param minAgeMillis The minimum time, in milliseconds, a key must be queued to be checked.
+    * @return The status of the cleanup.
+    */
+   IracQueueCleanupStatus startQueueCleanup(long minAgeMillis);
+
+   /**
+    * Cancels the queue cleanup running in this node, if any.
+    *
+    * @return The status of the cleanup.
+    */
+   IracQueueCleanupStatus cancelQueueCleanup();
+
+   /**
+    * @return The status of the queue cleanup in this node.
+    */
+   IracQueueCleanupStatus queueCleanupStatus();
 }

@@ -104,5 +104,20 @@ public enum NoOpIracManager implements IracManager {
       //no-op
    }
 
+   @Override
+   public IracQueueCleanupStatus startQueueCleanup(long minAgeMillis) {
+      return IracQueueCleanupStatus.NOT_AVAILABLE;
+   }
+
+   @Override
+   public IracQueueCleanupStatus cancelQueueCleanup() {
+      return IracQueueCleanupStatus.NOT_AVAILABLE;
+   }
+
+   @Override
+   public IracQueueCleanupStatus queueCleanupStatus() {
+      return IracQueueCleanupStatus.NOT_AVAILABLE;
+   }
+
 
 }

@@ -1,5 +1,6 @@
 package org.infinispan.rest.resources;
 
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.NO_CONTENT;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
@@ -82,6 +83,9 @@ public class XSiteResourceV3 extends XSiteResource {
             .permission(AuthorizationPermission.ADMIN)
             .auditContext(AuditContext.CACHE)
             .handleWith(this::pushStateStatus);
+
+      // Queue cleanup: removes queued keys without an entry and without a tombstone
+      addQueueCleanupInvocations(builder);
 
       // 4. Get Site Status
       builder.invocation()
@@ -268,5 +272,43 @@ public class XSiteResourceV3 extends XSiteResource {
 
    private CompletionStage<RestResponse> globalStatusAll(RestRequest request) {
       return globalStatus(request, null);
+   }
+
+   private void addQueueCleanupInvocations(Builder builder) {
+      builder.invocation()
+            .methods(POST).path("/v3/caches/{cacheName}/x-site/queue/_cleanup")
+            .name("Start the removal of queued keys without an entry and without a tombstone for cache")
+            .operationId("startCacheQueueCleanup")
+            .parameter("cacheName", ParameterIn.PATH, true, Schema.STRING, "The cache name")
+            .parameter(QUEUE_CLEANUP_MIN_AGE, ParameterIn.QUERY, true, Schema.LONG,
+                  "The minimum time, in milliseconds, a key must be queued to be checked")
+            .response(OK, "Queue cleanup status per node", APPLICATION_JSON)
+            .response(BAD_REQUEST, "Missing or invalid min-age", TEXT_PLAIN, Schema.STRING)
+            .response(NOT_FOUND, "Cache not found or cross-site not configured", TEXT_PLAIN, Schema.STRING)
+            .permission(AuthorizationPermission.ADMIN)
+            .auditContext(AuditContext.CACHE)
+            .handleWith(this::startQueueCleanup);
+
+      builder.invocation()
+            .methods(GET).path("/v3/caches/{cacheName}/x-site/queue/_status")
+            .name("Get queue size and queue cleanup status for cache")
+            .operationId("getCacheQueueCleanupStatus")
+            .parameter("cacheName", ParameterIn.PATH, true, Schema.STRING, "The cache name")
+            .response(OK, "Queue cleanup status per node", APPLICATION_JSON)
+            .response(NOT_FOUND, "Cache not found or cross-site not configured", TEXT_PLAIN, Schema.STRING)
+            .permission(AuthorizationPermission.ADMIN)
+            .auditContext(AuditContext.CACHE)
+            .handleWith(this::queueCleanupStatus);
+
+      builder.invocation()
+            .methods(POST).path("/v3/caches/{cacheName}/x-site/queue/_cancel-cleanup")
+            .name("Cancel the queue cleanup for cache")
+            .operationId("cancelCacheQueueCleanup")
+            .parameter("cacheName", ParameterIn.PATH, true, Schema.STRING, "The cache name")
+            .response(OK, "Queue cleanup status per node", APPLICATION_JSON)
+            .response(NOT_FOUND, "Cache not found or cross-site not configured", TEXT_PLAIN, Schema.STRING)
+            .permission(AuthorizationPermission.ADMIN)
+            .auditContext(AuditContext.CACHE)
+            .handleWith(this::cancelQueueCleanup);
    }
 }

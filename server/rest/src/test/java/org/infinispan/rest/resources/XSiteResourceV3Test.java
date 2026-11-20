@@ -64,6 +64,9 @@ public class XSiteResourceV3Test extends AbstractRestResourceTest {
       assertTrue(paths.has("/rest/v3/caches/{cacheName}/x-site/backups/{site}/state-transfer-mode"));
       assertTrue(paths.has("/rest/v3/caches/{cacheName}/x-site/backups/{site}/state-transfer-mode/_set"));
       assertTrue(paths.has("/rest/v3/caches/{cacheName}/x-site/push-state/_clear"));
+      assertTrue(paths.has("/rest/v3/caches/{cacheName}/x-site/queue/_cleanup"));
+      assertTrue(paths.has("/rest/v3/caches/{cacheName}/x-site/queue/_status"));
+      assertTrue(paths.has("/rest/v3/caches/{cacheName}/x-site/queue/_cancel-cleanup"));
 
       // Container-level endpoints
       assertTrue(paths.has("/rest/v3/container/x-site/backups"));
@@ -82,6 +85,13 @@ public class XSiteResourceV3Test extends AbstractRestResourceTest {
 
       Json bringOnlineOp = paths.at("/rest/v3/caches/{cacheName}/x-site/backups/{site}/_bring-online").at("post");
       assertEquals("bringCacheSiteOnline", bringOnlineOp.at("operationId").asString());
+
+      assertEquals("startCacheQueueCleanup",
+            paths.at("/rest/v3/caches/{cacheName}/x-site/queue/_cleanup").at("post").at("operationId").asString());
+      assertEquals("getCacheQueueCleanupStatus",
+            paths.at("/rest/v3/caches/{cacheName}/x-site/queue/_status").at("get").at("operationId").asString());
+      assertEquals("cancelCacheQueueCleanup",
+            paths.at("/rest/v3/caches/{cacheName}/x-site/queue/_cancel-cleanup").at("post").at("operationId").asString());
 
       // Verify operationIds for container-level operations
       Json globalBackupOp = paths.at("/rest/v3/container/x-site/backups").at("get");
@@ -116,5 +126,20 @@ public class XSiteResourceV3Test extends AbstractRestResourceTest {
       // Endpoint should be accessible (not 500 error)
       // May return NOT_FOUND if x-site not configured, or OK with empty result
       assertThat(response.status()).isIn(OK.code(), NOT_FOUND.code());
+   }
+
+   @Test
+   public void testQueueCleanupRequiresValidMinAge() {
+      assertThat(join(adminClient.raw().post("/rest/v3/caches/defaultcache/x-site/queue/_cleanup"))).isBadRequest();
+      assertThat(join(adminClient.raw().post("/rest/v3/caches/defaultcache/x-site/queue/_cleanup?min-age=-1"))).isBadRequest();
+      assertThat(join(adminClient.raw().post("/rest/v3/caches/defaultcache/x-site/queue/_cleanup?min-age=1h"))).isBadRequest();
+   }
+
+   @Test
+   public void testQueueCleanupWithoutCrossSite() {
+      // defaultcache has no backup site
+      assertThat(join(adminClient.raw().post("/rest/v3/caches/defaultcache/x-site/queue/_cleanup?min-age=0"))).isNotFound();
+      assertThat(join(adminClient.raw().get("/rest/v3/caches/defaultcache/x-site/queue/_status"))).isNotFound();
+      assertThat(join(adminClient.raw().post("/rest/v3/caches/defaultcache/x-site/queue/_cancel-cleanup"))).isNotFound();
    }
 }
