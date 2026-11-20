@@ -108,7 +108,7 @@ public interface RestContainerClient {
     * Restores all content associated with this containers name contained within the provided backup file. The backup
     * file is uploaded via the server endpoint for processing, returning once the restoration has completed.
     *
-    * @param name a unique name to identify the restore request.
+    * @param name   a unique name to identify the restore request.
     * @param backup the backup {@link File} containing the data to be restored.
     */
    default CompletionStage<RestResponse> restore(String name, File backup) {
@@ -118,7 +118,7 @@ public interface RestContainerClient {
    /**
     * Restores the specified content from the backup file that's associated with this container's name.
     *
-    * @param name a unique name to identify the restore request.
+    * @param name      a unique name to identify the restore request.
     * @param backup    the backup {@link File} containing the data to be restored.
     * @param resources a map of BackupManager.Resources.Type with the names of the resources to backup. If the provided
     *                  list only contains "*" then all available resources of that type are restored. A null value
@@ -129,7 +129,7 @@ public interface RestContainerClient {
    /**
     * Restores the specified content from the backup file that's associated with this container's name.
     *
-    * @param name a unique name to identify the restore request.
+    * @param name           a unique name to identify the restore request.
     * @param backupLocation the path of the backup file already located on the server.
     * @param resources      a map of BackupManager.Resources.Type with the names of the resources to backup. If the
     *                       provided list only contains "*" then all available resources of that type are restored. A
@@ -187,7 +187,7 @@ public interface RestContainerClient {
     * Updates a mutable global configuration attribute.
     *
     * @param attribute the dotted path of the attribute (e.g., "metrics.accurate-size")
-    * @param values the new value(s) to apply
+    * @param values    the new value(s) to apply
     */
    CompletionStage<RestResponse> updateGlobalConfigurationAttribute(String attribute, String... values);
 }

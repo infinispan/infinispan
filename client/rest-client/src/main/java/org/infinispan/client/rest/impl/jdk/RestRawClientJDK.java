@@ -1,6 +1,5 @@
 package org.infinispan.client.rest.impl.jdk;
 
-import static org.infinispan.client.rest.RestClient.LOG;
 import static org.infinispan.client.rest.RestHeaders.ACCEPT;
 import static org.infinispan.client.rest.RestHeaders.ACCEPT_ENCODING;
 import static org.infinispan.client.rest.RestHeaders.CONTENT_TYPE;
@@ -32,6 +31,7 @@ import org.infinispan.client.rest.configuration.AuthenticationConfiguration;
 import org.infinispan.client.rest.configuration.RestClientConfiguration;
 import org.infinispan.client.rest.configuration.ServerConfiguration;
 import org.infinispan.client.rest.configuration.SslConfiguration;
+import org.infinispan.client.rest.impl.jdk.auth.AuthRequestState;
 import org.infinispan.client.rest.impl.jdk.auth.AutoDetectAuthenticator;
 import org.infinispan.client.rest.impl.jdk.auth.BasicAuthenticator;
 import org.infinispan.client.rest.impl.jdk.auth.BearerAuthenticator;
@@ -40,6 +40,7 @@ import org.infinispan.client.rest.impl.jdk.auth.HttpAuthenticator;
 import org.infinispan.client.rest.impl.jdk.auth.LocalUserAuthenticator;
 import org.infinispan.client.rest.impl.jdk.auth.NegotiateAuthenticator;
 import org.infinispan.client.rest.impl.jdk.sse.EventSubscriber;
+import org.infinispan.client.rest.logging.Log;
 import org.infinispan.commons.dataconversion.MediaType;
 import org.infinispan.commons.util.SslContextFactory;
 
@@ -117,17 +118,20 @@ public class RestRawClientJDK implements RestRawClient, AutoCloseable {
                authenticator = new LocalUserAuthenticator(httpClient, authentication);
                break;
             default:
-               throw new IllegalArgumentException("Cannot handle " + authentication.mechanism());
+               throw Log.REST.unsupportedAuthenticationMechanism(authentication.mechanism());
          }
       } else {
          authenticator = null;
       }
       ServerConfiguration server = configuration.servers().get(0);
       baseURL = String.format("%s://%s:%d", ssl.enabled() ? "https" : "http", server.host(), server.port());
+      Log.REST.debugf("Created REST client for server %s", baseURL);
       if (configuration.pingOnCreate()) {
          try {
             head("/").toCompletableFuture().get();
+            Log.REST.debugf("Server %s is reachable", baseURL);
          } catch (ExecutionException e) {
+            Log.REST.errorConnecting(baseURL, e.getCause());
             throw new RuntimeException("Error connecting to " + baseURL, e.getCause());
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -211,10 +215,12 @@ public class RestRawClientJDK implements RestRawClient, AutoCloseable {
       EventSubscriber subscriber = new EventSubscriber(listener);
       execute(builder, subscriber::bodyHandler).handle((r, t) -> {
          if (t != null) {
+            Log.REST.sseListenerError(path, t);
             listener.onError(t, r);
          } else {
             int status = r.status();
             if (status >= 300) {
+               Log.REST.sseNonSuccessStatus(status, path);
                listener.onError(null, r);
             }
          }
@@ -245,23 +251,29 @@ public class RestRawClientJDK implements RestRawClient, AutoCloseable {
    private <T> CompletionStage<RestResponse> execute(HttpRequest.Builder builder, Supplier<HttpResponse.BodyHandler<?>> handlerSupplier) {
       // Add configured headers
       configuration.headers().forEach(builder::header);
+      AuthRequestState state = new AuthRequestState();
       if (authenticator != null && authenticator.supportsPreauthentication()) {
-         authenticator.preauthenticate(builder);
+         authenticator.preauthenticate(builder, state);
       }
       HttpRequest request = builder.build();
-      LOG.tracef("Request %s", request);
-      return handle(httpClient.sendAsync(request, handlerSupplier.get()), handlerSupplier).thenApply(RestResponseJDK::new);
+      Log.REST.tracef("Request %s", request);
+      return handle(httpClient.sendAsync(request, handlerSupplier.get()), handlerSupplier, state)
+            .thenApply(r -> {
+               Log.REST.debugf("Response %d for %s", r.statusCode(), r.request().uri());
+               return new RestResponseJDK<>(r);
+            });
    }
 
-   private <T> CompletionStage<HttpResponse<T>> handle(CompletionStage<HttpResponse<T>> response, Supplier<HttpResponse.BodyHandler<?>> handlerSupplier) {
+   private <T> CompletionStage<HttpResponse<T>> handle(CompletionStage<HttpResponse<T>> response, Supplier<HttpResponse.BodyHandler<?>> handlerSupplier, AuthRequestState state) {
       return response.thenCompose(r -> {
          if (r.statusCode() == 401 && authenticator != null) {
-            CompletionStage<HttpResponse<T>> authenticate = authenticator.authenticate(r, handlerSupplier.get());
+            CompletionStage<HttpResponse<T>> authenticate = authenticator.authenticate(r, handlerSupplier.get(), state);
             if (authenticate == null) {
                // The authenticator has given up, return the failure as is
+               Log.REST.authenticationFailed(r.request().uri().toString());
                return CompletableFuture.completedFuture(r);
             } else {
-               return handle(authenticate, handlerSupplier);
+               return handle(authenticate, handlerSupplier, state);
             }
          } else {
             return CompletableFuture.completedFuture(r);
@@ -271,9 +283,14 @@ public class RestRawClientJDK implements RestRawClient, AutoCloseable {
 
    @Override
    public void close() throws Exception {
+      Log.REST.debug("Closing REST client");
       if (Runtime.version().feature() >= 21) {
          // HttpClient.close() can hang for 1 day
-         HttpClient.class.getMethod("shutdownNow").invoke(httpClient);
+         try {
+            HttpClient.class.getMethod("shutdownNow").invoke(httpClient);
+         } catch (ReflectiveOperationException e) {
+            Log.REST.clientCloseFailure(e);
+         }
       }
       if (managedExecutorService) {
          executorService.shutdownNow();

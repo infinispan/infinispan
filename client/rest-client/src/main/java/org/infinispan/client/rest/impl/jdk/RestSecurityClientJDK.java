@@ -100,7 +100,7 @@ public class RestSecurityClientJDK implements RestSecurityClient {
       }
       RestEntity entity;
       if (description != null) {
-         entity= RestEntity.create(MediaType.TEXT_PLAIN, description);
+         entity = RestEntity.create(MediaType.TEXT_PLAIN, description);
       } else {
          entity = RestEntity.EMPTY;
       }

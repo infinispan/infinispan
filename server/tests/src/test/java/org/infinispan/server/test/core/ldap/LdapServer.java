@@ -8,7 +8,7 @@ public interface LdapServer extends AutoCloseable {
    String TEST_LDAP_PRINCIPAL = "org.infinispan.test.ldap.principal";
    String TEST_LDAP_CREDENTIAL = "org.infinispan.test.ldap.credential";
 
-   void start(String keystoreFile, File confDir) throws Exception;
+   void start(String keystoreFile, File confDir, LdapPorts ports) throws Exception;
 
    void stop() throws Exception;
 

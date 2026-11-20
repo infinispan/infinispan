@@ -7,7 +7,7 @@ public class McpProxy {
       RestClientConfigurationBuilder builder = new RestClientConfigurationBuilder();
 
       RestClient client = RestClient.forConfiguration(builder.build());
-      for(String line = System.console().readLine(); line != null; line = System.console().readLine()) {
+      for (String line = System.console().readLine(); line != null; line = System.console().readLine()) {
          System.out.println(line);
       }
    }
