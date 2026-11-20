@@ -160,25 +160,4 @@ public class TransactionConfigurationBuilderTest {
       assertThat(config).isNotNull();
       assertThat(config.transaction().completedTxTimeout()).isEqualTo(10000);
    }
-
-   public void testClusteredTxThrowsWhenRemoteTimeoutInfiniteAndCompletedTxTimeoutFinite() {
-      assertThatThrownBy(() -> new ConfigurationBuilder()
-            .clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(-1)
-            .clustering().stateTransfer().timeout(-1)
-            .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-            .completedTxTimeout(60000)
-            .build())
-            .isInstanceOf(CacheConfigurationException.class)
-            .hasMessageContaining("ISPN000737");
-   }
-
-   public void testLocalTxAllowsInfiniteRemoteTimeoutWithFiniteCompletedTxTimeout() {
-      Configuration config = new ConfigurationBuilder()
-            .clustering().cacheMode(CacheMode.LOCAL).remoteTimeout(-1)
-            .transaction().transactionMode(TransactionMode.TRANSACTIONAL)
-            .completedTxTimeout(10000)
-            .build();
-      assertThat(config).isNotNull();
-      assertThat(config.transaction().completedTxTimeout()).isEqualTo(10000);
-   }
 }

@@ -106,7 +106,11 @@ You can still configure a shorter timeout, including zero, to bound shutdown tim
 Default is `org.infinispan.transaction.lookup.GenericTransactionManagerLookup`.
 
 For clustered caches, set the cache `remote-timeout` higher than the locking `acquire-timeout` so that remote operations can report lock acquisition failures before timing out.
+The `remote-timeout` must be greater than zero milliseconds, including when you update it at runtime.
+Zero and negative values are rejected; infinite remote timeouts are not supported.
 {brandname} rejects a lower remote timeout and logs a warning when the values are equal.
+For synchronous cross-site backups, the backup `timeout` must also be greater than zero milliseconds and should be less than `remote-timeout`.
+Zero and negative locking `acquire-timeout` values remain valid and mean that lock acquisition does not wait.
 For distributed and replicated caches, a finite state transfer `timeout` must be strictly greater than `remote-timeout`.
 For clustered caches, a finite transport `lock-timeout` (`distributedSyncTimeout`) must also be strictly greater than `remote-timeout`.
 

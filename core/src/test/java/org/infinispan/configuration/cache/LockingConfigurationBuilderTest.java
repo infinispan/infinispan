@@ -140,28 +140,6 @@ public class LockingConfigurationBuilderTest {
       }
    }
 
-   public void testClusteredCacheAllowsInfiniteRemoteTimeoutWithFiniteLockTimeout() {
-      Configuration config = new ConfigurationBuilder()
-            .clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(-1)
-            .clustering().stateTransfer().timeout(-1)
-            .locking().lockAcquisitionTimeout(10000)
-            .build();
-      assertThat(config).isNotNull();
-      assertThat(config.clustering().remoteTimeout()).isEqualTo(-1);
-      assertThat(config.locking().lockAcquisitionTimeout()).isEqualTo(10000);
-   }
-
-   public void testClusteredCacheAllowsNegativeLockTimeoutWithInfiniteRemoteTimeout() {
-      Configuration config = new ConfigurationBuilder()
-            .clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(-1)
-            .clustering().stateTransfer().timeout(-1)
-            .locking().lockAcquisitionTimeout(-1)
-            .build();
-      assertThat(config).isNotNull();
-      assertThat(config.clustering().remoteTimeout()).isEqualTo(-1);
-      assertThat(config.locking().lockAcquisitionTimeout()).isEqualTo(-1);
-   }
-
    public void testLocalCacheAllowsNegativeLockTimeoutWithFiniteRemoteTimeout() {
       Configuration config = new ConfigurationBuilder()
             .clustering().cacheMode(CacheMode.LOCAL).remoteTimeout(5000)

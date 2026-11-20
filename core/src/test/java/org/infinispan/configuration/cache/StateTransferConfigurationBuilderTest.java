@@ -99,15 +99,6 @@ public class StateTransferConfigurationBuilderTest {
       cb.validate(globalConfig);
    }
 
-   public void testStateTransferThrowsWhenRemoteTimeoutInfiniteAndStateTransferTimeoutFinite() {
-      assertThatThrownBy(() -> new ConfigurationBuilder()
-            .clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(-1)
-            .stateTransfer().timeout(10000)
-            .build())
-            .isInstanceOf(CacheConfigurationException.class)
-            .hasMessageContaining("ISPN000636");
-   }
-
    public void testStateTransferAllowsInfiniteStateTransferTimeoutWithFiniteRemoteTimeout() {
       Configuration config = new ConfigurationBuilder()
             .clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(15000)
@@ -117,29 +108,6 @@ public class StateTransferConfigurationBuilderTest {
       assertThat(config.clustering().stateTransfer().timeout()).isEqualTo(-1);
    }
 
-   public void testStateTransferAllowsBothTimeoutsInfinite() {
-      Configuration config = new ConfigurationBuilder()
-            .clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(-1)
-            .stateTransfer().timeout(-1)
-            .build();
-      assertThat(config).isNotNull();
-      assertThat(config.clustering().stateTransfer().timeout()).isEqualTo(-1);
-      assertThat(config.clustering().remoteTimeout()).isEqualTo(-1);
-   }
-
-   public void testDistributedSyncTimeoutThrowsWhenRemoteTimeoutInfinite() {
-      GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-            .transport().transport(new JGroupsTransport()).distributedSyncTimeout(240000)
-            .build();
-
-      ConfigurationBuilder cb = new ConfigurationBuilder();
-      cb.clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(-1);
-
-      assertThatThrownBy(() -> cb.validate(globalConfig))
-            .isInstanceOf(CacheConfigurationException.class)
-            .hasMessageContaining("ISPN000740");
-   }
-
    public void testDistributedSyncTimeoutAllowsInfiniteDistributedSyncTimeoutWithFiniteRemoteTimeout() {
       GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
             .transport().transport(new JGroupsTransport()).distributedSyncTimeout(-1)
@@ -147,17 +115,6 @@ public class StateTransferConfigurationBuilderTest {
 
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(15000);
-
-      cb.validate(globalConfig);
-   }
-
-   public void testDistributedSyncTimeoutAllowsBothTimeoutsInfinite() {
-      GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-            .transport().transport(new JGroupsTransport()).distributedSyncTimeout(-1)
-            .build();
-
-      ConfigurationBuilder cb = new ConfigurationBuilder();
-      cb.clustering().cacheMode(CacheMode.DIST_SYNC).remoteTimeout(-1);
 
       cb.validate(globalConfig);
    }

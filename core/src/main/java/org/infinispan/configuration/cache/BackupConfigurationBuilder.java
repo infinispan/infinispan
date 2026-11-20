@@ -72,6 +72,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    /**
     * Timeout(millis) used for replicating calls to other sites.
+    * For synchronous backups, the timeout must be greater than zero milliseconds.
     */
    public BackupConfigurationBuilder replicationTimeout(long milliseconds) {
       attributes.attribute(REPLICATION_TIMEOUT).set(TimeQuantity.valueOf(milliseconds));
@@ -80,6 +81,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    /**
     * Same as {@link #replicationTimeout(long)} but supporting time units.
+    * For synchronous backups, the timeout must resolve to more than zero milliseconds.
     *
     */
    public BackupConfigurationBuilder replicationTimeout(String timeQuantity) {
@@ -139,6 +141,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    @Override
    public void validate() {
+      BackupConfiguration.validateReplicationTimeout(strategy(), attributes.attribute(REPLICATION_TIMEOUT).get());
       takeOfflineBuilder.validate();
       stateTransferBuilder.validate();
       String siteName = attributes.attribute(SITE).get();
@@ -204,6 +207,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
+      BackupConfiguration.validateReplicationTimeout(strategy(), attributes.attribute(REPLICATION_TIMEOUT).get());
       takeOfflineBuilder.validate(globalConfig);
       stateTransferBuilder.validate(globalConfig);
    }
