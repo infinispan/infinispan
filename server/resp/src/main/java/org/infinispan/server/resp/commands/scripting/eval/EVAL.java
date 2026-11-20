@@ -46,18 +46,20 @@ public class EVAL extends RespCommand implements Resp3Command {
          handler.writer().error("ERR Number of keys can't be greater than number of args");
          return handler.myStage();
       }
-      String[] keys = new String[numKeys];
+      // KEYS and ARGV may carry arbitrary binary data (including NUL bytes and bytes > 0x7F), so they
+      // must be passed through as raw bytes rather than being decoded to a String.
+      byte[][] keys = new byte[numKeys][];
       for (int i = 0; i < numKeys; i++) {
-         keys[i] = ascii(arguments.get(i + 2));
+         keys[i] = arguments.get(i + 2);
       }
-      String[] argv = new String[arguments.size() - numKeys - 2];
+      byte[][] argv = new byte[arguments.size() - numKeys - 2][];
       for (int i = numKeys; i < arguments.size() - 2; i++) {
-         argv[i - numKeys] = ascii(arguments.get(i + 2));
+         argv[i - numKeys] = arguments.get(i + 2);
       }
       return performEval(handler, ctx, script, keys, argv);
    }
 
-   protected CompletionStage<RespRequestHandler> performEval(Resp3Handler handler, ChannelHandlerContext ctx, String script, String[] keys, String[] argv) {
+   protected CompletionStage<RespRequestHandler> performEval(Resp3Handler handler, ChannelHandlerContext ctx, String script, byte[][] keys, byte[][] argv) {
       try {
          return handler.stageToReturn(handler.respServer().luaEngine().eval(handler, ctx, script, keys, argv, 0).thenApply(__ -> handler), ctx);
       } catch (Exception e) {

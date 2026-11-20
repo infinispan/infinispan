@@ -225,6 +225,45 @@ public class ScriptingCommandsTest extends SingleNodeRespBaseTest {
    }
 
    @Test
+   public void testStructLibraryIsAvailable() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // The struct library is available as a table of functions
+      String type = redis.eval("return type(struct)", ScriptOutputType.VALUE);
+      assertThat(type).isEqualTo("table");
+      // pack two unsigned shorts -> 4 bytes
+      Long len = redis.eval("return #struct.pack('HH', 1, 2)", ScriptOutputType.INTEGER);
+      assertEquals(4L, len);
+      // pack/unpack round-trip (big-endian uint32)
+      Long v = redis.eval("return struct.unpack('>I4', struct.pack('>I4', 42))", ScriptOutputType.INTEGER);
+      assertEquals(42L, v);
+      Boolean roundTrip = redis.eval("""
+            local a, b = struct.unpack('HH', struct.pack('HH', 1, 2))
+            return a == 1 and b == 2
+            """, ScriptOutputType.BOOLEAN);
+      assertTrue(roundTrip);
+      // Returning the packed binary string directly must preserve embedded NUL bytes.
+      // struct.pack('HH', 1, 2) on little-endian is the 4 bytes 0x01 0x00 0x02 0x00; it must not be
+      // truncated at the first NUL.
+      String packed = redis.eval("return struct.pack('HH', 1, 2)", ScriptOutputType.VALUE);
+      assertThat(packed).hasSize(4);
+      assertThat(packed.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1))
+            .containsExactly(0x01, 0x00, 0x02, 0x00);
+   }
+
+   @Test
+   public void testBinaryArgvWithEmbeddedNul() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // ARGV entries must reach the script as raw bytes, including embedded NUL bytes. The 4-byte
+      // argument 0x01 0x00 0x02 0x00 unpacks as two little-endian unsigned shorts (1 and 2), with the
+      // final value being the next read position (5). A corrupted argument (e.g. NUL rewritten as
+      // 0xC0 0x80 by modified UTF-8 encoding) would instead yield 49153 and 640.
+      String argv = "\u0001\u0000\u0002\u0000";
+      List<Object> out = redis.eval("return { struct.unpack('HH', ARGV[1]) }",
+            ScriptOutputType.MULTI, new String[]{}, argv);
+      assertThat(out).containsExactly(1L, 2L, 5L);
+   }
+
+   @Test
    public void testMissingGlobalRaisesError() {
       RedisCommands<String, String> redis = redisConnection.sync();
       assertThatThrownBy(() ->
