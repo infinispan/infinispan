@@ -65,17 +65,32 @@ public class ClusterInvalidatedNearCacheBloomTest extends MultiHotRodServersTest
    @AfterClass(alwaysRun = true)
    @Override
    protected void destroy() {
-      for (AssertsNearCache<Integer, String> assertsNearCache : assertClients) {
+      Throwable failure = null;
+      try {
+         for (AssertsNearCache<Integer, String> assertsNearCache : assertClients) {
+            try {
+               assertsNearCache.expectNoNearEvents(500, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+               throw new AssertionError(e);
+            }
+         }
+      } catch (RuntimeException | Error e) {
+         failure = e;
+         throw e;
+      } finally {
+         // The superclass owns the same client managers and stops all server resources.
+         assertClients.clear();
          try {
-            assertsNearCache.expectNoNearEvents(500, TimeUnit.MILLISECONDS);
-         } catch (InterruptedException e) {
-            throw new AssertionError(e);
+            super.destroy();
+         } catch (RuntimeException | Error e) {
+            if (failure == null) {
+               throw e;
+            }
+            if (failure != e) {
+               failure.addSuppressed(e);
+            }
          }
       }
-      assertClients.forEach(AssertsNearCache::stop);
-      assertClients.clear();
-
-      super.destroy();
    }
 
    private ConfigurationBuilder getCacheConfiguration() {
