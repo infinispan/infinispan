@@ -153,6 +153,58 @@ public class DefaultRollingUpgradeTestIT {
       RollingUpgradeHandler.performUpgrade(configuration);
    }
 
+   @Test
+   public void testHotKeysForwardCompat() {
+      String cacheName = "hot-keys-cache";
+      TestUser user = TestUser.ADMIN;
+      int nodeCount = 3;
+
+      RollingUpgradeConfigurationBuilder builder = new RollingUpgradeConfigurationBuilder(
+            DefaultRollingUpgradeTestIT.class.getName(),
+            RollingUpgradeTestUtil.getFromVersion(), RollingUpgradeTestUtil.getToVersion())
+            .useCustomServerConfiguration("configuration/ClusteredServerTest.xml")
+            .jgroupsProtocol("test-tcp")
+            .nodeCount(nodeCount);
+
+      ByRef.Boolean created = new ByRef.Boolean(false);
+
+      builder.handlers(
+            uh -> { /* initial (OLD_RUNNING): nothing needed */ },
+            uh -> {
+               if (uh.getCurrentState() != RollingUpgradeHandler.STATE.ADDED_NEW)
+                  return true;
+
+               // Create ON THE NEW NODE while old members remain.
+               // Before 16.4, statistics is a cache attribute and <hot-keys> does not exist, so the replicated
+               // configuration must fall back to statistics="true" for the old members to parse it.
+               if (!created.get()) {
+                  String xml = "<distributed-cache name=\"" + cacheName + "\">"
+                        + "<statistics enabled=\"true\"><hot-keys enabled=\"true\" top-k=\"50\"/></statistics>"
+                        + "</distributed-cache>";
+                  RestClient newNode = restClient(uh.getToDriver().getServerAddress(0), user);
+                  try (RestResponse res = await(newNode.cache(cacheName)
+                        .createWithConfiguration(RestEntity.create(MediaType.APPLICATION_XML, xml)))) {
+                     assertThat(res.status()).isEqualTo(200);
+                  }
+                  created.set(true);
+               }
+
+               if (!uh.getFromDriver().isRunning(0))
+                  return true;
+
+               RestClient oldNode = restClient(uh.getFromDriver().getServerAddress(0), user);
+               try (RestResponse exists = await(oldNode.cache(cacheName).exists())) {
+                  // 204 = the old node parsed the replicated configuration; 404 = parsing failed.
+                  return exists.status() == 204;
+               }
+            }
+      );
+
+      RollingUpgradeConfiguration configuration = builder.build();
+      Assumptions.assumeFalse(Compatibility.INSTANCE.isCompatibilitySkip(configuration), "Incompatible test");
+      RollingUpgradeHandler.performUpgrade(configuration);
+   }
+
    private static RestClient restClient(InetAddress addr, TestUser user) {
       RestClientConfigurationBuilder b = new RestClientConfigurationBuilder();
       b.security().authentication().enable().username(user.getUser()).password(user.getPassword());

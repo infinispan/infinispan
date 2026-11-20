@@ -2508,4 +2508,11 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Ignoring topology %d for cache %s from view %d received after status request from view %d", id = 732)
    void ignoringTopologyFromOldView(int topologyId, String cacheName, int viewId, int statusRequestViewId);
+
+   @Message(value = "Invalid value %d for attribute top-k: must be between 1 and %d", id = 733)
+   CacheConfigurationException hotKeysTopKOutOfRange(int topK, int max);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Cache '%s' has hot key tracking enabled but statistics disabled. Keys are only tracked while statistics are enabled", id = 734)
+   void hotKeysEnabledWithoutStatistics(String cacheName);
 }
