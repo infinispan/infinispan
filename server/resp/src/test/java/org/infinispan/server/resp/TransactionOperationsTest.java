@@ -18,6 +18,7 @@ import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.TransactionResult;
+import io.lettuce.core.XReadArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -335,7 +336,7 @@ public class TransactionOperationsTest extends SingleNodeRespBaseTest {
       assertThat(redis.set(k(), v())).isNull();
 
       // Command doesn't exist.
-      redis.xadd(k(1), v(), v(1));
+      redis.xgroupCreate(XReadArgs.StreamOffset.from(k(1), "0-0"), "group");
 
       assertThatThrownBy(redis::exec)
             .isInstanceOf(RedisCommandExecutionException.class)

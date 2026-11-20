@@ -13,6 +13,7 @@ import org.infinispan.testing.skip.StringLogAppender;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
+import io.lettuce.core.XReadArgs;
 import io.lettuce.core.api.sync.RedisCommands;
 
 @Test(groups = "functional", testName = "server.resp.logging.RespAccessLoggingTest")
@@ -64,7 +65,7 @@ public class RespAccessLoggingTest extends SingleNodeRespBaseTest {
       redis.mset(Map.of("k1", "v1", "k2", "v2", "k3", "v3"));
 
       // Unknown command.
-      assertThatThrownBy(() -> redis.xadd("something", "kv1", "kv2"))
+      assertThatThrownBy(() -> redis.xgroupCreate(XReadArgs.StreamOffset.from("something", "0-0"), "group"))
             .hasMessageContaining("unknown command");
 
       server.getTransport().stop();

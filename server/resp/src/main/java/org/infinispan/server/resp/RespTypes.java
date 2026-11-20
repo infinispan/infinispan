@@ -8,6 +8,7 @@ import org.infinispan.multimap.impl.SortedSetBucket;
 import org.infinispan.protostream.annotations.ProtoEnumValue;
 import org.infinispan.protostream.annotations.ProtoTypeId;
 import org.infinispan.server.resp.json.JsonBucket;
+import org.infinispan.server.resp.stream.StreamBucket;
 
 /**
  * @since 15.0
@@ -58,6 +59,8 @@ public enum RespTypes {
          return RespTypes.string;
       } else if (c == JsonBucket.class) {
          return RespTypes.json;
+      } else if (c == StreamBucket.class) {
+         return RespTypes.stream;
       } else {
          return RespTypes.unknown;
       }
