@@ -103,6 +103,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.testing.Exceptions;
 import org.infinispan.testing.annotation.TestForIssue;
 import org.infinispan.topology.LocalTopologyManager;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 import org.testng.reporters.Files;
@@ -1145,6 +1146,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       ComponentRegistry ccr = TestingUtil.extractComponentRegistry(c);
       ClusterPublisherManager<?, ?> cpm = ccr.getClusterPublisherManager().running();
       ClusterPublisherManager<?, ?> spyCpm = Mockito.spy(cpm);
+      ArgumentCaptor<Integer> batchCaptor = ArgumentCaptor.forClass(Integer.class);
       Mockito.doAnswer(ivk -> {
          SegmentPublisherSupplier<Object> sps = (SegmentPublisherSupplier<Object>) ivk.callRealMethod();
          SegmentPublisherSupplier<Object> spySps = Mockito.spy(sps);
@@ -1152,7 +1154,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
                .when(spySps).publisherWithoutSegments();
          return spySps;
       }).when(spyCpm).keyPublisher(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.eq(EMPTY_BIT_SET),
-            Mockito.eq(DeliveryGuarantee.EXACTLY_ONCE), Mockito.eq(1000), Mockito.any());
+            Mockito.eq(DeliveryGuarantee.EXACTLY_ONCE), batchCaptor.capture(), Mockito.any());
       TestingUtil.replaceComponent(c, ClusterPublisherManager.class, spyCpm, true);
 
       if (protocol == HTTP_11) {
@@ -1165,6 +1167,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
                   .hasMessage("Received RST_STREAM: Stream cancelled");
          }
       }
+      assertThat(batchCaptor.getValue()).isBetween(1, CacheResourceV2.STREAM_BATCH_SIZE);
       TestingUtil.replaceComponent(c, ClusterPublisherManager.class, cpm, true);
    }
 
@@ -1175,6 +1178,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
       ComponentRegistry ccr = TestingUtil.extractComponentRegistry(c);
       ClusterPublisherManager<?, ?> cpm = ccr.getClusterPublisherManager().running();
       ClusterPublisherManager<?, ?> spyCpm = Mockito.spy(cpm);
+      ArgumentCaptor<Integer> batchCaptor = ArgumentCaptor.forClass(Integer.class);
       Mockito.doAnswer(ivk -> {
          SegmentPublisherSupplier<Object> sps = (SegmentPublisherSupplier<Object>) ivk.callRealMethod();
          SegmentPublisherSupplier<Object> spySps = Mockito.spy(sps);
@@ -1182,7 +1186,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
                .when(spySps).publisherWithoutSegments();
          return spySps;
       }).when(spyCpm).entryPublisher(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.eq(EMPTY_BIT_SET),
-            Mockito.eq(DeliveryGuarantee.EXACTLY_ONCE), Mockito.eq(1000), Mockito.any());
+            Mockito.eq(DeliveryGuarantee.EXACTLY_ONCE), batchCaptor.capture(), Mockito.any());
       TestingUtil.replaceComponent(c, ClusterPublisherManager.class, spyCpm, true);
 
       if (protocol == HTTP_11) {
@@ -1195,6 +1199,7 @@ public class CacheResourceV2Test extends AbstractRestResourceTest {
                   .hasMessage("Received RST_STREAM: Stream cancelled");
          }
       }
+      assertThat(batchCaptor.getValue()).isBetween(1, CacheResourceV2.STREAM_BATCH_SIZE);
       TestingUtil.replaceComponent(c, ClusterPublisherManager.class, cpm, true);
    }
 
