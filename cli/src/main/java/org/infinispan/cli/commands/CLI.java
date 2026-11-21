@@ -440,8 +440,22 @@ public class CLI extends CliCommand {
       return runtimeBuilder;
    }
 
-   private static boolean isKubernetesMode() {
-      return ProcessInfo.getInstance().getName().contains("kubectl") || Boolean.getBoolean("infinispan.cli.kubernetes");
+   static boolean isKubernetesMode() {
+      return Boolean.getBoolean("infinispan.cli.kubernetes") || isPluginExecutable(ProcessInfo.getInstance().getName());
+   }
+
+   /**
+    * Both <code>kubectl</code> and <code>oc</code> run a plugin by executing a binary named
+    * <code>&lt;command&gt;-&lt;plugin&gt;</code>, so the CLI only knows that it is running as a plugin from the name it
+    * was invoked under.
+    *
+    * @param command the command of the current process, i.e. the path of its executable.
+    */
+   static boolean isPluginExecutable(String command) {
+      // The command is an absolute path on every platform the native CLI is built for
+      int separator = Math.max(command.lastIndexOf('/'), command.lastIndexOf('\\'));
+      String executable = command.substring(separator + 1);
+      return executable.startsWith("kubectl-") || executable.startsWith("oc-");
    }
 
    public static int main(Shell shell, String[] args, Properties properties, boolean kube) {
