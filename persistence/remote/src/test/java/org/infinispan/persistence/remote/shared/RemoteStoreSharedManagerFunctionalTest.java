@@ -1,5 +1,8 @@
 package org.infinispan.persistence.remote.shared;
 
+import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
+import static org.infinispan.server.core.test.ServerTestingUtil.startProtocolServer;
+import static org.infinispan.server.hotrod.test.HotRodTestingUtil.host;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -10,7 +13,10 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.remote.RemoteStoreFunctionalTest;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.global.RemoteContainersConfigurationBuilder;
+import org.infinispan.server.core.admin.embeddedserver.EmbeddedServerAdminOperationHandler;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
+import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.testing.Testing;
 import org.testng.annotations.AfterClass;
@@ -27,7 +33,10 @@ public class RemoteStoreSharedManagerFunctionalTest extends RemoteStoreFunctiona
    public void setupBefore() throws Throwable {
       Testing.retryOnFailure(() -> {
          localCacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
-         hrServer = HotRodClientTestingUtil.startHotRodServer(localCacheManager);
+         HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
+         builder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
+         hrServer = startProtocolServer(findFreePort(),
+               port -> HotRodTestingUtil.startHotRodServer(localCacheManager, host(), port, builder, false));
       }, this::tearDown);
    }
 
