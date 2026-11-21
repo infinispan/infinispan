@@ -1,5 +1,9 @@
 package org.infinispan.spring.embedded.provider;
 
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.spring.embedded.AbstractEmbeddedCacheManagerFactory;
 import org.infinispan.util.logging.Log;
@@ -53,6 +57,32 @@ public class SpringEmbeddedCacheManagerFactoryBean extends AbstractEmbeddedCache
 
    private SpringEmbeddedCacheManager cacheManager;
 
+   private boolean putForExternalReadOnLoad;
+
+   private Set<String> putForExternalReadOnLoadCaches = Collections.emptySet();
+
+   /**
+    * Whether values computed by a value loader on a cache miss (for example {@code @Cacheable(sync = true)}) are
+    * stored with {@link org.infinispan.Cache#putForExternalRead(Object, Object)} in all caches.
+    *
+    * @param putForExternalReadOnLoad {@code true} to enable it for all caches
+    * @see SpringEmbeddedCache
+    */
+   public void setPutForExternalReadOnLoad(boolean putForExternalReadOnLoad) {
+      this.putForExternalReadOnLoad = putForExternalReadOnLoad;
+   }
+
+   /**
+    * Names of the caches in which values computed by a value loader on a cache miss are stored with
+    * {@link org.infinispan.Cache#putForExternalRead(Object, Object)}, when it is not enabled for all caches.
+    *
+    * @param putForExternalReadOnLoadCaches the cache names
+    * @see SpringEmbeddedCache
+    */
+   public void setPutForExternalReadOnLoadCaches(Set<String> putForExternalReadOnLoadCaches) {
+      this.putForExternalReadOnLoadCaches = new LinkedHashSet<>(putForExternalReadOnLoadCaches);
+   }
+
    // ------------------------------------------------------------------------
    // org.springframework.beans.factory.InitializingBean
    // ------------------------------------------------------------------------
@@ -65,7 +95,10 @@ public class SpringEmbeddedCacheManagerFactoryBean extends AbstractEmbeddedCache
       logger.info("Initializing SpringEmbeddedCacheManager instance ...");
 
       final EmbeddedCacheManager nativeEmbeddedCacheManager = createBackingEmbeddedCacheManager();
-      this.cacheManager = new SpringEmbeddedCacheManager(nativeEmbeddedCacheManager);
+      final boolean allCaches = this.putForExternalReadOnLoad;
+      final Set<String> selectedCaches = this.putForExternalReadOnLoadCaches;
+      this.cacheManager = new SpringEmbeddedCacheManager(nativeEmbeddedCacheManager, false,
+            cacheName -> allCaches || selectedCaches.contains(cacheName));
 
       logger.info("Successfully initialized SpringEmbeddedCacheManager instance ["
                         + this.cacheManager + "]");

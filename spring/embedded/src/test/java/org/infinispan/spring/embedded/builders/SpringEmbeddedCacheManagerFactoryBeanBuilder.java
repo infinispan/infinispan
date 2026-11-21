@@ -1,5 +1,7 @@
 package org.infinispan.spring.embedded.builders;
 
+import java.util.Set;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.spring.embedded.provider.SpringEmbeddedCacheManagerFactoryBean;
@@ -35,6 +37,16 @@ public class SpringEmbeddedCacheManagerFactoryBeanBuilder {
    public SpringEmbeddedCacheManagerFactoryBean build() throws Exception {
       buildingBean.afterPropertiesSet();
       return buildingBean;
+   }
+
+   public SpringEmbeddedCacheManagerFactoryBeanBuilder withPutForExternalReadOnLoad(boolean enabled) {
+      buildingBean.setPutForExternalReadOnLoad(enabled);
+      return this;
+   }
+
+   public SpringEmbeddedCacheManagerFactoryBeanBuilder withPutForExternalReadOnLoadCaches(Set<String> cacheNames) {
+      buildingBean.setPutForExternalReadOnLoadCaches(cacheNames);
+      return this;
    }
 
    public SpringEmbeddedCacheManagerFactoryBeanBuilder withConfigurationBuilder(ConfigurationBuilder configurationBuilder) {

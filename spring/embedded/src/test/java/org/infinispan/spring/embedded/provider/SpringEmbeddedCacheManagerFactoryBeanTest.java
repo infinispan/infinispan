@@ -1,10 +1,12 @@
 package org.infinispan.spring.embedded.provider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -96,6 +98,36 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest extends AbstractTestNGSpr
       assertEquals(springEmbeddedCacheManager.getClass(), objectUnderTest.getObjectType(),
             "getObjectType() should return the most derived class of the actual SpringEmbeddedCacheManager "
                   + "implementation returned from getObject(). However, it didn't.");
+   }
+
+   @Test
+   public void testIfSpringEmbeddedCacheManagerFactoryBeanAppliesPutForExternalReadOnLoadToSelectedCaches()
+         throws Exception {
+      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
+      builder.defaultCacheName("default");
+      objectUnderTest = SpringEmbeddedCacheManagerFactoryBeanBuilder
+            .defaultBuilder().withGlobalConfiguration(builder).withConfigurationBuilder(new ConfigurationBuilder())
+            .withPutForExternalReadOnLoadCaches(Set.of("default")).build();
+
+      final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
+      springEmbeddedCacheManager.getNativeCacheManager().defineConfiguration("other", new ConfigurationBuilder().build());
+
+      assertTrue(((SpringEmbeddedCache) springEmbeddedCacheManager.getCache("default")).isPutForExternalReadOnLoad());
+      assertFalse(((SpringEmbeddedCache) springEmbeddedCacheManager.getCache("other")).isPutForExternalReadOnLoad());
+   }
+
+   @Test
+   public void testIfSpringEmbeddedCacheManagerFactoryBeanAppliesPutForExternalReadOnLoadToAllCaches()
+         throws Exception {
+      GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
+      builder.defaultCacheName("default");
+      objectUnderTest = SpringEmbeddedCacheManagerFactoryBeanBuilder
+            .defaultBuilder().withGlobalConfiguration(builder).withConfigurationBuilder(new ConfigurationBuilder())
+            .withPutForExternalReadOnLoad(true).build();
+
+      final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
+
+      assertTrue(((SpringEmbeddedCache) springEmbeddedCacheManager.getCache("default")).isPutForExternalReadOnLoad());
    }
 
    @Test

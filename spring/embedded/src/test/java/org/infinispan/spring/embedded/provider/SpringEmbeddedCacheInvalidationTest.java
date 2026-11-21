@@ -3,6 +3,8 @@ package org.infinispan.spring.embedded.provider;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.util.concurrent.CompletableFuture;
+
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -19,6 +21,7 @@ public class SpringEmbeddedCacheInvalidationTest extends MultipleCacheManagersTe
 
    private static final String CACHE = "invalidation";
    private static final String OTHER_CACHE = "invalidation-other";
+   private static final String TX_CACHE = "invalidation-tx";
 
    @Override
    protected void createCacheManagers() throws Throwable {
@@ -26,7 +29,8 @@ public class SpringEmbeddedCacheInvalidationTest extends MultipleCacheManagersTe
       builder.clustering().cacheMode(CacheMode.INVALIDATION_SYNC);
       createClusteredCaches(2, CACHE, builder);
       defineConfigurationOnAllManagers(OTHER_CACHE, builder);
-      waitForClusterToForm(OTHER_CACHE);
+      defineConfigurationOnAllManagers(TX_CACHE, getDefaultClusteredCacheConfig(CacheMode.INVALIDATION_SYNC, true));
+      waitForClusterToForm(OTHER_CACHE, TX_CACHE);
    }
 
    private Cache springCache(int node, boolean putForExternalReadOnLoad) {
@@ -88,7 +92,36 @@ public class SpringEmbeddedCacheInvalidationTest extends MultipleCacheManagersTe
 
    public void testExistingEntryIsNotOverwrittenOnLoad() {
       Cache node0 = springCache(0, true);
-      cache(0, CACHE).putForExternalRead("k4", "existing");
-      assertEquals("existing", node0.get("k4", () -> "loaded"));
+      // the entry appears after the initial miss, while the value is being loaded
+      node0.get("k4", () -> {
+         cache(0, CACHE).put("k4", "existing");
+         return "loaded";
+      });
+      assertEquals("existing", cache(0, CACHE).get("k4"));
+   }
+
+   public void testLoadInsideTransactionIsRolledBack() throws Exception {
+      Cache node0 = new SpringEmbeddedCacheManager(manager(0), false, true).getCache(TX_CACHE);
+
+      tm(0, TX_CACHE).begin();
+      try {
+         assertEquals("v0", node0.get("k6", () -> "v0"));
+      } finally {
+         tm(0, TX_CACHE).rollback();
+      }
+      // the loaded value took part in the transaction, so it is discarded on rollback
+      assertNull(cache(0, TX_CACHE).get("k6"));
+   }
+
+   public void testReactiveLoadDoesNotInvalidateOtherNodesWhenEnabled() {
+      Cache node0 = new SpringEmbeddedCacheManager(manager(0), true, true).getCache(CACHE);
+      Cache node1 = new SpringEmbeddedCacheManager(manager(1), true, true).getCache(CACHE);
+
+      assertEquals("v0", node0.retrieve("k7", () -> CompletableFuture.completedFuture("v0")).join());
+      assertEquals("v1", node1.retrieve("k7", () -> CompletableFuture.completedFuture("v1")).join());
+
+      // the value is stored by the time the returned stage completes, and node1 did not invalidate node0
+      assertEquals("v0", cache(0, CACHE).get("k7"));
+      assertEquals("v1", cache(1, CACHE).get("k7"));
    }
 }

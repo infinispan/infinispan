@@ -9,6 +9,7 @@ In a cluster with two or more nodes, the cache hit ratio for frequently read key
 Values that a `@Cacheable` method loads on a cache miss come from the source of truth, so other nodes do not need to discard their copies.
 You can configure the provider to store those values with `Cache.putForExternalRead()`, which stores the value on the local node without invalidating other nodes.
 Explicit writes with `@CachePut` and removals with `@CacheEvict` continue to invalidate the key on all nodes.
+If a transaction is active when the value is loaded, the provider stores the value with a regular write so that the value is discarded if the transaction rolls back.
 
 .Prerequisites
 

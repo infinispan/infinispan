@@ -82,23 +82,39 @@ public class InfinispanEmbeddedConfigurationProperties {
       return reactive;
    }
 
+   /**
+    * @return whether values loaded on a cache miss are stored with {@code putForExternalRead} in all caches
+    */
    public boolean isPutForExternalReadOnLoad() {
       return putForExternalReadOnLoad;
    }
 
+   /**
+    * @param putForExternalReadOnLoad whether values loaded on a cache miss are stored with
+    *                                 {@code putForExternalRead} in all caches
+    */
    public void setPutForExternalReadOnLoad(boolean putForExternalReadOnLoad) {
       this.putForExternalReadOnLoad = putForExternalReadOnLoad;
    }
 
+   /**
+    * @return the names of the caches in which values loaded on a cache miss are stored with
+    * {@code putForExternalRead}
+    */
    public Set<String> getPutForExternalReadOnLoadCaches() {
       return putForExternalReadOnLoadCaches;
    }
 
+   /**
+    * @param putForExternalReadOnLoadCaches the names of the caches in which values loaded on a cache miss are
+    *                                       stored with {@code putForExternalRead}
+    */
    public void setPutForExternalReadOnLoadCaches(Set<String> putForExternalReadOnLoadCaches) {
       this.putForExternalReadOnLoadCaches = putForExternalReadOnLoadCaches;
    }
 
    /**
+    * @param cacheName the cache name
     * @return whether {@code putForExternalReadOnLoad} applies to the cache with the given name
     */
    public boolean isPutForExternalReadOnLoad(String cacheName) {
