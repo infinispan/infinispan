@@ -360,7 +360,7 @@ public class IracTombstoneUnitTest extends AbstractInfinispanTest {
    public void testRoundRunsAfterFailedPrimaryCheck() throws InterruptedException {
       BlockingDeque<RunnableData> queue = new LinkedBlockingDeque<>();
       AtomicInteger attempts = new AtomicInteger();
-      DefaultIracTombstoneManager manager = createIracTombstoneManager(queue, 10, 1000, createDistributionManager(false),
+      DefaultIracTombstoneManager manager = createIracTombstoneManager(queue, 1, 1000, createDistributionManager(false),
             createIracManager(new AtomicBoolean(false)), createRpcManagerFailingUnicast(attempts));
       manager.start();
       insertTombstones(1, manager, createIracMetadata());
@@ -368,10 +368,39 @@ public class IracTombstoneUnitTest extends AbstractInfinispanTest {
       nextRound(queue).run();
       assertEquals(1, attempts.get());
 
-      nextRound(queue).run();
+      RunnableData retry = queue.poll(10, TimeUnit.SECONDS);
+      assertNotNull(retry);
+      assertEquals(1000, retry.delay);
+      retry.runnable.run();
       assertEquals(2, attempts.get());
 
       assertNotNull(nextRound(queue));
+      manager.stop();
+   }
+
+   public void testFailedCleanupRoundsBackOffUpToMaxDelay() throws InterruptedException {
+      BlockingDeque<RunnableData> queue = new LinkedBlockingDeque<>();
+      RpcManager rpcManager = createRpcManager();
+      Mockito.when(rpcManager.invokeCommand(ArgumentMatchers.any(Address.class), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any()))
+            .thenAnswer(invocationOnMock -> CompletableFuture.failedFuture(new TimeoutException("simulated RPC timeout")));
+      DefaultIracTombstoneManager manager = createIracTombstoneManager(queue, 1, 1000, createDistributionManager(false),
+            createIracManager(new AtomicBoolean(false)), rpcManager);
+      manager.start();
+      insertTombstones(1, manager, createIracMetadata());
+
+      RunnableData firstRound = queue.poll(10, TimeUnit.SECONDS);
+      assertNotNull(firstRound);
+      assertEquals(500, firstRound.delay);
+      firstRound.runnable.run();
+
+      RunnableData retry = queue.poll(10, TimeUnit.SECONDS);
+      assertNotNull(retry);
+      assertEquals(1000, retry.delay);
+      retry.runnable.run();
+
+      RunnableData nextRetry = queue.poll(10, TimeUnit.SECONDS);
+      assertNotNull(nextRetry);
+      assertEquals(1000, nextRetry.delay);
       manager.stop();
    }
 
