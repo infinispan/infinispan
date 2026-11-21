@@ -99,13 +99,21 @@ public final class FlowableTimeoutAfterRequest<T> extends Flowable<T> {
       @Override
       public void request(long n) {
          if (SubscriptionHelper.validate(n)) {
-            long total = BackpressureHelper.add(requested, n);
+            long generation;
+            long total;
+            synchronized (this) {
+               generation = advanceGeneration();
+               if (generation == TERMINATED_INDEX) {
+                  return;
+               }
+               total = BackpressureHelper.add(requested, n);
+            }
             if (log.isTraceEnabled()) {
                log.tracef("TimeoutAfterRequest[%08x] request(%d), outstanding demand: %d, arming timer",
                      System.identityHashCode(this), n, total + n);
             }
             upstream.get().request(n);
-            scheduleTimeout();
+            scheduleTimeout(generation);
          }
       }
 
@@ -189,18 +197,28 @@ public final class FlowableTimeoutAfterRequest<T> extends Flowable<T> {
          return idx;
       }
 
-      void scheduleTimeout() {
+      synchronized long advanceGeneration() {
          long current, next;
          do {
             current = get();
             if (current == TERMINATED_INDEX) {
-               return;
+               return TERMINATED_INDEX;
             }
             next = current + 1;
          } while (!compareAndSet(current, next));
-         long finalNext = next;
-         Disposable d = worker.schedule(() -> onTimeout(finalNext), timeout, unit);
-         installTimer(finalNext, d);
+         return next;
+      }
+
+      void scheduleTimeout() {
+         scheduleTimeout(advanceGeneration());
+      }
+
+      void scheduleTimeout(long generation) {
+         if (generation == TERMINATED_INDEX) {
+            return;
+         }
+         Disposable d = worker.schedule(() -> onTimeout(generation), timeout, unit);
+         installTimer(generation, d);
       }
 
       /**
@@ -239,15 +257,12 @@ public final class FlowableTimeoutAfterRequest<T> extends Flowable<T> {
       }
 
       void onTimeout(long expectedIdx) {
-         if (requested.get() <= 0) {
-            if (log.isTraceEnabled()) {
-               log.tracef("TimeoutAfterRequest[%08x] timer fired but no outstanding demand, ignoring",
-                     System.identityHashCode(this));
+         // Demand publication and invalidating its old timer must be indivisible to timeout delivery.
+         // Never hold this monitor while calling upstream, downstream, or the scheduler.
+         synchronized (this) {
+            if (requested.get() <= 0 || !compareAndSet(expectedIdx, TERMINATED_INDEX)) {
+               return;
             }
-            return;
-         }
-         if (!compareAndSet(expectedIdx, TERMINATED_INDEX)) {
-            return;
          }
          if (log.isTraceEnabled()) {
             log.tracef("TimeoutAfterRequest[%08x] timed out after %d %s with %d outstanding demand",

@@ -6,13 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,7 +20,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.infinispan.test.AbstractInfinispanTest;
 import org.reactivestreams.Subscription;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import io.reactivex.rxjava3.core.Flowable;
@@ -28,7 +27,7 @@ import io.reactivex.rxjava3.core.FlowableSubscriber;
 import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.processors.PublishProcessor;
-import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.schedulers.TestScheduler;
 
 /**
  * Tests for {@link FlowableTimeoutAfterRequest}.
@@ -46,29 +45,22 @@ public class FlowableTimeoutAfterRequestTest extends AbstractInfinispanTest {
    private static final long TIMEOUT_MS = 100;
    private static final long AWAIT_SECONDS = 10;
 
-   private final ScheduledExecutorService timeoutExecutor =
-         Executors.newSingleThreadScheduledExecutor(getTestThreadFactory("timeout"));
-   private final Scheduler scheduler = Schedulers.from(timeoutExecutor);
-
-   @AfterClass(alwaysRun = true)
-   public void tearDown() {
-      timeoutExecutor.shutdownNow();
-   }
-
    /**
     * A downstream with a bounded number of in flight operations, such as {@code flatMapCompletable}, replenishes
     * the demand from inside {@code onNext} whenever an operation completes right away. The timer armed by that
     * request must survive the delivery it was issued from, otherwise the subscription never times out.
     */
    public void testTimesOutWhenDemandReplenishedInsideOnNext() throws InterruptedException {
+      TestScheduler scheduler = new TestScheduler();
       PublishProcessor<Integer> source = PublishProcessor.create();
       RecordingSubscriber subscriber = new RecordingSubscriber(1, subscription -> subscription.request(1));
-      timeoutFlowable(source).subscribe(subscriber);
+      timeoutFlowable(source, scheduler).subscribe(subscriber);
 
       // The source emits a single item and then stalls while the subscriber still has demand.
       source.onNext(1);
 
-      assertTrue(subscriber.awaitTermination(AWAIT_SECONDS, TimeUnit.SECONDS),
+      scheduler.advanceTimeBy(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+      assertTrue(subscriber.awaitTermination(0, TimeUnit.SECONDS),
             "The subscription must be terminated by the timeout");
       assertInstanceOf(TimeoutException.class, subscriber.error());
       assertEquals(1, subscriber.received());
@@ -78,6 +70,7 @@ public class FlowableTimeoutAfterRequestTest extends AbstractInfinispanTest {
     * The same scenario, with the demand replenished by another thread while {@code onNext} is still running.
     */
    public void testTimesOutWhenDemandReplenishedFromAnotherThread() throws InterruptedException {
+      TestScheduler scheduler = new TestScheduler();
       PublishProcessor<Integer> source = PublishProcessor.create();
       RecordingSubscriber subscriber = new RecordingSubscriber(1, subscription -> {
          // Wait for the request to complete before returning, so the delivery always observes the demand
@@ -87,11 +80,12 @@ public class FlowableTimeoutAfterRequestTest extends AbstractInfinispanTest {
          });
          requested.get(AWAIT_SECONDS, TimeUnit.SECONDS);
       });
-      timeoutFlowable(source).subscribe(subscriber);
+      timeoutFlowable(source, scheduler).subscribe(subscriber);
 
       source.onNext(1);
 
-      assertTrue(subscriber.awaitTermination(AWAIT_SECONDS, TimeUnit.SECONDS),
+      scheduler.advanceTimeBy(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+      assertTrue(subscriber.awaitTermination(0, TimeUnit.SECONDS),
             "The subscription must be terminated by the timeout");
       assertInstanceOf(TimeoutException.class, subscriber.error());
    }
@@ -101,13 +95,15 @@ public class FlowableTimeoutAfterRequestTest extends AbstractInfinispanTest {
     * fail it, no matter how long it stays idle.
     */
    public void testNoTimeoutWhileDemandIsZero() throws InterruptedException {
+      TestScheduler scheduler = new TestScheduler();
       PublishProcessor<Integer> source = PublishProcessor.create();
       RecordingSubscriber subscriber = new RecordingSubscriber(1, null);
-      timeoutFlowable(source).subscribe(subscriber);
+      timeoutFlowable(source, scheduler).subscribe(subscriber);
 
       source.onNext(1);
 
-      assertFalse(subscriber.awaitTermination(TIMEOUT_MS * 10, TimeUnit.MILLISECONDS),
+      scheduler.advanceTimeBy(TIMEOUT_MS * 10, TimeUnit.MILLISECONDS);
+      assertFalse(subscriber.awaitTermination(0, TimeUnit.MILLISECONDS),
             "The subscription must not be terminated while it has no outstanding demand");
       assertNull(subscriber.error());
 
@@ -118,19 +114,22 @@ public class FlowableTimeoutAfterRequestTest extends AbstractInfinispanTest {
     * Demand that arrives long after the previous item must arm the timer again.
     */
    public void testTimesOutWhenDemandArrivesLate() throws InterruptedException {
+      TestScheduler scheduler = new TestScheduler();
       PublishProcessor<Integer> source = PublishProcessor.create();
       RecordingSubscriber subscriber = new RecordingSubscriber(1, null);
-      timeoutFlowable(source).subscribe(subscriber);
+      timeoutFlowable(source, scheduler).subscribe(subscriber);
 
       source.onNext(1);
 
-      assertFalse(subscriber.awaitTermination(TIMEOUT_MS * 5, TimeUnit.MILLISECONDS),
+      scheduler.advanceTimeBy(TIMEOUT_MS * 5, TimeUnit.MILLISECONDS);
+      assertFalse(subscriber.awaitTermination(0, TimeUnit.MILLISECONDS),
             "The subscription must not be terminated while it has no outstanding demand");
 
       // The source is still stalled, so this demand can never be satisfied.
       subscriber.request(1);
 
-      assertTrue(subscriber.awaitTermination(AWAIT_SECONDS, TimeUnit.SECONDS),
+      scheduler.advanceTimeBy(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+      assertTrue(subscriber.awaitTermination(0, TimeUnit.SECONDS),
             "The subscription must be terminated by the timeout");
       assertInstanceOf(TimeoutException.class, subscriber.error());
    }
@@ -148,6 +147,7 @@ public class FlowableTimeoutAfterRequestTest extends AbstractInfinispanTest {
     * </p>
     */
    public void testTimerSurvivesReorderedConcurrentScheduling() throws Exception {
+      TestScheduler scheduler = new TestScheduler();
       CountDownLatch parked = new CountDownLatch(1);
       CountDownLatch release = new CountDownLatch(1);
       // Call 1 arms the timer for the initial request(1), call 2 is the one made from onNext.
@@ -173,7 +173,8 @@ public class FlowableTimeoutAfterRequestTest extends AbstractInfinispanTest {
       emission.get(AWAIT_SECONDS, TimeUnit.SECONDS);
 
       // The source is stalled and the subscriber has outstanding demand, so the subscription must time out.
-      assertTrue(subscriber.awaitTermination(AWAIT_SECONDS, TimeUnit.SECONDS),
+      scheduler.advanceTimeBy(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+      assertTrue(subscriber.awaitTermination(0, TimeUnit.SECONDS),
             "The subscription must be terminated by the timeout");
       assertInstanceOf(TimeoutException.class, subscriber.error());
    }
@@ -192,6 +193,7 @@ public class FlowableTimeoutAfterRequestTest extends AbstractInfinispanTest {
     * </p>
     */
    public void testStaleTimerInstallDoesNotReplaceNewerTimer() throws Exception {
+      TestScheduler scheduler = new TestScheduler();
       CountDownLatch parked = new CountDownLatch(1);
       CountDownLatch release = new CountDownLatch(1);
       AtomicInteger scheduleCalls = new AtomicInteger();
@@ -226,12 +228,84 @@ public class FlowableTimeoutAfterRequestTest extends AbstractInfinispanTest {
       assertFalse(newer.discardedByOperator(), "the newer task must not be replaced by the stale one");
 
       // What ultimately matters: the stalled source with outstanding demand is still failed by the timeout.
-      assertTrue(subscriber.awaitTermination(AWAIT_SECONDS, TimeUnit.SECONDS),
+      scheduler.advanceTimeBy(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+      assertTrue(subscriber.awaitTermination(0, TimeUnit.SECONDS),
             "The subscription must be terminated by the timeout");
       assertInstanceOf(TimeoutException.class, subscriber.error());
    }
 
-   private Flowable<Integer> timeoutFlowable(PublishProcessor<Integer> source) {
+   public void testIdleTimerCannotExpireNewDemandDuringUpstreamRequest() {
+      TestScheduler scheduler = new TestScheduler();
+      RecordingSubscriber subscriber = new RecordingSubscriber(1, null);
+      var parent = new FlowableTimeoutAfterRequest.TimeoutSubscriber<Integer>(subscriber, TIMEOUT_MS,
+            TimeUnit.MILLISECONDS, scheduler.createWorker(), null);
+      AtomicInteger requests = new AtomicInteger();
+      parent.onSubscribe(new Subscription() {
+         @Override
+         public void request(long n) {
+            if (requests.incrementAndGet() == 2) {
+               // Expire the previous idle timer before the new upstream request returns.
+               scheduler.advanceTimeBy(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            }
+         }
+
+         @Override
+         public void cancel() { }
+      });
+      parent.onNext(1);
+      subscriber.request(1);
+      assertNull(subscriber.error(), "An idle timer must not expire newly published demand");
+      scheduler.advanceTimeBy(TIMEOUT_MS - 1, TimeUnit.MILLISECONDS);
+      assertNull(subscriber.error());
+      scheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
+      assertInstanceOf(TimeoutException.class, subscriber.error());
+   }
+
+   public void testCompetingInstallsRetryGenerationCheck() throws Exception {
+      TestScheduler scheduler = new TestScheduler();
+      RecordingSubscriber subscriber = new RecordingSubscriber(1, null);
+      var parent = new FlowableTimeoutAfterRequest.TimeoutSubscriber<Integer>(subscriber, TIMEOUT_MS,
+            TimeUnit.MILLISECONDS, scheduler.createWorker(), null);
+      CountDownLatch checked = new CountDownLatch(1);
+      CountDownLatch release = new CountDownLatch(1);
+      FlowableTimeoutAfterRequest.Timer initial = mock(FlowableTimeoutAfterRequest.Timer.class);
+      Disposable initialTask = Disposable.empty();
+      when(initial.task()).thenReturn(initialTask);
+      when(initial.generation()).thenAnswer(invocation -> {
+         if (Thread.currentThread().getName().equals("older-timer-install")) {
+            checked.countDown();
+            assertTrue(release.await(AWAIT_SECONDS, TimeUnit.SECONDS));
+         }
+         return 0L;
+      });
+      parent.timerTask.set(initial);
+      Disposable older = Disposable.empty();
+      Disposable newer = Disposable.empty();
+      Future<Void> install = fork(() -> {
+         Thread thread = Thread.currentThread();
+         String name = thread.getName();
+         try {
+            thread.setName("older-timer-install");
+            parent.installTimer(1, older);
+         } finally {
+            thread.setName(name);
+         }
+      });
+      try {
+         assertTrue(checked.await(AWAIT_SECONDS, TimeUnit.SECONDS));
+         // The older installer has read the old slot. Replace it before its CAS, forcing a retry.
+         parent.installTimer(2, newer);
+      } finally {
+         release.countDown();
+      }
+      install.get(AWAIT_SECONDS, TimeUnit.SECONDS);
+      assertEquals(2, parent.timerTask.get().generation());
+      assertTrue(older.isDisposed());
+      assertFalse(newer.isDisposed());
+      parent.cancel();
+   }
+
+   private Flowable<Integer> timeoutFlowable(PublishProcessor<Integer> source, Scheduler scheduler) {
       return new FlowableTimeoutAfterRequest<>(source.hide(), TIMEOUT_MS, TimeUnit.MILLISECONDS, scheduler, null);
    }
 
