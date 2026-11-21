@@ -42,8 +42,8 @@ public class EmbeddedApplicationPublishedBridge extends AbstractApplicationPubli
 
    @CacheEntryExpired
    public void processCacheEntryExpired(CacheEntryExpiredEvent event) {
-      // The expired value is read from the data container when the event is raised, so it may be
-      // missing if the entry was already removed by a concurrent operation.
+      // Expiration may have no value, including genuine cache-store expiration. Avoid an NPE;
+      // publishing an ID-only event when the original session is unavailable is not supported here.
       Session session = (Session) event.getValue();
       if (session != null) {
          emitSessionExpiredEvent(session);

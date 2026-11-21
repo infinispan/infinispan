@@ -1,6 +1,8 @@
 package org.infinispan.spring.embedded.session;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
 import java.util.List;
@@ -8,6 +10,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.notifications.cachelistener.event.impl.EventImpl;
 import org.infinispan.spring.common.InfinispanTestExecutionListener;
 import org.infinispan.spring.common.provider.SpringCache;
 import org.infinispan.spring.common.session.AbstractInfinispanSessionRepository;
@@ -121,6 +125,21 @@ public class EmbeddedApplicationPublishedBridgeTest extends InfinispanApplicatio
 
       //then
       assertEquals(0, countDestroyedEvents(events));
+   }
+
+   public void testExpirationWithoutSessionDoesNotPublishEvent() {
+      List<Object> events = new CopyOnWriteArrayList<>();
+      EmbeddedApplicationPublishedBridge bridge = new EmbeddedApplicationPublishedBridge(createSpringCache());
+      bridge.setApplicationEventPublisher(events::add);
+      EventImpl<String, Object> event = EventImpl.createEvent(embeddedCacheManager.getCache(),
+            Event.Type.CACHE_ENTRY_EXPIRED);
+      event.setKey("expired-session");
+      event.setValue(null);
+
+      // Store expiration may carry only a key. The bridge avoids an exception but cannot publish
+      // the original session; defining ID-only expiration events is a separate concern.
+      assertDoesNotThrow(() -> bridge.processCacheEntryExpired(event));
+      assertTrue(events.isEmpty());
    }
 
    private long countDestroyedEvents(List<Object> events) {
