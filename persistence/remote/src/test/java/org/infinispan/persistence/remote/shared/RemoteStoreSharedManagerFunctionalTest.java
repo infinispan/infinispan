@@ -1,6 +1,7 @@
 package org.infinispan.persistence.remote.shared;
 
 import static org.infinispan.server.core.test.ServerTestingUtil.findFreePort;
+import static org.infinispan.server.core.test.ServerTestingUtil.startProtocolServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.host;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
@@ -34,7 +35,8 @@ public class RemoteStoreSharedManagerFunctionalTest extends RemoteStoreFunctiona
          localCacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
          HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
          builder.adminOperationsHandler(new EmbeddedServerAdminOperationHandler());
-         hrServer = HotRodTestingUtil.startHotRodServer(localCacheManager, host(), findFreePort(), builder, false);
+         hrServer = startProtocolServer(findFreePort(),
+               port -> HotRodTestingUtil.startHotRodServer(localCacheManager, host(), port, builder, false));
       }, this::tearDown);
    }
 
