@@ -145,8 +145,8 @@ public class RespServer extends AbstractProtocolServer<RespServerConfiguration> 
       String cacheName = configuration.defaultCacheName();
       segmentSlots = new SegmentSlotRelation(defaultCacheConfiguration.clustering().hash().numSegments());
       return getBlockingManager()
-            // Ensure it invokes `.getOrCreateCache` because it starts the cache in all nodes in the cluster.
-            // Otherwise, the node would start only at the node the connection was established.
+            // Use `getOrCreateCache` so the cache is defined and registered on every node in the cluster,
+            // not only on the node this connection was established with. Remote nodes finish starting it asynchronously.
             .runBlocking(() -> SecurityActions.getOrCreateCache(cacheManager, cacheName, defaultCacheConfiguration), "create-resp-cache");
    }
 

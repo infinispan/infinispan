@@ -21,6 +21,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerAdmin;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stats.CacheContainerStats;
+import org.infinispan.util.concurrent.BlockingManager;
 
 /**
  * This is a convenient base class for implementing a cache manager delegate.
@@ -166,6 +167,11 @@ public class AbstractDelegatingEmbeddedCacheManager extends InternalCacheManager
    @Override
    public <K, V> Cache<K, V> createCache(String name, Configuration configuration) {
       return cm.createCache(name, configuration);
+   }
+
+   @Override
+   protected CompletionStage<Void> internalCreateCache(String cacheName, BlockingManager blockingManager) {
+      return InternalCacheManager.createCache(cm, cacheName, blockingManager);
    }
 
    @Override
