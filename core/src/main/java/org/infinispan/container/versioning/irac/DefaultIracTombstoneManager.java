@@ -297,18 +297,8 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
          // Composite carries a synthetic exception if trying to access through cause chain.
          if (cause instanceof CompositeException ce)
             cause = Util.getRootCause(ce.getExceptions().get(0));
-         log.warnFailedIracTask(commandsFactory.getCacheName(), sanitizeExceptionForLog(cause));
+         log.warnFailedIracTask(commandsFactory.getCacheName(), cause.toString().replaceAll("\\R", " "));
       }
-   }
-
-   static String sanitizeExceptionForLog(Throwable throwable) {
-      String message = throwable.toString();
-      StringBuilder sanitized = new StringBuilder(message.length());
-      for (int i = 0; i < message.length(); ++i) {
-         char c = message.charAt(i);
-         sanitized.append(Character.isISOControl(c) ? ' ' : c);
-      }
-      return sanitized.toString();
    }
 
    public CompletionStage<Void> checkStaleTombstones() {

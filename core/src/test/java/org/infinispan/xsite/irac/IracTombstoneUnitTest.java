@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -378,30 +379,27 @@ public class IracTombstoneUnitTest extends AbstractInfinispanTest {
       manager.stop();
    }
 
-   public void testFailedCleanupRoundsBackOffUpToMaxDelay() throws InterruptedException {
-      BlockingDeque<RunnableData> queue = new LinkedBlockingDeque<>();
+   public void testFailedCleanupRoundsBackOffUpToMaxDelay() {
+      Queue<RunnableData> queue = new ArrayDeque<>();
       RpcManager rpcManager = createRpcManager();
       Mockito.when(rpcManager.invokeCommand(ArgumentMatchers.any(Address.class), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any()))
             .thenAnswer(invocationOnMock -> CompletableFuture.failedFuture(new TimeoutException("simulated RPC timeout")));
-      DefaultIracTombstoneManager manager = createIracTombstoneManager(queue, 1, 1000, createDistributionManager(false),
+      DefaultIracTombstoneManager manager = createIracTombstoneManager(queue, 1, 8, createDistributionManager(false),
             createIracManager(new AtomicBoolean(false)), rpcManager);
       manager.start();
-      insertTombstones(1, manager, createIracMetadata());
+      try {
+         insertTombstones(1, manager, createIracMetadata());
 
-      RunnableData firstRound = queue.poll(10, TimeUnit.SECONDS);
-      assertNotNull(firstRound);
-      assertEquals(500, firstRound.delay);
-      firstRound.runnable.run();
-
-      RunnableData retry = queue.poll(10, TimeUnit.SECONDS);
-      assertNotNull(retry);
-      assertEquals(1000, retry.delay);
-      retry.runnable.run();
-
-      RunnableData nextRetry = queue.poll(10, TimeUnit.SECONDS);
-      assertNotNull(nextRetry);
-      assertEquals(1000, nextRetry.delay);
-      manager.stop();
+         // The mocked scheduler records each delay. Run the captured task without waiting for that delay.
+         for (long delay : new long[] { 4, 8, 8 }) {
+            assertEquals(1, queue.size());
+            RunnableData round = queue.remove();
+            assertEquals(delay, round.delay);
+            round.runnable.run();
+         }
+      } finally {
+         manager.stop();
+      }
    }
 
    public void testRoundRunsAfterFailedPendingKeyCheck() throws InterruptedException {

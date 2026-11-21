@@ -2,7 +2,9 @@ package org.infinispan.xsite.irac;
 
 import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.extractField;
 import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.replaceField;
 import static org.infinispan.test.TestingUtil.wrapComponent;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -10,14 +12,22 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
@@ -85,8 +95,6 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       builder.clustering().hash().numOwners(2).numSegments(16);
       builder.sites().addBackup().site("NYC").strategy(BackupConfiguration.BackupStrategy.ASYNC).stateTransfer().chunkSize(1);
-      // Short delay for the tests that run the scheduler. It is stopped by default, see createCacheManagers().
-      builder.sites().maxTombstoneCleanupDelay(100);
       return builder;
    }
 
@@ -229,7 +237,7 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
          tombstoneManager(bCache).startCleanupTombstone();
 
          // Wait until the first round is running, otherwise the executor merges both calls into a single round.
-         eventually(() -> "The primary owner check was not sent", failureInjected::isDone);
+         eventually(() -> "The failed round did not finish", () -> failureInjected.isDone() && !tombstoneManager(bCache).isTaskRunning());
          assertEquals(1, tombstoneManager(bCache).size());
 
          tombstoneManager(bCache).startCleanupTombstone();
@@ -241,32 +249,46 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
       }
    }
 
-   /**
-    * The scheduler must keep starting rounds by itself after a failed one. Nothing else starts a round in this test,
-    * which is how a node behaves in production.
-    */
-   public void testScheduledCleanupResumesAfterFailedPrimaryCheck(Method method) {
+   public void testScheduledCleanupResumesAfterFailedPrimaryCheck(Method method) throws InterruptedException {
       String key = k(method);
       int segment = getSegment(key);
       Cache<String, String> bCache = findBackupOwner(segment);
+      DefaultIracTombstoneManager manager = tombstoneManager(bCache);
 
-      // Stored only in the backup owner: the primary owner sees it as stale and asks the owners to remove it.
-      tombstoneManager(bCache).storeTombstone(segment, key, dummyMetadata(5));
-      assertEquals(1, tombstoneManager(bCache).size());
-
+      // Only the backup has the tombstone, so the primary will ask the owners to remove it on retry.
+      manager.storeTombstone(segment, key, dummyMetadata(5));
       CompletableFuture<Void> failureInjected = recordingRpcManager(bCache).failNextRequest(IracTombstonePrimaryCheckCommand.class);
+      BlockingQueue<Runnable> rounds = new LinkedBlockingQueue<>();
+      ScheduledExecutorService original = extractField(manager, "scheduledExecutorService");
+      ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
+      when(scheduler.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class))).thenAnswer(invocation -> {
+         rounds.add(invocation.getArgument(0));
+         return null;
+      });
+      replaceField(scheduler, "scheduledExecutorService", manager, DefaultIracTombstoneManager.class);
 
       try {
-         // Enables the scheduler stopped in createCacheManagers().
-         tombstoneManager(bCache).start();
+         manager.start();
+         runScheduledRound(rounds);
 
-         eventually(() -> "The primary owner check was not sent", failureInjected::isDone);
-         eventuallyEquals(0, () -> tombstoneManager(bCache).size());
+         Runnable retry = rounds.poll(10, TimeUnit.SECONDS);
+         assertNotNull(retry, "The failed cleanup round did not schedule a retry");
+         assertTrue(failureInjected.isDone());
+         assertEquals(1, manager.size());
+
+         retry.run();
+         eventuallyEquals(0, manager::size);
       } finally {
-         tombstoneManager(bCache).stopCleanupTask();
-         // remove tombstone to avoid messing up with other tests
-         tombstoneManager(bCache).removeTombstone(key);
+         manager.stopCleanupTask();
+         replaceField(original, "scheduledExecutorService", manager, DefaultIracTombstoneManager.class);
+         manager.removeTombstone(key);
       }
+   }
+
+   private static void runScheduledRound(BlockingQueue<Runnable> rounds) throws InterruptedException {
+      Runnable round = rounds.poll(10, TimeUnit.SECONDS);
+      assertNotNull(round, "No cleanup round was scheduled");
+      round.run();
    }
 
    public void testStateTransfer(Method method) {
