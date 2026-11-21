@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import org.infinispan.client.hotrod.DataFormat;
 import org.infinispan.client.hotrod.configuration.Configuration;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.InternalRemoteCache;
 
 public abstract class AbstractCacheOperation<V> extends AbstractHotRodOperation<V> {
@@ -35,5 +36,15 @@ public abstract class AbstractCacheOperation<V> extends AbstractHotRodOperation<
 
    public Configuration getConfiguration() {
       return internalRemoteCache.getRemoteCacheContainer().getConfiguration();
+   }
+
+   /**
+    * The timeout to apply to operations which are not bound to a single entry and may therefore take considerably
+    * longer than {@link Configuration#socketTimeout()}.
+    *
+    * @return the timeout in milliseconds.
+    */
+   protected final long longRunningTimeout() {
+      return ConfigurationProperties.longRunningOperationTimeout(getConfiguration().socketTimeout());
    }
 }

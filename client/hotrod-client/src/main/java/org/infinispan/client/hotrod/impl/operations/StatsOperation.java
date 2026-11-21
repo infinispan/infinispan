@@ -54,4 +54,9 @@ public class StatsOperation extends AbstractCacheOperation<ServerStatistics> {
       numStats = -1;
       result = null;
    }
+
+   @Override
+   public long timeout() {
+      return longRunningTimeout();
+   }
 }

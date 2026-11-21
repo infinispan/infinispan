@@ -125,6 +125,13 @@ public class ConfigurationProperties {
    // defaults
    public static final int DEFAULT_HOTROD_PORT = 11222;
    public static final int DEFAULT_SO_TIMEOUT = 2_000;
+   /**
+    * Operations which are not bound to a single entry grow with the size of the data set, so the socket timeout is
+    * scaled by this factor rather than applied to them directly.
+    *
+    * @see #longRunningOperationTimeout(int)
+    */
+   private static final int LONG_RUNNING_OPERATION_TIMEOUT_MULTIPLIER = 5;
    public static final int DEFAULT_CONNECT_TIMEOUT = 2_000;
    public static final int DEFAULT_MAX_RETRIES = 3;
    public static final int DEFAULT_BATCH_SIZE = 10_000;
@@ -259,6 +266,19 @@ public class ConfigurationProperties {
 
    public void setSocketTimeout(int socketTimeout) {
       props.setProperty(SO_TIMEOUT, socketTimeout);
+   }
+
+   /**
+    * The timeout applied to operations which are not bound to a single entry, such as
+    * {@link org.infinispan.client.hotrod.RemoteCache#size()}, bulk operations, queries, server tasks and
+    * administrative operations. The duration of those grows with the size of the data set, so the socket timeout is
+    * rarely appropriate for them.
+    *
+    * @param socketTimeout the configured socket timeout in milliseconds.
+    * @return the timeout to apply to long running operations, in milliseconds.
+    */
+   public static long longRunningOperationTimeout(int socketTimeout) {
+      return (long) socketTimeout * LONG_RUNNING_OPERATION_TIMEOUT_MULTIPLIER;
    }
 
    public String getProtocolVersion() {

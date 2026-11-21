@@ -53,6 +53,13 @@ public class PrepareTransactionOperation extends AbstractCacheOperation<Integer>
    }
 
    @Override
+   public long timeout() {
+      // The server validates every modification of the transaction and may block for up to the transaction timeout
+      // while acquiring the locks, so never wait for less than that.
+      return Math.max(timeoutMs, longRunningTimeout());
+   }
+
+   @Override
    public Integer createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       if (status == HotRodConstants.NO_ERROR_STATUS) {
          return buf.readInt();
