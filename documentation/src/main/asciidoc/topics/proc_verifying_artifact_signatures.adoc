@@ -14,17 +14,13 @@ It is also published permanently in link:https://github.com/infinispan/infinispa
 
 [%autowidth,options="header"]
 |===
-^|Attribute ^|Value a|
-Full fingerprint a|
-`F5FEBA84EB26C56457B2CF819E31AB27445478DB` a|
-Algorithm and capabilities a|
-RSA 3072-bit, sign and certify (`SC`) a|
-User ID a|
-`Infinispan <infinispan-maven@infinispan.org>` a|
-Valid from a|
-July 6, 2022 a|
-Expires on a|
-July 3, 2032 a|
+|Full fingerprint|Algorithm and capabilities|User ID|Valid from|Expires on
+
+|`F5FEBA84EB26C56457B2CF819E31AB27445478DB`
+|RSA 3072-bit, sign and certify (`SC`)
+|`Infinispan <infinispan-maven@infinispan.org>`
+|July 6, 2022
+|July 3, 2032
 |===
 
 This key is the only OpenPGP key used to sign {brandname} artifacts; no rotation has occurred and there are no older keys associated with these coordinates.
@@ -35,14 +31,14 @@ GnuPG must be installed on the system to verify signatures manually.
 
 .Procedure
 
-* Download the artifact and its `.asc` signature file from Maven Central for example `infinispan-bom-16.1.4.pom` and `infinispan-bom-16.1.4.pom.asc`.
+* Download the artifact and its `.asc` signature file from Maven Central for example `infinispan-bom-{ispn_version}.pom` and `infinispan-bom-{ispn_version}.pom.asc`.
 +
-[source,bash,options="nowrap"]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
-curl -fsSL https://repo1.maven.org/maven2/org/infinispan/infinispan-bom/16.1.4/infinispan-bom-16.1.4.pom \
-  --output infinispan-bom-16.1.4.pom
-curl -fsSL https://repo1.maven.org/maven2/org/infinispan/infinispan-bom/16.1.4/infinispan-bom-16.1.4.pom.asc \
-  --output infinispan-bom-16.1.4.pom.asc
+curl -fsSL https://repo1.maven.org/maven2/org/infinispan/infinispan-bom/{ispn_version}/infinispan-bom-{ispn_version}.pom \
+  --output infinispan-bom-{ispn_version}.pom
+curl -fsSL https://repo1.maven.org/maven2/org/infinispan/infinispan-bom/{ispn_version}/infinispan-bom-{ispn_version}.pom.asc \
+  --output infinispan-bom-{ispn_version}.pom.asc
 ----
 
 * Import the public part of the signing key from one of its official sources, for example:
@@ -61,9 +57,9 @@ gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys F5FEBA84EB26C56457B2CF81
 
 * Verify that the signature was made by the documented key and matches the artifact.
 +
-[source,bash,options="nowrap"]
+[source,bash,options="nowrap",subs="attributes+"]
 ----
-gpg --verify infinispan-bom-16.1.4.pom.asc infinispan-bom-16.1.4.pom
+gpg --verify infinispan-bom-{ispn_version}.pom.asc infinispan-bom-{ispn_version}.pom
 ----
 
 A successful verification displays a message similar to the following output:

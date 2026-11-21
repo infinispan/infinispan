@@ -23,6 +23,13 @@ on:
 permissions:
   contents: read
 
+# Serialize runs that upload assets for the same release version, so that overlapping runs
+# (a release and its resume, or two resumes) cannot interleave one run's asset with another
+# run's signature. Runs for different versions are unaffected.
+concurrency:
+  group: release-${{ github.event.inputs.version }}
+  cancel-in-progress: false
+
 jobs:
   published:
     runs-on: ubuntu-latest
@@ -96,12 +103,182 @@ jobs:
         name: Build native executable
         run: ./mvnw package -Pdistribution -Pnative -am -pl ${{ steps.detect-cli.outputs.module }}
 
+      # The built archive is passed to the sign-cli-assets job, which signs and attaches it.
+      # Keeping the credentials out of this job means tag-controlled build code never executes
+      # on a runner that holds the GPG key, passphrase or release token.
       - name: Upload CLI native executable
-        id: upload-cli-native-executable
-        run: |
-          gh release upload ${{ github.event.inputs.version }} ${{ steps.detect-cli.outputs.module }}/target/infinispan-cli-${{ github.event.inputs.version }}-${{ matrix.asset_name }}.zip
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: infinispan-cli-${{ matrix.asset_name }}
+          path: ${{ steps.detect-cli.outputs.module }}/target/infinispan-cli-${{ github.event.inputs.version }}-${{ matrix.asset_name }}.zip
+          if-no-files-found: error
+
+  # Signs and attaches the CLI native executables built by native-cli. This is a separate job
+  # that does not check out the release tag, for two reasons:
+  # - the signing credentials never run on a runner that executed tag-controlled build code;
+  # - the signing action is always loaded from the workflow's own revision, so it is available
+  #   even for the tags of older releases that predate it.
+  sign-cli-assets:
+    needs: native-cli
+    runs-on: ubuntu-latest
+    concurrency:
+      # Shares its key with the sign-cli-assets job of the release workflow, so a resume
+      # serializes with any release still uploading assets for the same version.
+      group: sign-cli-assets-${{ inputs.version }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+
+      # The original release creates the GitHub release and attaches its assets as part
+      # of its release job; a resume started while that is still in progress can acquire
+      # its signing concurrency group first and reach the upload before the release
+      # exists. Poll for the release before signing so the upload does not race it.
+      - name: Wait for the release to exist
         env:
-          GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+          GH_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+          # Indirected so the dispatch input reaches this script as data, never as shell
+          # syntax; the regex below rejects anything that is not a release version.
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){2}(\.[A-Za-z][A-Za-z0-9]*)?(-[A-Za-z0-9._-]+)?$ ]]; then
+            echo "::error::Invalid release version: $VERSION"
+            exit 1
+          fi
+          for i in $(seq 1 60); do
+            if gh release view "$VERSION" --json tagName >/dev/null 2>&1; then
+              echo "Release $VERSION exists"
+              exit 0
+            fi
+            echo "Waiting for release $VERSION to be created (attempt $i/60)..."
+            sleep 30
+          done
+          echo "::error::Timed out waiting for release $VERSION to be created"
+          exit 1
+
+      - name: Download CLI native executables
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: cli-assets
+          pattern: infinispan-cli-*
+
+      - name: Sign and attach CLI native executables
+        uses: ./.github/actions/sign-release-assets
+        with:
+          release-tag: ${{ inputs.version }}
+          asset-paths: cli-assets/*/*.zip
+          gpg-armored-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
+          gpg-passphrase: ${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}
+          token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+          clobber: "true"
+
+  # Best effort: repairs a partially uploaded server distribution, e.g. when the original
+  # release run was interrupted between uploading the ZIP and its .asc signature, or when a
+  # partially replaced upload left the ZIP paired with a signature over different bytes.
+  # Re-signs the exact bytes already attached to the release, so no rebuild is needed;
+  # skipped when the published pair is present and verifies.
+  server-dist:
+    needs: published
+    runs-on: ubuntu-latest
+    concurrency:
+      # Shares its key with the sign-server-dist job of the release workflow, so a resume
+      # serializes with any release still uploading assets for the same version.
+      group: sign-server-assets-${{ inputs.version }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+
+      # The original release creates the GitHub release and attaches the server ZIP as
+      # part of its release job; a resume started while that is still in progress can
+      # acquire its signing concurrency group first and check the release before the
+      # ZIP is attached, reporting a spurious "missing ZIP". Poll for the release and
+      # the ZIP before checking so the check does not race the original release.
+      - name: Wait for the release and server ZIP
+        env:
+          GH_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+          # Indirected so the dispatch input reaches this script as data, never as shell
+          # syntax; the regex below rejects anything that is not a release version.
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){2}(\.[A-Za-z][A-Za-z0-9]*)?(-[A-Za-z0-9._-]+)?$ ]]; then
+            echo "::error::Invalid release version: $VERSION"
+            exit 1
+          fi
+          zip="infinispan-server-$VERSION.zip"
+          for i in $(seq 1 60); do
+            if gh release view "$VERSION" --json assets >/dev/null 2>&1; then
+              names=$(gh release view "$VERSION" --json assets --jq '.assets[].name')
+              if grep -Fxq "$zip" <<<"$names"; then
+                echo "Release $VERSION and server ZIP are present"
+                exit 0
+              fi
+            fi
+            echo "Waiting for release $VERSION and server ZIP (attempt $i/60)..."
+            sleep 30
+          done
+          echo "::error::Timed out waiting for release $VERSION and its server ZIP"
+          exit 1
+
+      - name: Check server distribution assets
+        id: server-dist
+        env:
+          GH_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+          GPG_ARMORED_KEY: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
+          # Indirected so the dispatch input reaches this script as data, never as shell
+          # syntax; the regex below rejects anything that is not a release version.
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){2}(\.[A-Za-z][A-Za-z0-9]*)?(-[A-Za-z0-9._-]+)?$ ]]; then
+            echo "::error::Invalid release version: $VERSION"
+            exit 1
+          fi
+          zip="infinispan-server-$VERSION.zip"
+          names=$(gh release view "$VERSION" --json assets --jq '.assets[].name')
+          mode=missing-zip
+          if grep -Fxq "$zip" <<<"$names"; then
+            # Fetch the published bytes: needed to verify the signature below, and by the
+            # repair path, which re-signs the asset exactly as published.
+            mkdir -p server-dist
+            gh release download "$VERSION" --pattern "$zip" --dir server-dist
+            if grep -Fxq "$zip.asc" <<<"$names"; then
+              # Both assets exist, but a partially replaced upload can pair an asset with a
+              # signature over different bytes, so verify the pair instead of trusting names.
+              gh release download "$VERSION" --pattern "$zip.asc" --dir server-dist
+              echo "$GPG_ARMORED_KEY" | gpg --batch --import >/dev/null 2>&1
+              if gpg --batch --verify "server-dist/$zip.asc" "server-dist/$zip" >/dev/null 2>&1; then
+                mode=complete
+              else
+                echo "::warning::$zip.asc does not verify against the published $zip; re-signing the pair"
+                mode=missing-asc
+              fi
+            else
+              mode=missing-asc
+            fi
+          fi
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+
+      - name: Fail when the server distribution is missing
+        if: steps.server-dist.outputs.mode == 'missing-zip'
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          echo "::error::The server distribution ZIP is not attached to release $VERSION. The resume workflow can only re-sign assets that were already uploaded; re-run the sign-server-dist job of the original release run (while its build artifact is still available) or attach the ZIP manually."
+          exit 1
+
+      # Only the signature is attached: the ZIP was downloaded from the release and is
+      # byte-identical to the published one, so re-uploading it (gh --clobber deletes the
+      # existing asset before uploading the replacement) would risk deleting the published
+      # asset for no benefit.
+      - name: Re-sign and re-attach server distribution
+        if: steps.server-dist.outputs.mode == 'missing-asc'
+        uses: ./.github/actions/sign-release-assets
+        with:
+          release-tag: ${{ inputs.version }}
+          asset-paths: server-dist/*.zip
+          upload-signatures-only: "true"
+          gpg-armored-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
+          gpg-passphrase: ${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}
+          token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+          clobber: "true"
 
   images:
     needs: published
@@ -126,8 +303,8 @@ jobs:
       repository: infinispan/infinispan-operator
 
   update-website:
-    needs: [published, native-cli]
-    if: always() && needs.published.result == 'success'
+    needs: [published, sign-cli-assets, server-dist]
+    if: always() && needs.published.result == 'success' && needs.sign-cli-assets.result == 'success' && needs.server-dist.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Update website release data
@@ -153,5 +330,38 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          # Indirected so the dispatch input reaches this script as data, never as shell
+          # syntax; the regex below rejects anything that is not a release version.
+          VERSION: ${{ inputs.version }}
         run: |
-          gh variable set "RELEASE_$(echo '${{ inputs.version }}' | cut -f 1-2 -d '.' | tr . _)_VERSION" -b "$(echo ${{ inputs.version }} | cut -f 1 -d '-')" --org infinispan --visibility all;
+          if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){2}(\.[A-Za-z][A-Za-z0-9]*)?(-[A-Za-z0-9._-]+)?$ ]]; then
+            echo "::error::Invalid release version: $VERSION"
+            exit 1
+          fi
+          gh variable set "RELEASE_$(echo "$VERSION" | cut -f 1-2 -d '.' | tr . _)_VERSION" -b "$(echo "$VERSION" | cut -f 1 -d '-')" --org infinispan --visibility all;
+
+  # Best effort: keeps the example artifact version in KEYS on main current after a latest
+  # release, including one completed through this resume workflow. Never blocks or fails
+  # the resume itself.
+  update-signing-statement:
+    needs: published
+    if: ${{ inputs.type == 'latest' }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    concurrency:
+      # Serialize with the equivalent job of the release workflow and with other resume
+      # runs, so that concurrent KEYS updates cannot conflict on main. Note that a pending
+      # update can still be displaced by a later dispatch (GitHub keeps only one pending
+      # run per group); this is accepted because the update is best-effort and the next
+      # latest release heals it. Once actionlint learns the concurrency "queue" property
+      # (github.blog/changelog/2026-05-07), setting queue: max here removes the limitation.
+      group: update-signing-statement
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+
+      - name: Update example artifact version in KEYS
+        uses: ./.github/actions/update-signing-statement
+        with:
+          release-version: ${{ inputs.version }}
+          token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
