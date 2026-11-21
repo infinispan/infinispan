@@ -1,5 +1,8 @@
 package org.infinispan.spring.starter.embedded;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties("infinispan.embedded")
@@ -15,6 +18,17 @@ public class InfinispanEmbeddedConfigurationProperties {
     * Reactive mode
     */
    private boolean reactive = false;
+
+   /**
+    * Store values loaded on a cache miss by {@code @Cacheable(sync = true)} with {@code putForExternalRead},
+    * so that in invalidation mode they do not invalidate the key on the other nodes. Applies to all caches.
+    */
+   private boolean putForExternalReadOnLoad = false;
+
+   /**
+    * Names of the caches to which {@code putForExternalReadOnLoad} applies, when it is not enabled for all caches.
+    */
+   private Set<String> putForExternalReadOnLoadCaches = new LinkedHashSet<>();
 
    /**
     * The configuration file to use as a template for all caches created.
@@ -66,5 +80,28 @@ public class InfinispanEmbeddedConfigurationProperties {
 
    public boolean isReactive() {
       return reactive;
+   }
+
+   public boolean isPutForExternalReadOnLoad() {
+      return putForExternalReadOnLoad;
+   }
+
+   public void setPutForExternalReadOnLoad(boolean putForExternalReadOnLoad) {
+      this.putForExternalReadOnLoad = putForExternalReadOnLoad;
+   }
+
+   public Set<String> getPutForExternalReadOnLoadCaches() {
+      return putForExternalReadOnLoadCaches;
+   }
+
+   public void setPutForExternalReadOnLoadCaches(Set<String> putForExternalReadOnLoadCaches) {
+      this.putForExternalReadOnLoadCaches = putForExternalReadOnLoadCaches;
+   }
+
+   /**
+    * @return whether {@code putForExternalReadOnLoad} applies to the cache with the given name
+    */
+   public boolean isPutForExternalReadOnLoad(String cacheName) {
+      return putForExternalReadOnLoad || putForExternalReadOnLoadCaches.contains(cacheName);
    }
 }

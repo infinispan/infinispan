@@ -131,7 +131,7 @@ public class SpringCache implements Cache {
                   T newValue = valueLoader.call();
                   // we can't use computeIfAbsent here since in distributed embedded scenario we would
                   // send a lambda to other nodes. This is the behavior we want to avoid.
-                  value = (T) nativeCache.putIfAbsent(key, encodeNull(newValue));
+                  value = (T) storeLoadedValue(key, encodeNull(newValue));
                   if (value == null) {
                      value = newValue;
                   }
@@ -283,6 +283,28 @@ public class SpringCache implements Cache {
       return value != NullValue.NULL ? (T) value : null;
    }
 
+   /**
+    * Stores a value that has just been computed by a value loader on a cache miss
+    * (see {@link #get(Object, Callable)} and {@link #retrieve(Object, Supplier)}).
+    * <p>
+    * The default implementation uses {@code putIfAbsent}. Subclasses may override it, e.g. to store values
+    * read from an external source without notifying other cluster members.
+    *
+    * @param key          the key
+    * @param encodedValue the loaded value, already encoded (never {@code null})
+    * @return the value already present in the cache (encoded), or {@code null} if the loaded value should be returned
+    */
+   protected Object storeLoadedValue(Object key, Object encodedValue) {
+      return nativeCache.putIfAbsent(key, encodedValue);
+   }
+
+   /**
+    * Asynchronous counterpart of {@link #storeLoadedValue(Object, Object)}.
+    */
+   protected CompletableFuture<Object> storeLoadedValueAsync(Object key, Object encodedValue) {
+      return nativeCache.putIfAbsentAsync(key, encodedValue);
+   }
+
    //Implemented as a static holder class for backwards compatibility.
    //Imagine a situation where a client has new integration module and old Spring version. In that case
    //this exception does not exist. However, we can bypass this by using separate class file (which is loaded
@@ -331,7 +353,7 @@ public class SpringCache implements Cache {
                         result.completeExceptionally(ex2);
                         computationResults.remove(key);
                      } else {
-                        nativeCache.putIfAbsentAsync(key, encodeNull(newValue))
+                        storeLoadedValueAsync(key, encodeNull(newValue))
                               .whenComplete((existing, ex3) -> {
                                  if (ex3 != null) {
                                     result.completeExceptionally((Throwable) ex3);

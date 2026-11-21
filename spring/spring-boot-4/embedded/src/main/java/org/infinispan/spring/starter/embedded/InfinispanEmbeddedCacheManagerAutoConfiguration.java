@@ -29,6 +29,10 @@ public class InfinispanEmbeddedCacheManagerAutoConfiguration {
    @ConditionalOnBean(type = "org.infinispan.manager.EmbeddedCacheManager")
    public SpringEmbeddedCacheManager springEmbeddedCacheManager(EmbeddedCacheManager embeddedCacheManager) {
       InfinispanEmbeddedConfigurationProperties infinispanProperties = context.getBean(InfinispanEmbeddedConfigurationProperties.class);
-      return new SpringEmbeddedCacheManager(embeddedCacheManager, infinispanProperties == null? false : infinispanProperties.isReactive());
+      if (infinispanProperties == null) {
+         return new SpringEmbeddedCacheManager(embeddedCacheManager);
+      }
+      return new SpringEmbeddedCacheManager(embeddedCacheManager, infinispanProperties.isReactive(),
+            infinispanProperties::isPutForExternalReadOnLoad);
    }
 }

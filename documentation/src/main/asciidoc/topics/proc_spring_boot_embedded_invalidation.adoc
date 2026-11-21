@@ -1,0 +1,53 @@
+[id='spring-boot-embedded-invalidation_{context}']
+= Using Spring Cache annotations with invalidation caches
+
+With invalidation caches, every write to a key removes that key from the other nodes in the cluster.
+By default, when a `@Cacheable` method runs on a cache miss, the {brandname} Spring Cache provider stores the result with a regular write.
+As a result, a node that loads a value from the database invalidates the same key on every other node, and the other nodes must load it again on their next read.
+In a cluster with two or more nodes, the cache hit ratio for frequently read keys can drop close to zero.
+
+Values that a `@Cacheable` method loads on a cache miss come from the source of truth, so other nodes do not need to discard their copies.
+You can configure the provider to store those values with `Cache.putForExternalRead()`, which stores the value on the local node without invalidating other nodes.
+Explicit writes with `@CachePut` and removals with `@CacheEvict` continue to invalidate the key on all nodes.
+
+.Prerequisites
+
+* Use an invalidation cache, for example `<invalidation-cache mode="SYNC"/>`.
+* Use `@Cacheable(sync = true)` on the methods that load the values.
+Without the `sync` attribute, Spring stores loaded values with the same operation that `@CachePut` uses, and the provider cannot tell the two cases apart.
+
+.Procedure
+
+. Annotate the methods that load values with `@Cacheable(sync = true)`:
++
+[source,java,options="nowrap"]
+----
+@Cacheable(value = "books", sync = true)
+public Book findBook(Integer bookId) {...}
+----
+. Enable `putForExternalRead` for values that are loaded on a cache miss in `application.properties`.
++
+To enable it for specific caches only, list the cache names:
++
+[source,text,options="nowrap",subs="attributes+"]
+----
+infinispan.embedded.put-for-external-read-on-load-caches=books,authors
+----
++
+To enable it for all caches, specify the following property:
++
+[source,text,options="nowrap",subs="attributes+"]
+----
+infinispan.embedded.put-for-external-read-on-load=true
+----
+
+[IMPORTANT]
+====
+`putForExternalRead` does not overwrite an existing entry and fails silently if the key is locked.
+If a node loads a value from the database at the same time that another node updates that value, the first node can store the old value locally until the entry expires or the key is invalidated again.
+Configure expiration on caches that use this option to limit how long such entries remain.
+====
+
+[role="_additional-resources"]
+.Additional resources
+* link:{javadocroot}/org/infinispan/Cache.html#putForExternalRead(K,V)[`Cache.putForExternalRead()`]
