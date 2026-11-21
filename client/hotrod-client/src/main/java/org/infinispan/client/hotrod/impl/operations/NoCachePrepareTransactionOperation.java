@@ -37,6 +37,13 @@ public class NoCachePrepareTransactionOperation extends AbstractNoCacheHotRodOpe
    }
 
    @Override
+   public long timeout() {
+      // This operation is not bound to a cache, so the socket timeout cannot be scaled here. The server may still
+      // block for up to the transaction timeout while acquiring the locks, so never wait for less than that.
+      return timeoutMs > 0 ? timeoutMs : super.timeout();
+   }
+
+   @Override
    public Integer createResponse(ByteBuf buf, short status, HeaderDecoder decoder, Codec codec, CacheUnmarshaller unmarshaller) {
       if (status == NO_ERROR_STATUS) {
          return buf.readInt();

@@ -92,4 +92,9 @@ public class IterationStartOperation extends AbstractCacheOperation<IterationSta
          }
       }
    }
+
+   @Override
+   public long timeout() {
+      return longRunningTimeout();
+   }
 }

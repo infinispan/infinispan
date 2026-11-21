@@ -48,4 +48,9 @@ public class SizeMultimapOperation extends AbstractCacheOperation<Long> {
    public short responseOpCode() {
       return SIZE_MULTIMAP_RESPONSE;
    }
+
+   @Override
+   public long timeout() {
+      return longRunningTimeout();
+   }
 }
