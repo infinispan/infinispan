@@ -2,7 +2,9 @@ package org.infinispan.xsite.irac;
 
 import static org.infinispan.test.TestingUtil.extractCacheTopology;
 import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.extractField;
 import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.replaceField;
 import static org.infinispan.test.TestingUtil.wrapComponent;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -10,19 +12,29 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.irac.IracTombstoneCleanupCommand;
 import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commons.TimeoutException;
 import org.infinispan.commons.util.IntSets;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.CacheMode;
@@ -205,6 +217,80 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
       tombstoneManager(bCache).removeTombstone(key);
    }
 
+   /**
+    * A round that fails must not stop the following ones. The rounds are started with
+    * {@link DefaultIracTombstoneManager#startCleanupTombstone()} because, unlike
+    * {@link DefaultIracTombstoneManager#runCleanupAndWait()}, it goes through the executor that runs them in production.
+    */
+   public void testCleanupResumesAfterFailedPrimaryCheck(Method method) {
+      String key = k(method);
+      int segment = getSegment(key);
+      Cache<String, String> bCache = findBackupOwner(segment);
+
+      // Stored only in the backup owner: the primary owner sees it as stale and asks the owners to remove it.
+      tombstoneManager(bCache).storeTombstone(segment, key, dummyMetadata(4));
+      assertEquals(1, tombstoneManager(bCache).size());
+
+      CompletableFuture<Void> failureInjected = recordingRpcManager(bCache).failNextRequest(IracTombstonePrimaryCheckCommand.class);
+
+      try {
+         tombstoneManager(bCache).startCleanupTombstone();
+
+         // Wait until the first round is running, otherwise the executor merges both calls into a single round.
+         eventually(() -> "The failed round did not finish", () -> failureInjected.isDone() && !tombstoneManager(bCache).isTaskRunning());
+         assertEquals(1, tombstoneManager(bCache).size());
+
+         tombstoneManager(bCache).startCleanupTombstone();
+
+         eventuallyEquals(0, () -> tombstoneManager(bCache).size());
+      } finally {
+         // remove tombstone to avoid messing up with other tests
+         tombstoneManager(bCache).removeTombstone(key);
+      }
+   }
+
+   public void testScheduledCleanupResumesAfterFailedPrimaryCheck(Method method) throws InterruptedException {
+      String key = k(method);
+      int segment = getSegment(key);
+      Cache<String, String> bCache = findBackupOwner(segment);
+      DefaultIracTombstoneManager manager = tombstoneManager(bCache);
+
+      // Only the backup has the tombstone, so the primary will ask the owners to remove it on retry.
+      manager.storeTombstone(segment, key, dummyMetadata(5));
+      CompletableFuture<Void> failureInjected = recordingRpcManager(bCache).failNextRequest(IracTombstonePrimaryCheckCommand.class);
+      BlockingQueue<Runnable> rounds = new LinkedBlockingQueue<>();
+      ScheduledExecutorService original = extractField(manager, "scheduledExecutorService");
+      ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
+      when(scheduler.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class))).thenAnswer(invocation -> {
+         rounds.add(invocation.getArgument(0));
+         return null;
+      });
+      replaceField(scheduler, "scheduledExecutorService", manager, DefaultIracTombstoneManager.class);
+
+      try {
+         manager.start();
+         runScheduledRound(rounds);
+
+         Runnable retry = rounds.poll(10, TimeUnit.SECONDS);
+         assertNotNull(retry, "The failed cleanup round did not schedule a retry");
+         assertTrue(failureInjected.isDone());
+         assertEquals(1, manager.size());
+
+         retry.run();
+         eventuallyEquals(0, manager::size);
+      } finally {
+         manager.stopCleanupTask();
+         replaceField(original, "scheduledExecutorService", manager, DefaultIracTombstoneManager.class);
+         manager.removeTombstone(key);
+      }
+   }
+
+   private static void runScheduledRound(BlockingQueue<Runnable> rounds) throws InterruptedException {
+      Runnable round = rounds.poll(10, TimeUnit.SECONDS);
+      assertNotNull(round, "No cleanup round was scheduled");
+      round.run();
+   }
+
    public void testStateTransfer(Method method) {
       int numberOfKeys = 100;
       List<IracTombstoneInfo> keys = new ArrayList<>(numberOfKeys);
@@ -304,6 +390,8 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
       @GuardedBy("this")
       private final List<CacheRpcCommand> commandList;
       private volatile boolean recording;
+      private volatile Class<? extends CacheRpcCommand> commandToFail;
+      private volatile CompletableFuture<Void> failureInjected;
 
       RecordingRpcManager(RpcManager realOne) {
          super(realOne);
@@ -340,6 +428,19 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
          return found;
       }
 
+      /**
+       * Fails the next request sending a command of the given class, as if it had timed out. Later requests are not
+       * affected.
+       *
+       * @param commandClass The class of the command to fail.
+       * @return A {@link CompletableFuture} completed when the request is failed.
+       */
+      CompletableFuture<Void> failNextRequest(Class<? extends CacheRpcCommand> commandClass) {
+         failureInjected = new CompletableFuture<>();
+         commandToFail = commandClass;
+         return failureInjected;
+      }
+
       void startRecording() {
          synchronized (this) {
             commandList.clear();
@@ -349,6 +450,7 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
 
       void stopRecording() {
          recording = false;
+         commandToFail = null;
          synchronized (this) {
             commandList.clear();
          }
@@ -357,6 +459,11 @@ public class IracTombstoneCleanupTest extends MultipleCacheManagersTest {
 
       @Override
       protected <T> CompletionStage<T> performRequest(Collection<Address> targets, CacheRpcCommand command, ResponseCollector<Address, T> collector, Function<ResponseCollector<Address, T>, CompletionStage<T>> invoker, RpcOptions rpcOptions) {
+         if (command.getClass() == commandToFail) {
+            commandToFail = null;
+            failureInjected.complete(null);
+            return CompletableFuture.failedFuture(new TimeoutException("Simulated RPC timeout"));
+         }
          if (recording) {
             synchronized (this) {
                commandList.add(command);

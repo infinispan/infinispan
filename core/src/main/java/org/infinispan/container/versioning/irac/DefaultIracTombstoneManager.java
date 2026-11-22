@@ -28,6 +28,7 @@ import org.infinispan.commands.irac.IracTombstonePrimaryCheckCommand;
 import org.infinispan.commands.irac.IracTombstoneStateResponseCommand;
 import org.infinispan.commons.util.IntSet;
 import org.infinispan.commons.util.IntSets;
+import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.commons.util.concurrent.CompletionStages;
@@ -69,6 +70,7 @@ import io.reactivex.rxjava3.core.CompletableObserver;
 import io.reactivex.rxjava3.core.CompletableSource;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.exceptions.CompositeException;
 import io.reactivex.rxjava3.functions.Predicate;
 
 /**
@@ -285,7 +287,18 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
       }
       scheduler.onTaskStarted(tombstoneMap.size());
       return CompletionStages.allOf(checkStaleKeys(), checkStaleTombstones())
+            .whenComplete(this::logRoundFailure)
             .whenComplete(scheduler);
+   }
+
+   private void logRoundFailure(Void unused, Throwable t) {
+      if (t != null && !stopped) {
+         Throwable cause = CompletableFutures.extractException(t);
+         // Composite carries a synthetic exception if trying to access through cause chain.
+         if (cause instanceof CompositeException ce)
+            cause = Util.getRootCause(ce.getExceptions().get(0));
+         log.warnFailedIracTask(commandsFactory.getCacheName(), cause.toString().replaceAll("\\R", " "));
+      }
    }
 
    public CompletionStage<Void> checkStaleTombstones() {
@@ -538,8 +551,11 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
          preCleanupSize = size;
       }
 
-      void onTaskCompleted(int postCleanupSize) {
-         if (postCleanupSize >= targetSize) {
+      void onTaskCompleted(int postCleanupSize, Throwable throwable) {
+         if (throwable != null) {
+            // A failed round cannot make progress, so retry with bounded exponential backoff.
+            currentDelayMillis = currentDelayMillis >= maxDelayMillis / 2 ? maxDelayMillis : Math.max(1, currentDelayMillis * 2);
+         } else if (postCleanupSize >= targetSize) {
             // The tombstones map is already at or above the target size, start a new cleanup round immediately
             // Keep the delay >= 1 to simplify the tombstoneCreationRate calculation
             currentDelayMillis = 1;
@@ -590,7 +606,7 @@ public class DefaultIracTombstoneManager implements IracTombstoneManager {
       @Override
       public void accept(Void unused, Throwable throwable) {
          // invoked after the cleanup round
-         onTaskCompleted(tombstoneMap.size());
+         onTaskCompleted(tombstoneMap.size(), throwable);
       }
    }
 
