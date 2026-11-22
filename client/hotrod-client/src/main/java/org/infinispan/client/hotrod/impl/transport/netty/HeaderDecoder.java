@@ -366,9 +366,10 @@ public class HeaderDecoder extends HintedReplayingDecoder<HeaderDecoder.State> {
 
       final short hashFunctionVersion;
       final SocketAddress[][] segmentOwners;
-      ClientIntelligence configuredIntelligence = dispatcher.getClientIntelligence();
-      ClientIntelligence effectiveIntelligence = configuredIntelligence.getEffectiveIntelligence();
-      if (effectiveIntelligence == ClientIntelligence.HASH_DISTRIBUTION_AWARE) {
+      // The server decides whether to send the hash from the intelligence it received in the request header, so the
+      // cache's current intelligence has to be used here. Reading the configured one instead would make an AUTO
+      // cache which has degraded to BASIC consume the following bytes as hash metadata.
+      if (dispatcher.getClientIntelligence(cacheName) == ClientIntelligence.HASH_DISTRIBUTION_AWARE) {
          // Only read the hash if we asked for it
          hashFunctionVersion = buf.readUnsignedByte();
          int numSegments = ByteBufUtil.readVInt(buf);

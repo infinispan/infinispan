@@ -146,8 +146,10 @@ public final class TopologyInfo {
       if (log.isTraceEnabled()) log.tracef("Switching to initial server list for cache %s, cluster %s",
                                            cacheName, cluster.getName());
       CacheInfo oldCacheInfo = caches.get(cacheName);
+      // Keep the intelligence the cache is currently using rather than the configured one: a cache which AUTO has
+      // already degraded to BASIC must not silently return to being hash aware when its servers fail again.
       CacheInfo newCacheInfo = oldCacheInfo.withNewServers(HotRodConstants.DEFAULT_CACHE_TOPOLOGY,
-                                                           cluster.getInitialServers(), cluster.getIntelligence());
+                                                           cluster.getInitialServers());
       updateCacheInfo(cacheName, oldCacheInfo, newCacheInfo);
    }
 

@@ -65,7 +65,10 @@ public class CacheInfo {
    }
 
    public CacheInfo withNewServers(int topologyId, List<InetSocketAddress> servers, ClientIntelligence intelligence) {
-      return new CacheInfo(cacheName, balancer, servers, null, -1, clientTopologyRef, new ClientTopology(topologyId, intelligence));
+      // AUTO is a configuration level choice which the server does not understand: the per cache topology must always
+      // hold an effective intelligence, since its value is what the codec writes in every request header.
+      return new CacheInfo(cacheName, balancer, servers, null, -1, clientTopologyRef,
+            new ClientTopology(topologyId, intelligence.getEffectiveIntelligence()));
    }
 
    public CacheInfo withNewHash(int topologyId, List<InetSocketAddress> servers,
@@ -112,6 +115,15 @@ public class CacheInfo {
 
    public AtomicReference<ClientTopology> getClientTopologyRef() {
       return clientTopologyRef;
+   }
+
+   /**
+    * The intelligence currently in use by this cache, which is the one written in the request headers. It differs
+    * from the configured one when {@link ClientIntelligence#AUTO} has degraded the cache to
+    * {@link ClientIntelligence#BASIC}.
+    */
+   public ClientIntelligence getClientIntelligence() {
+      return clientTopologyRef.get().getClientIntelligence();
    }
 
    public List<InetSocketAddress> getServers() {

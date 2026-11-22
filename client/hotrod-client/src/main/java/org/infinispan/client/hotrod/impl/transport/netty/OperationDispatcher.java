@@ -402,6 +402,22 @@ public class OperationDispatcher {
       return getClusterInfo().getIntelligence();
    }
 
+   /**
+    * The intelligence a given cache is currently using, which is what its request headers carry. This is never
+    * {@link ClientIntelligence#AUTO}, and it is {@link ClientIntelligence#BASIC} once AUTO has degraded the cache.
+    *
+    * @param cacheName the cache to inspect, may be {@code null} when the response is not tied to a cache.
+    */
+   public ClientIntelligence getClientIntelligence(String cacheName) {
+      if (cacheName != null) {
+         CacheInfo cacheInfo = topologyInfo.getCacheInfo(cacheName);
+         if (cacheInfo != null) {
+            return cacheInfo.getClientIntelligence();
+         }
+      }
+      return getClientIntelligence().getEffectiveIntelligence();
+   }
+
    public CacheTopologyInfo getCacheTopologyInfo(String cacheName) {
       return getCacheInfo(cacheName).getCacheTopologyInfo();
    }
@@ -628,6 +644,9 @@ public class OperationDispatcher {
             closeChannel(socketAddress);
             connectionFailedServers.remove(socketAddress);
          }
+         // The new cluster gets a clean slate: a cache degraded on the previous one must be able to degrade again
+         // here, and must not stay excluded from the fallback for the lifetime of the client.
+         degradedCaches.clear();
          topologyInfo.switchCluster(newCluster);
       } finally {
          lock.unlockWrite(stamp);
@@ -707,6 +726,8 @@ public class OperationDispatcher {
          }
          log.debugf("Switching to cluster %s, servers: %s", clusterName, newCluster.getInitialServers());
          markPendingOperationsAsPriorAge();
+         // See above: degradation state belongs to the cluster it was observed on.
+         degradedCaches.clear();
          topologyInfo.switchCluster(newCluster);
       } finally {
          lock.unlockWrite(stamp);
@@ -953,7 +974,15 @@ public class OperationDispatcher {
       } else {
          SocketAddress unresolvedAddress = operationChannel.getAddress();
          ChannelRecord.set(operationChannel.getChannel(), unresolvedAddress);
-         connectionFailedServers.remove(unresolvedAddress);
+         // Synchronize the removal to prevent a race where failure-driven degradation happens concurrently
+         // with a successful connection. Without synchronization, a cache could degrade permanently even though
+         // a server became available between the failure check and the degradation commit.
+         long stamp = lock.writeLock();
+         try {
+            connectionFailedServers.remove(unresolvedAddress);
+         } finally {
+            lock.unlockWrite(stamp);
+         }
          log.tracef("OperationChannel connected: %s", operationChannel);
       }
    }
@@ -968,19 +997,37 @@ public class OperationDispatcher {
       topologyInfo.forEachCache((cacheNameBytes, cacheInfo) -> {
          List<InetSocketAddress> cacheServers = cacheInfo.getServers();
          boolean currentServersHaveFailed = connectionFailedServers.containsAll(cacheServers);
-         boolean canReset = !cacheServers.equals(topologyInfo.getCluster().getInitialServers());
+         boolean canReset = !cacheServers.equals(topologyInfo.getCluster().getInitialServers()) || cacheInfo.getTopologyId() > 0;
+
+         // For AUTO mode, degrade even if only some topology servers failed - the whole point of AUTO is to
+         // handle NAT/container scenarios where topology addresses may not be reachable
+         boolean anyServersFailed = cacheServers.stream().anyMatch(connectionFailedServers::contains);
+         boolean shouldDegrade = configuredIntelligence == ClientIntelligence.AUTO
+               && !degradedCaches.contains(cacheInfo.getCacheName())
+               && anyServersFailed && canReset;
+
          if (currentServersHaveFailed && canReset) {
             failedCaches.add(cacheInfo.getCacheName());
             // Check if we should degrade from AUTO to BASIC
             if (configuredIntelligence == ClientIntelligence.AUTO && !degradedCaches.contains(cacheInfo.getCacheName())) {
                cachesToDegrade.add(cacheInfo.getCacheName());
             }
+         } else if (shouldDegrade) {
+            // AUTO mode degrades even when not all servers failed
+            cachesToDegrade.add(cacheInfo.getCacheName());
          }
       });
 
       // Degrade caches from AUTO to BASIC if topology connections failed
       if (!cachesToDegrade.isEmpty()) {
-         HOTROD.degradingToBasicIntelligence(cachesToDegrade);
+         // Mark pending operations as from the prior age so their topology responses are rejected after degradation.
+         // This prevents late topology responses from restoring the failed servers we're abandoning.
+         markPendingOperationsAsPriorAge();
+         // Sanitize cache names to prevent log injection attacks where cache names containing CR/LF could forge log entries
+         List<String> sanitizedCacheNames = cachesToDegrade.stream()
+               .map(name -> name.replace("\r", "\\r").replace("\n", "\\n"))
+               .collect(java.util.stream.Collectors.toList());
+         HOTROD.degradingToBasicIntelligence(sanitizedCacheNames);
          for (String cacheName : cachesToDegrade) {
             degradedCaches.add(cacheName);
             CacheInfo oldCacheInfo = topologyInfo.getCacheInfo(cacheName);
@@ -989,7 +1036,9 @@ public class OperationDispatcher {
                   HotRodConstants.DEFAULT_CACHE_TOPOLOGY,
                   cluster.getInitialServers(),
                   ClientIntelligence.BASIC);
-            topologyInfo.updateCacheInfo(cacheName, oldCacheInfo, newCacheInfo);
+            // Go through the dispatcher rather than straight to the topology, so that the channels of the
+            // topology servers we are abandoning are closed and their failure records cleared.
+            updateCacheInfo(cacheName, newCacheInfo);
          }
       }
 
