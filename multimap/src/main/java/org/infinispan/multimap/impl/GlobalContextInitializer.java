@@ -13,6 +13,7 @@ import org.infinispan.protostream.annotations.ProtoSyntax;
       },
       includeClasses = {
             org.infinispan.multimap.impl.SortedSetBucket.AggregateFunction.class,
+            org.infinispan.multimap.impl.function.hmap.HashMapGetAndRemoveFunction.class,
             org.infinispan.multimap.impl.function.hmap.HashMapKeySetFunction.class,
             org.infinispan.multimap.impl.function.hmap.HashMapPutFunction.class,
             org.infinispan.multimap.impl.function.hmap.HashMapRemoveFunction.class,

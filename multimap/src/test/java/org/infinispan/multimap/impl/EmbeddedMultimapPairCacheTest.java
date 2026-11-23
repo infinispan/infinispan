@@ -7,6 +7,7 @@ import static org.infinispan.multimap.impl.EmbeddedMultimapPairCache.ERR_KEY_CAN
 import static org.infinispan.multimap.impl.EmbeddedMultimapPairCache.ERR_PROPERTY_CANT_BE_NULL;
 import static org.infinispan.multimap.impl.EmbeddedMultimapPairCache.ERR_VALUE_CANT_BE_NULL;
 
+import java.util.List;
 import java.util.Map;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -204,5 +205,30 @@ public class EmbeddedMultimapPairCacheTest extends SingleCacheManagerTest {
       assertThatThrownBy(() -> await(embeddedPairCache.setIfAbsent("b", "k1", null)))
             .hasMessage(ERR_VALUE_CANT_BE_NULL)
             .isInstanceOf(NullPointerException.class);
+   }
+
+   public void testGetAndRemove() {
+      // Does not exist
+      assertThat(await(embeddedPairCache.getAndRemove("get-and-remove", List.of("k1", "k2")))).containsExactly(null, null);
+      assertThat(await(embeddedPairCache.get("get-and-remove"))).isEmpty();
+
+      assertThat(await(embeddedPairCache.set("get-and-remove", Map.entry("k1", "v1"), Map.entry("k2", "v2"), Map.entry("k3", "v3"))))
+            .isEqualTo(3);
+
+      // Values in the order requested, null for a missing property
+      assertThat(await(embeddedPairCache.getAndRemove("get-and-remove", List.of("k3", "k4", "k1")))).containsExactly("v3", null, "v1");
+      assertThat(await(embeddedPairCache.get("get-and-remove"))).containsExactly(Map.entry("k2", "v2"));
+
+      // A repeated property is only returned once, the first time
+      assertThat(await(embeddedPairCache.getAndRemove("get-and-remove", List.of("k2", "k2")))).containsExactly("v2", null);
+      // Removing the last property removes the key
+      assertThat(await(embeddedPairCache.get("get-and-remove"))).isEmpty();
+
+      assertThatThrownBy(() -> await(embeddedPairCache.getAndRemove(null, List.of("k1"))))
+            .isInstanceOf(NullPointerException.class);
+      assertThatThrownBy(() -> await(embeddedPairCache.getAndRemove("get-and-remove", null)))
+            .isInstanceOf(NullPointerException.class);
+      assertThatThrownBy(() -> await(embeddedPairCache.getAndRemove("get-and-remove", List.of())))
+            .isInstanceOf(IllegalArgumentException.class);
    }
 }

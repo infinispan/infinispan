@@ -171,4 +171,19 @@ public class DistributedMultimapPairCacheTest extends BaseDistributedMultimapTes
                   .containsEntry("oihana", OIHANA)
                   .containsEntry("koldo", KOLDO)));
    }
+
+   public void testGetAndRemove() {
+      // Run from every member, so the function and its result are marshalled for non-owners
+      for (EmbeddedMultimapPairCache<String, byte[], Person> multimap : cluster.values()) {
+         String key = getEntryKey();
+         await(multimap.set(key, Map.entry(toBytes("oihana"), OIHANA), Map.entry(toBytes("koldo"), KOLDO)));
+
+         assertThat(await(multimap.getAndRemove(key, List.of(toBytes("koldo"), toBytes("ramon")))))
+               .containsExactly(KOLDO, null);
+         assertFromAllCaches(key, Map.of("oihana", OIHANA));
+
+         assertThat(await(multimap.getAndRemove(key, List.of(toBytes("oihana"))))).containsExactly(OIHANA);
+         assertFromAllCaches(m -> m.get(key).thenAccept(v -> assertThat(v).isEmpty()));
+      }
+   }
 }

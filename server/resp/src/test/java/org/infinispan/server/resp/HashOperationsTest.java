@@ -5,11 +5,13 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.infinispan.server.resp.test.RespTestingUtil.ADMIN;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.security.Security;
+import org.infinispan.server.resp.test.RawRespConnection;
 import org.testng.annotations.Test;
 
 import io.lettuce.core.CopyArgs;
@@ -930,5 +932,67 @@ public class HashOperationsTest extends SingleNodeRespBaseTest {
       // HINCRBYFLOAT on a field originally set with HSET
       redis.hset("hfloat-hset", "price", "9.99");
       assertThat(redis.hincrbyfloat("hfloat-hset", "price", 0.01)).isEqualTo(10.0);
+   }
+
+   public void testHGetDel() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.hset("hgetdel", Map.of("f1", "Hello", "f2", "World", "f3", "!"));
+
+      // Values in the order requested, nil for a missing field
+      assertThat(redis.hgetdel("hgetdel", "f3", "f4"))
+            .containsExactly(KeyValue.just("f3", "!"), KeyValue.empty("f4"));
+      assertThat(redis.hgetall("hgetdel")).containsExactlyInAnyOrderEntriesOf(Map.of("f1", "Hello", "f2", "World"));
+
+      // A repeated field is only returned the first time
+      assertThat(redis.hgetdel("hgetdel", "f1", "f1"))
+            .containsExactly(KeyValue.just("f1", "Hello"), KeyValue.empty("f1"));
+      assertThat(redis.hlen("hgetdel")).isEqualTo(1);
+
+      // Removing the last field removes the key
+      assertThat(redis.hgetdel("hgetdel", "f2")).containsExactly(KeyValue.just("f2", "World"));
+      assertThat(redis.exists("hgetdel")).isZero();
+
+      // Missing key
+      assertThat(redis.hgetdel("hgetdel-missing", "f1", "f2"))
+            .containsExactly(KeyValue.empty("f1"), KeyValue.empty("f2"));
+      assertThat(redis.exists("hgetdel-missing")).isZero();
+   }
+
+   public void testHGetDelWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertWrongType(() -> redis.set("hgetdel-plain", "string"), () -> redis.hgetdel("hgetdel-plain", "f1"));
+      assertThat(redis.get("hgetdel-plain")).isEqualTo("string");
+   }
+
+   public void testHGetDelReply() throws IOException {
+      redisConnection.sync().hset("hgetdel-raw", Map.of("f1", "v1", "f2", "v2"));
+      try (RawRespConnection raw = rawConnection()) {
+         raw.send("HGETDEL hgetdel-raw fields 2 f1 missing");
+         raw.assertFrame("*2\r\n$2\r\nv1\r\n_\r\n");
+      }
+   }
+
+   public void testHGetDelErrors() throws IOException {
+      redisConnection.sync().hset("hgetdel-err", Map.of("f1", "v1"));
+      try (RawRespConnection raw = rawConnection()) {
+         raw.send("HGETDEL hgetdel-err FIELD 1 f1");
+         raw.assertFrame("-ERR Mandatory argument FIELDS is missing or not at the right position\r\n");
+         raw.send("HGETDEL hgetdel-err f1 FIELDS 1");
+         raw.assertFrame("-ERR Mandatory argument FIELDS is missing or not at the right position\r\n");
+         raw.send("HGETDEL hgetdel-err FIELDS 0 f1");
+         raw.assertFrame("-ERR Number of fields must be a positive integer\r\n");
+         raw.send("HGETDEL hgetdel-err FIELDS -1 f1");
+         raw.assertFrame("-ERR Number of fields must be a positive integer\r\n");
+         raw.send("HGETDEL hgetdel-err FIELDS x f1");
+         raw.assertFrame("-ERR Number of fields must be a positive integer\r\n");
+         raw.send("HGETDEL hgetdel-err FIELDS 2 f1");
+         raw.assertFrame("-ERR The `numfields` parameter must match the number of arguments\r\n");
+         raw.send("HGETDEL hgetdel-err FIELDS 1 f1 f2");
+         raw.assertFrame("-ERR The `numfields` parameter must match the number of arguments\r\n");
+         raw.send("HGETDEL hgetdel-err FIELDS 1");
+         raw.assertFrame("-ERR wrong number of arguments for 'hgetdel' command\r\n");
+      }
+      // Nothing was removed by the failed calls
+      assertThat(redisConnection.sync().hget("hgetdel-err", "f1")).isEqualTo("v1");
    }
 }
