@@ -36,6 +36,7 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
    protected final List<Consumer<File>> configurationEnhancers = new ArrayList<>();
    protected final Set<Class<?>> suiteTestClasses = new HashSet<>();
    protected Class<?> suite;
+   private boolean suiteClassesInitialized;
 
    protected String testName(ExtensionContext extensionContext) {
       // We need to replace the $ for subclasses as it causes issues with the testcontainers docker client
@@ -43,13 +44,17 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
    }
 
    protected void initSuiteClasses(ExtensionContext extensionContext) {
-      if (!suiteTestClasses.isEmpty())
-         return;
-
       Class<?> testClass = extensionContext.getRequiredTestClass();
-      addSuiteTestClasses(testClass);
-      // Add SelectClasses from outer class definition
-      addSuiteTestClasses(testClass.getDeclaringClass());
+      if (!suiteClassesInitialized) {
+         addSuiteTestClasses(testClass);
+         // Add SelectClasses from outer class definition
+         addSuiteTestClasses(testClass.getDeclaringClass());
+         suiteClassesInitialized = true;
+      } else {
+         // Surefire reruns failed suite members individually. In that case, the suite has
+         // already completed and only the selected member belongs to this execution.
+         suiteTestClasses.add(testClass);
+      }
 
       if (suite == null && isSuiteClass(extensionContext)) {
          suite = testClass;
