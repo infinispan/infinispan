@@ -94,21 +94,34 @@ public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest
          Cache localCache = cache;
          TransactionManager tm = getTransactionManager(localCache);
          tm.begin();
-         // This brings k,v to L1 in non-owner cache
-         if (withFlag)
-            localCache = cache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK);
+         try {
+            // This brings k,v to L1 in non-owner cache
+            if (withFlag)
+               localCache = cache.getAdvancedCache().withFlags(Flag.FORCE_WRITE_LOCK);
 
-         CompletableFuture<String> f = localCache.getAsync(k);
-         CompletableFuture<Map<String, String>> allF = localCache.getAllAsync(Collections.singleton(k));
-         assertNotNull(f);
-         assertEquals(v, f.get());
-         assertNotNull(allF);
-         assertEquals(Collections.singletonMap(k, v), allF.get());
+            CompletableFuture<String> f = localCache.getAsync(k);
+            CompletableFuture<Map<String, String>> allF = localCache.getAllAsync(Collections.singleton(k));
+            assertNotNull(f);
+            assertEquals(v, f.get());
+            assertNotNull(allF);
+            assertEquals(Collections.singletonMap(k, v), allF.get());
 
-         putLatch.countDown();
-         getAsynclatch.await();
-         tm.commit();
-         return null;
+            putLatch.countDown();
+            getAsynclatch.await();
+            tm.commit();
+            return null;
+         } catch (Exception | Error failure) {
+            try {
+               if (tm.getTransaction() != null) {
+                  tm.rollback();
+               }
+            } catch (Exception | Error cleanupFailure) {
+               if (failure != cleanupFailure) {
+                  failure.addSuppressed(cleanupFailure);
+               }
+            }
+            throw failure;
+         }
       };
 
       Callable<Void> c2 = () -> {
@@ -137,7 +150,12 @@ public class SingleOwnerAndAsyncMethodsWithTxTest extends BaseDistFunctionalTest
       Future f1 = fork(c1);
       Future f2 = fork(c2);
 
-      f1.get();
+      try {
+         f1.get();
+      } catch (ExecutionException | InterruptedException e) {
+         f2.cancel(true);
+         throw e;
+      }
       try {
          f2.get();
          assertFalse(withFlag, "Should throw a TimeoutException if the get operation acquired a lock");
