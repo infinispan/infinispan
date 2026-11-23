@@ -82,7 +82,7 @@ jobs:
           sparse-checkout-cone-mode: false
           fetch-depth: 1
 
-      - uses: graalvm/setup-graalvm@d6eca2595046623d69d636041513c80abf745406 # v1
+      - uses: graalvm/setup-graalvm@60e76998d25690099182b796e99b8804da582d90 # v1
         with:
           version: '25.0'
           distribution: 'graalvm'
@@ -110,7 +110,7 @@ jobs:
           unzip -q "${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip"
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
-      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3
         id: app-token
         with:
           client-id: ${{ secrets.GH_APP_ISPN_ID }}
@@ -176,7 +176,7 @@ jobs:
 
       # Renewing token since it last for 1 hour and cannot be extended
       # see for more info https://github.com/actions/create-github-app-token/issues/128
-      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3
         if: always() && failure()
         id: app-token-2
         with:
@@ -328,7 +328,7 @@ jobs:
           unzip -q "${GITHUB_WORKSPACE}/infinispan-${{ steps.dis.outputs.server-version }}-src.zip"
           mv infinispan-${{ steps.dis.outputs.server-version }}-src infinispan
 
-      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3
         id: app-token
         with:
             client-id: ${{ secrets.GH_APP_ISPN_ID }}
