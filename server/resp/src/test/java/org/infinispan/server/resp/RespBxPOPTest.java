@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +31,7 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.server.resp.commands.list.blocking.AbstractBlockingPop;
 import org.infinispan.server.resp.commands.list.blocking.BLMOVEM;
+import org.infinispan.server.resp.test.RawRespConnection;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -38,6 +40,8 @@ import io.lettuce.core.KeyValue;
 import io.lettuce.core.LMPopArgs;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisFuture;
+import io.lettuce.core.ScoredValue;
+import io.lettuce.core.ZPopArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -483,9 +487,9 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
 
    @Listener(clustered = true)
    public static class FailingListener {
-      AbstractBlockingPop.PubSubListener blpop;
+      AbstractBlockingPop.PubSubListener<?> blpop;
 
-      public FailingListener(AbstractBlockingPop.PubSubListener arg) {
+      public FailingListener(AbstractBlockingPop.PubSubListener<?> arg) {
          blpop = arg;
       }
 
@@ -814,5 +818,224 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
       io.lettuce.core.TransactionResult execResult = redis.exec();
       assertThat(execResult).hasSize(1);
       assertThat((List<Object>) execResult.get(0)).isEmpty();
+   }
+
+   // BZPOPMIN / BZPOPMAX / BZMPOP tests. right() tests the MAX variants.
+
+   private RedisFuture<KeyValue<String, ScoredValue<String>>> bzpopAsync(double timeout, String... keys) {
+      RedisAsyncCommands<String, String> async = newConnection().async();
+      return registerListener(() -> right ? async.bzpopmax(timeout, keys) : async.bzpopmin(timeout, keys));
+   }
+
+   private KeyValue<String, ScoredValue<String>> bzpop(double timeout, String... keys) {
+      RedisCommands<String, String> redis = newConnection().sync();
+      return right ? redis.bzpopmax(timeout, keys) : redis.bzpopmin(timeout, keys);
+   }
+
+   private ZPopArgs zpopArgs() {
+      return right ? ZPopArgs.Builder.max() : ZPopArgs.Builder.min();
+   }
+
+   private RedisFuture<KeyValue<String, List<ScoredValue<String>>>> bzmpopAsync(double timeout, int count, String... keys) {
+      RedisAsyncCommands<String, String> async = newConnection().async();
+      return registerListener(() -> async.bzmpop(timeout, count, zpopArgs(), keys));
+   }
+
+   private String bzpopCommand() {
+      return right ? "BZPOPMAX" : "BZPOPMIN";
+   }
+
+   public void testBzpop() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // Blocks until a member is added
+      var cf = bzpopAsync(0, "bzp-z1");
+      redis.zadd("bzp-z1", 1.0, "a", 2.0, "b", 3.0, "c");
+      var res = cf.get(10, TimeUnit.SECONDS);
+      assertThat(res.getKey()).isEqualTo("bzp-z1");
+      assertThat(res.getValue()).isEqualTo(right ? ScoredValue.just(3, "c") : ScoredValue.just(1, "a"));
+      assertThat(redis.zrange("bzp-z1", 0, -1)).containsExactly(right ? new String[]{"a", "b"} : new String[]{"b", "c"});
+      verifyListenerUnregistered();
+
+      // Does not block when a member is available, popping from the first non-empty key
+      res = bzpop(0, "bzp-missing", "bzp-z1");
+      assertThat(res.getKey()).isEqualTo("bzp-z1");
+      assertThat(res.getValue()).isEqualTo(ScoredValue.just(2, "b"));
+      res = bzpop(0, "bzp-z1");
+      assertThat(res.getValue()).isEqualTo(right ? ScoredValue.just(1, "a") : ScoredValue.just(3, "c"));
+      // Popping the last member removes the key
+      assertThat(redis.exists("bzp-z1")).isZero();
+   }
+
+   public void testBzpopTwoKeys() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      var cf = bzpopAsync(0, "bzp-k1", "bzp-k2");
+      redis.zadd("bzp-k2", 1.5, "x");
+      var res = cf.get(10, TimeUnit.SECONDS);
+      assertThat(res.getKey()).isEqualTo("bzp-k2");
+      assertThat(res.getValue()).isEqualTo(ScoredValue.just(1.5, "x"));
+      verifyListenerUnregistered();
+   }
+
+   public void testBzpopTwoListeners() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      var cf1 = bzpopAsync(0, "bzp-two");
+      var cf2 = bzpopAsync(0, "bzp-two");
+      redis.zadd("bzp-two", 1.0, "a", 2.0, "b");
+      var res1 = cf1.get(10, TimeUnit.SECONDS);
+      var res2 = cf2.get(10, TimeUnit.SECONDS);
+      // Each client gets a different member; the order clients are served in is unspecified
+      assertThat(List.of(res1.getValue().getValue(), res2.getValue().getValue())).containsExactlyInAnyOrder("a", "b");
+      assertThat(redis.exists("bzp-two")).isZero();
+      verifyListenerUnregistered();
+   }
+
+   public void testBzpopTimeout() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThatThrownBy(() -> bzpop(-1, "bzp-to"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR value is out of range, must be positive");
+
+      var res = bzpopAsync(1, "bzp-to");
+      timeService.advance(TimeUnit.SECONDS.toMillis(2));
+      eventually(res::isDone);
+      assertThat(res.get()).isNull();
+      // A member added after the timeout is not popped
+      redis.zadd("bzp-to", 1, "a");
+      assertThat(redis.zcard("bzp-to")).isEqualTo(1);
+      verifyListenerUnregistered();
+   }
+
+   public void testBzpopIgnoresOtherTypes() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      // A sorted set blocked client is not served by a list, and a list blocked client is not served by a sorted set
+      var zset = bzpopAsync(3, "bzp-other-list");
+      var list = bxPopAsync(3, "bzp-other-zset");
+      redis.lpush("bzp-other-list", "v");
+      redis.zadd("bzp-other-zset", 1, "m");
+      assertThat(zset.isDone()).isFalse();
+      assertThat(list.isDone()).isFalse();
+      timeService.advance(TimeUnit.SECONDS.toMillis(4));
+      assertThat(zset.get(10, TimeUnit.SECONDS)).isNull();
+      assertThat(list.get(10, TimeUnit.SECONDS)).isNull();
+      assertThat(redis.lrange("bzp-other-list", 0, -1)).containsExactly("v");
+      assertThat(redis.zcard("bzp-other-zset")).isEqualTo(1);
+      verifyListenerUnregistered();
+   }
+
+   public void testBzpopWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertWrongType(() -> redis.set("bzp-wt", "value"), () -> bzpop(0, "bzp-wt"));
+      assertWrongType(() -> redis.lpush("bzp-wt-list", "value"), () -> bzpop(0, "bzp-wt-missing", "bzp-wt-list"));
+   }
+
+   public void testBzpopInsideMulti() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.zadd("bzp-multi", 1, "a");
+      redis.multi();
+      bzpopQueued(redis, "bzp-multi");
+      bzpopQueued(redis, "bzp-multi");
+      io.lettuce.core.TransactionResult result = redis.exec();
+      // Inside a transaction the command does not block, and replies null when there is nothing to pop
+      assertThat(result).hasSize(2);
+      assertThat(result.<KeyValue<String, ScoredValue<String>>>get(0).getValue()).isEqualTo(ScoredValue.just(1, "a"));
+      assertThat((Object) result.get(1)).isNull();
+   }
+
+   private void bzpopQueued(RedisCommands<String, String> redis, String key) {
+      if (right) {
+         redis.bzpopmax(0, key);
+      } else {
+         redis.bzpopmin(0, key);
+      }
+   }
+
+   public void testBzpopReply() throws IOException {
+      redisConnection.sync().zadd("bzp-raw", 2.5, "a");
+      try (RawRespConnection raw = rawConnection()) {
+         raw.send(bzpopCommand() + " bzp-raw 0");
+         raw.assertFrame("*3\r\n$7\r\nbzp-raw\r\n$1\r\na\r\n,2.5\r\n");
+      }
+   }
+
+   public void testBzmpop() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      var cf = bzmpopAsync(0, 2, "bzmp-missing", "bzmp-z");
+      redis.zadd("bzmp-z", 1.0, "a", 2.0, "b", 3.0, "c");
+      var res = cf.get(10, TimeUnit.SECONDS);
+      assertThat(res.getKey()).isEqualTo("bzmp-z");
+      assertThat(res.getValue()).containsExactlyElementsOf(right
+            ? List.of(ScoredValue.just(3, "c"), ScoredValue.just(2, "b"))
+            : List.of(ScoredValue.just(1, "a"), ScoredValue.just(2, "b")));
+      assertThat(redis.zrange("bzmp-z", 0, -1)).containsExactly(right ? "a" : "c");
+      verifyListenerUnregistered();
+
+      // Does not block when a member is available; COUNT larger than the set pops everything
+      RedisCommands<String, String> other = newConnection().sync();
+      var popped = other.bzmpop(0L, 10L, zpopArgs(), "bzmp-z");
+      assertThat(popped.getKey()).isEqualTo("bzmp-z");
+      assertThat(popped.getValue()).containsExactly(ScoredValue.just(right ? 1 : 3, right ? "a" : "c"));
+      assertThat(redis.exists("bzmp-z")).isZero();
+
+      // Without COUNT a single member is popped
+      redis.zadd("bzmp-single", 1.0, "a", 2.0, "b");
+      var single = other.bzmpop(0, zpopArgs(), "bzmp-single");
+      assertThat(single.getValue()).isEqualTo(right ? ScoredValue.just(2, "b") : ScoredValue.just(1, "a"));
+   }
+
+   public void testBzmpopTimeout() throws Exception {
+      var res = bzmpopAsync(1, 1, "bzmp-to");
+      timeService.advance(TimeUnit.SECONDS.toMillis(2));
+      eventually(res::isDone);
+      // Lettuce maps the null reply to an empty KeyValue; testBzpopNullReply checks the raw reply
+      assertThat(res.get().hasValue()).isFalse();
+      verifyListenerUnregistered();
+   }
+
+   public void testBzpopNullReply() throws IOException {
+      try (RawRespConnection raw = rawConnection()) {
+         // Inside a transaction the commands do not block, so they reply null straight away
+         raw.send("MULTI");
+         raw.assertFrame("+OK\r\n");
+         raw.send(bzpopCommand() + " bzp-null 0");
+         raw.assertFrame("+QUEUED\r\n");
+         raw.send("BZMPOP 0 1 bzp-null " + (right ? "MAX" : "MIN"));
+         raw.assertFrame("+QUEUED\r\n");
+         raw.send("EXEC");
+         raw.assertFrame("*2\r\n_\r\n_\r\n");
+      }
+   }
+
+   public void testBzmpopWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertWrongType(() -> redis.set("bzmp-wt", "value"), () -> redis.bzmpop(0L, 1L, zpopArgs(), "bzmp-wt"));
+   }
+
+   public void testBzmpopErrors() throws IOException {
+      try (RawRespConnection raw = rawConnection()) {
+         raw.send("BZMPOP -1 1 bzmp-e MIN");
+         raw.assertFrame("-ERR value is out of range, must be positive\r\n");
+         raw.send("BZMPOP 0 0 bzmp-e MIN");
+         raw.assertFrame("-ERR numkeys should be greater than 0\r\n");
+         raw.send("BZMPOP 0 1 bzmp-e MIN COUNT 0");
+         raw.assertFrame("-ERR count should be greater than 0\r\n");
+         raw.send("BZMPOP 0 1 bzmp-e LEFT");
+         raw.assertFrame("-ERR syntax error\r\n");
+         raw.send("BZMPOP 0 2 bzmp-e MIN");
+         raw.assertFrame("-ERR syntax error\r\n");
+         raw.send("BZMPOP 0 1 bzmp-e");
+         raw.assertFrame("-ERR wrong number of arguments for 'bzmpop' command\r\n");
+         raw.send("BZMPOP 0 1 bzmp-e MIN COUNT 1 extra");
+         raw.assertFrame("-ERR syntax error\r\n");
+      }
+   }
+
+   public void testBzmpopReply() throws IOException {
+      redisConnection.sync().zadd("bzmp-raw", 1.5, "a", 2.5, "b");
+      try (RawRespConnection raw = rawConnection()) {
+         raw.send("BZMPOP 0 1 bzmp-raw " + (right ? "MAX" : "MIN") + " COUNT 2");
+         raw.assertFrame(right
+               ? "*2\r\n$8\r\nbzmp-raw\r\n*2\r\n*2\r\n$1\r\nb\r\n,2.5\r\n*2\r\n$1\r\na\r\n,1.5\r\n"
+               : "*2\r\n$8\r\nbzmp-raw\r\n*2\r\n*2\r\n$1\r\na\r\n,1.5\r\n*2\r\n$1\r\nb\r\n,2.5\r\n");
+      }
    }
 }

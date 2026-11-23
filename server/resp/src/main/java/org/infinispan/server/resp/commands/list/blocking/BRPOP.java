@@ -1,5 +1,7 @@
 package org.infinispan.server.resp.commands.list.blocking;
 
+import java.util.Collection;
+
 import org.infinispan.server.resp.AclCategory;
 
 /**
@@ -12,9 +14,9 @@ import org.infinispan.server.resp.AclCategory;
  * @see <a href="https://redis.io/commands/brpop/">BRPOP</a>
  * @since 15.0
  */
-public class BRPOP extends SingleBlockingPop {
+public class BRPOP extends SingleBlockingPop<Collection<byte[]>> {
 
    public BRPOP() {
-      super(false, -3, 1, -2, 1, AclCategory.WRITE.mask() | AclCategory.LIST.mask() | AclCategory.SLOW.mask() | AclCategory.BLOCKING.mask());
+      super(LIST, false, -3, 1, -2, 1, AclCategory.WRITE.mask() | AclCategory.LIST.mask() | AclCategory.SLOW.mask() | AclCategory.BLOCKING.mask());
    }
 }

@@ -44,7 +44,21 @@ public class ZMPOP extends RespCommand implements Resp3Command {
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
 
-      int pos = 0;
+      Arguments args = parseArguments(handler, arguments, 0);
+      if (args == null) {
+         return handler.myStage();
+      }
+
+      CompletionStage<PopResult> cs = asyncCalls(CompletableFutures.completedNull(), null, args.keys().iterator(), args.count(), args.min(), ctx, handler);
+      return handler.stageToReturn(cs, ctx, (res, writer) -> writer.write(res, res));
+   }
+
+   /**
+    * Parses {@code numkeys key [key ...] <MIN | MAX> [COUNT count]}, starting at {@code start}, writing an error and
+    * returning {@code null} when the arguments are invalid.
+    */
+   static Arguments parseArguments(Resp3Handler handler, List<byte[]> arguments, int start) {
+      int pos = start;
       int numberKeys = -1;
       try {
          byte[] bytes = arguments.get(pos++);
@@ -54,7 +68,7 @@ public class ZMPOP extends RespCommand implements Resp3Command {
 
       if (numberKeys <= 0) {
          handler.writer().customError("numkeys should be greater than 0");
-         return handler.myStage();
+         return null;
       }
 
       List<byte[]> sortedSetNames = new ArrayList<>();
@@ -64,7 +78,7 @@ public class ZMPOP extends RespCommand implements Resp3Command {
 
       if (sortedSetNames.size() != numberKeys || pos >= arguments.size()) {
          handler.writer().syntaxError();
-         return handler.myStage();
+         return null;
       }
       byte[] minOrMax = arguments.get(pos++);
       final boolean isMin;
@@ -74,7 +88,7 @@ public class ZMPOP extends RespCommand implements Resp3Command {
          isMin = false;
       } else {
          handler.writer().syntaxError();
-         return handler.myStage();
+         return null;
       }
 
       int count = 1;
@@ -89,21 +103,23 @@ public class ZMPOP extends RespCommand implements Resp3Command {
             }
             if (count <= 0) {
                handler.writer().customError("count should be greater than 0");
-               return handler.myStage();
+               return null;
             }
          } else {
             handler.writer().syntaxError();
-            return handler.myStage();
+            return null;
          }
       }
 
       if (arguments.size() > pos) {
          handler.writer().syntaxError();
-         return handler.myStage();
+         return null;
       }
 
-      CompletionStage<PopResult> cs = asyncCalls(CompletableFutures.completedNull(), null, sortedSetNames.iterator(), count, isMin, ctx, handler);
-      return handler.stageToReturn(cs, ctx, (res, writer) -> writer.write(res, res));
+      return new Arguments(sortedSetNames, isMin, count);
+   }
+
+   record Arguments(List<byte[]> keys, boolean min, int count) {
    }
 
    private CompletionStage<PopResult> asyncCalls(CompletionStage<Collection<ScoredValue<byte[]>>> popValues,
@@ -128,8 +144,8 @@ public class ZMPOP extends RespCommand implements Resp3Command {
       });
    }
 
-   private record PopResult(byte[] name,
-                            Collection<ScoredValue<byte[]>> values) implements JavaObjectSerializer<PopResult> {
+   record PopResult(byte[] name,
+                    Collection<ScoredValue<byte[]>> values) implements JavaObjectSerializer<PopResult> {
 
       @Override
       public void accept(PopResult res, ResponseWriter writer) {

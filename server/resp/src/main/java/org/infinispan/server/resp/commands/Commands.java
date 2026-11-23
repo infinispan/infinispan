@@ -176,6 +176,9 @@ import org.infinispan.server.resp.commands.set.SREM;
 import org.infinispan.server.resp.commands.set.SSCAN;
 import org.infinispan.server.resp.commands.set.SUNION;
 import org.infinispan.server.resp.commands.set.SUNIONSTORE;
+import org.infinispan.server.resp.commands.sortedset.BZMPOP;
+import org.infinispan.server.resp.commands.sortedset.BZPOPMAX;
+import org.infinispan.server.resp.commands.sortedset.BZPOPMIN;
 import org.infinispan.server.resp.commands.sortedset.ZADD;
 import org.infinispan.server.resp.commands.sortedset.ZCARD;
 import org.infinispan.server.resp.commands.sortedset.ZCOUNT;
@@ -262,7 +265,7 @@ public final class Commands {
       // NOTE that the order within the sub array matters, commands we want to have the lowest latency should be first
       // in this array as they are looked up sequentially for matches
       ALL_COMMANDS[0] = new RespCommand[]{new APPEND(), new AUTH()};
-      ALL_COMMANDS[1] = new RespCommand[]{new BLPOP(), new BRPOP(), new BLMPOP(), new BLMOVEM(), new BITFIELD(), new BITFIELD_RO(), new BITCOUNT(), new BITOP(), new BITPOS(), new BFADD(), new BFMADD(), new BFEXISTS(), new BFMEXISTS(), new BFRESERVE(), new BFINSERT(), new BFINFO(), new BFCARD()};
+      ALL_COMMANDS[1] = new RespCommand[]{new BLPOP(), new BRPOP(), new BLMPOP(), new BLMOVEM(), new BZPOPMIN(), new BZPOPMAX(), new BZMPOP(), new BITFIELD(), new BITFIELD_RO(), new BITCOUNT(), new BITOP(), new BITPOS(), new BFADD(), new BFMADD(), new BFEXISTS(), new BFMEXISTS(), new BFRESERVE(), new BFINSERT(), new BFINFO(), new BFCARD()};
       ALL_COMMANDS[2] = new RespCommand[]{new CONFIG(), new COMMAND(), new COPY(), new CLUSTER(), new CLIENT(), new CFADD(), new CFADDNX(), new CFEXISTS(), new CFMEXISTS(), new CFRESERVE(), new CFINSERT(), new CFINSERTNX(), new CFDEL(), new CFCOUNT(), new CFINFO(), new CMSINITBYDIM(), new CMSINITBYPROB(), new CMSINCRBY(), new CMSQUERY(), new CMSINFO(), new CMSMERGE()};
       // DEL should always be first here
       ALL_COMMANDS[3] = new RespCommand[]{new DEL(), new DECR(), new DECRBY(), new DBSIZE(), new DELEX(), new DIGEST(), new DISCARD()};

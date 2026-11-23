@@ -9,6 +9,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.WrappedByteArray;
@@ -34,49 +35,77 @@ import org.infinispan.server.resp.tx.TransactionContext;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
+ * Base class for the blocking pop commands. The data structure being popped from is defined by a {@link Source}.
+ * <p>
  * Derogating to the command documentation, when multiple client are blocked
  * on a BLPOP, the order in which they will be served is unspecified.
  *
+ * @param <R> the type of a successful pop result
  * @see <a href="https://redis.io/commands/blpop/">BLPOP</a>
  * @since 15.0
  */
-public abstract class AbstractBlockingPop extends RespCommand implements Resp3Command {
+public abstract class AbstractBlockingPop<R> extends RespCommand implements Resp3Command {
    private static final Log log = Log.getLog(AbstractBlockingPop.class);
 
-   public AbstractBlockingPop(int arity, int firstKeyPos, int lastKeyPos, int steps, long aclMask) {
+   /**
+    * Pops from the head or tail of lists. The result is the key followed by the popped values.
+    */
+   public static final Source<Collection<byte[]>> LIST = new Source<>() {
+      @Override
+      public CompletionStage<Collection<byte[]>> poll(Resp3Handler handler, byte[] key, PopConfiguration configuration) {
+         return pollKeyValue(handler.getListMultimap(), key, configuration);
+      }
+
+      @Override
+      public boolean isBucket(Object value) {
+         return value instanceof ListBucket;
+      }
+
+      @Override
+      public BiConsumer<? super Collection<byte[]>, ResponseWriter> serializer() {
+         return ResponseWriter.ARRAY_BULK_STRING;
+      }
+   };
+
+   private final Source<R> source;
+
+   protected AbstractBlockingPop(Source<R> source, int arity, int firstKeyPos, int lastKeyPos, int steps, long aclMask) {
       super(arity, firstKeyPos, lastKeyPos, steps, aclMask);
+      this.source = source;
    }
 
-   abstract PopConfiguration parseArguments(Resp3Handler handler, List<byte[]> arguments);
+   /**
+    * Parses the command arguments, writing an error and returning {@code null} when they are invalid.
+    */
+   protected abstract PopConfiguration parseArguments(Resp3Handler handler, List<byte[]> arguments);
 
    @Override
    public CompletionStage<RespRequestHandler> perform(Resp3Handler handler,
                                                       ChannelHandlerContext ctx,
                                                       List<byte[]> arguments) {
-      EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
       PopConfiguration configuration = parseArguments(handler, arguments);
       if (configuration == null) {
          return handler.myStage();
       }
 
       // If all the keys are empty or null, create a listener
-      // otherwise return the left value of the first non-empty list
-      var pollStage = pollAllKeys(listMultimap, configuration);
+      // otherwise return the value popped from the first non-empty key
+      var pollStage = pollAllKeys(source, handler, configuration);
 
       // Running blocking pop from EXEC should not block.
       // In this case, we just return whatever the polling has returned and do not install the listener.
       if (TransactionContext.isInTransactionContext(ctx)) {
-         return handler.stageToReturn(pollStage, ctx, ResponseWriter.ARRAY_BULK_STRING);
+         return handler.stageToReturn(pollStage, ctx, source.serializer());
       }
 
       // If no value returned, we need subscribers
       return handler.stageToReturn(pollStage.thenCompose(v -> {
          // addSubscriber call can rise exception that needs to be reported
          // as error
-         return (v != null && !v.isEmpty())
+         return v != null
                ? CompletableFuture.completedFuture(v)
                : addSubscriber(configuration, handler);
-      }), ctx, ResponseWriter.ARRAY_BULK_STRING);
+      }), ctx, source.serializer());
    }
 
    /**
@@ -88,13 +117,13 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
       return timeout > 0 ? handler.respServer().getTimeService().expectedEndTime(timeout, TimeUnit.MILLISECONDS) : 0;
    }
 
-   private CompletableFuture<Collection<byte[]>> addSubscriber(PopConfiguration configuration, Resp3Handler handler) {
+   private CompletableFuture<R> addSubscriber(PopConfiguration configuration, Resp3Handler handler) {
       if (log.isTraceEnabled()) {
          log.tracef("Subscriber for keys: %s", configuration.keys());
       }
       AdvancedCache<byte[], Object> cache = handler.typedCache(null);
       DataConversion vc = cache.getValueDataConversion();
-      PubSubListener pubSubListener = new PubSubListener(handler, cache, configuration);
+      PubSubListener<R> pubSubListener = new PubSubListener<>(handler, cache, source, configuration);
       EventListenerKeysFilter filter = new EventListenerKeysFilter(configuration.keys().stream());
       long timeout = configuration.timeout();
       long deadline = deadline(handler, timeout);
@@ -133,20 +162,20 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
       });
    }
 
-   private static CompletionStage<Collection<byte[]>> pollAllKeys(
-         EmbeddedMultimapListCache<byte[], byte[]> listMultimap, PopConfiguration configuration) {
-      var pollStage = pollKeyValue(listMultimap, configuration.key(0), configuration);
+   private static <R> CompletionStage<R> pollAllKeys(Source<R> source, Resp3Handler handler,
+                                                    PopConfiguration configuration) {
+      var pollStage = source.poll(handler, configuration.key(0), configuration);
       for (int i = 1; i < configuration.keys().size(); ++i) {
          var keyChannel = configuration.key(i);
          pollStage = pollStage.thenCompose(
-               v -> (v == null || v.isEmpty())
-                     ? pollKeyValue(listMultimap, keyChannel, configuration)
+               v -> v == null
+                     ? source.poll(handler, keyChannel, configuration)
                      : CompletableFuture.completedFuture(v));
       }
       return pollStage;
    }
 
-   static CompletionStage<Collection<byte[]>> pollKeyValue(EmbeddedMultimapListCache<byte[], byte[]> mmList,
+   private static CompletionStage<Collection<byte[]>> pollKeyValue(EmbeddedMultimapListCache<byte[], byte[]> mmList,
                                                            byte[] key, PopConfiguration configuration) {
       var cs = configuration.isHead() ? mmList.pollFirst(key, configuration.count()) : mmList.pollLast(key, configuration.count());
       return cs
@@ -161,17 +190,44 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
             });
    }
 
+   /**
+    * The data structure a blocking pop command pops from.
+    *
+    * @param <R> the type of a successful pop result
+    */
+   public interface Source<R> {
+      /**
+       * Pops from the given key.
+       *
+       * @return a stage with the result, or {@code null} when there was nothing to pop
+       */
+      CompletionStage<R> poll(Resp3Handler handler, byte[] key, PopConfiguration configuration);
+
+      /**
+       * @return {@code true} if a cache entry with this value can be popped from
+       */
+      boolean isBucket(Object value);
+
+      /**
+       * @return the serializer for the reply, which also handles a {@code null} result (timeout)
+       */
+      BiConsumer<? super R, ResponseWriter> serializer();
+   }
+
    @Listener(clustered = true)
-   public static class PubSubListener {
+   public static class PubSubListener<R> {
       private final AdvancedCache<byte[], Object> cache;
       private volatile ScheduledFuture<?> scheduledTimer;
       private final Resp3Handler handler;
-      private final PollListenerSynchronizer synchronizer;
+      private final Predicate<Object> isBucket;
+      private final PollListenerSynchronizer<R> synchronizer;
 
-      private PubSubListener(Resp3Handler handler, AdvancedCache<byte[], Object> cache, PopConfiguration configuration) {
+      private PubSubListener(Resp3Handler handler, AdvancedCache<byte[], Object> cache, Source<R> source,
+                             PopConfiguration configuration) {
          this.cache = cache;
          this.handler = handler;
-         this.synchronizer = new PollListenerSynchronizer(handler.getListMultimap(), configuration);
+         this.isBucket = source::isBucket;
+         this.synchronizer = new PollListenerSynchronizer<>(handler, source, configuration);
 
          synchronizer.resultFuture.whenComplete((ignore_v, ignore_t) -> {
             deleteTimer();
@@ -179,7 +235,7 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
          });
       }
 
-      public CompletableFuture<Collection<byte[]>> getFuture() {
+      public CompletableFuture<R> getFuture() {
          return synchronizer.resultFuture;
       }
 
@@ -201,7 +257,7 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
       @CacheEntryModified
       public void onEvent(CacheEntryEvent<Object, Object> entryEvent) {
          try {
-            if (entryEvent.getValue() instanceof ListBucket) {
+            if (isBucket.test(entryEvent.getValue())) {
                byte[] key = unwrapKey(entryEvent.getKey());
                synchronizer.onEvent(key);
             }
@@ -226,28 +282,30 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
     * - otherwise by onEvent(k) call if the referred entry is not null or empty
     *
     */
-   public static class PollListenerSynchronizer {
+   public static class PollListenerSynchronizer<R> {
       private final ArrayDeque<Object> keyQueue;
-      private final CompletableFuture<Collection<byte[]>> resultFuture;
-      private final EmbeddedMultimapListCache<byte[], byte[]> multimapList;
-      private final BiConsumer<? super Collection<byte[]>, ? super Throwable> whenCompleteConsumer;
+      private final CompletableFuture<R> resultFuture;
+      private final Resp3Handler handler;
+      private final Source<R> source;
+      private final BiConsumer<? super R, ? super Throwable> whenCompleteConsumer;
       private volatile boolean canPollJustEventKey;
       private final PopConfiguration configuration;
 
-      private PollListenerSynchronizer(EmbeddedMultimapListCache<byte[], byte[]> multimapList, PopConfiguration configuration) {
+      private PollListenerSynchronizer(Resp3Handler handler, Source<R> source, PopConfiguration configuration) {
          keyQueue = new ArrayDeque<>();
          resultFuture = new CompletableFuture<>();
-         this.multimapList = multimapList;
+         this.handler = handler;
+         this.source = source;
          this.configuration = configuration;
          whenCompleteConsumer = (v, t) -> {
             if (t != null) {
                // Between installing the listener and doing the first poll, an entry was created.
-               // When trying to poll, we identify it is not a list element.
+               // When trying to poll, we identify it is not of the expected type.
                // We do not complete the future in this case, we leave it until the timeout elapses.
                if (!RespUtil.isWrongTypeError(t)) {
                   resultFuture.completeExceptionally(t);
                }
-            } else if (v != null && !v.isEmpty()) {
+            } else if (v != null) {
                resultFuture.complete(v);
             } else {
                Object key;
@@ -266,9 +324,9 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
 
       private void runPoll(Object key) {
          if (canPollJustEventKey && key != this) {
-            AbstractBlockingPop.pollKeyValue(multimapList, (byte[]) key, configuration).whenComplete(whenCompleteConsumer);
+            source.poll(handler, (byte[]) key, configuration).whenComplete(whenCompleteConsumer);
          } else {
-            AbstractBlockingPop.pollAllKeys(multimapList, configuration).whenComplete(whenCompleteConsumer);
+            AbstractBlockingPop.pollAllKeys(source, handler, configuration).whenComplete(whenCompleteConsumer);
          }
       }
 
@@ -279,7 +337,7 @@ public abstract class AbstractBlockingPop extends RespCommand implements Resp3Co
             keyQueue.offer(this);
          }
          if (emptyQueue) {
-            AbstractBlockingPop.pollAllKeys(multimapList, configuration).whenComplete(whenCompleteConsumer);
+            AbstractBlockingPop.pollAllKeys(source, handler, configuration).whenComplete(whenCompleteConsumer);
          }
       }
 
