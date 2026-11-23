@@ -873,6 +873,53 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
       verifyListenerUnregistered();
    }
 
+   public void testBLMOVESubMillisecondTimeoutExpires() throws Exception {
+      // A positive timeout below 1ms is rounded up, not truncated to 0 (which would block forever)
+      RedisFuture<String> cf = blmoveAsync("blm-subms-src", "blm-subms-dst", LMoveArgs.Builder.leftRight(), 0.0001);
+      timeService.advance(TimeUnit.SECONDS.toMillis(1));
+      eventually(cf::isDone);
+      assertThat(cf.get()).isNull();
+      verifyListenerUnregistered();
+   }
+
+   public void testBLMOVETimeoutOutOfRange() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      for (String timeout : new String[]{"+inf", "1e300"}) {
+         assertThatThrownBy(() -> redis.dispatch(BLMOVE_CMD, new StatusOutput<>(codec),
+               new CommandArgs<>(codec).addKey("blm-oor-src").addKey("blm-oor-dst").add("LEFT").add("RIGHT").add(timeout)))
+               .isInstanceOf(RedisCommandExecutionException.class)
+               .hasMessageContaining("ERR timeout is out of range");
+      }
+   }
+
+   public void testBLMOVEDestinationBecomesWrongTypeWhileBlocked() throws Exception {
+      // Like Redis, a blocked BLMOVE fails with WRONGTYPE when the destination is no longer a list
+      RedisCommands<String, String> redis = redisConnection.sync();
+      RedisFuture<String> cf = blmoveAsync("blm-dwt-src", "blm-dwt-dst", LMoveArgs.Builder.leftRight(), 0);
+      redis.set("blm-dwt-dst", "value");
+      redis.rpush("blm-dwt-src", "a");
+      assertThatThrownBy(() -> cf.get(10, TimeUnit.SECONDS))
+            .isInstanceOf(ExecutionException.class)
+            .hasMessageContaining("WRONGTYPE");
+      assertThat(redis.lrange("blm-dwt-src", 0, -1)).containsExactly("a");
+      assertThat(redis.get("blm-dwt-dst")).isEqualTo("value");
+      verifyListenerUnregistered();
+   }
+
+   public void testBLMOVESourceBecomesWrongTypeKeepsBlocking() throws Exception {
+      // Like Redis, a blocked BLMOVE keeps waiting when the source is overwritten with a non-list
+      RedisCommands<String, String> redis = redisConnection.sync();
+      RedisFuture<String> cf = blmoveAsync("blm-swt-src", "blm-swt-dst", LMoveArgs.Builder.leftRight(), 0);
+      redis.set("blm-swt-src", "value");
+      assertThat(cf.isDone()).isFalse();
+      redis.del("blm-swt-src");
+      redis.rpush("blm-swt-src", "a");
+      assertThat(cf.get(10, TimeUnit.SECONDS)).isEqualTo("a");
+      assertThat(redis.lrange("blm-swt-dst", 0, -1)).containsExactly("a");
+      verifyListenerUnregistered();
+   }
+
    public void testBLMOVENegativeTimeout() {
       RedisCommands<String, String> redis = redisConnection.sync();
       assertThatThrownBy(() -> redis.blmove("blm-neg-src", "blm-neg-dst", LMoveArgs.Builder.leftRight(), -1))
