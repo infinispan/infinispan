@@ -64,7 +64,7 @@ jobs:
         name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3
 
-      - uses: graalvm/setup-graalvm@d6eca2595046623d69d636041513c80abf745406 # v1
+      - uses: graalvm/setup-graalvm@60e76998d25690099182b796e99b8804da582d90 # v1
         with:
           version: '25.0'
           distribution: 'graalvm'
