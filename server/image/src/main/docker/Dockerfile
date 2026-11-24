@@ -12,9 +12,11 @@ ARG REMOVE_PACKAGES="alsa-lib avahi-libs cups-filesystem cups-libs gawk p11-kit"
 ARG NEWROOT=/new-root-fs
 # The path where DNF cache files should be stored
 ARG DNF_CACHE=/tmp/dnf-cache
-# Replace "--releasever 10" below with "--use-host-config" once DNF is upgraded
+# The major version of the UBI base image used by the builder stage and of the target userland
+ARG UBI_MAJOR=9
+# Replace "--releasever ${UBI_MAJOR}" below with "--use-host-config" once DNF is upgraded
 ARG DNF_FLAGS="-y --installroot=${NEWROOT} \
-      --releasever 10 \
+      --releasever ${UBI_MAJOR} \
       --nodocs \
       --setopt=install_weak_deps=False \
       --setopt=cachedir=${DNF_CACHE} \
@@ -39,7 +41,7 @@ ARG BRAND_VERSION
 ARG BASE_IMAGE=scratch
 
 # Builder
-FROM registry.access.redhat.com/ubi10 AS builder
+FROM registry.access.redhat.com/ubi${UBI_MAJOR} AS builder
 # Repeat the arguments, since they have been reset by the FROM directive above
 ARG NEWROOT
 ARG DNF_CACHE
