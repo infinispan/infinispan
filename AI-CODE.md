@@ -34,7 +34,12 @@
 
 ## CI Change Detection
 
-The Build and Native CLI workflows use `.github/actions/detect-changes` to classify changes as `full`, `docs-only`, or `skip`. Maintain the shared glob lists in that action when changing file exclusions. Build publishes the classification as the `build-type` artifact for the Test workflow. Required checks must still report a result when work is skipped.
+The Build and Native CLI workflows use `.github/actions/detect-changes` to classify changes as `full`, `docs-only`, or `skip`.
+Maintain the shared glob lists in `.github/actions/detect-changes/detect-changes.sh` when changing file exclusions.
+Build publishes the classification as the `build-type` artifact for the Publish Image workflow and push builds in the Test workflow.
+For pull requests, Test recomputes the classification using the trusted default-branch action and GitHub file metadata.
+Required checks must still report a result when work is skipped.
+Run the detector regression tests with `bash .github/actions/detect-changes/test-detect-changes.sh`.
 
 ## Architecture
 When you need to understand the internal architecture (interceptor chain, component lifecycle, clustering, persistence, marshalling, etc.), read the documentation in `documentation/src/main/asciidoc/titles/architecture/` — start with `stories/assembly_architecture.adoc` for the topic index.

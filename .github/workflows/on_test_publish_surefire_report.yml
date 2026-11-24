@@ -14,7 +14,29 @@ permissions:
   actions: read
 
 jobs:
+   get-info:
+      runs-on: ubuntu-latest
+      outputs:
+         tests-skipped: ${{ steps.test-status.outputs.tests-skipped }}
+      steps:
+        # Query the trusted Test workflow, not a PR-produced artifact.
+        - name: Determine whether tests were skipped
+          id: test-status
+          env:
+            GH_TOKEN: ${{ github.token }}
+            TEST_RUN_ID: ${{ github.event.workflow_run.id }}
+          run: |
+            SKIPPED=$(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$TEST_RUN_ID/jobs?filter=latest&per_page=100" \
+              --jq '.jobs[] | select(.name == "Skip Test Reports" and .conclusion == "success") | .id')
+            if [ -n "$SKIPPED" ]; then
+              echo 'tests-skipped=true' >> "$GITHUB_OUTPUT"
+            else
+              echo 'tests-skipped=false' >> "$GITHUB_OUTPUT"
+            fi
+
    publish:
+      needs: get-info
+      if: needs.get-info.outputs.tests-skipped != 'true'
       name: Publish Surefire Report
       runs-on: ubuntu-latest
       steps:
@@ -146,6 +168,8 @@ jobs:
             targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
    targets-test:
+    needs: get-info
+    if: needs.get-info.outputs.tests-skipped != 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -242,6 +266,8 @@ jobs:
           --method PATCH
 
    jstack-analysis:
+      needs: get-info
+      if: needs.get-info.outputs.tests-skipped != 'true'
       name: Analyze Thread Dumps
       runs-on: ubuntu-latest
       steps:
@@ -337,6 +363,8 @@ jobs:
             gh pr comment "$PR_URL" -F /tmp/jstack-comment.md
 
    rolling-upgrades-report:
+      needs: get-info
+      if: needs.get-info.outputs.tests-skipped != 'true'
       runs-on: ubuntu-latest
       strategy:
         fail-fast: false

@@ -39,6 +39,7 @@ jobs:
 
   build:
     needs: detect-changes
+    if: ${{ !cancelled() }}
     # Keep the matrix jobs so every required OS check is reported, even when builds are skipped.
     runs-on: ${{ matrix.os }}
     strategy:
@@ -57,6 +58,21 @@ jobs:
             asset_name: windows-amd64
             gu_binary: gu.cmd
     steps:
+      - name: Validate change detection
+        shell: bash
+        env:
+          DETECTION_RESULT: ${{ needs.detect-changes.result }}
+          BUILD_TYPE: ${{ needs.detect-changes.outputs.build-type }}
+        run: |
+          if [ "$DETECTION_RESULT" != success ]; then
+            echo 'Change detection failed'
+            exit 1
+          fi
+          case "$BUILD_TYPE" in
+            full|docs-only|skip) ;;
+            *) echo 'Invalid build type'; exit 1 ;;
+          esac
+
       - if: needs.detect-changes.outputs.build-type == 'full'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
 
@@ -86,9 +102,9 @@ jobs:
         shell: bash
         run: |
           if [ -f graalvm/cli/pom.xml ]; then
-            echo "module=graalvm/cli" >> $GITHUB_OUTPUT
+            echo "module=graalvm/cli" >> "$GITHUB_OUTPUT"
           else
-            echo "module=quarkus/cli" >> $GITHUB_OUTPUT
+            echo "module=quarkus/cli" >> "$GITHUB_OUTPUT"
           fi
 
       - if: needs.detect-changes.outputs.build-type == 'full' && matrix.os == 'windows-2022'
