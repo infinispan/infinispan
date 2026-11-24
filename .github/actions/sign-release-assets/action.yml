@@ -105,33 +105,57 @@ runs:
           gh release view "$RELEASE_TAG" --json assets --jq ".assets[] | select(.name == \"$(basename "$1")\") | .digest" | sed 's/^sha256://'
         }
 
+        # Sets PUBLISHED to the digest of the asset named by $1 on the release (empty when
+        # the asset is absent) and returns the query's exit status, so callers can tell
+        # "absent" (success, empty) from "could not tell" (failure).
+        query_published_digest() {
+          local rc=0
+          PUBLISHED=$(published_digest "$1") || rc=$?
+          if [ "$rc" -ne 0 ]; then PUBLISHED=""; fi
+          return "$rc"
+        }
+
         # A partially applied replacement can leave the release with a signature that
         # does not belong to the published asset: ours under an asset that never
         # landed, or a stale one under an asset that just did. Remove any signature
         # that does not belong to the asset published now, so a failed or interrupted
         # upload leaves the release missing a signature — which retries and the resume
         # workflow repair — rather than carrying an invalid one. A previous run's
-        # intact pair is never touched. In signatures-only mode the assets are
-        # already published and were signed as published, so any partial state is
-        # already consistent and nothing needs removing.
+        # intact pair is never touched: a signature is only deleted after a successful
+        # query positively establishes that it is stale (or orphaned); a failed query
+        # proves nothing and leaves the pair untouched. In signatures-only mode the
+        # assets are already published and were signed as published, so any partial
+        # state is already consistent and nothing needs removing.
         repair_partial_upload() {
           [ "$SIGNATURES_ONLY" = "true" ] && return 0
-          local i asc file local_asc local_file published_file
+          local i asc file local_asc local_file published_asc published_file
           for ((i = 0; i < ${#uploads[@]}; i += 2)); do
             asc="${uploads[$i]}"
             file="${uploads[$((i + 1))]}"
             local_asc=$(file_sha256 "$asc")
             local_file=$(file_sha256 "$file")
-            if [ "$(published_digest "$asc")" = "$local_asc" ]; then
-              # Our signature is published: if our asset is not, the pair is invalid.
-              # A failed query proves nothing, so only act on a positive mismatch.
-              published_file=$(published_digest "$file") || published_file=""
-              if [ -n "$published_file" ] && [ "$published_file" != "$local_file" ]; then
+            if ! query_published_digest "$asc"; then
+              echo "::warning::Could not query $(basename "$asc") on release $RELEASE_TAG; leaving its pair untouched"
+              continue
+            fi
+            published_asc="$PUBLISHED"
+            if ! query_published_digest "$file"; then
+              echo "::warning::Could not query $(basename "$file") on release $RELEASE_TAG; leaving its pair untouched"
+              continue
+            fi
+            published_file="$PUBLISHED"
+            if [ "$published_asc" = "$local_asc" ]; then
+              # Our signature is published. It is only valid when the published asset
+              # is exactly ours: a different digest means the pair mixes runs, and an
+              # empty digest means the asset never landed, leaving the signature
+              # orphaned. Both facts were established by successful queries.
+              if [ "$published_file" != "$local_file" ]; then
                 gh release delete-asset "$RELEASE_TAG" "$(basename "$asc")" --yes || true
               fi
-            elif [ "$(published_digest "$file")" = "$local_file" ]; then
-              # Our asset is published without our signature: whatever signature
-              # sits under it is stale.
+            elif [ -n "$published_asc" ] && [ "$published_file" = "$local_file" ]; then
+              # Our asset is published under a signature that is not ours: the
+              # queries above succeeded, so whatever signature sits under the
+              # asset is stale.
               gh release delete-asset "$RELEASE_TAG" "$(basename "$asc")" --yes || true
             fi
           done
@@ -151,10 +175,15 @@ runs:
         # Verify what is actually published: if a concurrent run replaced an asset between
         # the uploads, the release could pair one run's asset with another run's signature.
         # A failed query must not fail the job after a successful upload, so it degrades to
-        # a warning and skips verification for that file.
+        # a warning and skips verification for that file. An asset that a successful query
+        # reports as absent fails the job: the upload did not take effect, and leaving an
+        # orphaned signature behind would make the release look complete when it is not.
         for file in "${uploads[@]}"; do
           digest=$(published_digest "$file") || { echo "::warning::Could not verify $(basename "$file") on release $RELEASE_TAG: the release query failed"; continue; }
-          [ -n "$digest" ] || continue
+          if [ -z "$digest" ]; then
+            echo "::error::$(basename "$file") is absent from release $RELEASE_TAG after the upload"
+            exit 1
+          fi
           if [ "$digest" != "$(file_sha256 "$file")" ]; then
             echo "::error::$(basename "$file") on release $RELEASE_TAG does not match the file just uploaded; a concurrent run may have replaced it"
             exit 1

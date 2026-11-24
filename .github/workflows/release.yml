@@ -143,7 +143,14 @@ jobs:
           # Indirected so a crafted branch input cannot inject shell commands
           BRANCH: ${{ inputs.branch }}
         run: |
-          git push --tags origin "$BRANCH"
+          if ! [[ "$BRANCH" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]]; then
+            echo "::error::Invalid branch name: $BRANCH"
+            exit 1
+          fi
+          # The explicit refspec starts with refs/heads/, so git can never parse the
+          # branch value as a push option (e.g. a branch named --force would otherwise
+          # enable force-pushing the release tags instead of pushing that branch).
+          git push --tags origin "refs/heads/$BRANCH:refs/heads/$BRANCH"
 
       - name: Create default release
         if: ${{ inputs.type == 'default' }}
@@ -169,20 +176,24 @@ jobs:
       # The distribution is signed and attached by the sign-server-dist job. Signing is kept
       # out of this job because it checks out inputs.branch, which may predate the signing
       # action, and so that the signing credentials never run on its build code. The ZIP is
-      # attached here, before the later failure-prone attestation steps, so that a run that
-      # fails after staging can still be resumed: the sign-server-dist job re-uploads the
-      # same bytes with --clobber to add the signature, and the resume workflow can attach
-      # the ZIP from the staged artifact if it is missing from the release.
+      # attached here, before the later failure-prone attestation steps, and also staged as
+      # a version-named run artifact, so that a run that fails after staging can still be
+      # resumed: the sign-server-dist job re-uploads the same bytes with --clobber to add
+      # the signature, and the resume workflow recovers the ZIP from the staged artifact
+      # when it is missing from the release.
       - name: Upload server distribution
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: infinispan-server-dist
+          name: infinispan-server-dist-${{ steps.resolve-versions.outputs.RELEASE_VERSION }}
           path: distribution/target/distribution/infinispan-server-${{ steps.resolve-versions.outputs.RELEASE_VERSION }}.zip
           if-no-files-found: error
 
       - name: Attach server distribution to release
         run: |
-          gh release upload "$RELEASE" "distribution/target/distribution/infinispan-server-$RELEASE.zip"
+          # --clobber so that re-running the release after this step already attached
+          # the ZIP does not fail on the existing asset: the sign-server-dist job then
+          # replaces the same bytes with the signed pair.
+          gh release upload --clobber "$RELEASE" "distribution/target/distribution/infinispan-server-$RELEASE.zip"
         env:
           GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
           RELEASE: ${{ steps.resolve-versions.outputs.RELEASE_VERSION }}
@@ -312,6 +323,11 @@ jobs:
     concurrency:
       # Keyed on the resolved version so that it serializes with the sign-cli-assets job of
       # the resume workflow even when this release was dispatched without an explicit version.
+      # GitHub keeps only one pending job per group, so a queued job displaces an older
+      # pending one; that is acceptable here because the displacing job is not a matrix leg
+      # but the same single upload for the same version, so no work is lost. Once actionlint
+      # learns the concurrency "queue" property (github.blog/changelog/2026-05-07), setting
+      # queue: max here removes the limitation.
       group: sign-cli-assets-${{ needs.release.outputs.version }}
       cancel-in-progress: false
     steps:
@@ -342,6 +358,11 @@ jobs:
     concurrency:
       # Keyed on the resolved version so that it serializes with the server-dist job of the
       # resume workflow even when this release was dispatched without an explicit version.
+      # GitHub keeps only one pending job per group, so a queued job displaces an older
+      # pending one; that is acceptable here because the displacing job is not a matrix leg
+      # but the same single upload for the same version, so no work is lost. Once actionlint
+      # learns the concurrency "queue" property (github.blog/changelog/2026-05-07), setting
+      # queue: max here removes the limitation.
       group: sign-server-assets-${{ needs.release.outputs.version }}
       cancel-in-progress: false
     steps:
@@ -350,7 +371,7 @@ jobs:
       - name: Download server distribution
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: infinispan-server-dist
+          name: infinispan-server-dist-${{ needs.release.outputs.version }}
           path: server-dist
 
       - name: Sign and attach server distribution

@@ -26,9 +26,13 @@ jobs:
   linux-packages:
     runs-on: ubuntu-latest
     concurrency:
-      # Serializes with any other run signing assets of the same release, so that package
-      # and signature uploads cannot interleave across runs.
-      group: sign-package-assets-${{ inputs.version }}
+      # Serializes with any other run signing the same release's package assets, so that
+      # package and signature uploads cannot interleave across runs. The matrix leg is part
+      # of the key: GitHub keeps only one pending job per group and a queued job displaces
+      # the pending one, so a group shared by both legs would let a queued leg of a newer
+      # run cancel its still-pending sibling and silently drop that architecture's packages.
+      # The legs upload disjoint files, so they do not need mutual serialization.
+      group: sign-package-assets-${{ inputs.version }}-${{ matrix.asset_name }}
       cancel-in-progress: false
     strategy:
       fail-fast: false
