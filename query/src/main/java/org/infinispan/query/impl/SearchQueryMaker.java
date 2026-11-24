@@ -1,5 +1,6 @@
 package org.infinispan.query.impl;
 
+import static org.hibernate.search.engine.search.common.ValueModel.RAW;
 import static org.infinispan.query.core.impl.Log.CONTAINER;
 import static org.infinispan.query.impl.HibernateSearchPropertyHelper.KEY;
 import static org.infinispan.query.impl.HibernateSearchPropertyHelper.SCORE;
@@ -24,7 +25,6 @@ import org.hibernate.search.backend.lucene.search.predicate.dsl.LuceneSearchPred
 import org.hibernate.search.engine.backend.metamodel.IndexFieldDescriptor;
 import org.hibernate.search.engine.backend.metamodel.IndexValueFieldDescriptor;
 import org.hibernate.search.engine.common.EntityReference;
-import org.hibernate.search.engine.search.aggregation.SearchAggregation;
 import org.hibernate.search.engine.search.predicate.SearchPredicate;
 import org.hibernate.search.engine.search.predicate.dsl.BooleanPredicateClausesStep;
 import org.hibernate.search.engine.search.predicate.dsl.ExistsPredicateOptionsStep;
@@ -142,7 +142,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
             searchMapping.indexedEntity(targetedTypeName);
 
       filteringClause = parsingResult.getFilteringClause();
-      InfinispanAggregation<?> aggregation = makeAggregation(scope, parsingResult);
+      InfinispanAggregation<?, ?> aggregation = makeAggregation(scope, parsingResult);
       SearchPredicate predicate = makePredicate(parsingResult.getWhereClause(), aggregation).toPredicate();
       SearchProjectionInfo projection = makeProjection(parsingResult.getTargetEntityMetadata(), scope.projection(), parsingResult.getProjectedPaths(),
             parsingResult.getProjectedTypes(), aggregation);
@@ -151,7 +151,7 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
       return new SearchQueryParsingResult(targetedType, targetedTypeName, projection, aggregation, predicate, sort, hitCountAccuracy, knn);
    }
 
-   private <T> InfinispanAggregation makeAggregation(SearchScope<?> scope, IckleParsingResult<TypeMetadata> parsingResult) {
+   private <T> InfinispanAggregation<?, ?> makeAggregation(SearchScope<?> scope, IckleParsingResult<TypeMetadata> parsingResult) {
       PropertyPath<?>[] groupBy = parsingResult.getGroupBy();
       if (groupBy == null || groupBy.length != 1) {
          return null;
@@ -176,7 +176,6 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
          return null;
       }
 
-      SearchAggregation<?> searchAggregation;
       String groupByFieldName = groupBy[0].asStringPathWithoutAlias();
       var aggregationFactory = scope.aggregation();
       String aggFieldName = aggregationPropertyPath.asStringPathWithoutAlias();
@@ -184,47 +183,54 @@ public final class SearchQueryMaker<TypeMetadata> implements Visitor<PredicateFi
          case COUNT -> {
             if (aggFieldName == null || aggFieldName.isEmpty()) {
                // Count(*)
-               searchAggregation = aggregationFactory.terms()
+               return new InfinispanAggregation<>(aggregationFactory.terms()
                      .field(groupByFieldName, projectedType)
                      .value(aggregationFactory.count().documents())
                      .maxTermCount(maxResults)
-                     .toAggregation();
+                     .toAggregation(), aggregationPropertyPath, displayGroupFirst);
             } else {
-               searchAggregation = aggregationFactory.terms()
+               return new InfinispanAggregation<>(aggregationFactory.terms()
                      .field(groupByFieldName, projectedType)
                      .value(aggregationFactory.count().field(aggFieldName))
                      .maxTermCount(maxResults)
-                     .toAggregation();
+                     .toAggregation(), aggregationPropertyPath, displayGroupFirst);
             }
          }
-         case SUM -> searchAggregation = aggregationFactory.terms()
+         case SUM -> {
+            return new InfinispanAggregation<>(aggregationFactory.terms()
                .field(groupByFieldName, projectedType)
                .value(aggregationFactory.sum().field(aggFieldName, Object.class))
                .maxTermCount(maxResults)
-               .toAggregation();
+               .toAggregation(), aggregationPropertyPath, displayGroupFirst);
+         }
 
-         case MAX -> searchAggregation = aggregationFactory.terms()
+         case MAX -> {
+            return new InfinispanAggregation<>(aggregationFactory.terms()
                .field(groupByFieldName, projectedType)
                .value(aggregationFactory.max().field(aggFieldName, Object.class))
                .maxTermCount(maxResults)
-               .toAggregation();
+               .toAggregation(), aggregationPropertyPath, displayGroupFirst);
+         }
 
-         case MIN -> searchAggregation = aggregationFactory.terms()
+         case MIN -> {
+            return new InfinispanAggregation<>(aggregationFactory.terms()
                .field(groupByFieldName, projectedType)
                .value(aggregationFactory.min().field(aggFieldName, Object.class))
                .maxTermCount(maxResults)
-               .toAggregation();
+               .toAggregation(), aggregationPropertyPath, displayGroupFirst);
+         }
 
-         case AVG -> searchAggregation = aggregationFactory.terms()
+         case AVG -> {
+            return new InfinispanAggregation<>(aggregationFactory.terms()
                .field(groupByFieldName, projectedType)
-               .value(aggregationFactory.avg().field(aggFieldName, Object.class))
+               .value(aggregationFactory.avg().field(aggFieldName, Double.class, RAW))
                .maxTermCount(maxResults)
-               .toAggregation();
+               .toAggregation(), aggregationPropertyPath, displayGroupFirst);
+         }
 
          default ->
                throw new UnsupportedOperationException("Query aggregation not supported " + aggregationPropertyPath.getAggregationFunction().name());
       }
-      return new InfinispanAggregation(searchAggregation, aggregationPropertyPath, displayGroupFirst);
    }
 
    private SearchProjectionInfo makeProjection(TypeMetadata typeMetadata, SearchProjectionFactory<EntityReference, ?> projectionFactory,

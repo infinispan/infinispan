@@ -35,6 +35,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.protostream.sampledomain.KeywordVector;
 import org.infinispan.protostream.sampledomain.Metadata;
+import org.infinispan.protostream.sampledomain.NumericAggregation;
 import org.infinispan.protostream.sampledomain.TestDomainSCI;
 import org.infinispan.protostream.sampledomain.bank.Address;
 import org.infinispan.protostream.sampledomain.bank.User;
@@ -54,6 +55,35 @@ public class HotRodCacheQueries {
 
    @InfinispanServer(ClusteredIT.class)
    public static TestClientDriver SERVERS;
+
+   @ParameterizedTest
+   @ValueSource(booleans = {true, false})
+   public void testFractionalAverage(boolean indexed) {
+      var schema = NumericAggregation.NumericAggregationSchema.INSTANCE;
+      ConfigurationBuilder client = new ConfigurationBuilder().addContextInitializer(schema);
+      var driver = SERVERS.hotrod().withClientConfiguration(client);
+      driver.createRemoteCacheManager().administration().schemas().createOrUpdate(schema);
+      var configuration = new org.infinispan.configuration.cache.ConfigurationBuilder();
+      configuration.clustering().cacheMode(CacheMode.DIST_SYNC);
+      configuration.encoding().mediaType(MediaType.APPLICATION_PROTOSTREAM_TYPE);
+      if (indexed) {
+         configuration.indexing().enable()
+               .storage(org.infinispan.configuration.cache.IndexStorage.LOCAL_HEAP)
+               .addIndexedEntity("aggregation.NumericAggregation");
+      }
+      RemoteCache<Integer, NumericAggregation> cache = driver.withServerConfiguration(configuration)
+            .create("fractional-average-" + (indexed ? "indexed" : "nonindexed"));
+      cache.put(1, new NumericAggregation("values", 1, 1L));
+      cache.put(2, new NumericAggregation("values", 2, 2L));
+      for (String field : new String[] {"integerValue", "longValue"}) {
+         Query<Object[]> query = cache.query("select category, avg(" + field +
+               ") from aggregation.NumericAggregation group by category");
+         assertThat(query.list()).containsExactly(new Object[] {"values", 1.5d});
+         assertThat(query.list().get(0)[1]).isInstanceOf(Double.class);
+         query = cache.query("select count(" + field + "), avg(" + field + ") from aggregation.NumericAggregation");
+         assertThat(query.list()).containsExactly(new Object[] {2L, 1.5d});
+      }
+   }
 
    @ParameterizedTest
    @ValueSource(booleans = {true, false})

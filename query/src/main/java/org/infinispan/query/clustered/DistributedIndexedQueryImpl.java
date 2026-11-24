@@ -97,7 +97,7 @@ public final class DistributedIndexedQueryImpl<E> extends IndexedQueryImpl<E> {
 
       SearchQueryBuilder searchQueryBuilder = queryDefinition.getSearchQueryBuilder();
       Sort luceneSort = searchQueryBuilder.getLuceneSort();
-      InfinispanAggregation<?> aggregation = searchQueryBuilder.aggregation();
+      InfinispanAggregation<?, ?> aggregation = searchQueryBuilder.aggregation();
 
       if (aggregation != null) {
          return (CloseableIterator<E>) new AggregationDistributedIterator(topDocsResponses,

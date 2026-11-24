@@ -203,20 +203,22 @@ public class IndexedQueryImpl<E> implements IndexedQuery<E> {
       SearchResult<E> searchResult = searchQuery.fetch(0, 0); // we don't need to fetch any values except the aggregations
       if (queryStatistics.isEnabled()) recordQuery(System.nanoTime() - start);
 
-      Map<Comparable<?>, Long> aggregationResult = searchResult
+      Map<Comparable<?>, ?> aggregationResult = searchResult
             .aggregation(AggregationKey.of(INFINISPAN_AGGREGATION_KEY_NAME));
       Sort sort = searchQueryBuilder.getLuceneSort();
-      Map<Comparable<?>, Long> aggregation;
+      Map<Comparable<?>, ?> aggregation;
       if (sort.getSort().length == 1) {
-         aggregation = sort.getSort()[0].getReverse() ? new TreeMap<>(Collections.reverseOrder()) : new TreeMap<>();
-         aggregation.putAll(aggregationResult);
+         Map<Comparable<?>, Object> sortedAggregation = sort.getSort()[0].getReverse() ?
+               new TreeMap<>(Collections.reverseOrder()) : new TreeMap<>();
+         aggregationResult.forEach(sortedAggregation::put);
+         aggregation = sortedAggregation;
       } else {
          aggregation = aggregationResult;
       }
 
       ArrayList<Object[]> result = new ArrayList<>(aggregation.size());
       boolean displayGroupFirst = searchQueryBuilder.aggregation().displayGroupFirst();
-      for (Map.Entry<?, Long> groupAggregation : aggregation.entrySet()) {
+      for (Map.Entry<?, ?> groupAggregation : aggregation.entrySet()) {
          if (displayGroupFirst) {
             result.add(new Object[]{groupAggregation.getKey(), groupAggregation.getValue()});
          } else {

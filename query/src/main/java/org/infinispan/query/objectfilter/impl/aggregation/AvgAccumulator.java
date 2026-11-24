@@ -20,14 +20,20 @@ final class AvgAccumulator extends FieldAccumulator {
 
    private static final Log log = Logger.getMessageLogger(MethodHandles.lookup(), Log.class, AvgAccumulator.class.getName());
 
-   private final Class<?> fieldType;
-
    AvgAccumulator(int inPos, int outPos, Class<?> fieldType) {
       super(inPos, outPos);
+      validateFieldType(fieldType);
+   }
+
+   static Class<?> getOutputType(Class<?> fieldType) {
+      validateFieldType(fieldType);
+      return Double.class;
+   }
+
+   private static void validateFieldType(Class<?> fieldType) {
       if (!Number.class.isAssignableFrom(fieldType)) {
          throw log.getAVGCannotBeAppliedToPropertyOfType(fieldType.getName());
       }
-      this.fieldType = fieldType;
    }
 
    @Override
@@ -55,13 +61,6 @@ final class AvgAccumulator extends FieldAccumulator {
 
    @Override
    protected void finish(Object[] accRow) {
-      Double avg = ((DoubleStat) accRow[outPos]).getAvg();
-      if (avg != null && fieldType == Integer.class) {
-         accRow[outPos] = avg.intValue();
-      } else if (avg != null && fieldType == Long.class) {
-         accRow[outPos] = avg.longValue();
-      } else {
-         accRow[outPos] = avg;
-      }
+      accRow[outPos] = ((DoubleStat) accRow[outPos]).getAvg();
    }
 }

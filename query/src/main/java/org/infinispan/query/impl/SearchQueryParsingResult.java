@@ -20,14 +20,14 @@ public final class SearchQueryParsingResult {
    private final Class<?> targetedType;
    private final String targetedTypeName;
    private final SearchProjectionInfo projectionInfo;
-   private final InfinispanAggregation<?> aggregation;
+   private final InfinispanAggregation<?, ?> aggregation;
    private final SearchPredicate predicate;
    private final SearchSort sort;
    private final int hitCountAccuracy;
    private final Integer knn;
 
    public SearchQueryParsingResult(Class<?> targetedType, String targetedTypeName, SearchProjectionInfo projectionInfo,
-                                   InfinispanAggregation<?> aggregation, SearchPredicate predicate, SearchSort sort,
+                                   InfinispanAggregation<?, ?> aggregation, SearchPredicate predicate, SearchSort sort,
                                    int hitCountAccuracy, Integer knn) {
       this.targetedType = targetedType;
       this.targetedTypeName = targetedTypeName;
