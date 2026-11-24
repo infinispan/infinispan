@@ -32,6 +32,10 @@
 * **Run a single test method:** `mvn verify -pl core -Dtest=SomeTest#testMethod`
 * **Format code before committing:** `mvn spotless:apply`
 
+## CI Change Detection
+
+The Build and Native CLI workflows use `.github/actions/detect-changes` to classify changes as `full`, `docs-only`, or `skip`. Maintain the shared glob lists in that action when changing file exclusions. Build publishes the classification as the `build-type` artifact for the Test workflow. Required checks must still report a result when work is skipped.
+
 ## Architecture
 When you need to understand the internal architecture (interceptor chain, component lifecycle, clustering, persistence, marshalling, etc.), read the documentation in `documentation/src/main/asciidoc/titles/architecture/` — start with `stories/assembly_architecture.adoc` for the topic index.
 

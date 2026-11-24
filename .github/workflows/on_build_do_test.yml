@@ -66,6 +66,35 @@ jobs:
              echo "build-type=$BUILD_TYPE" >> "$GITHUB_OUTPUT"
              echo "Build type: $BUILD_TYPE"
 
+  skip-test-reports:
+    needs: get-info
+    if: needs.get-info.outputs.build-type == 'docs-only' || needs.get-info.outputs.build-type == 'skip'
+    name: Skip Test Reports
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3
+        id: app-token
+        with:
+          client-id: ${{ secrets.GH_APP_ISPN_ID }}
+          private-key: ${{ secrets.GH_APP_ISPN_KEY }}
+
+      - name: Report skipped tests
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          SOURCE_HEAD_SHA: ${{ needs.get-info.outputs.source-head-sha }}
+          BUILD_TYPE: ${{ needs.get-info.outputs.build-type }}
+        run: |
+          for CHECK_NAME in 'Test Report Result' 'Test Report Result db2' 'Test Report Result mssql' 'Test Report Result oracle'; do
+            gh api "repos/$GITHUB_REPOSITORY/check-runs" \
+              --method POST \
+              -f name="$CHECK_NAME" \
+              -f head_sha="$SOURCE_HEAD_SHA" \
+              -f status=completed \
+              -f conclusion=skipped \
+              -f "output[title]=Tests skipped" \
+              -f "output[summary]=Tests are not required for build type: $BUILD_TYPE."
+          done
+
   ci-build-test-pr:
     needs: get-info
     if: ${{ github.event.workflow_run.conclusion == 'success' && needs.get-info.outputs.build-type == 'full' }}

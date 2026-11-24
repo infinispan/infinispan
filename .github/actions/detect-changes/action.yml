@@ -1,0 +1,69 @@
+name: Detect Changes
+description: Classify changes as full, docs-only, or skip after checking out the repository with full history
+outputs:
+  build-type:
+    description: Build required for the changed files (full, docs-only, or skip)
+    value: ${{ steps.check.outputs.build-type }}
+runs:
+  using: composite
+  steps:
+    - name: Determine build type
+      id: check
+      shell: bash
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+      run: |
+        # New branches and unavailable history require a full build.
+        BUILD_TYPE=full
+        if [ "$BASE_SHA" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$BASE_SHA^{commit}"; then
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            CHANGED=$(git diff --name-only "$BASE_SHA...$GITHUB_SHA")
+          else
+            CHANGED=$(git diff --name-only "$BASE_SHA" "$GITHUB_SHA")
+          fi
+          echo "Changed files:"
+          printf '%s\n' "$CHANGED"
+
+          # These files require neither builds nor tests. Add glob patterns here.
+          IGNORED_PATHS=(
+            '**.md'
+            'LICENSE*'
+            '.gitignore'
+            '.gitattributes'
+            '.editorconfig'
+            'CODEOWNERS'
+          )
+          # These files require only a documentation build.
+          DOCS_PATHS=(
+            'documentation/**'
+          )
+          BUILD_TYPE=skip
+          while IFS= read -r FILE; do
+            [ -z "$FILE" ] && continue
+            IGNORED=false
+            for PATTERN in "${IGNORED_PATHS[@]}"; do
+              if [[ "$FILE" == $PATTERN ]]; then
+                IGNORED=true
+                break
+              fi
+            done
+            [ "$IGNORED" = true ] && continue
+
+            DOCS=false
+            for PATTERN in "${DOCS_PATHS[@]}"; do
+              if [[ "$FILE" == $PATTERN ]]; then
+                DOCS=true
+                break
+              fi
+            done
+            if [ "$DOCS" = true ]; then
+              BUILD_TYPE=docs-only
+            else
+              BUILD_TYPE=full
+              break
+            fi
+          done <<< "$CHANGED"
+        fi
+        echo "Build type: $BUILD_TYPE"
+        echo "build-type=$BUILD_TYPE" >> "$GITHUB_OUTPUT"
