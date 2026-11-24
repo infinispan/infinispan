@@ -36,8 +36,6 @@ import io.netty.channel.ChannelHandlerContext;
 public class SUNIONCARD extends RespCommand implements Resp3Command {
    private static final byte[] APPROX = "APPROX".getBytes(StandardCharsets.US_ASCII);
    private static final byte[] LIMIT = "LIMIT".getBytes(StandardCharsets.US_ASCII);
-   // In APPROX mode, how many HyperLogLog register updates between checks of the estimate against LIMIT
-   private static final int APPROX_LIMIT_CHECK_INTERVAL = 1024;
 
    public SUNIONCARD() {
       super(-3, 0, 0, 0, AclCategory.READ.mask() | AclCategory.SET.mask() | AclCategory.SLOW.mask());
@@ -119,13 +117,23 @@ public class SUNIONCARD extends RespCommand implements Resp3Command {
 
    private static long approxCount(List<SetBucket<byte[]>> buckets, long limit) {
       HyperLogLog hll = new HyperLogLog();
-      int updates = 0;
+      // Adding one element raises the estimate by about one at most, so the estimate cannot reach LIMIT before
+      // another (limit - estimate) elements are added. Check only then, and only if a register changed since
+      // the last check, as computing the estimate is not free.
+      long checkInterval = limit;
+      long sinceCheck = 0;
+      boolean changed = false;
       for (SetBucket<byte[]> bucket : buckets) {
          for (Iterator<MultimapObjectWrapper<byte[]>> it = bucket.stream().iterator(); it.hasNext(); ) {
-            // The estimate only changes when a register changes; computing it is not free, so check periodically
-            if (hll.add(it.next().get()) && limit > 0 && ++updates % APPROX_LIMIT_CHECK_INTERVAL == 0
-                  && hll.cardinality() >= limit) {
-               return limit;
+            changed |= hll.add(it.next().get());
+            if (limit > 0 && ++sinceCheck >= checkInterval) {
+               sinceCheck = 0;
+               if (changed) {
+                  changed = false;
+                  long estimate = hll.cardinality();
+                  if (estimate >= limit) return limit;
+                  checkInterval = limit - estimate;
+               }
             }
          }
       }

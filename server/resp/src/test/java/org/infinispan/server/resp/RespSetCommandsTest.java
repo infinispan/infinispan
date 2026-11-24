@@ -1293,6 +1293,9 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       assertThat(sunioncard("2", "suca-big1", "suca-big2", "APPROX", "LIMIT", "100")).isEqualTo(100);
       assertThat(sunioncard("2", "suca-big1", "suca-big2", "LIMIT", "100", "APPROX")).isEqualTo(100);
       assertThat(sunioncard("2", "suca1", "suca2", "APPROX", "LIMIT", "100")).isEqualTo(5);
+      // A limit close to the union's size stops early; a limit above it returns the estimate
+      assertThat(sunioncard("2", "suca-big1", "suca-big2", "APPROX", "LIMIT", "14000")).isEqualTo(14000);
+      assertThat(sunioncard("2", "suca-big1", "suca-big2", "APPROX", "LIMIT", "20000")).isBetween(14550L, 15450L);
    }
 
    public void testSunioncardWrongType() {
