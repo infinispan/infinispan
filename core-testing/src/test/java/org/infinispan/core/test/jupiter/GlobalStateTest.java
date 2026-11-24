@@ -2,6 +2,9 @@ package org.infinispan.core.test.jupiter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.concurrent.TimeUnit;
+
+import org.awaitility.Awaitility;
 import org.infinispan.configuration.cache.CacheMode;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -49,7 +52,14 @@ class GlobalStateTest {
       // Restart node 0
       ctx.restart(0);
 
-      // Data should still be accessible through node 1
+      // The restarted node recovers the cache configuration and its data
+      Awaitility.await().atMost(30, TimeUnit.SECONDS)
+            .untilAsserted(() -> {
+               assertThat(cache.on(0).get("survive")).isEqualTo("restart");
+               assertThat(cache.on(0).get("also")).isEqualTo("survives");
+            });
+
+      // Data is still accessible through node 1
       assertThat(cache.on(1).get("survive")).isEqualTo("restart");
       assertThat(cache.on(1).get("also")).isEqualTo("survives");
    }

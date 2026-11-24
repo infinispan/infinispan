@@ -80,9 +80,7 @@ public class InfinispanContext {
       String cacheName = testId + "-" + (cacheCounter++);
       ConfigurationBuilder builder = new ConfigurationBuilder();
       configurer.accept(builder);
-      for (EmbeddedCacheManager manager : cluster.managers()) {
-         manager.defineConfiguration(cacheName, builder.build());
-      }
+      cluster.defineCache(cacheName, builder.build());
       createdCaches.add(cacheName);
       return new CacheHandle<>(cluster.managers(), cacheName);
    }
@@ -172,9 +170,9 @@ public class InfinispanContext {
     * Adds a new node to the cluster and waits for the cluster view to stabilize.
     * <p>
     * The new node will have access to all named cache configurations already
-    * defined via the configuration file, but per-test caches created with
-    * {@link #createCache} are <b>not</b> automatically defined on the new node.
-    * Use the returned manager to define and start them if needed.
+    * defined via the configuration file and to the per-test caches created
+    * with {@link #createCache}: their configurations are reproduced on the
+    * new node automatically.
     *
     * @return the new cache manager
     */
@@ -241,9 +239,7 @@ public class InfinispanContext {
 
    private <K, V> CacheHandle<K, V> defineCache(Configuration config) {
       String cacheName = testId + "-" + (cacheCounter++);
-      for (EmbeddedCacheManager manager : cluster.managers()) {
-         manager.defineConfiguration(cacheName, config);
-      }
+      cluster.defineCache(cacheName, config);
       createdCaches.add(cacheName);
       return new CacheHandle<>(cluster.managers(), cacheName);
    }

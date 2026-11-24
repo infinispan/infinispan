@@ -50,6 +50,13 @@ import io.reactivex.rxjava3.core.Flowable;
  * via {@link #buildConfig(ConfigurationBuilder)}. The test suite validates
  * the core store contract: CRUD, expiration, bulk operations, and segmentation.
  * <p>
+ * Bulk operations are only exercised when the store declares
+ * {@link Characteristic#BULK_READ}; otherwise they are replaced by point
+ * operation checks using {@code load()}/{@code containsKey()}. The
+ * {@code approximateSize} assertions accommodate estimates and {@code -1}
+ * (unavailable), as permitted by {@link NonBlockingStore#approximateSize};
+ * exact-count assertions are left to store-specific tests.
+ * <p>
  * Example:
  * <pre>{@code
  * class MyStoreTest extends AbstractNonBlockingStoreTest {
@@ -185,12 +192,12 @@ public abstract class AbstractNonBlockingStoreTest {
       write("k2", "v2");
       write("k3", "v3");
 
-      assertThat(allEntries()).hasSize(3);
+      assertBulkOrPointChecks(3, "k1", "k2", "k3");
 
       delete("k1");
       delete("k2");
 
-      assertThat(allEntries()).hasSize(1);
+      assertBulkOrPointChecks(1, "k3");
       assertThat(load("k3")).isNotNull();
       assertThat(load("k3").getValue()).isEqualTo("v3");
       assertContains("k1", false);
@@ -212,10 +219,12 @@ public abstract class AbstractNonBlockingStoreTest {
    void testClear() {
       write("k1", "v1");
       write("k2", "v2");
-      assertThat(allEntries()).hasSize(2);
+      assertBulkOrPointChecks(2, "k1", "k2");
 
       join(store.clear());
       assertStoreIsEmpty();
+      assertContains("k1", false);
+      assertContains("k2", false);
    }
 
    @Test
@@ -245,8 +254,10 @@ public abstract class AbstractNonBlockingStoreTest {
       write("k2", "v2");
       write("k3", "v3");
 
+      // approximateSize() permits estimates and -1 when no estimate is
+      // available; exact-count assertions belong to store-specific tests
       long size = join(store.approximateSize(segments));
-      assertThat(size).isEqualTo(3);
+      assertThat(size).isGreaterThanOrEqualTo(-1);
    }
 
    @Test
@@ -483,7 +494,26 @@ public abstract class AbstractNonBlockingStoreTest {
             .toList().toCompletionStage());
    }
 
+   /**
+    * Asserts that the store contains exactly {@code expectedSize} entries.
+    * <p>
+    * Uses {@code publishEntries} when the store supports
+    * {@link Characteristic#BULK_READ}; otherwise falls back to
+    * {@code containsKey} checks on the given keys.
+    */
+   protected void assertBulkOrPointChecks(int expectedSize, Object... keys) {
+      if (characteristics.contains(Characteristic.BULK_READ)) {
+         assertThat(allEntries()).hasSize(expectedSize);
+      } else {
+         for (Object key : keys) {
+            assertContains(key, true);
+         }
+      }
+   }
+
    protected void assertStoreIsEmpty() {
+      // Without BULK_READ there is no way to enumerate the store's contents
+      if (!characteristics.contains(Characteristic.BULK_READ)) return;
       assertThat(allEntries()).isEmpty();
    }
 

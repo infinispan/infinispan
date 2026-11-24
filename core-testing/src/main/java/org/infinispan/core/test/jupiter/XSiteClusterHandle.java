@@ -66,58 +66,66 @@ class XSiteClusterHandle implements AutoCloseable {
       bridgeClusterName = "bridge-" + System.nanoTime();
       TestRelay.registerTopology(bridgeClusterName, siteNames);
 
-      for (Site s : siteAnnotations) {
-         String siteName = s.name();
-         int numNodes = s.nodes();
-         String clusterName = "ISPN(SITE " + siteName + ")-" + System.nanoTime();
-         int portOffset = TestTransport.allocatePortOffset();
+      try {
+         for (Site s : siteAnnotations) {
+            String siteName = s.name();
+            int numNodes = s.nodes();
+            String clusterName = "ISPN(SITE " + siteName + ")-" + System.nanoTime();
+            int portOffset = TestTransport.allocatePortOffset();
 
-         List<EmbeddedCacheManager> managers = new ArrayList<>(numNodes);
-         for (int i = 0; i < numNodes; i++) {
-            ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
-            GlobalConfigurationBuilder gcb = holder.getGlobalConfigurationBuilder();
+            List<EmbeddedCacheManager> managers = new ArrayList<>(numNodes);
+            // Register the site before creating its managers so that the
+            // cleanup below can reach partially created sites
+            sites.put(siteName, new SiteInfo(siteName, managers, numNodes));
+            for (int i = 0; i < numNodes; i++) {
+               ConfigurationBuilderHolder holder = new ConfigurationBuilderHolder();
+               GlobalConfigurationBuilder gcb = holder.getGlobalConfigurationBuilder();
 
-            TestTransport.configureXSite(gcb, clusterName, siteName,
-                  bridgeClusterName, i, portOffset);
+               TestTransport.configureXSite(gcb, clusterName, siteName,
+                     bridgeClusterName, i, portOffset);
 
-            for (SerializationContextInitializer sci : contextInitializers) {
-               gcb.serialization().addContextInitializer(sci);
-            }
-
-            if (globalState) {
-               Path nodeDir = stateBaseDir.resolve(siteName + "-node-" + i);
-               try {
-                  Files.createDirectories(nodeDir);
-               } catch (IOException e) {
-                  throw new UncheckedIOException("Failed to create node state directory", e);
+               for (SerializationContextInitializer sci : contextInitializers) {
+                  gcb.serialization().addContextInitializer(sci);
                }
-               gcb.globalState().enable()
-                     .persistentLocation(nodeDir.toString())
-                     .sharedPersistentLocation(nodeDir.toString())
-                     .temporaryLocation(nodeDir.resolve("tmp").toString());
+
+               if (globalState) {
+                  Path nodeDir = stateBaseDir.resolve(siteName + "-node-" + i);
+                  try {
+                     Files.createDirectories(nodeDir);
+                  } catch (IOException e) {
+                     throw new UncheckedIOException("Failed to create node state directory", e);
+                  }
+                  gcb.globalState().enable()
+                        .persistentLocation(nodeDir.toString())
+                        .sharedPersistentLocation(nodeDir.toString())
+                        .temporaryLocation(nodeDir.resolve("tmp").toString());
+               }
+
+               EmbeddedCacheManager manager = new DefaultCacheManager(holder, true);
+
+               if (timeService != null) {
+                  replaceTimeService(manager, timeService);
+               }
+
+               managers.add(manager);
             }
-
-            EmbeddedCacheManager manager = new DefaultCacheManager(holder, true);
-
-            if (timeService != null) {
-               replaceTimeService(manager, timeService);
-            }
-
-            managers.add(manager);
          }
 
-         sites.put(siteName, new SiteInfo(siteName, managers, numNodes));
-      }
-
-      // Wait for intra-site clustering
-      for (SiteInfo info : sites.values()) {
-         if (info.numNodes > 1) {
-            waitForIntraSiteCluster(info);
+         // Wait for intra-site clustering
+         for (SiteInfo info : sites.values()) {
+            if (info.numNodes > 1) {
+               waitForIntraSiteCluster(info);
+            }
          }
-      }
 
-      // Wait for cross-site bridge views
-      waitForXSiteViews(siteNames);
+         // Wait for cross-site bridge views
+         waitForXSiteViews(siteNames);
+      } catch (Throwable t) {
+         // Clean up partially constructed resources: the extension only closes
+         // this handle after the constructor completes successfully
+         close();
+         throw t;
+      }
    }
 
    Map<String, SiteInfo> sites() {

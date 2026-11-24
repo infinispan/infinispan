@@ -80,10 +80,7 @@ class DynamicMembershipTest {
       ctx.addNode();
       assertThat(ctx.numNodes()).isEqualTo(3);
 
-      // Define cache on new node and access data
-      ctx.manager(2).defineConfiguration(handle.name(),
-            new org.infinispan.configuration.cache.ConfigurationBuilder()
-                  .clustering().cacheMode(org.infinispan.configuration.cache.CacheMode.DIST_SYNC).build());
+      // The new node reproduces the cache configuration automatically
       assertThat(ctx.manager(2).<String, String>getCache(handle.name()).get(k(1))).isEqualTo(v(1));
    }
 }

@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.time.ControlledTimeService;
 import org.infinispan.commons.time.TimeService;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
@@ -46,6 +47,7 @@ class ClusterHandle implements AutoCloseable {
    private final boolean globalState;
    private final Path stateBaseDir;
    private final Map<Integer, Path> nodeStateDirs;
+   private final Map<String, Configuration> cacheConfigurations;
    private final int portOffset;
    private int nodeCounter;
 
@@ -58,6 +60,7 @@ class ClusterHandle implements AutoCloseable {
       this.contextInitializers = contextInitializers;
       this.globalState = globalState;
       this.nodeStateDirs = new HashMap<>();
+      this.cacheConfigurations = new HashMap<>();
       this.clusterName = "ISPN-test-" + System.nanoTime();
       this.portOffset = numNodes > 1 ? TestTransport.allocatePortOffset() : 0;
 
@@ -71,12 +74,19 @@ class ClusterHandle implements AutoCloseable {
          this.stateBaseDir = null;
       }
 
-      for (int i = 0; i < numNodes; i++) {
-         managers.add(createManager(numNodes > 1));
-      }
+      try {
+         for (int i = 0; i < numNodes; i++) {
+            managers.add(createManager(numNodes > 1));
+         }
 
-      if (numNodes > 1) {
-         waitForClusterToForm();
+         if (numNodes > 1) {
+            waitForClusterToForm();
+         }
+      } catch (Throwable t) {
+         // Clean up partially constructed resources: the extension only closes
+         // this handle after the constructor completes successfully
+         close();
+         throw t;
       }
    }
 
@@ -88,6 +98,8 @@ class ClusterHandle implements AutoCloseable {
    EmbeddedCacheManager addNode() {
       EmbeddedCacheManager manager = createManager(true);
       managers.add(manager);
+      // Reproduce the cache configurations defined so far on the new node
+      cacheConfigurations.forEach(manager::defineConfiguration);
       waitForClusterToForm();
       return manager;
    }
@@ -133,6 +145,9 @@ class ClusterHandle implements AutoCloseable {
 
       // Recreate with the same state directory
       EmbeddedCacheManager manager = createManagerWithNodeId(true, nodeId);
+      // Restore the cache configurations defined on the old manager: they are
+      // not part of the configuration file, so parseConfiguration() loses them
+      cacheConfigurations.forEach(manager::defineConfiguration);
       managers.set(index, manager);
 
       if (managers.size() > 1) {
@@ -155,6 +170,18 @@ class ClusterHandle implements AutoCloseable {
 
    List<EmbeddedCacheManager> managers() {
       return managers;
+   }
+
+   /**
+    * Defines a cache configuration on all current nodes and records it so that
+    * nodes added later (via {@link #addNode()} or {@link #restart(int)}) can
+    * reproduce it.
+    */
+   void defineCache(String cacheName, Configuration configuration) {
+      cacheConfigurations.put(cacheName, configuration);
+      for (EmbeddedCacheManager manager : managers) {
+         manager.defineConfiguration(cacheName, configuration);
+      }
    }
 
    ControlledTimeService timeService() {

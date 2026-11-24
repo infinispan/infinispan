@@ -1,12 +1,15 @@
 package org.infinispan.core.test.jupiter;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.xsite.XSiteAdminOperations;
+import org.jgroups.Address;
 import org.jgroups.JChannel;
 import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
@@ -44,15 +47,21 @@ import org.jgroups.stack.ProtocolStack;
 public class SiteController {
 
    private final XSiteClusterHandle cluster;
-   private final List<String> disconnectedSites = new ArrayList<>();
+   private final Set<String> disconnectedSites = new LinkedHashSet<>();
 
    SiteController(XSiteClusterHandle cluster) {
       this.cluster = cluster;
    }
 
    /**
-    * Disconnects a site at the network level by inserting DISCARD on the
-    * RELAY2 bridge of every site master in every <em>other</em> site.
+    * Disconnects a site at the network level, leaving all other sites able to
+    * communicate with each other.
+    * <p>
+    * All site masters share a single bridge cluster, so a blanket discard on a
+    * bridge channel would also block traffic between unrelated sites. Instead
+    * a {@link DISCARD} filter is installed on every bridge channel and
+    * configured to drop only the messages exchanged with the site masters of
+    * the disconnected sites.
     * <p>
     * After this call, the target site is still running but unreachable from
     * all other sites. Cross-site replication requests to this site will
@@ -61,96 +70,22 @@ public class SiteController {
     * @param site the site name to disconnect
     */
    public void disconnect(String site) {
-      // Get the JGroups addresses of site masters in the target site
-      List<org.jgroups.Address> targetAddresses = siteAddresses(site);
-
-      // On every other site's nodes, discard messages from/to the target site
-      for (var entry : cluster.sites().entrySet()) {
-         if (entry.getKey().equals(site)) continue;
-         for (EmbeddedCacheManager manager : entry.getValue().managers()) {
-            RELAY2 relay = findRelay(manager);
-            if (relay == null || !relay.isSiteMaster()) continue;
-            JChannel bridgeChannel = relay.getBridge(site);
-            if (bridgeChannel == null) continue;
-
-            DISCARD discard = findDiscard(bridgeChannel);
-            if (discard == null) {
-               discard = new DISCARD();
-               discard.discardAll(true);
-               try {
-                  bridgeChannel.getProtocolStack().insertProtocol(
-                        discard, ProtocolStack.Position.ABOVE, TP.class);
-               } catch (Exception e) {
-                  throw new RuntimeException("Failed to insert DISCARD on bridge channel", e);
-               }
-            } else {
-               discard.discardAll(true);
-            }
-         }
-      }
-
-      // Also discard on the target site's own bridge channels to other sites
-      for (EmbeddedCacheManager manager : cluster.site(site).managers()) {
-         RELAY2 relay = findRelay(manager);
-         if (relay == null || !relay.isSiteMaster()) continue;
-         for (var otherSite : cluster.sites().keySet()) {
-            if (otherSite.equals(site)) continue;
-            JChannel bridgeChannel = relay.getBridge(otherSite);
-            if (bridgeChannel == null) continue;
-
-            DISCARD discard = findDiscard(bridgeChannel);
-            if (discard == null) {
-               discard = new DISCARD();
-               discard.discardAll(true);
-               try {
-                  bridgeChannel.getProtocolStack().insertProtocol(
-                        discard, ProtocolStack.Position.ABOVE, TP.class);
-               } catch (Exception e) {
-                  throw new RuntimeException("Failed to insert DISCARD on bridge channel", e);
-               }
-            } else {
-               discard.discardAll(true);
-            }
-         }
-      }
-
+      cluster.site(site); // fail fast on unknown sites
       disconnectedSites.add(site);
+      applyBridgeFilters();
    }
 
    /**
-    * Reconnects a previously disconnected site by removing DISCARD from
-    * all RELAY2 bridge channels.
+    * Reconnects a previously disconnected site.
+    * <p>
+    * Disconnections requested independently for other sites are preserved.
     *
     * @param site the site name to reconnect
     */
    public void reconnect(String site) {
-      // Remove DISCARD from other sites' bridges to the target site
-      for (var entry : cluster.sites().entrySet()) {
-         if (entry.getKey().equals(site)) continue;
-         for (EmbeddedCacheManager manager : entry.getValue().managers()) {
-            RELAY2 relay = findRelay(manager);
-            if (relay == null || !relay.isSiteMaster()) continue;
-            JChannel bridgeChannel = relay.getBridge(site);
-            if (bridgeChannel != null) {
-               removeDISCARD(bridgeChannel);
-            }
-         }
-      }
-
-      // Remove DISCARD from the target site's bridges to other sites
-      for (EmbeddedCacheManager manager : cluster.site(site).managers()) {
-         RELAY2 relay = findRelay(manager);
-         if (relay == null || !relay.isSiteMaster()) continue;
-         for (var otherSite : cluster.sites().keySet()) {
-            if (otherSite.equals(site)) continue;
-            JChannel bridgeChannel = relay.getBridge(otherSite);
-            if (bridgeChannel != null) {
-               removeDISCARD(bridgeChannel);
-            }
-         }
-      }
-
+      cluster.site(site); // fail fast on unknown sites
       disconnectedSites.remove(site);
+      applyBridgeFilters();
    }
 
    /**
@@ -192,17 +127,95 @@ public class SiteController {
    }
 
    void reset() {
-      for (String site : new ArrayList<>(disconnectedSites)) {
-         reconnect(site);
+      disconnectedSites.clear();
+      applyBridgeFilters();
+   }
+
+   /**
+    * Recomputes the {@link DISCARD} filters on every site master's bridge
+    * channel from the current set of disconnected sites, so that only the
+    * traffic between two sites separated by a disconnection is dropped.
+    * <p>
+    * The bridge channel of site {@code X} drops messages from site {@code Y}
+    * when {@code X != Y} and either {@code X} or {@code Y} is disconnected.
+    */
+   private void applyBridgeFilters() {
+      for (String siteName : cluster.sites().keySet()) {
+         // Site masters of the sites separated from siteName by a disconnection
+         List<Address> ignoredSenders = new ArrayList<>();
+         for (String otherSite : cluster.sites().keySet()) {
+            if (otherSite.equals(siteName)) continue;
+            if (disconnectedSites.contains(siteName) || disconnectedSites.contains(otherSite)) {
+               ignoredSenders.addAll(siteMasterBridgeAddresses(otherSite));
+            }
+         }
+
+         for (EmbeddedCacheManager manager : cluster.site(siteName).managers()) {
+            JChannel bridge = bridgeChannel(siteName, manager);
+            if (bridge == null) continue;
+            ignoreSenders(bridge, ignoredSenders);
+         }
       }
    }
 
-   private List<org.jgroups.Address> siteAddresses(String site) {
-      List<org.jgroups.Address> addresses = new ArrayList<>();
+   /**
+    * Returns the bridge channel addresses of every site master in the given site.
+    */
+   private List<Address> siteMasterBridgeAddresses(String site) {
+      List<Address> addresses = new ArrayList<>();
       for (EmbeddedCacheManager manager : cluster.site(site).managers()) {
-         addresses.add(NetworkController.extractChannel(manager).getAddress());
+         JChannel bridge = bridgeChannel(site, manager);
+         if (bridge != null) {
+            addresses.add(bridge.getAddress());
+         }
       }
       return addresses;
+   }
+
+   /**
+    * Returns the shared bridge channel of a site master, or {@code null} if the
+    * manager is not a site master or its bridge has not been started yet.
+    */
+   private JChannel bridgeChannel(String managerSite, EmbeddedCacheManager manager) {
+      RELAY2 relay = findRelay(manager);
+      if (relay == null || !relay.isSiteMaster()) {
+         return null;
+      }
+      // Every site master runs a single bridge channel shared by all routes,
+      // so any other site's route gives access to it
+      return cluster.sites().keySet().stream()
+            .filter(s -> !s.equals(managerSite))
+            .map(relay::getBridge)
+            .filter(bridge -> bridge != null)
+            .findFirst()
+            .orElse(null);
+   }
+
+   /**
+    * Drops messages received from the given senders on the bridge channel,
+    * inserting or reconfiguring a {@link DISCARD} protocol as necessary.
+    * An empty sender list lets everything through.
+    */
+   private static void ignoreSenders(JChannel bridge, List<Address> senders) {
+      DISCARD discard = findDiscard(bridge);
+      if (senders.isEmpty()) {
+         // Nothing to filter: remove a leftover DISCARD, if any
+         if (discard != null) {
+            bridge.getProtocolStack().removeProtocol(discard);
+         }
+         return;
+      }
+      if (discard == null) {
+         discard = new DISCARD();
+         try {
+            bridge.getProtocolStack().insertProtocol(
+                  discard, ProtocolStack.Position.ABOVE, TP.class);
+         } catch (Exception e) {
+            throw new RuntimeException("Failed to insert DISCARD on bridge channel", e);
+         }
+      }
+      discard.resetIgnoredMembers();
+      discard.addIgnoredMembers(senders.toArray(new Address[0]));
    }
 
    private static RELAY2 findRelay(EmbeddedCacheManager manager) {
@@ -212,11 +225,5 @@ public class SiteController {
 
    private static DISCARD findDiscard(JChannel channel) {
       return channel.getProtocolStack().findProtocol(DISCARD.class);
-   }
-
-   private static void removeDISCARD(JChannel channel) {
-      if (findDiscard(channel) != null) {
-         channel.getProtocolStack().removeProtocol(DISCARD.class);
-      }
    }
 }
