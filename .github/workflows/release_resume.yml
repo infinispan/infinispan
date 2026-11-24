@@ -112,6 +112,9 @@ jobs:
           name: infinispan-cli-${{ matrix.asset_name }}
           path: ${{ steps.detect-cli.outputs.module }}/target/infinispan-cli-${{ github.event.inputs.version }}-${{ matrix.asset_name }}.zip
           if-no-files-found: error
+          # Re-running the job after an artifact of this name was already uploaded
+          # would otherwise fail on the duplicate name.
+          overwrite: true
 
   # Signs and attaches the CLI native executables built by native-cli. This is a separate job
   # that does not check out the release tag, for two reasons:
@@ -256,29 +259,9 @@ jobs:
           # Fetch the published bytes: needed to verify the signature below, and by the
           # repair path, which re-signs the asset exactly as published.
           mkdir -p server-dist
+          mode=missing-zip
           if grep -Fxq "$zip" <<<"$names"; then
             gh release download "$VERSION" --pattern "$zip" --dir server-dist
-          else
-            # The ZIP is missing from the release: the release workflow stages it as a
-            # version-named run artifact before attaching it, so a run that died between
-            # staging and attaching can be recovered here. Download the newest staging
-            # artifact that has not expired and attach its ZIP as-is; when none exists,
-            # the job fails below with recovery instructions.
-            artifact_id=$(gh api "repos/infinispan/infinispan/actions/artifacts?per_page=100" --paginate \
-              --jq ".artifacts[] | select(.name == \"infinispan-server-dist-$VERSION\" and .expired == false) | [.id, .created_at] | @tsv" \
-              | sort -k2,2 -r | head -1 | cut -f1)
-            if [ -n "$artifact_id" ]; then
-              gh api "repos/infinispan/infinispan/actions/artifacts/$artifact_id/zip" > server-dist/staged.zip
-              unzip -o server-dist/staged.zip -d server-dist
-              rm -f server-dist/staged.zip
-              if [ -f "server-dist/$zip" ]; then
-                echo "Recovered $zip from staged artifact $artifact_id; attaching it to release $VERSION"
-                gh release upload --clobber "$VERSION" "server-dist/$zip"
-              fi
-            fi
-          fi
-          mode=missing-zip
-          if [ -f "server-dist/$zip" ]; then
             mode=missing-asc
             if grep -Fxq "$zip.asc" <<<"$names"; then
               # Both assets exist, but a partially replaced upload can pair an asset with a
@@ -292,6 +275,57 @@ jobs:
               fi
             fi
           fi
+          if [ "$mode" != "complete" ]; then
+            # The pair is incomplete, invalid, or the ZIP is missing entirely. The release
+            # workflow stages the ZIP as a version-named run artifact before attaching it.
+            # Artifact names are filtered server-side; provenance is then verified per
+            # candidate, newest first, because the artifact listing does not expose which
+            # workflow a run belongs to. Only artifacts staged by the release workflow
+            # itself are accepted, so a same-named artifact from any other workflow
+            # (e.g. one run from a pull request) cannot be signed as a release binary; a
+            # candidate whose run cannot be queried is skipped rather than trusted.
+            candidates=$(gh api "repos/infinispan/infinispan/actions/artifacts?name=infinispan-server-dist-$VERSION&per_page=100" --paginate \
+              --jq ".artifacts[] | select(.expired == false) | [.id, .workflow_run.id, .created_at] | @tsv" \
+              | sort -k3,3 -r)
+            artifact_id=""
+            while IFS=$'\t' read -r aid run_id _; do
+              [ -n "$aid" ] || continue
+              if run_path=$(gh api "repos/infinispan/infinispan/actions/runs/$run_id" --jq '.path' 2>/dev/null); then
+                if [ "$run_path" = ".github/workflows/release.yml" ]; then
+                  artifact_id="$aid"
+                  break
+                fi
+              fi
+            done <<< "$candidates"
+            staged_zip=""
+            if [ -n "$artifact_id" ]; then
+              mkdir -p staged
+              gh api "repos/infinispan/infinispan/actions/artifacts/$artifact_id/zip" > staged/artifact.zip
+              unzip -o staged/artifact.zip -d staged
+              rm -f staged/artifact.zip
+              if [ -f "staged/$zip" ]; then staged_zip="staged/$zip"; fi
+            fi
+            if [ "$mode" = "missing-zip" ]; then
+              if [ -n "$staged_zip" ]; then
+                # Delete any signature left on the release first, so an interruption
+                # between the two uploads cannot pair it with the recovered ZIP; the
+                # re-sign step below (or the next resume) attaches a matching one.
+                if grep -Fxq "$zip.asc" <<<"$names"; then
+                  gh release delete-asset "$VERSION" "$zip.asc" --yes
+                fi
+                cp "$staged_zip" "server-dist/$zip"
+                echo "Recovered $zip from staged artifact $artifact_id; attaching it to release $VERSION"
+                gh release upload --clobber "$VERSION" "server-dist/$zip"
+                mode=missing-asc
+              fi
+            elif [ -n "$staged_zip" ] && ! cmp -s "server-dist/$zip" "$staged_zip"; then
+              # The published ZIP is about to be re-signed: it must be the bytes the
+              # release build staged, otherwise this workflow would put the project's
+              # signature on content the project never built.
+              echo "::error::$zip on release $VERSION does not match the bytes staged by the release workflow (artifact $artifact_id); refusing to re-sign it"
+              exit 1
+            fi
+          fi
           echo "mode=$mode" >> "$GITHUB_OUTPUT"
 
       - name: Fail when the server distribution is missing
@@ -302,10 +336,10 @@ jobs:
           echo "::error::The server distribution ZIP is not attached to release $VERSION and no staged infinispan-server-dist-$VERSION artifact was found (the release run may have died before staging or still be running, or the artifact has expired). Re-run the sign-server-dist job of the original release run (while its build artifact is still available), wait for the original run to finish attaching, or attach the ZIP manually."
           exit 1
 
-      # Only the signature is attached: the ZIP was downloaded from the release and is
-      # byte-identical to the published one, so re-uploading it (gh --clobber deletes the
-      # existing asset before uploading the replacement) would risk deleting the published
-      # asset for no benefit.
+      # Only the signature is attached: the ZIP is byte-identical to the published one —
+      # downloaded from the release, or recovered from the staged artifact and just
+      # attached — so re-uploading it (gh --clobber deletes the existing asset before
+      # uploading the replacement) would risk deleting the published asset for no benefit.
       - name: Re-sign and re-attach server distribution
         if: steps.server-dist.outputs.mode == 'missing-asc'
         uses: ./.github/actions/sign-release-assets
@@ -336,7 +370,9 @@ jobs:
     uses: infinispan/infinispan-operator/.github/workflows/add_operand.yml@ad7722776de21dd4d01ce7d1648079f28a1b98d2 # main
     secrets: inherit
     with:
-      image: quay.io/infinispan/server:${{ github.ref_name }}
+      # The dispatch input, not github.ref_name: this workflow is dispatched from a
+      # branch, so the ref name is not the release version.
+      image: quay.io/infinispan/server:${{ inputs.version }}
       ref: main
       repository: infinispan/infinispan-operator
 

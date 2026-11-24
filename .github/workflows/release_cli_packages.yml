@@ -387,6 +387,9 @@ jobs:
           path: |
             out/jreleaser/trace.log
             out/jreleaser/output.properties
+          # Re-running the job after an artifact of this name was already uploaded
+          # would otherwise fail on the duplicate name.
+          overwrite: true
 
   publish-aur:
     runs-on: ubuntu-latest

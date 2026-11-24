@@ -115,20 +115,45 @@ runs:
           return "$rc"
         }
 
+        # Downloads the signature published for $1 and verifies it against the local file
+        # $2. Returns 0 when the signature is valid, 1 when it is not, and 2 when it could
+        # not be downloaded (which proves nothing either way).
+        verify_published_signature() {
+          local dir
+          dir=$(mktemp -d)
+          if ! gh release download "$RELEASE_TAG" --pattern "$(basename "$1")" --dir "$dir" >/dev/null 2>&1; then
+            echo "::warning::Could not download $(basename "$1") from release $RELEASE_TAG to verify it"
+            rm -rf "$dir"
+            return 2
+          fi
+          if gpg --batch --verify "$dir/$(basename "$1")" "$2" >/dev/null 2>&1; then
+            echo "Preserving the valid published signature for $(basename "$2")"
+            rm -rf "$dir"
+            return 0
+          fi
+          rm -rf "$dir"
+          return 1
+        }
+
         # A partially applied replacement can leave the release with a signature that
         # does not belong to the published asset: ours under an asset that never
-        # landed, or a stale one under an asset that just did. Remove any signature
-        # that does not belong to the asset published now, so a failed or interrupted
-        # upload leaves the release missing a signature — which retries and the resume
+        # landed, a stale one under an asset that just did, or any signature whose
+        # asset a clobbering upload deleted before dying. Remove signatures that do
+        # not belong to the asset published now, so a failed or interrupted upload
+        # leaves the release missing a signature — which retries and the resume
         # workflow repair — rather than carrying an invalid one. A previous run's
-        # intact pair is never touched: a signature is only deleted after a successful
-        # query positively establishes that it is stale (or orphaned); a failed query
-        # proves nothing and leaves the pair untouched. In signatures-only mode the
-        # assets are already published and were signed as published, so any partial
-        # state is already consistent and nothing needs removing.
+        # intact pair is never touched: a signature is only deleted after successful
+        # queries positively establish that it is orphaned, invalid, or paired with a
+        # foreign asset, and a signature over our own bytes is verified before
+        # deletion so a valid one from an earlier run survives (signatures are
+        # nondeterministic, so identical bytes yield different digests per run).
+        # A failed query proves nothing and leaves the pair untouched. In
+        # signatures-only mode the assets are already published and were signed as
+        # published, so any partial state is already consistent and nothing needs
+        # removing.
         repair_partial_upload() {
           [ "$SIGNATURES_ONLY" = "true" ] && return 0
-          local i asc file local_asc local_file published_asc published_file
+          local i asc file local_asc local_file published_asc published_file verify_rc
           for ((i = 0; i < ${#uploads[@]}; i += 2)); do
             asc="${uploads[$i]}"
             file="${uploads[$((i + 1))]}"
@@ -144,18 +169,29 @@ runs:
               continue
             fi
             published_file="$PUBLISHED"
-            if [ "$published_asc" = "$local_asc" ]; then
-              # Our signature is published. It is only valid when the published asset
-              # is exactly ours: a different digest means the pair mixes runs, and an
-              # empty digest means the asset never landed, leaving the signature
-              # orphaned. Both facts were established by successful queries.
-              if [ "$published_file" != "$local_file" ]; then
+            if [ -z "$published_file" ]; then
+              # The asset is absent: any published signature is orphaned, whether or
+              # not it is ours (a clobbering upload may have deleted the old asset
+              # before failing).
+              if [ -n "$published_asc" ]; then
                 gh release delete-asset "$RELEASE_TAG" "$(basename "$asc")" --yes || true
               fi
-            elif [ -n "$published_asc" ] && [ "$published_file" = "$local_file" ]; then
-              # Our asset is published under a signature that is not ours: the
-              # queries above succeeded, so whatever signature sits under the
-              # asset is stale.
+            elif [ "$published_file" = "$local_file" ]; then
+              # Our asset is published. Our own signature under it means the pair is
+              # intact; a foreign one may be a valid signature from an earlier run
+              # over the same bytes, so verify it and only delete it when it is
+              # actually invalid.
+              if [ "$published_asc" != "$local_asc" ] && [ -n "$published_asc" ]; then
+                verify_rc=0
+                verify_published_signature "$asc" "$file" || verify_rc=$?
+                if [ "$verify_rc" -eq 1 ]; then
+                  gh release delete-asset "$RELEASE_TAG" "$(basename "$asc")" --yes || true
+                fi
+              fi
+            elif [ "$published_asc" = "$local_asc" ]; then
+              # Our signature is published over an asset that is not ours: the pair
+              # mixes runs, so delete our signature. The foreign asset belongs to a
+              # concurrent run and is left alone.
               gh release delete-asset "$RELEASE_TAG" "$(basename "$asc")" --yes || true
             fi
           done
@@ -178,14 +214,23 @@ runs:
         # a warning and skips verification for that file. An asset that a successful query
         # reports as absent fails the job: the upload did not take effect, and leaving an
         # orphaned signature behind would make the release look complete when it is not.
+        # Failures run the same partial-upload repair as the upload-failure path, so the
+        # release is left in a repairable state rather than carrying an invalid pair.
+        verify_failed=false
         for file in "${uploads[@]}"; do
           digest=$(published_digest "$file") || { echo "::warning::Could not verify $(basename "$file") on release $RELEASE_TAG: the release query failed"; continue; }
           if [ -z "$digest" ]; then
             echo "::error::$(basename "$file") is absent from release $RELEASE_TAG after the upload"
-            exit 1
+            verify_failed=true
+            continue
           fi
           if [ "$digest" != "$(file_sha256 "$file")" ]; then
             echo "::error::$(basename "$file") on release $RELEASE_TAG does not match the file just uploaded; a concurrent run may have replaced it"
-            exit 1
+            verify_failed=true
           fi
         done
+        if [ "$verify_failed" = true ]; then
+          trap - INT TERM HUP
+          repair_partial_upload
+          exit 1
+        fi
