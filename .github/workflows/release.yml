@@ -26,6 +26,14 @@ on:
 permissions:
   contents: read
 
+# Serialize with the resume workflow and with other release dispatches: overlapping
+# runs must not interleave one run's asset with another run's signature. Releases are
+# never cut concurrently, and the group is deliberately version-less so that a release
+# dispatched without an explicit version still serializes with its own resume.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -338,16 +346,6 @@ jobs:
   sign-cli-assets:
     needs: [native-cli, release]
     runs-on: ubuntu-latest
-    concurrency:
-      # Keyed on the resolved version so that it serializes with the sign-cli-assets job of
-      # the resume workflow even when this release was dispatched without an explicit version.
-      # GitHub keeps only one pending job per group, so a queued job displaces an older
-      # pending one; that is acceptable here because the displacing job is not a matrix leg
-      # but the same single upload for the same version, so no work is lost. Once actionlint
-      # learns the concurrency "queue" property (github.blog/changelog/2026-05-07), setting
-      # queue: max here removes the limitation.
-      group: sign-cli-assets-${{ needs.release.outputs.version }}
-      cancel-in-progress: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
 
@@ -376,16 +374,6 @@ jobs:
   sign-server-dist:
     needs: [release]
     runs-on: ubuntu-latest
-    concurrency:
-      # Keyed on the resolved version so that it serializes with the server-dist job of the
-      # resume workflow even when this release was dispatched without an explicit version.
-      # GitHub keeps only one pending job per group, so a queued job displaces an older
-      # pending one; that is acceptable here because the displacing job is not a matrix leg
-      # but the same single upload for the same version, so no work is lost. Once actionlint
-      # learns the concurrency "queue" property (github.blog/changelog/2026-05-07), setting
-      # queue: max here removes the limitation.
-      group: sign-server-assets-${{ needs.release.outputs.version }}
-      cancel-in-progress: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
 

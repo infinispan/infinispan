@@ -23,11 +23,13 @@ on:
 permissions:
   contents: read
 
-# Serialize runs that upload assets for the same release version, so that overlapping runs
-# (a release and its resume, or two resumes) cannot interleave one run's asset with another
-# run's signature. Runs for different versions are unaffected.
+# Serialize with the release workflow and with other resumes: overlapping runs (a
+# release and its resume, or two resumes) must not interleave one run's asset with
+# another run's signature. The group is shared with release.yml and deliberately
+# version-less: releases are never cut concurrently, and a version-less key also
+# serializes a release dispatched without an explicit version with its own resume.
 concurrency:
-  group: release-${{ github.event.inputs.version }}
+  group: release
   cancel-in-progress: false
 
 jobs:
@@ -124,24 +126,14 @@ jobs:
   sign-cli-assets:
     needs: native-cli
     runs-on: ubuntu-latest
-    concurrency:
-      # Shares its key with the sign-cli-assets job of the release workflow, so a resume
-      # serializes with any release still uploading assets for the same version. GitHub
-      # keeps only one pending job per group, so a queued job displaces an older pending
-      # one; that is acceptable here because the displacing job is not a matrix leg but
-      # the same single upload for the same version, so no work is lost. Once actionlint
-      # learns the concurrency "queue" property (github.blog/changelog/2026-05-07),
-      # setting queue: max here removes the limitation.
-      group: sign-cli-assets-${{ inputs.version }}
-      cancel-in-progress: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
 
-      # The original release creates the GitHub release and attaches its assets as part
-      # of its release job; a resume started while that is still in progress can acquire
-      # its signing concurrency group first and reach the upload before the release
-      # exists. Poll for the release before signing so the upload does not race it.
-      - name: Wait for the release to exist
+      # The workflow-level concurrency group serializes this resume with the release
+      # workflow, so by the time this job runs the release already exists. Validate the
+      # dispatch input and the release once, and fail fast on a bad dispatch instead of
+      # uploading into a nonexistent release.
+      - name: Validate the release
         env:
           GH_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
           # Indirected so the dispatch input reaches this script as data, never as shell
@@ -152,16 +144,10 @@ jobs:
             echo "::error::Invalid release version: $VERSION"
             exit 1
           fi
-          for i in $(seq 1 60); do
-            if gh release view "$VERSION" --json tagName >/dev/null 2>&1; then
-              echo "Release $VERSION exists"
-              exit 0
-            fi
-            echo "Waiting for release $VERSION to be created (attempt $i/60)..."
-            sleep 30
-          done
-          echo "::error::Timed out waiting for release $VERSION to be created"
-          exit 1
+          if ! gh release view "$VERSION" --json tagName >/dev/null 2>&1; then
+            echo "::error::Release $VERSION does not exist, nothing to resume"
+            exit 1
+          fi
 
       - name: Download CLI native executables
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -188,30 +174,15 @@ jobs:
   server-dist:
     needs: published
     runs-on: ubuntu-latest
-    concurrency:
-      # Shares its key with the sign-server-dist job of the release workflow, so a resume
-      # serializes with any release still uploading assets for the same version. GitHub
-      # keeps only one pending job per group, so a queued job displaces an older pending
-      # one; that is acceptable here because the displacing job is not a matrix leg but
-      # the same single upload for the same version, so no work is lost. Once actionlint
-      # learns the concurrency "queue" property (github.blog/changelog/2026-05-07),
-      # setting queue: max here removes the limitation.
-      group: sign-server-assets-${{ inputs.version }}
-      cancel-in-progress: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
 
-      # The original release creates the GitHub release and attaches the server ZIP as
-      # part of its release job; a resume started while that is still in progress can
-      # acquire its signing concurrency group first and check the release before the
-      # ZIP is attached, reporting a spurious "missing ZIP". Poll for the release and
-      # the ZIP before checking so the check does not race the original release. When
-      # the wait times out with the release present, fall through to the check step
-      # instead of failing: its recovery path retrieves the ZIP from the version-named
-      # artifact the release workflow stages before attaching, which holds the exact
-      # bytes the original run attached or is about to attach, so recovering is safe
-      # whether that run is dead or still in flight.
-      - name: Wait for the release and server ZIP
+      # The workflow-level concurrency group serializes this resume with the release
+      # workflow, so the release and whatever assets it managed to attach are in their
+      # final state by the time this job runs: a missing server ZIP is recovered by the
+      # check step below from the artifact staged before attaching, not waited for.
+      # Validate the dispatch input and the release once, and fail fast on a bad dispatch.
+      - name: Validate the release
         env:
           GH_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
           # Indirected so the dispatch input reaches this script as data, never as shell
@@ -222,24 +193,10 @@ jobs:
             echo "::error::Invalid release version: $VERSION"
             exit 1
           fi
-          zip="infinispan-server-$VERSION.zip"
-          for i in $(seq 1 60); do
-            if gh release view "$VERSION" --json assets >/dev/null 2>&1; then
-              names=$(gh release view "$VERSION" --json assets --jq '.assets[].name')
-              if grep -Fxq "$zip" <<<"$names"; then
-                echo "Release $VERSION and server ZIP are present"
-                exit 0
-              fi
-            fi
-            echo "Waiting for release $VERSION and server ZIP (attempt $i/60)..."
-            sleep 30
-          done
-          if gh release view "$VERSION" --json assets >/dev/null 2>&1; then
-            echo "::warning::Server ZIP not present on release $VERSION after 30 minutes; continuing to recovery"
-            exit 0
+          if ! gh release view "$VERSION" --json assets >/dev/null 2>&1; then
+            echo "::error::Release $VERSION does not exist, nothing to resume"
+            exit 1
           fi
-          echo "::error::Timed out waiting for release $VERSION to be created"
-          exit 1
 
       - name: Check server distribution assets
         id: server-dist
@@ -277,21 +234,29 @@ jobs:
           fi
           if [ "$mode" != "complete" ]; then
             # The pair is incomplete, invalid, or the ZIP is missing entirely. The release
-            # workflow stages the ZIP as a version-named run artifact before attaching it.
+            # workflow stages the ZIP as a version-named run artifact after creating the
+            # GitHub release and before attaching it. Because `gh release create` fails on
+            # an existing release, only the run that created this release ever reaches the
+            # staging step for this version; a later dispatch of the release workflow for
+            # the same version dies at release creation, before staging. Combined with the
+            # workflow filter below, the newest matching artifact is therefore the one
+            # staged by the run that created this release.
+            #
             # Artifact names are filtered server-side; provenance is then verified per
-            # candidate, newest first, because the artifact listing does not expose which
-            # workflow a run belongs to. Only artifacts staged by the release workflow
-            # itself are accepted, so a same-named artifact from any other workflow
-            # (e.g. one run from a pull request) cannot be signed as a release binary; a
-            # candidate whose run cannot be queried is skipped rather than trusted.
+            # candidate, newest first, against the stable workflow ID of the release
+            # workflow (the run's `path` formatting is not stable across API surfaces), so
+            # a same-named artifact from any other workflow cannot be signed as a release
+            # binary. A candidate whose run cannot be queried is skipped rather than
+            # trusted.
+            release_workflow_id=$(gh api "repos/infinispan/infinispan/actions/workflows/release.yml" --jq '.id')
             candidates=$(gh api "repos/infinispan/infinispan/actions/artifacts?name=infinispan-server-dist-$VERSION&per_page=100" --paginate \
               --jq ".artifacts[] | select(.expired == false) | [.id, .workflow_run.id, .created_at] | @tsv" \
               | sort -k3,3 -r)
             artifact_id=""
             while IFS=$'\t' read -r aid run_id _; do
               [ -n "$aid" ] || continue
-              if run_path=$(gh api "repos/infinispan/infinispan/actions/runs/$run_id" --jq '.path' 2>/dev/null); then
-                if [ "$run_path" = ".github/workflows/release.yml" ]; then
+              if run_workflow_id=$(gh api "repos/infinispan/infinispan/actions/runs/$run_id" --jq '.workflow_id' 2>/dev/null); then
+                if [ "$run_workflow_id" = "$release_workflow_id" ]; then
                   artifact_id="$aid"
                   break
                 fi
@@ -318,7 +283,14 @@ jobs:
                 gh release upload --clobber "$VERSION" "server-dist/$zip"
                 mode=missing-asc
               fi
-            elif [ -n "$staged_zip" ] && ! cmp -s "server-dist/$zip" "$staged_zip"; then
+            elif [ -z "$staged_zip" ]; then
+              # The published ZIP's signature is missing or invalid and no staged
+              # artifact is available to confirm which bytes the release build
+              # produced: signing them would endorse content the project cannot
+              # verify it built. Refuse.
+              echo "::error::$zip on release $VERSION has a missing or invalid signature and no staged infinispan-server-dist-$VERSION artifact is available to verify its bytes; refusing to re-sign it. Re-run the sign-server-dist job of the original release run (while its build artifact is still available) or rebuild the release."
+              exit 1
+            elif ! cmp -s "server-dist/$zip" "$staged_zip"; then
               # The published ZIP is about to be re-signed: it must be the bytes the
               # release build staged, otherwise this workflow would put the project's
               # signature on content the project never built.
@@ -333,12 +305,12 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
         run: |
-          echo "::error::The server distribution ZIP is not attached to release $VERSION and no staged infinispan-server-dist-$VERSION artifact was found (the release run may have died before staging or still be running, or the artifact has expired). Re-run the sign-server-dist job of the original release run (while its build artifact is still available), wait for the original run to finish attaching, or attach the ZIP manually."
+          echo "::error::The server distribution ZIP is not attached to release $VERSION and no staged infinispan-server-dist-$VERSION artifact was found (the release run may have died before staging, or the artifact has expired). Re-run the sign-server-dist job of the original release run (while its build artifact is still available) or attach the ZIP manually."
           exit 1
 
-      # Only the signature is attached: the ZIP is byte-identical to the published one —
-      # downloaded from the release, or recovered from the staged artifact and just
-      # attached — so re-uploading it (gh --clobber deletes the existing asset before
+      # Only the signature is attached: the ZIP's bytes were verified against (or
+      # recovered from) the staged build artifact, so they are identical to the published
+      # ones and re-uploading them (gh --clobber deletes the existing asset before
       # uploading the replacement) would risk deleting the published asset for no benefit.
       - name: Re-sign and re-attach server distribution
         if: steps.server-dist.outputs.mode == 'missing-asc'
