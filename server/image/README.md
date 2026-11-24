@@ -47,8 +47,9 @@ The following build arguments are supported:
 | `BRAND_NAME`      | `infinispan.brand.name`    | the brand name used by the container image labels (defaults to `Infinispan`)                                                                                                          |
 | `BRAND_VERSION`   | `infinispan.brand.version` | the brand version used by the container image labels (required)                                                                                                                       |
 | `JDK_DIST`        | `jdk.dist`                 | a local or remote `zip`, `tar.gz`, or `rpm` distribution of OpenJDK. If not specified, the Temuring OpenJDK will be donwloaded from Adoptium. Ignored if `JAVA_PACKAGE` is specified. |
-| `OPENJDK_PACKAGE` | N/A                        | the name of an OpenJDK package provided by the builder repository (currently RHEL 10.x) (optional)                                                                                    |
+| `OPENJDK_PACKAGE` | N/A                        | the name of an OpenJDK package provided by the builder repository (currently RHEL 9.x) (optional)                                                                                    |
 | `SERVER_DIST`     | `server.dist`              | a local or remote `zip` distribution of Infinispan Server (required)                                                                                                                  |
+| `UBI_MAJOR`       | N/A                        | the major version of the UBI base image used by the builder stage and of the target userland (defaults to `9`)                                                                        |
 
 ### Release images
 
