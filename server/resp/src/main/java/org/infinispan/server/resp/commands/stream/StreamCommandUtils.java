@@ -51,7 +51,7 @@ final class StreamCommandUtils {
    /**
     * Parses the trimming specification {@code <MAXLEN | MINID> [= | ~] threshold [LIMIT count]} starting at the
     * provided position. The {@code LIMIT} option is only valid together with the approximate ({@code ~}) trimming,
-    * following the Redis semantics.
+    * and a {@code LIMIT} of zero disables the eviction limit, following the Redis semantics.
     *
     * @param arguments The command arguments.
     * @param pos The position of the trimming strategy token.
@@ -103,6 +103,10 @@ final class StreamCommandUtils {
          if (limit < 0) {
             throw new RespCommandException("ERR The LIMIT argument must be >= 0");
          }
+         // Following the Redis semantics, LIMIT 0 disables the eviction limit instead of capping it at zero.
+         if (limit == 0) {
+            limit = -1;
+         }
       }
 
       return new TrimSpec(maxlenStrategy ? TRIM_MAXLEN : TRIM_MINID, maxlen, minId, limit, pos);
@@ -145,7 +149,8 @@ final class StreamCommandUtils {
 
    /**
     * Parses a range bound for {@code XRANGE} and {@code XREVRANGE}. Handles the special {@code -} and {@code +}
-    * tokens, the incomplete {@code <ms>} format, and the exclusive {@code (} prefix.
+    * tokens, the incomplete {@code <ms>} format, and the exclusive {@code (} prefix. With the incomplete format, the
+    * missing sequence part is zero for the start of the interval and the maximal unsigned value for its end.
     *
     * @param argument The bound to parse.
     * @param isStart Whether the bound is the start of the interval.
@@ -171,7 +176,9 @@ final class StreamCommandUtils {
          id = StreamID.MAX;
       } else {
          try {
-            id = StreamID.parse(value);
+            // An incomplete <ms> bound has a zero sequence part as the start of the interval, and the maximal
+            // unsigned sequence part as its end, following the Redis range semantics.
+            id = StreamID.parse(value, isStart ? 0 : -1L);
          } catch (NumberFormatException e) {
             throw new RespCommandException("ERR Invalid stream ID specified as stream command argument");
          }

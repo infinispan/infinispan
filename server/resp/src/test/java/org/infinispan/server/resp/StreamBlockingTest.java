@@ -257,6 +257,20 @@ public class StreamBlockingTest extends SingleNodeRespBaseTest {
       assertThat(join(future)).isEmpty();
    }
 
+   // A client disconnecting while blocked with BLOCK 0 releases the listener and the blocked-client metrics.
+   public void testDisconnectCancelsBlockedXread() {
+      var redis = connection.sync();
+      redis.del("leakstream");
+      CacheNotifierImpl<?, ?> cni = (CacheNotifierImpl<?, ?>) TestingUtil.extractComponent(cache, CacheNotifier.class);
+      long listeners = cni.getListeners().stream().filter(IS_XREAD_LISTENER).count();
+
+      registerListener(() -> second.async()
+            .xread(new XReadArgs().block(0), XReadArgs.StreamOffset.latest("leakstream")));
+      second.close();
+
+      eventually(() -> cni.getListeners().stream().filter(IS_XREAD_LISTENER).count() == listeners);
+   }
+
    // Multiple blocked clients are all served with the new data: the entries are not consumed.
    public void testMultipleBlockedClientsReceiveSameData() {
       var redis = connection.sync();

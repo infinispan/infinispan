@@ -131,6 +131,14 @@ public class StreamBucket {
    }
 
    /**
+    * @return A copy of this bucket, with the same entries and bookkeeping, not sharing any mutable state with this
+    *         bucket. Utilized by {@code COPY}.
+    */
+   public StreamBucket copy() {
+      return new StreamBucket(new java.util.ArrayList<>(entries), lastId, entriesAdded, maxDeletedId, recordedFirstId);
+   }
+
+   /**
     * Appends an entry with the given ID and field-value pairs. The ID must be strictly greater than the current
     * {@link #lastId}; the caller is responsible for the validation.
     *
@@ -245,7 +253,13 @@ public class StreamBucket {
          boolean reverse, long count) {
       int from = lowerBound(start, startExclusive);
       int to = upperBound(end, endExclusive);
-      List<StreamEntry> result = new java.util.ArrayList<>(Math.max(0, to - from));
+      // Cap the initial capacity by the count, so a limited read does not allocate proportionally to the number of
+      // matching entries.
+      int capacity = Math.max(0, to - from);
+      if (count > 0) {
+         capacity = (int) Math.min(capacity, count);
+      }
+      List<StreamEntry> result = new java.util.ArrayList<>(capacity);
       if (!reverse) {
          for (int i = from; i < to; i++) {
             if (count > 0 && result.size() >= count) {

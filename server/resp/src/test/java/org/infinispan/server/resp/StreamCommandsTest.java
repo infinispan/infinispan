@@ -2,8 +2,10 @@ package org.infinispan.server.resp;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.infinispan.server.resp.test.RespTestingUtil.ADMIN;
 import static org.infinispan.server.resp.test.RespTestingUtil.assertWrongType;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -11,9 +13,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.security.Security;
+import org.infinispan.server.resp.test.RawRespConnection;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import io.lettuce.core.CopyArgs;
 import io.lettuce.core.Limit;
 import io.lettuce.core.Range;
 import io.lettuce.core.RedisCommandExecutionException;
@@ -280,6 +286,27 @@ public class StreamCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.xrevrange("mystream", Range.unbounded(), Limit.create(0, 10))).hasSize(10);
    }
 
+   /**
+    * An explicit COUNT 0 replies with nil for an existing stream, and an empty array for a missing key, instead of
+    * returning all the matching entries. The Lettuce typed API represents both replies as an empty list, so the raw
+    * reply bytes are asserted.
+    */
+   public void testXrangeCountZero() throws IOException {
+      redis.del("mystream");
+      insertIntoStreamKey("mystream", 10);
+
+      try (RawRespConnection raw = rawConnection()) {
+         raw.send("XRANGE mystream - + COUNT 0");
+         raw.assertFrame("_\r\n");
+         raw.send("XREVRANGE mystream + - COUNT 0");
+         raw.assertFrame("_\r\n");
+         raw.send("XRANGE missingstream - + COUNT 0");
+         raw.assertFrame("*0\r\n");
+         raw.send("XREVRANGE missingstream + - COUNT 0");
+         raw.assertFrame("*0\r\n");
+      }
+   }
+
    // Upstream: XRANGE can be used to iterate the whole stream
    public void testXrangeCanBeUsedToIterateTheWholeStream() {
       massInsertStream();
@@ -338,6 +365,45 @@ public class StreamCommandsTest extends SingleNodeRespBaseTest {
       assertThatThrownBy(() -> redis.xrange("vipstream",
             Range.from(Range.Boundary.including("-"), Range.Boundary.excluding("0-0"))))
             .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR");
+   }
+
+   /**
+    * Upstream: XRANGE with incomplete IDs. An incomplete start bound has a zero sequence part, and an incomplete end
+    * bound the maximal sequence part, so the interval covers every entry with the same milliseconds part.
+    */
+   public void testXrangeWithIncompleteIds() {
+      redis.del("incompletestream");
+      redis.xadd("incompletestream", new XAddArgs().id("42-0"), "f", "a");
+      redis.xadd("incompletestream", new XAddArgs().id("42-1"), "f", "b");
+      redis.xadd("incompletestream", new XAddArgs().id("43-0"), "f", "c");
+
+      assertThat(redis.xrange("incompletestream", Range.create("42", "42")))
+            .extracting(io.lettuce.core.StreamMessage::getId).containsExactly("42-0", "42-1");
+      assertThat(redis.xrange("incompletestream", Range.create("42", "43")))
+            .extracting(io.lettuce.core.StreamMessage::getId).containsExactly("42-0", "42-1", "43-0");
+      // An exclusive incomplete start bound excludes only the zero sequence, and an exclusive incomplete end bound
+      // excludes only the maximal sequence.
+      assertThat(redis.xrange("incompletestream", Range.from(Range.Boundary.excluding("42"), Range.Boundary.including("43"))))
+            .extracting(io.lettuce.core.StreamMessage::getId).containsExactly("42-1", "43-0");
+      assertThat(redis.xrange("incompletestream", Range.from(Range.Boundary.including("42"), Range.Boundary.excluding("43"))))
+            .extracting(io.lettuce.core.StreamMessage::getId).containsExactly("42-0", "42-1", "43-0");
+      assertThat(redis.xrange("incompletestream", Range.from(Range.Boundary.excluding("42"), Range.Boundary.excluding("43"))))
+            .extracting(io.lettuce.core.StreamMessage::getId).containsExactly("42-1", "43-0");
+   }
+
+   // Upstream: XREVRANGE with incomplete IDs, the reverse of the XRANGE intervals.
+   public void testXrevrangeWithIncompleteIds() {
+      redis.del("incompletestream");
+      redis.xadd("incompletestream", new XAddArgs().id("42-0"), "f", "a");
+      redis.xadd("incompletestream", new XAddArgs().id("42-1"), "f", "b");
+      redis.xadd("incompletestream", new XAddArgs().id("43-0"), "f", "c");
+
+      assertThat(redis.xrevrange("incompletestream", Range.create("42", "42")))
+            .extracting(io.lettuce.core.StreamMessage::getId).containsExactly("42-1", "42-0");
+      assertThat(redis.xrevrange("incompletestream", Range.from(Range.Boundary.excluding("42"), Range.Boundary.including("43"))))
+            .extracting(io.lettuce.core.StreamMessage::getId).containsExactly("43-0", "42-1");
+      assertThat(redis.xrevrange("incompletestream", Range.from(Range.Boundary.including("42"), Range.Boundary.excluding("43"))))
+            .extracting(io.lettuce.core.StreamMessage::getId).containsExactly("43-0", "42-1", "42-0");
    }
 
    // Upstream: XREAD with non empty stream
@@ -464,6 +530,14 @@ public class StreamCommandsTest extends SingleNodeRespBaseTest {
       assertThatThrownBy(() -> xreadRaw("MAXCOUNT", "foo", "STREAMS", "mcstream1", "0"))
             .isInstanceOf(RedisCommandExecutionException.class)
             .hasMessageContaining("not an integer");
+   }
+
+   // XREAD accepts a non-positive COUNT, normalizing it to an unlimited read.
+   public void testXreadNonPositiveCountIsUnlimited() {
+      redis.del("mystream");
+      insertIntoStreamKey("mystream", 10);
+      assertThat(xreadTotalEntries(xreadRaw("COUNT", "0", "STREAMS", "mystream", "0"))).isEqualTo(10);
+      assertThat(xreadTotalEntries(xreadRaw("COUNT", "-1", "STREAMS", "mystream", "0"))).isEqualTo(10);
    }
 
    // Upstream: XREAD MAXCOUNT caps total entries across streams
@@ -757,6 +831,37 @@ public class StreamCommandsTest extends SingleNodeRespBaseTest {
       assertThat(redis.xtrim("mystream", new XTrimArgs().maxlen(0).approximateTrimming().limit(2))).isEqualTo(2);
    }
 
+   // Upstream: XTRIM with LIMIT 0 does not limit the trimming, MAXLEN strategy.
+   public void testXtrimMaxlenWithLimitZeroIsUnlimited() {
+      redis.del("mystream");
+      for (int j = 0; j < 5; j++) {
+         redis.xadd("mystream", "xitem", "v");
+      }
+      // The Lettuce client does not send a zero limit, so the raw command is utilized.
+      assertThat(xtrimRaw("mystream", "MAXLEN", "~", "0", "LIMIT", "0")).isEqualTo(5);
+      assertThat(redis.xlen("mystream")).isEqualTo(0);
+   }
+
+   // Upstream: XTRIM with LIMIT 0 does not limit the trimming, MINID strategy.
+   public void testXtrimMinidWithLimitZeroIsUnlimited() {
+      redis.del("mystream");
+      for (int j = 1; j <= 5; j++) {
+         redis.xadd("mystream", new XAddArgs().id(j + "-0"), "xitem", "v");
+      }
+      assertThat(xtrimRaw("mystream", "MINID", "~", "4", "LIMIT", "0")).isEqualTo(3);
+      assertThat(redis.xlen("mystream")).isEqualTo(2);
+   }
+
+   // Upstream: XADD trimming with LIMIT 0 does not limit the trimming.
+   public void testXaddMaxlenWithLimitZeroIsUnlimited() {
+      redis.del("mystream");
+      for (int j = 0; j < 5; j++) {
+         redis.xadd("mystream", "xitem", "v");
+      }
+      assertThat(xaddRaw("mystream", "MAXLEN", "~", "2", "LIMIT", "0", "*", "xitem", "v")).isNotNull();
+      assertThat(redis.xlen("mystream")).isEqualTo(2);
+   }
+
    // Upstream: XTRIM with MINID option
    public void testXtrimWithMinidOption() {
       redis.del("mystream");
@@ -955,6 +1060,177 @@ public class StreamCommandsTest extends SingleNodeRespBaseTest {
             () -> redis.xread(XReadArgs.StreamOffset.from("stringkey", "0-0")));
       assertWrongType(() -> redis.set("stringkey", "value"), () -> xsetid("stringkey", "1-1"));
       assertWrongType(() -> redis.set("stringkey", "value"), () -> xinfo("stringkey"));
+   }
+
+   // --------------------------------------------------------
+   // COPY, following the patterns of the other data types
+   // --------------------------------------------------------
+
+   public void testCopyStream() {
+      redis.del("copy-stream-src");
+      redis.xadd("copy-stream-src", new XAddArgs().id("1-1"), "f1", "v1");
+      redis.xadd("copy-stream-src", new XAddArgs().id("2-2"), "f2", "v2");
+
+      assertThat(redis.copy("copy-stream-src", "copy-stream-dst")).isTrue();
+      List<io.lettuce.core.StreamMessage<String, String>> entries = redis.xrange("copy-stream-dst", Range.unbounded());
+      assertThat(entries).extracting(io.lettuce.core.StreamMessage::getId).containsExactly("1-1", "2-2");
+      assertThat(entries.get(0).getBody()).containsEntry("f1", "v1");
+      assertThat(entries.get(1).getBody()).containsEntry("f2", "v2");
+      // The bookkeeping is copied as well.
+      assertThat(xinfo("copy-stream-dst").get("last-generated-id")).isEqualTo("2-2");
+   }
+
+   public void testCopyStreamNotPresent() {
+      assertThat(redis.copy("copy-stream-missing", "copy-stream-dst")).isFalse();
+   }
+
+   public void testCopyStreamEmptyStream() {
+      redis.del("copy-stream-empty-src");
+      redis.xadd("copy-stream-empty-src", new XAddArgs().id("1-1"), "f", "v");
+      redis.xdel("copy-stream-empty-src", "1-1");
+
+      // The key exists as an empty stream after deleting its only entry.
+      assertThat(redis.exists("copy-stream-empty-src")).isEqualTo(1);
+      assertThat(redis.copy("copy-stream-empty-src", "copy-stream-empty-dst")).isTrue();
+      assertThat(redis.exists("copy-stream-empty-dst")).isEqualTo(1);
+      assertThat(redis.type("copy-stream-empty-dst")).isEqualTo("stream");
+      assertThat(redis.xlen("copy-stream-empty-dst")).isEqualTo(0);
+   }
+
+   public void testCopyStreamToExistingKeyWithoutReplace() {
+      redis.del("copy-stream-src-nr", "copy-stream-dst-nr");
+      redis.xadd("copy-stream-src-nr", new XAddArgs().id("1-1"), "f", "v");
+      redis.xadd("copy-stream-dst-nr", new XAddArgs().id("2-2"), "f", "v");
+
+      assertThat(redis.copy("copy-stream-src-nr", "copy-stream-dst-nr")).isFalse();
+      assertThat(redis.xrange("copy-stream-dst-nr", Range.unbounded()))
+            .extracting(io.lettuce.core.StreamMessage::getId).containsExactly("2-2");
+   }
+
+   public void testCopyStreamToExistingKeyWithReplace() {
+      redis.del("copy-stream-src-r", "copy-stream-dst-r");
+      redis.xadd("copy-stream-src-r", new XAddArgs().id("1-1"), "f", "a");
+      redis.xadd("copy-stream-dst-r", new XAddArgs().id("2-2"), "f", "b");
+
+      var copyArgs = new CopyArgs().replace(true);
+      assertThat(redis.copy("copy-stream-src-r", "copy-stream-dst-r", copyArgs)).isTrue();
+      assertThat(redis.xrange("copy-stream-dst-r", Range.unbounded()))
+            .extracting(io.lettuce.core.StreamMessage::getId).containsExactly("1-1");
+   }
+
+   public void testCopyStreamWithReplaceToNonExistingKey() {
+      redis.del("copy-stream-src-rne");
+      redis.xadd("copy-stream-src-rne", new XAddArgs().id("1-1"), "f", "v");
+
+      var copyArgs = new CopyArgs().replace(true);
+      assertThat(redis.copy("copy-stream-src-rne", "copy-stream-dst-rne", copyArgs)).isTrue();
+      assertThat(redis.xrange("copy-stream-dst-rne", Range.unbounded()))
+            .extracting(io.lettuce.core.StreamMessage::getId).containsExactly("1-1");
+   }
+
+   public void testCopyStreamToNewDB() {
+      createCacheDb1();
+
+      redis.del("copy-stream-db-src");
+      redis.xadd("copy-stream-db-src", new XAddArgs().id("1-1"), "f", "v");
+
+      var copyArgs = new CopyArgs().destinationDb(1);
+      assertThat(redis.copy("copy-stream-db-src", "copy-stream-db-dst", copyArgs)).isTrue();
+      assertThat(redis.xlen("copy-stream-db-dst")).isEqualTo(0);
+
+      redis.select(1);
+      assertThat(redis.xrange("copy-stream-db-dst", Range.unbounded()))
+            .extracting(io.lettuce.core.StreamMessage::getId).containsExactly("1-1");
+      redis.select(0);
+   }
+
+   public void testCopyStreamToNewDBWithReplace() {
+      createCacheDb1();
+
+      redis.del("copy-stream-dbr-src");
+      redis.xadd("copy-stream-dbr-src", new XAddArgs().id("1-1"), "f", "a");
+
+      redis.select(1);
+      redis.xadd("copy-stream-dbr-dst", new XAddArgs().id("2-2"), "f", "b");
+      redis.select(0);
+
+      var copyArgs = new CopyArgs().destinationDb(1).replace(true);
+      assertThat(redis.copy("copy-stream-dbr-src", "copy-stream-dbr-dst", copyArgs)).isTrue();
+
+      redis.select(1);
+      assertThat(redis.xrange("copy-stream-dbr-dst", Range.unbounded()))
+            .extracting(io.lettuce.core.StreamMessage::getId).containsExactly("1-1");
+      redis.select(0);
+   }
+
+   /**
+    * Creates the cache utilized as the destination database by the {@code COPY} tests with the {@code DB} option. The
+    * other data types create the database in a single test and rely on the method ordering; creating it only when
+    * missing allows each test to run in isolation.
+    */
+   private void createCacheDb1() {
+      ConfigurationBuilder builder = defaultRespConfiguration();
+      amendConfiguration(builder);
+      Runnable create = () -> {
+         if (!manager(0).cacheExists("1")) {
+            manager(0).createCache("1", builder.build());
+         }
+      };
+      if (isAuthorizationEnabled()) {
+         Security.doAs(ADMIN, create);
+      } else {
+         create.run();
+      }
+   }
+
+   public void testCopyStreamDataIndependence() {
+      redis.del("copy-stream-ind-src");
+      redis.xadd("copy-stream-ind-src", new XAddArgs().id("1-1"), "f", "a");
+
+      assertThat(redis.copy("copy-stream-ind-src", "copy-stream-ind-dst")).isTrue();
+
+      // Modifying the original does not affect the copy.
+      redis.xadd("copy-stream-ind-src", new XAddArgs().id("2-2"), "f", "b");
+      assertThat(redis.xrange("copy-stream-ind-dst", Range.unbounded()))
+            .extracting(io.lettuce.core.StreamMessage::getId).containsExactly("1-1");
+
+      // Modifying the copy does not affect the original.
+      redis.xadd("copy-stream-ind-dst", new XAddArgs().id("3-3"), "f", "c");
+      redis.xtrim("copy-stream-ind-dst", new XTrimArgs().maxlen(0).exactTrimming());
+      assertThat(redis.xlen("copy-stream-ind-dst")).isEqualTo(0);
+      assertThat(redis.xlen("copy-stream-ind-src")).isEqualTo(2);
+
+      // Deleting the original does not affect the copy.
+      redis.del("copy-stream-ind-src");
+      assertThat(redis.type("copy-stream-ind-dst")).isEqualTo("stream");
+   }
+
+   public void testCopyStreamSameKey() {
+      redis.del("copy-stream-same");
+      redis.xadd("copy-stream-same", new XAddArgs().id("1-1"), "f", "v");
+
+      assertThat(redis.copy("copy-stream-same", "copy-stream-same")).isFalse();
+      assertThat(redis.xlen("copy-stream-same")).isEqualTo(1);
+   }
+
+   public void testCopyStreamToExistingStringWithoutReplace() {
+      redis.del("copy-cross-stream-src");
+      redis.xadd("copy-cross-stream-src", new XAddArgs().id("1-1"), "f", "v");
+      redis.set("copy-cross-stream-dst", "existing");
+
+      assertThat(redis.copy("copy-cross-stream-src", "copy-cross-stream-dst")).isFalse();
+      assertThat(redis.get("copy-cross-stream-dst")).isEqualTo("existing");
+   }
+
+   public void testCopyStreamToExistingStringWithReplace() {
+      redis.del("copy-cross-stream-r-src");
+      redis.xadd("copy-cross-stream-r-src", new XAddArgs().id("1-1"), "f", "v");
+      redis.set("copy-cross-stream-r-dst", "existing");
+
+      var copyArgs = new CopyArgs().replace(true);
+      assertThat(redis.copy("copy-cross-stream-r-src", "copy-cross-stream-r-dst", copyArgs)).isTrue();
+      assertThat(redis.xrange("copy-cross-stream-r-dst", Range.unbounded()))
+            .extracting(io.lettuce.core.StreamMessage::getId).containsExactly("1-1");
    }
 
    // --------------------------------------------------------

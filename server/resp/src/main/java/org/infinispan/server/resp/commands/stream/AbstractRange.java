@@ -72,6 +72,18 @@ abstract class AbstractRange extends RespCommand implements Resp3Command {
          }
       }
 
+      if (countGiven && count == 0) {
+         // Following the Redis semantics, an explicit COUNT 0 replies with nil for an existing stream, and an empty
+         // array for a missing key, instead of returning all the matching entries.
+         return handler.stageToReturn(handler.getStreamCache().bucket(key), ctx, (bucket, writer) -> {
+            if (bucket == null) {
+               writeEntries(List.of(), writer);
+            } else {
+               writer.nulls();
+            }
+         });
+      }
+
       StreamRangeFunction function = new StreamRangeFunction(lower.id(), lower.exclusive(),
             higher.id(), higher.exclusive(), reverse, count);
       return handler.stageToReturn(handler.getStreamCache().range(key, function), ctx,

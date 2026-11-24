@@ -59,11 +59,27 @@ public class StreamID implements Comparable<StreamID>, Serializable {
     * @throws NumberFormatException If the ID is malformed or its parts overflow an unsigned 64-bit integer.
     */
    public static StreamID parse(byte[] argument) {
+      return parse(argument, 0);
+   }
+
+   /**
+    * Parses a stream ID in the {@code <ms>-<seq>} or incomplete {@code <ms>} format, utilizing the provided sequence
+    * part when the format is incomplete. The sequence part is interpreted as unsigned, so {@code -1} means the
+    * maximal value {@code 18446744073709551615}. Special tokens ({@code -}, {@code +}, {@code $}, {@code *}) must be
+    * handled by the caller.
+    *
+    * @param argument The ID to parse.
+    * @param incompleteSequence The sequence part to utilize with the incomplete {@code <ms>} format, as an unsigned
+    *        value.
+    * @return The parsed ID, never {@code null}.
+    * @throws NumberFormatException If the ID is malformed or its parts overflow an unsigned 64-bit integer.
+    */
+   public static StreamID parse(byte[] argument, long incompleteSequence) {
       String value = new String(argument, StandardCharsets.US_ASCII);
       int dash = value.indexOf('-');
       try {
          if (dash < 0) {
-            return new StreamID(Long.parseUnsignedLong(value), 0);
+            return new StreamID(Long.parseUnsignedLong(value), incompleteSequence);
          }
          if (dash == 0 || dash == value.length() - 1) {
             throw new NumberFormatException("Invalid stream ID: " + value);

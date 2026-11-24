@@ -39,7 +39,10 @@ import org.infinispan.server.resp.stream.StreamEntry;
 import org.infinispan.server.resp.stream.StreamID;
 import org.infinispan.server.resp.tx.TransactionContext;
 
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 
 /**
  * XREAD
@@ -82,7 +85,7 @@ public class XREAD extends RespCommand implements Resp3Command {
       while (pos < arguments.size()) {
          byte[] argument = arguments.get(pos++);
          if (matches(argument, COUNT)) {
-            count = parsePositiveLong(arguments, pos, "COUNT");
+            count = parseCount(arguments, pos);
             pos++;
          } else if (matches(argument, MAXCOUNT)) {
             maxcount = parsePositiveLong(arguments, pos, "MAXCOUNT");
@@ -152,7 +155,7 @@ public class XREAD extends RespCommand implements Resp3Command {
          // When there is data to return, the command is executed synchronously, exactly like the BLOCK option was
          // missing. Otherwise, install a listener to wait for new data.
          return results.isEmpty()
-               ? blockForData(handler, pairs, countArg, maxcountArg, maxsizeArg, blockArg)
+               ? blockForData(handler, pairs, countArg, maxcountArg, maxsizeArg, blockArg, ctx)
                : CompletableFuture.completedFuture(results);
       }), ctx, XREAD_WRITER);
    }
@@ -166,6 +169,18 @@ public class XREAD extends RespCommand implements Resp3Command {
          throw new RespCommandException("ERR " + option + " must be a positive integer");
       }
       return value;
+   }
+
+   /**
+    * Parses the {@code COUNT} option. Unlike {@code MAXCOUNT} and {@code MAXSIZE}, Redis accepts non-positive values,
+    * normalizing them to an unlimited read.
+    */
+   private static long parseCount(List<byte[]> arguments, int pos) {
+      if (pos >= arguments.size()) {
+         throw new RespCommandException("ERR syntax error");
+      }
+      long value = ArgumentUtils.toLong(arguments.get(pos));
+      return value > 0 ? value : -1;
    }
 
    private static long parseNonNegativeLong(List<byte[]> arguments, int pos) {
@@ -271,10 +286,12 @@ public class XREAD extends RespCommand implements Resp3Command {
 
    /**
     * Installs a listener to wait for new data on any of the requested streams, following the same approach as the
-    * blocking list commands. A timer handles the timeout, completing the command with a nil reply.
+    * blocking list commands. A timer handles the timeout, completing the command with a nil reply. The blocked read
+    * is also cancelled when the client disconnects, releasing the listener and the blocked-client metrics even
+    * without a timeout, as with {@code BLOCK 0}.
     */
    private CompletionStage<List<ReadResult>> blockForData(Resp3Handler handler, List<ReadPair> pairs, long count,
-         long maxcount, long maxsize, long block) {
+         long maxcount, long maxsize, long block, ChannelHandlerContext ctx) {
       AdvancedCache<byte[], Object> cache = handler.typedCache(null);
       DataConversion vc = cache.getValueDataConversion();
       XReadListener listener = new XReadListener(handler, cache, pairs, count, maxcount, maxsize);
@@ -283,11 +300,27 @@ public class XREAD extends RespCommand implements Resp3Command {
             ? handler.respServer().getTimeService().expectedEndTime(block, TimeUnit.MILLISECONDS)
             : 0;
 
+      // Cancel the blocked read when the channel closes: without new data, an error or a timeout, the command future
+      // is never completed, and the listener would retain the handler and cache references indefinitely. The close
+      // future listener runs immediately when the channel is already closed, covering a disconnect racing with the
+      // command itself. The listener is removed when the command completes, so repeated blocked reads on a
+      // long-lived connection do not accumulate on the close future until the channel closes.
+      ChannelFuture closeFuture = ctx.channel().closeFuture();
+      GenericFutureListener<Future<? super Void>> cancelOnClose = ignored -> listener.getFuture().cancel(false);
+      closeFuture.addListener(cancelOnClose);
+      listener.getFuture().whenComplete((ignore, t) -> closeFuture.removeListener(cancelOnClose));
+
       cache.addListenerAsync(listener, filter, new EventListenerConverter<Object, Object, Object>(vc))
             .whenComplete((ignore, t) -> {
                // If the listener fails to install, fail the command.
                if (t != null) {
                   listener.getFuture().completeExceptionally(t);
+                  return;
+               }
+               // The client may have disconnected while the listener was being installed, cancelling the command: the
+               // removal triggered by the cancellation ran before the registration completed, so remove it here.
+               if (listener.getFuture().isDone()) {
+                  cache.removeListenerAsync(listener);
                   return;
                }
                // The listener can lose events during its installation, so we need to poll again. Start a timer with
