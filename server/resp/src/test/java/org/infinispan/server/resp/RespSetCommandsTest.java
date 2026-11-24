@@ -1263,6 +1263,8 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       // 0 means no limit
       assertThat(sunioncard("2", "sucl1", "sucl2", "LIMIT", "0")).isEqualTo(5);
       assertThat(sunioncard("2", "sucl1", "sucl2", "limit", "3")).isEqualTo(3);
+      // LIMIT is a 64-bit integer, like in Redis
+      assertThat(sunioncard("2", "sucl1", "sucl2", "LIMIT", String.valueOf(Long.MAX_VALUE))).isEqualTo(5);
    }
 
    public void testSunioncardApprox() {
@@ -1317,6 +1319,9 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
             .isInstanceOf(RedisCommandExecutionException.class)
             .hasMessage("ERR numkeys should be greater than 0");
       assertThatThrownBy(() -> sunioncard("3", "suce", "suce2"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR Number of keys can't be greater than number of args");
+      assertThatThrownBy(() -> sunioncard(String.valueOf(Integer.MAX_VALUE), "suce"))
             .isInstanceOf(RedisCommandExecutionException.class)
             .hasMessage("ERR Number of keys can't be greater than number of args");
       assertThatThrownBy(() -> sunioncard("1", "suce", "LIMIT", "-1"))
