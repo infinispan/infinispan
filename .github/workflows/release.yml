@@ -30,6 +30,12 @@ permissions:
 # runs must not interleave one run's asset with another run's signature. Releases are
 # never cut concurrently, and the group is deliberately version-less so that a release
 # dispatched without an explicit version still serializes with its own resume.
+# GitHub keeps only one pending run per group, so a newer dispatch displaces a pending
+# one instead of queueing behind it; that is accepted because releases are dispatched
+# one at a time, and a displaced dispatch can simply be re-run, whereas interleaved
+# uploads would corrupt the release. Once actionlint learns the concurrency "queue"
+# property (github.blog/changelog/2026-05-07), setting queue: max here removes the
+# limitation.
 concurrency:
   group: release
   cancel-in-progress: false
@@ -74,7 +80,17 @@ jobs:
           # a release version.
           INPUT_VERSION: ${{ inputs.version }}
           INPUT_NEXT_VERSION: ${{ inputs.nextVersion }}
+          BRANCH: ${{ inputs.branch }}
         run: |
+          # Fail fast on an invalid branch name, here — before anything is published —
+          # using git's own ref validation so that every valid branch name is accepted.
+          # The push step later uses an explicit refs/heads/... refspec, which cannot be
+          # parsed as a git option, so a crafted name has nothing to inject into.
+          if ! git check-ref-format "refs/heads/$BRANCH"; then
+            echo "::error::Invalid branch name: $BRANCH"
+            exit 1
+          fi
+
           POM_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "POM version: $POM_VERSION"
 
@@ -162,13 +178,11 @@ jobs:
           # Indirected so a crafted branch input cannot inject shell commands
           BRANCH: ${{ inputs.branch }}
         run: |
-          if ! [[ "$BRANCH" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]]; then
-            echo "::error::Invalid branch name: $BRANCH"
-            exit 1
-          fi
           # The explicit refspec starts with refs/heads/, so git can never parse the
           # branch value as a push option (e.g. a branch named --force would otherwise
-          # enable force-pushing the release tags instead of pushing that branch).
+          # enable force-pushing the release tags instead of pushing that branch). The
+          # name itself was validated by git check-ref-format in the resolve-versions
+          # step, before anything was published.
           git push --tags origin "refs/heads/$BRANCH:refs/heads/$BRANCH"
 
       - name: Create default release

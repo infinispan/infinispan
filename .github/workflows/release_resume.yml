@@ -28,6 +28,12 @@ permissions:
 # another run's signature. The group is shared with release.yml and deliberately
 # version-less: releases are never cut concurrently, and a version-less key also
 # serializes a release dispatched without an explicit version with its own resume.
+# GitHub keeps only one pending run per group, so a newer dispatch displaces a pending
+# one instead of queueing behind it; that is accepted because releases are dispatched
+# one at a time, and a displaced dispatch can simply be re-run, whereas interleaved
+# uploads would corrupt the release. Once actionlint learns the concurrency "queue"
+# property (github.blog/changelog/2026-05-07), setting queue: max here removes the
+# limitation.
 concurrency:
   group: release
   cancel-in-progress: false

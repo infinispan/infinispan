@@ -75,6 +75,24 @@ runs:
         echo "$MAVEN_GPG_KEY" | gpg --batch --import >/dev/null 2>&1 \
           || { echo "::error::Failed to import the OpenPGP signing key"; exit 1; }
 
+        # The imported key must be one of the keys published in KEYS: signing with any
+        # other valid key would produce signatures that users cannot verify against the
+        # project's published keys. KEYS is read from the caller's workspace, which is a
+        # checkout of this repository.
+        if [ -f KEYS ]; then
+          fingerprint=$(gpg --batch --list-secret-keys --with-colons | awk -F: '/^fpr:/ {print $10; exit}')
+          if [ -z "$fingerprint" ]; then
+            echo "::error::Could not determine the fingerprint of the imported signing key"
+            exit 1
+          fi
+          if ! gpg --show-keys KEYS | grep -qi "$fingerprint"; then
+            echo "::error::The configured signing key ($fingerprint) is not published in KEYS; refusing to sign with it"
+            exit 1
+          fi
+        else
+          echo "::warning::No KEYS file in the workspace; skipping the signing-key fingerprint check"
+        fi
+
         uploads=()
         while IFS= read -r pattern || [ -n "$pattern" ]; do
           [ -z "$pattern" ] && continue
