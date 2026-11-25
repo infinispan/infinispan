@@ -131,7 +131,6 @@ public class BulkOperationsTest extends MultipleCacheManagersTest {
    }
 
 
-
    @AfterMethod
    public void checkNoActiveIterations() {
       for (HotRodServer hotRodServer : hotrodServers) {

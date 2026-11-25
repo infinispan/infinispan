@@ -17,7 +17,6 @@ public class PrincipalRoleMapperConfiguration extends ConfigurationElement<Princ
    public static final AttributeDefinition<Class> CLASS = AttributeDefinition.builder(Attribute.CLASS, null, Class.class).immutable().build();
 
 
-
    private final PrincipalRoleMapper principalRoleMapper;
 
    public static AttributeSet attributeDefinitionSet() {

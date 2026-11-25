@@ -492,7 +492,6 @@ public class RespTwoNodeTest extends BaseMultipleRespTest {
    }
 
 
-
    @Test
    public void testBlpopTwoListenersTwoPush() throws InterruptedException, ExecutionException {
       var redisCommmand1 = client1.connect().async();
