@@ -426,6 +426,16 @@
                      <spacesPerTab>3</spacesPerTab>
                   </indent>
                   <removeUnusedImports/>
+                  <!-- Collapse runs of more than 2 blank lines down to 2, as the IDE formatter does
+                       (ij_java_keep_blank_lines_in_code = 2 in .editorconfig).
+                       The regex matches only the newlines beyond the 3 that are kept, so the
+                       replacement is empty: Maven trims parameter values, so a replacement made
+                       only of newlines cannot be expressed (and \n would be a literal 'n' in
+                       java.util.regex replacement syntax). -->
+                  <replaceRegex>
+                     <name>collapseBlankLines</name>
+                     <searchRegex>(?&lt;=\n\n\n)\n+</searchRegex>
+                  </replaceRegex>
                   <trimTrailingWhitespace/>
                   <endWithNewline/>
                   <toggleOffOn/>

@@ -69,7 +69,6 @@ public class MultipleCacheTxFunctionalTest<K, V> extends MultiHotRodServersTest 
    }
 
 
-
    @AfterMethod(alwaysRun = true)
    @Override
    protected void clearContent() throws Throwable {

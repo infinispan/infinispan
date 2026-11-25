@@ -291,7 +291,6 @@ public class IndexSchemaNoDowntimeUpgradeTest extends SingleHotRodServerTest {
       }
 
 
-
       // VERSION 4
       // Now we can remove deprecated name field
       try (RemoteCacheManager rcm = clientForSchema(BaseEntityWithNonAnalyzedNameFieldEntitySchema.INSTANCE, true)) {

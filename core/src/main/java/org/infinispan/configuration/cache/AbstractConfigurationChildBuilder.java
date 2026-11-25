@@ -102,7 +102,6 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
    }
 
 
-
    protected ConfigurationBuilder getBuilder() {
       return builder;
    }

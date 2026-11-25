@@ -22,7 +22,6 @@ public class MechanismConfiguration {
    }
 
 
-
    public MechanismConfiguration(AttributeSet attributes) {
       this.attributes = attributes;
    }

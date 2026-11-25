@@ -472,7 +472,6 @@ public class EmbeddedRemoteInteropQueryTest extends SingleCacheManagerTest {
    }
 
 
-
    private void assertAccount(Account account, Class<?> cls) {
       assertNotNull(account);
       assertEquals(cls, account.getClass());
