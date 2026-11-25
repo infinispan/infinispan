@@ -19,7 +19,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -405,29 +404,17 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
 
       int totalSegments = topology.getWriteConsistentHash().getNumSegments();
 
-      // Failures of the individual segment fetches must not be emitted as onError signals into this pipeline's merge
-      // coordinator (flatMap): several segments are fetched concurrently, so a failing source produces one error per affected segment but
-      // the coordinator can deliver at most one — RxJava routes any additional errors to its global undeliverable handler.
-      // The failures are therefore consumed and recorded here instead; once every segment has been processed they are
-      // emitted as a single error (or nothing if this attempt was cancelled before then).
-      AtomicReference<Throwable> fetchFailure = new AtomicReference<>();
-
       return Flowable.fromCompletionStage(prefetchAllBucketHashesAsync(topology))
             .flatMap(prefetchedHashes ->
                   Flowable.range(0, totalSegments)
-                        .flatMap(segmentId -> handleSegmentFetchError(processSegmentAsync(segmentId, topology, prefetchedHashes), fetchFailure),
-                              false, SEGMENT_CONCURRENCY)
+                        // Segment fetches run concurrently, so several of them may fail at the same time (e.g. the transfer
+                        // source is suspected or has crashed). With delayErrors=false the merge coordinator terminates on
+                        // the first inner error and disposes the remaining in-flight fetches, so any error completing after
+                        // that termination is routed to RxJava's global undeliverable error handler. delayErrors=true lets
+                        // every segment settle first and reports all failures once as a single error instead.
+                        .flatMap(segmentId -> processSegmentAsync(segmentId, topology, prefetchedHashes),
+                              true, SEGMENT_CONCURRENCY)
             )
-            // Emit the recorded failure once every segment has been processed. If this attempt is cancelled before that point
-            // nothing is reported at all — no subscriber remains to deliver it to, and routing it to RxJava's global undeliverable
-            // handler would only add noise for a condition nobody can react to anymore.
-            .concatWith(Flowable.defer(() -> {
-               Throwable failure = fetchFailure.get();
-               if (failure == null) {
-                  return Flowable.empty();
-               }
-               return Flowable.error(failure);
-            }))
             .filter(DefaultConflictManager::hasConflict)
             .timeout(conflictTimeout, TimeUnit.MILLISECONDS)
             .doOnCancel(() -> streamInProgress.set(false))
@@ -487,22 +474,6 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       return Flowable.fromCompletionStage(
                   stateReceiver.getAllReplicasForSegment(segmentId, topology, conflictTimeout))
             .concatMapIterable(list -> list);
-   }
-
-   /**
-    * Consumes the failure of a single segment fetch instead of letting it propagate as an onError signal into
-    * {@link #getConflictsFlowable(LocalizedCacheTopology)}'s merge coordinator, where only one error could be delivered
-    * and any additional ones would reach RxJava's global undeliverable handler.
-    * The first failure is recorded so that the pipeline can report it once every segment has been processed.
-    */
-   private <T> Flowable<T> handleSegmentFetchError(Flowable<T> segment, AtomicReference<Throwable> fetchFailure) {
-      return segment.onErrorResumeNext(t -> {
-         // Additional failures are only logged here; each failing transfer task already logs its own details.
-         if (!fetchFailure.compareAndSet(null, t)) {
-            if (log.isTraceEnabled()) log.tracef("Cache %s additional segment fetch failure: %s", cacheName, t.getMessage());
-         }
-         return Flowable.empty();
-      });
    }
 
    @Override

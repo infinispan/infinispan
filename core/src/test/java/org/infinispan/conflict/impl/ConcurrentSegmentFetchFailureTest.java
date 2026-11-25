@@ -32,14 +32,17 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopology;
 import org.testng.annotations.Test;
 
+import io.reactivex.rxjava3.exceptions.CompositeException;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.plugins.RxJavaPlugins;
 
 /**
  * When several segment fetches fail concurrently during conflict detection — e.g. because the transfer source is
  * suspected or has crashed, as in {@code CrashedNodeDuringConflictResolutionTest} — each failing request completes
- * its future exceptionally and emits an onError signal into the pipeline's merge coordinator. The coordinator can
- * deliver at most one of them; any additional errors would be routed to RxJava's global undeliverable error handler.
+ * its future exceptionally and emits an onError signal into the pipeline's merge coordinator. The coordinator
+ * terminates on the first inner error and disposes the remaining in-flight fetches, so an error completing after
+ * that termination is routed to RxJava's global undeliverable error handler. Enabling {@code delayErrors} on the
+ * segment flatMap lets every segment settle first and reports all failures once as a single error.
  */
 @Test(groups = "functional", testName = "conflict.impl.ConcurrentSegmentFetchFailureTest")
 public class ConcurrentSegmentFetchFailureTest extends MultipleCacheManagersTest {
@@ -64,44 +67,53 @@ public class ConcurrentSegmentFetchFailureTest extends MultipleCacheManagersTest
 
       List<Throwable> undeliverable = Collections.synchronizedList(new ArrayList<>());
       Consumer<? super Throwable> previousHandler = RxJavaPlugins.getErrorHandler();
+      // The spy must remain installed until the attempt has settled and every assertion has run: restoring it
+      // earlier would let a late undeliverable error bypass the spy and make the final assertion pass vacuously.
       RxJavaPlugins.setErrorHandler(undeliverable::add);
-
-      CompletionStage<Void> stage;
-      CacheTopology topology;
       try {
          AdvancedCache<Object, Object> cache = advancedCache(0);
          InternalConflictManager<Object, Object> cm = TestingUtil.extractComponent(cache, InternalConflictManager.class);
-         topology = cache.getDistributionManager().getCacheTopology();
+         CacheTopology topology = cache.getDistributionManager().getCacheTopology();
 
-         // Every segment fetch from node 1 fails as soon as it is issued and several of them fail concurrently. The attempt
-         // must still process every segment before completing exceptionally exactly once — through the returned stage —
-         // without any error reaching RxJava's global handler or stopping early at the first failure.
-         stage = cm.resolveConflicts(topology, new HashSet<>(topology.getMembers()));
+         // Every segment fetch from node 1 fails as soon as it is issued and several of them fail concurrently. The
+         // attempt must still process every segment before completing exceptionally exactly once — through the
+         // returned stage — without any error reaching RxJava's global handler.
+         CompletionStage<Void> stage = cm.resolveConflicts(topology, new HashSet<>(topology.getMembers()));
 
-         eventually(() -> stateRequests.get() >= 2);
+         Throwable error;
+         try {
+            // The attempt cannot succeed: every segment fetch fails. It may only report that failure once, through the stage.
+            stage.toCompletableFuture().join();
+            throw new AssertionError("The attempt must fail when every segment fetch fails");
+         } catch (CompletionException e) {
+            error = e.getCause();
+         }
+
+         assertNotNull(error);
+         // With delayErrors the merge coordinator reports every failed fetch once, as a single error: a lone
+         // SuspectException when only one segment failed, or a CompositeException of them when several failed.
+         List<Throwable> failures = error instanceof CompositeException
+               ? ((CompositeException) error).getExceptions()
+               : List.of(error);
+         for (Throwable failure : failures) {
+            // handleAndCompose() relays the transfer task's failure wrapped in a CompletionException.
+            if (failure instanceof CompletionException && failure.getCause() != null) {
+               failure = failure.getCause();
+            }
+            assertTrue(failure instanceof SuspectException, "Expected a SuspectException but got: " + failure);
+         }
+
+         // Before #18295 was fixed the first failing fetch terminated this pipeline's merge coordinator immediately —
+         // cancelling the segment enumeration and disposing every in-flight request — so only a handful of segments
+         // were ever attempted. delayErrors requires every segment to settle first, and asserting on the count is
+         // what makes this regression observable even when no undeliverable error happens to slip through during a
+         // particular run.
+         assertEquals(topology.getWriteConsistentHash().getNumSegments(), stateRequests.get());
+
+         assertEquals(Collections.emptyList(), undeliverable, "Concurrent segment fetch failures must not be reported to RxJava's undeliverable error handler");
       } finally {
          RxJavaPlugins.setErrorHandler(previousHandler);
       }
-
-      Throwable error;
-      try {
-         // The attempt cannot succeed: every segment fetch fails. It may only report that failure once, through the stage.
-         stage.toCompletableFuture().join();
-         throw new AssertionError("The attempt must fail when every segment fetch fails");
-      } catch (CompletionException e) {
-         error = e.getCause();
-      }
-
-      assertNotNull(error);
-      assertTrue(error instanceof SuspectException, "Expected a SuspectException but got: " + error);
-
-      // Before #18295 was fixed the first failing fetch terminated this pipeline's merge coordinator immediately — cancelling
-      // the segment enumeration and disposing every in-flight request — so only a handful of segments were ever attempted.
-      // A failed attempt must now settle all its fetches before reporting once; asserting on the count is what makes this
-      // regression observable even when no undeliverable error happens to slip through during a particular run.
-      assertEquals(topology.getWriteConsistentHash().getNumSegments(), stateRequests.get());
-
-      assertEquals(Collections.emptyList(), undeliverable, "Concurrent segment fetch failures must not be reported to RxJava's undeliverable error handler");
    }
 
    /**
