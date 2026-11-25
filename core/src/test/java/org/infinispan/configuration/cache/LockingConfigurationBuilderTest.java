@@ -30,7 +30,7 @@ public class LockingConfigurationBuilderTest {
             .build();
       assertThat(config).isNotNull();
       assertThat(config.clustering().remoteTimeout()).isEqualTo(15000);
-      assertThat(config.locking().lockAcquisitionTimeout()).isEqualTo(10000);
+      assertThat(config.locking().lockAcquisitionTimeout()).isEqualTo(15000);
    }
 
    public void testLocalCacheAllowsLowerRemoteTimeout() {

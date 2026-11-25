@@ -136,7 +136,7 @@ public class DefaultCacheManagerAdmin implements EmbeddedCacheManagerAdmin {
             .read(SecurityActions.getCacheConfiguration(cache.getAdvancedCache())).build(false);
       Attribute<?> attribute = config.findAttribute(attributeName);
       attribute.fromString(attributeValue);
-      new ConfigurationBuilder().read(config).validate();
+      config = new ConfigurationBuilder().read(config).build(cacheManager.getCacheManagerConfiguration());
       EnumSet<AdminFlag> newFlags = flags.clone();
       newFlags.add(CacheContainerAdmin.AdminFlag.UPDATE);
       join(clusterConfigurationManager.getOrCreateCache(cacheName, config, newFlags));

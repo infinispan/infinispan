@@ -365,7 +365,8 @@ public class HotRodServer extends AbstractProtocolServer<HotRodServerConfigurati
    protected ConfigurationBuilder createTopologyCacheConfig(long distSyncTimeout) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       long replTimeout = configuration.topologyReplTimeout();
-      long stateTransferTimeout = distSyncTimeout < 0 || replTimeout < 0 ? -1 : distSyncTimeout + replTimeout;
+      long stateTransferTimeout = distSyncTimeout < 0 || replTimeout < 0 ? -1
+            : distSyncTimeout > Long.MAX_VALUE - replTimeout ? Long.MAX_VALUE : distSyncTimeout + replTimeout;
       builder.clustering().cacheMode(CacheMode.REPL_SYNC).remoteTimeout(configuration.topologyReplTimeout())
             .locking().lockAcquisitionTimeout(configuration.topologyLockTimeout())
             .clustering().partitionHandling().mergePolicy(null)

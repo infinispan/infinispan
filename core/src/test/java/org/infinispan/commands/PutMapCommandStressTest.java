@@ -58,6 +58,7 @@ public class PutMapCommandStressTest extends StressTest {
       builderUsed.clustering().stateTransfer().chunkSize(25000);
       // This is increased just for the put all command when doing full tracing
       builderUsed.clustering().remoteTimeout(12000);
+      builderUsed.locking().lockAcquisitionTimeout(10000);
       if (transactional) {
          builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       }

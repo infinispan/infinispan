@@ -115,6 +115,8 @@ public class HotRodConfigurationTest extends AbstractInfinispanTest {
    public Object[][] topologyTimeouts() {
       return new Object[][] {
             {60000L, 15000L, 75000L},
+            {Long.MAX_VALUE - 15000L, 15000L, Long.MAX_VALUE},
+            {Long.MAX_VALUE, 15000L, Long.MAX_VALUE},
             {-1L, 15000L, -1L}
       };
    }

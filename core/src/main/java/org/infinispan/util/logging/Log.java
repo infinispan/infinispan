@@ -2548,7 +2548,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Cache stop timeout (%s) is less than %s timeout (%s). In-flight transactions may be aborted during cache stop.", id = 744)
    void cacheStopTimeoutTooShort(String cacheStopTimeout, String operation, String timeout);
 
-   @LogMessage(level = WARN)
-   @Message(value = "Backup site '%s' replication timeout (%s) is greater than or equal to lock acquisition timeout (%s). Concurrent writes may time out waiting for locks held during cross-site replication.", id = 745)
-   void backupReplicationTimeoutTooLong(String siteName, String replicationTimeout, String lockTimeout);
+   @Message(value = "Backup site '%s' replication timeout (%s) must be less than lock acquisition timeout (%s)", id = 745)
+   CacheConfigurationException backupReplicationTimeoutTooLong(String siteName, String replicationTimeout, String lockTimeout);
 }

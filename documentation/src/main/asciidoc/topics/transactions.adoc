@@ -110,6 +110,8 @@ The `remote-timeout` must be greater than zero milliseconds, including when you 
 Zero and negative values are rejected; infinite remote timeouts are not supported.
 {brandname} rejects a lower remote timeout and logs a warning when the values are equal.
 For synchronous cross-site backups, the backup `timeout` must also be greater than zero milliseconds and should be less than `remote-timeout`.
+If the locking `acquire-timeout` is positive, the backup `timeout` must be strictly less than it.
+{brandname} rejects equal or greater backup timeouts.
 Zero and negative locking `acquire-timeout` values remain valid and mean that lock acquisition does not wait.
 For distributed and replicated caches, a finite state transfer `timeout` must be strictly greater than `remote-timeout`.
 For clustered caches, a finite transport `lock-timeout` (`distributedSyncTimeout`) must also be strictly greater than `remote-timeout`.

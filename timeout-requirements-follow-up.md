@@ -8,7 +8,7 @@ The proposed issue updates below have not been applied to GitHub.
 
 | Requirement | Why unchanged | What should happen next |
 |---|---|---|
-| **#3: Synchronous backup timeout ordering** | The table asks for backup timeout **above** lock timeout, but the issue describes problems caused by exactly that relationship. Existing code warns when backup timeout is greater than or equal to a positive lock timeout. | **Correct the issue description and investigate before enforcing more.** State that backup should finish before the originating remote call expires. Treat the lock relationship as advisory. Trace lock lifetime and cumulative RPC delays for transactional and nontransactional writes, then use clustered cross-site tests to establish any stronger constraint. |
+| **#3: Synchronous backup timeout ordering** | The user selected strict ordering: backup timeout must be below a positive lock-acquisition timeout. Invalid ordering is now rejected during configuration building and administration API updates. Defaults are backup 10 seconds, lock acquisition 15 seconds, and remote 15 seconds. Nonpositive lock timeouts remain valid as immediate acquisition attempts and are exempt from this ordering check. | **Correct the issue description** to require the backup timeout below a positive lock timeout and preserve no-wait lock acquisition for both synchronous and asynchronous caches. |
 | **#7: Cache-stop timeout above remote/lock timeouts** | Existing warnings identify short shutdown waits while preserving intentional bounded shutdown, including zero. Making this mandatory would remove that choice. | **Make the policy explicit in the issue:** require nonnegative values and warn below applicable operation timeouts. If strict enforcement is desired, that needs an explicit compatibility decision. Shutdown tests with active local and remote transactions would provide stronger behavioral coverage. |
 | **#10: Cross-site state-transfer timeout above retry wait time** | The timeout applies to each attempt. Backoff happens after failure; each retry gets a fresh timeout. There is no shared budget that the backoff consumes. | **Remove this ordering requirement and correct the explanation.** Keep both values positive and independent. Existing parsing tests and documentation cover equal or longer backoff. No further investigation is needed to reject this particular constraint. |
 | **#11: JKU timeout above connection + read timeouts** | JKU timeout controls cached-key lifetime, rather than an overall fetch deadline. Documentation was clarified in the implementation commit. | **Remove this ordering requirement.** Describe key-cache lifetime separately from network timeouts. If an overall fetch deadline is wanted, investigate it as a separate feature in the Elytron integration. |
@@ -18,7 +18,7 @@ The issue should distinguish the accepted policies: equality warns for lock/remo
 Nonpositive lock-acquisition timeouts mean immediate acquisition attempts, not infinite waits.
 Requirement **#2** received an additional fix: Hot Rod server configuration now rejects nonpositive topology replication timeouts before creating the internal cache.
 
-The recommended next steps are to correct issue #18322, explicitly settle the warning policy for #7, and keep #3 as the main remaining technical investigation.
+The recommended next steps are to correct issue #18322 and explicitly settle cache-stop enforcement for #7.
 
 Evidence for the timeout semantics:
 

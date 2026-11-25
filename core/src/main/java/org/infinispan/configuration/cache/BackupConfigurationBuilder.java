@@ -184,7 +184,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
       if (getBuilder() != null && !asyncStrategy) {
          CacheMode cacheMode = clustering().cacheMode();
-         if (cacheMode.isDistributed() || cacheMode.isReplicated()) {
+         if (cacheMode.isClustered()) {
             Attribute<TimeQuantity> replTimeoutAttr = attributes.attribute(REPLICATION_TIMEOUT);
             Attribute<TimeQuantity> remoteTimeoutAttr = clustering().attributes().attribute(ClusteringConfiguration.REMOTE_TIMEOUT);
             long replTimeoutVal = replTimeoutAttr.get().longValue();
@@ -192,7 +192,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
             Attribute<TimeQuantity> lockTimeoutAttr = locking().attributes().attribute(LockingConfiguration.LOCK_ACQUISITION_TIMEOUT);
             long lockTimeoutVal = lockTimeoutAttr.get().longValue();
             if (lockTimeoutVal > 0 && (replTimeoutVal < 0 || replTimeoutVal >= lockTimeoutVal)) {
-               CONFIG.backupReplicationTimeoutTooLong(siteName, replTimeoutAttr.get().toString(), lockTimeoutAttr.get().toString());
+               throw CONFIG.backupReplicationTimeoutTooLong(siteName, replTimeoutAttr.get().toString(), lockTimeoutAttr.get().toString());
             }
             if (remoteTimeoutVal >= 0) {
                if (replTimeoutVal < 0 || remoteTimeoutVal < replTimeoutVal) {

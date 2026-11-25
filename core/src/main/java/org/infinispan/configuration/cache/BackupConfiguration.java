@@ -14,7 +14,7 @@ import org.infinispan.configuration.parsing.Element;
 public class BackupConfiguration extends ConfigurationElement<BackupConfiguration> {
    public static final AttributeDefinition<String> SITE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SITE, null, String.class).autoPersist(false).immutable().build();
    public static final AttributeDefinition<BackupConfiguration.BackupStrategy> STRATEGY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STRATEGY, BackupConfiguration.BackupStrategy.ASYNC).immutable().build();
-   public static final AttributeDefinition<TimeQuantity> REPLICATION_TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TIMEOUT, TimeQuantity.valueOf("15s")).parser(TimeQuantity.PARSER).build();
+   public static final AttributeDefinition<TimeQuantity> REPLICATION_TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TIMEOUT, TimeQuantity.valueOf("10s")).parser(TimeQuantity.PARSER).build();
    public static final AttributeDefinition<BackupFailurePolicy> FAILURE_POLICY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.BACKUP_FAILURE_POLICY, BackupFailurePolicy.WARN).build();
    public static final AttributeDefinition<String> FAILURE_POLICY_CLASS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.FAILURE_POLICY_CLASS, null, String.class).immutable().build();
    public static final AttributeDefinition<Boolean> USE_TWO_PHASE_COMMIT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.USE_TWO_PHASE_COMMIT, false).immutable().build();

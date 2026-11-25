@@ -16,7 +16,7 @@ import org.infinispan.configuration.parsing.Element;
 public class LockingConfiguration extends ConfigurationElement<LockingConfiguration> {
    public static final AttributeDefinition<Integer> CONCURRENCY_LEVEL = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.CONCURRENCY_LEVEL, 32).immutable().build();
    public static final AttributeDefinition<IsolationLevel> ISOLATION_LEVEL  = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ISOLATION, IsolationLevel.REPEATABLE_READ).immutable().build();
-   public static final AttributeDefinition<TimeQuantity> LOCK_ACQUISITION_TIMEOUT  = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ACQUIRE_TIMEOUT, TimeQuantity.valueOf("10s")).parser(TimeQuantity.PARSER).build();
+   public static final AttributeDefinition<TimeQuantity> LOCK_ACQUISITION_TIMEOUT  = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.ACQUIRE_TIMEOUT, TimeQuantity.valueOf("15s")).parser(TimeQuantity.PARSER).build();
    public static final AttributeDefinition<Boolean> USE_LOCK_STRIPING = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STRIPING, false).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {

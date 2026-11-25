@@ -15,6 +15,7 @@
          <backup-for remote-cache="someCache" remote-site="NYC"/>
       </distributed-cache>
       <distributed-cache name="importantCache" configuration="base" remote-timeout="165000">
+         <locking acquire-timeout="162000"/>
          <backups>
             <backup site="NYC2" strategy="SYNC" failure-policy="FAIL" timeout="160000"/>
          </backups>
@@ -24,6 +25,7 @@
          <backups/>
       </distributed-cache>
       <distributed-cache name="customBackupPolicy" configuration="base" remote-timeout="165000">
+         <locking acquire-timeout="162000"/>
          <backups>
             <backup site="NYC2" strategy="SYNC" failure-policy="CUSTOM"
                     failure-policy-class="org.infinispan.xsite.CountingCustomFailurePolicy" timeout="160000"/>
