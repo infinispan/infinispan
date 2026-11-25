@@ -75,6 +75,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    cache-mode: none
     uses: ./.github/workflows/snapshot_image.yml
     secrets: inherit
     with:
@@ -109,6 +110,7 @@ jobs:
     needs:
       - get-info
     if: ${{ needs.get-info.outputs.publish-image == 'true' && (github.event.workflow_run.head_branch == '15.2.x' || github.event.workflow_run.head_branch == '15.0.x') }}
+    cache-mode: none
     uses: infinispan/infinispan-images/.github/workflows/publish_image.yml@fbfc22d69cec42331c552279d14502bc7032a009 # main
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}

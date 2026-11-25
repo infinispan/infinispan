@@ -467,6 +467,7 @@ jobs:
             from: 'previous'
           - name: 'first-version'
             from: '16.0.1'
+    cache-mode: read
     uses: ./.github/workflows/rolling-upgrade-test.yml
     with:
       name: ${{ matrix.targets.name }}
