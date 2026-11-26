@@ -500,7 +500,7 @@ GET /rest/v2/caches/{cacheName}?action=keys
 |Specifies the maximum number of keys to retrieve using an InputStream. A negative value retrieves all keys. The default value is `-1`.
 |`batch`
 |OPTIONAL
-|Specifies the internal batch size when retrieving the keys. The default value is `1000`.
+|Specifies the internal batch size when retrieving the keys. The default and maximum value is `256`. Larger values are capped to `256`.
 |===
 
 [id='rest_v2_get_entries']
@@ -525,7 +525,7 @@ GET /rest/v2/caches/{cacheName}?action=entries
 |Specifies the maximum number of keys to include in the response. A negative value retrieves all keys. The default value is `-1`.
 |`batch`
 |OPTIONAL
-|Specifies the internal batch size when retrieving the keys. The default value is `1000`.
+|Specifies the internal batch size when retrieving the keys. The default and maximum value is `256`. Larger values are capped to `256`.
 |`content-negotiation`
 |OPTIONAL
 | If `true`, will convert keys and values to a readable format.
