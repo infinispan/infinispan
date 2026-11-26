@@ -12,7 +12,11 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 
 import org.infinispan.commons.util.IntSet;
+import org.infinispan.commons.util.concurrent.AggregateCompletionStage;
+import org.infinispan.commons.util.concurrent.CompletionStages;
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.distribution.ch.KeyPartitioner;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.persistence.spi.MarshallableEntry;
 import org.infinispan.persistence.spi.NonBlockingStore;
 import org.infinispan.persistence.support.DelegatingPersistenceManager;
@@ -27,6 +31,8 @@ public class PassivationPersistenceManager extends DelegatingPersistenceManager 
 
    private final ConcurrentMap<Object, MarshallableEntry> map = new ConcurrentHashMap<>();
 
+   @Inject KeyPartitioner keyPartitioner;
+
    public PassivationPersistenceManager(PersistenceManager persistenceManager) {
       super(persistenceManager);
    }
@@ -38,12 +44,72 @@ public class PassivationPersistenceManager extends DelegatingPersistenceManager 
       }
       map.put(key, marshallableEntry);
       return writeToAllNonTxStores(marshallableEntry, segment, AccessMode.PRIVATE)
-            .whenComplete((ignore, ignoreT) -> {
-               map.remove(key);
-               if (log.isTraceEnabled()) {
-                  log.tracef("Removed temporary entry during passivation for key %s", key);
+            .whenComplete((ignore, t) -> {
+               if (t == null) {
+                  map.remove(key);
+                  if (log.isTraceEnabled()) {
+                     log.tracef("Removed temporary entry during passivation for key %s", key);
+                  }
+               } else {
+                  // The store write failed. The entry has already been evicted from the data container, so removing
+                  // it from this in-memory map as well would silently lose it (ISPN-18113). Instead we retain it here
+                  // so it stays visible to reads, iteration and size, and can be flushed to the store again on a later
+                  // passivation of the same key or on shutdown via flushPendingPassivations(). The exception is still
+                  // propagated so the caller logs the passivation failure.
+                  if (log.isTraceEnabled()) {
+                     log.tracef(t, "Retaining entry for key %s in memory after passivation failure", key);
+                  }
                }
             });
+   }
+
+   /**
+    * Attempts to write every entry that is still held in memory because a previous passivation failed to the
+    * underlying stores. Entries that are written successfully are removed from the in-memory map; entries that fail
+    * again are retained. This is used on shutdown to give quarantined entries a final chance to be persisted once the
+    * store has (potentially) recovered.
+    *
+    * @return a stage that completes once every pending entry has been attempted.
+    */
+   public CompletionStage<Void> flushPendingPassivations() {
+      if (map.isEmpty()) {
+         return CompletableFuture.completedFuture(null);
+      }
+      // Copy the keys so concurrent modifications to the map do not interfere with the iteration.
+      AggregateCompletionStage<Void> aggregate = CompletionStages.aggregateCompletionStage();
+      for (Object key : new HashSet<>(map.keySet())) {
+         MarshallableEntry entry = map.get(key);
+         if (entry == null) {
+            continue;
+         }
+         int segment = keyPartitioner.getSegment(key);
+         // Swallow individual failures so a store that is still unavailable does not abort the shutdown flush.
+         aggregate.dependsOn(writeToAllNonTxStores(entry, segment, AccessMode.PRIVATE)
+               .handle((ignore, t) -> {
+                  if (t == null) {
+                     map.remove(key, entry);
+                  } else if (log.isTraceEnabled()) {
+                     log.tracef(t, "Unable to flush pending passivation entry for key %s", key);
+                  }
+                  return null;
+               }));
+      }
+      return aggregate.freeze();
+   }
+
+   @Override
+   public CompletionStage<Boolean> deleteFromAllStores(Object key, int segment,
+                                                       Predicate<? super StoreConfiguration> predicate) {
+      // Drop any entry retained after a failed passivation so a removed key cannot be resurrected from the in-memory map.
+      map.remove(key);
+      return super.deleteFromAllStores(key, segment, predicate);
+   }
+
+   @Override
+   public CompletionStage<Void> clearAllStores(Predicate<? super StoreConfiguration> predicate) {
+      // A clear must also discard entries retained after a failed passivation, otherwise they would survive the clear.
+      map.clear();
+      return super.clearAllStores(predicate);
    }
 
    @Override
