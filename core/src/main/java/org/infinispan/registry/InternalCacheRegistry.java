@@ -35,6 +35,11 @@ public interface InternalCacheRegistry {
        */
       PERSISTENT,
       /**
+       * means that the cache does not keep its topology is during graceful shutdown, so it restarts with a fresh topology
+       * and joining nodes receive its content through state transfer
+       */
+      EPHEMERAL,
+      /**
        * means that this cache should be queryable
        */
       QUERYABLE,

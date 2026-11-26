@@ -245,7 +245,7 @@ public class RollingUpgradeHandler {
                .orElse("");
 
          handler.fromDriver = handler.startNode(VersionType.FROM, configuration.nodeCount(), configuration.nodeCount(),
-               configuration.jgroupsProtocol(), null, String.format("%s/%s", serverConfiguration, configuration.serverConfigurationFile()),
+               configuration.nodeCount(), configuration.jgroupsProtocol(), null, String.format("%s/%s", serverConfiguration, configuration.serverConfigurationFile()),
                configuration.defaultServerConfigurationFile(), artifacts,
                configuration.mavenArtifacts(), configuration.properties(), configuration.listeners());
          handler.currentState = STATE.OLD_RUNNING;
@@ -284,6 +284,63 @@ public class RollingUpgradeHandler {
       }
 
       log.debugf("Starting 1 node to version %s at cluster %s", versionTo, clusterName);
+      startToNode(volumeId, nodeCount);
+
+      currentState = STATE.ADDED_NEW;
+
+      if (!ensureServersWorking(this, nodeCount)) {
+         if (log.isDebugEnabled() && remoteCacheManager != null) {
+            log.debugf("Servers are: %s", Arrays.toString(remoteCacheManager.getServers()));
+         }
+         throw new IllegalStateException("Servers did not cluster within 30 seconds, assuming error");
+      }
+   }
+
+   /**
+    * Starts one node on the target version on the data volume of a source-version node that is no longer running.
+    * <p>
+    * Unlike {@link #upgradeNewNode()}, this method stops no node and waits only until the new node sees a cluster of
+    * {@code expectedClusterSize} members. A cluster stopped as a whole, for example by a graceful cluster shutdown, can
+    * then return on the target version one node at a time, each node with its own global state.
+    * </p>
+    *
+    * @param fromNode            the index of the stopped source-version node whose data volume the new node uses.
+    * @param expectedClusterSize the number of members the new node must see once it has started.
+    * @return the index of the new node, to use with {@link #rest(int, RestClientConfigurationBuilder)} or
+    * {@link #getToDriver()}.
+    * @throws IllegalStateException if the source-version node is still running, or every node already runs the target
+    *                               version.
+    */
+   public int startNewNodeFromStopped(int fromNode, int expectedClusterSize) {
+      if (nodeLeft <= 0) {
+         throw new IllegalStateException("All nodes have already been migrated to a new server. Check invocation count," +
+               " configured nodeCount is: " + nodeCount);
+      }
+      if (fromDriver.containerInfinispanServerDriver.isRunning(fromNode)) {
+         throw new IllegalStateException("Node " + fromNode + " on version " + versionFrom + " is still running");
+      }
+      String volumeId = fromDriver.containerInfinispanServerDriver.volumeId(fromNode);
+      // The container exited by itself. Stopping it clears the state the driver keeps about it.
+      fromDriver.containerInfinispanServerDriver.stop(fromNode);
+      nodeLeft--;
+
+      int newNode = toDriver == null ? 0 : toDriver.containerInfinispanServerDriver.serverCount();
+      // Clients are cached by index: drop the one that still points to the source-version node with this index.
+      cleanup(newNode);
+
+      log.debugf("Starting 1 node to version %s at cluster %s from stopped node %d", versionTo, clusterName, fromNode);
+      startToNode(volumeId, expectedClusterSize);
+      currentState = nodeLeft == 0 ? STATE.NEW_RUNNING : STATE.ADDED_NEW;
+      return newNode;
+   }
+
+   /**
+    * Starts one target-version node on a data volume, creating the target-version driver on the first call.
+    *
+    * @param volumeId            the data volume the new node uses.
+    * @param expectedClusterSize the number of members the new node must see once it has started.
+    */
+   private void startToNode(String volumeId, int expectedClusterSize) {
       if (toDriver == null) {
          String serverConfigurationFile = configuration.serverConfigurationFile();
          Archive<?>[] artifacts = configuration.customArtifacts();
@@ -300,21 +357,12 @@ public class RollingUpgradeHandler {
             }
          }
 
-         toDriver = startNode(VersionType.TO, 1, nodeCount,
+         toDriver = startNode(VersionType.TO, 1, nodeCount, expectedClusterSize,
                configuration.jgroupsProtocol(), volumeId, serverConfigurationFile,
                configuration.defaultServerConfigurationFile(), artifacts,
                configuration.mavenArtifacts(), configuration.properties(), configuration.listeners());
       } else {
-         toDriver.containerInfinispanServerDriver.startAdditionalServer(nodeCount, volumeId);
-      }
-
-      currentState = STATE.ADDED_NEW;
-
-      if (!ensureServersWorking(this, nodeCount)) {
-         if (log.isDebugEnabled() && remoteCacheManager != null) {
-            log.debugf("Servers are: %s", Arrays.toString(remoteCacheManager.getServers()));
-         }
-         throw new IllegalStateException("Servers did not cluster within 30 seconds, assuming error");
+         toDriver.containerInfinispanServerDriver.startAdditionalServer(expectedClusterSize, volumeId);
       }
    }
 
@@ -416,7 +464,32 @@ public class RollingUpgradeHandler {
       return fromDriver.containerInfinispanServerDriver.createRemoteCacheManager(builder);
    }
 
-   private ConfigAndDriver startNode(VersionType versionType, int nodeCount, int expectedCount,
+   /**
+    * Creates a container driver for one version and starts its first nodes.
+    * <p>
+    * Without {@code volumeId}, the driver starts {@code nodeCount} nodes as a fresh cluster. With {@code volumeId}, it
+    * starts a single node on that data volume, so the node keeps the global state stored there.
+    * </p>
+    *
+    * @param versionType                    whether the driver runs the source or the target version.
+    * @param nodeCount                      the number of nodes to start now. Must be 1 when {@code volumeId} is given.
+    * @param expectedCount                  the total number of nodes the driver may hold, which sizes its containers
+    *                                       and volumes.
+    * @param expectedClusterSize            the number of members the node started on {@code volumeId} must see before
+    *                                       this method returns. Unused without {@code volumeId}.
+    * @param protocol                       the JGroups stack the nodes use.
+    * @param volumeId                       the data volume of the single node to start, or {@code null} to start a
+    *                                       fresh cluster.
+    * @param serverConfigurationFile        the server configuration file of the nodes.
+    * @param defaultServerConfigurationFile whether {@code serverConfigurationFile} is a default server configuration.
+    * @param artifacts                      the archives to deploy on every node.
+    * @param mavenArtifacts                 the Maven artifacts to deploy on every node.
+    * @param properties                     the test properties passed to the server configuration.
+    * @param listeners                      the listeners invoked before any container starts.
+    * @return the server configuration and the driver holding the started nodes.
+    * @throws IllegalArgumentException if {@code volumeId} is given and {@code nodeCount} is not 1.
+    */
+   private ConfigAndDriver startNode(VersionType versionType, int nodeCount, int expectedCount, int expectedClusterSize,
                                      String protocol, String volumeId,
                                      String serverConfigurationFile, boolean defaultServerConfigurationFile,
                                      Archive<?>[] artifacts, String[] mavenArtifacts, Properties properties,
@@ -490,7 +563,7 @@ public class RollingUpgradeHandler {
             throw new IllegalArgumentException("nodeCount " + nodeCount + " must be 1 when a volumeId is passed " + volumeId);
          }
          driver.configureImage(name);
-         driver.startAdditionalServer(expectedCount, volumeId);
+         driver.startAdditionalServer(expectedClusterSize, volumeId);
       } else {
          driver.start(name);
       }

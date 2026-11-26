@@ -156,7 +156,7 @@ public class GlobalConfigurationManagerImpl implements GlobalConfigurationManage
       internalCacheRegistry.registerInternalCache(
             InternalCacheNames.CONFIG_STATE_CACHE_NAME,
             new ConfigurationBuilder().build(),
-            EnumSet.of(InternalCacheRegistry.Flag.GLOBAL));
+            EnumSet.of(InternalCacheRegistry.Flag.GLOBAL, InternalCacheRegistry.Flag.EPHEMERAL));
 
       cacheStartupManager.startInternalCaches(internalCacheRegistry.getInternalCacheNames());
 
