@@ -163,8 +163,8 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
    );
 
-   private static final int STREAM_BATCH_SIZE = 1000;
-   private static final String MIGRATOR_NAME = "hotrod";
+   protected static final int STREAM_BATCH_SIZE = 256;
+   protected static final String MIGRATOR_NAME = "hotrod";
 
    private final ParserRegistry parserRegistry = new ParserRegistry();
    private final InternalCacheRegistry internalCacheRegistry;
@@ -691,7 +691,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       String batchParam = request.getParameter("batch");
       String limitParam = request.getParameter("limit");
-      int batch = batchParam == null || batchParam.isEmpty() ? STREAM_BATCH_SIZE : Integer.parseInt(batchParam);
+      int batch = batchParam == null || batchParam.isEmpty() ? STREAM_BATCH_SIZE : Math.max(1, Math.min(Integer.parseInt(batchParam), STREAM_BATCH_SIZE));
       int limit = limitParam == null || limitParam.isEmpty() ? -1 : Integer.parseInt(limitParam);
 
       AdvancedCache<Object, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, TEXT_PLAIN, MATCH_ALL, request);
@@ -730,7 +730,7 @@ public class CacheResourceV2 extends BaseCacheResource implements ResourceHandle
 
       int limit = limitParam == null ? -1 : Integer.parseInt(limitParam);
       boolean metadata = Boolean.parseBoolean(metadataParam);
-      int batch = batchParam == null ? STREAM_BATCH_SIZE : Integer.parseInt(batchParam);
+      int batch = batchParam == null ? STREAM_BATCH_SIZE : Math.max(1, Math.min(Integer.parseInt(batchParam), STREAM_BATCH_SIZE));
       boolean negotiate = Boolean.parseBoolean(negotiateMediaType);
 
       AdvancedCache<?, ?> cache = invocationHelper.getRestCacheManager().getCache(cacheName, request).getAdvancedCache();
