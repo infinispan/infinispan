@@ -23,35 +23,31 @@ public class DistL1WriteSkewTest extends DistWriteSkewTest {
    @Test
    public void testL1ValuePutCanExpire() {
       Cache<Object, Object> cache0 = cache(0);
-      Cache<Object, Object> cache1 = cache(1);
-      Cache<Object, Object> cache2 = cache(2);
+      MagicKey hello = new MagicKey("hello", cache0);
+      Cache<Object, Object> nonOwner = DistributionTestHelper.getFirstNonOwner(hello, caches());
 
-      MagicKey hello = new MagicKey("hello", cache0, cache1);
-
-      DistributionTestHelper.assertIsNotInL1(cache2, hello);
+      DistributionTestHelper.assertIsNotInL1(nonOwner, hello);
 
       // Auto-commit is true
-      cache2.put(hello, "world 1");
+      nonOwner.put(hello, "world 1");
 
-      DistributionTestHelper.assertIsInL1(cache2, hello);
+      DistributionTestHelper.assertIsInL1(nonOwner, hello);
    }
 
    @Test
    public void testL1ValueGetCanExpire() {
       Cache<Object, Object> cache0 = cache(0);
-      Cache<Object, Object> cache1 = cache(1);
-      Cache<Object, Object> cache2 = cache(2);
+      MagicKey hello = new MagicKey("hello", cache0);
+      Cache<Object, Object> nonOwner = DistributionTestHelper.getFirstNonOwner(hello, caches());
 
-      MagicKey hello = new MagicKey("hello", cache0, cache1);
-
-      DistributionTestHelper.assertIsNotInL1(cache2, hello);
+      DistributionTestHelper.assertIsNotInL1(nonOwner, hello);
 
       // Auto-commit is true
       cache0.put(hello, "world 1");
 
-      assertEquals("world 1", cache2.get(hello));
+      assertEquals("world 1", nonOwner.get(hello));
 
-      DistributionTestHelper.assertIsInL1(cache2, hello);
+      DistributionTestHelper.assertIsInL1(nonOwner, hello);
    }
 
    public void testL1Enabled() {
