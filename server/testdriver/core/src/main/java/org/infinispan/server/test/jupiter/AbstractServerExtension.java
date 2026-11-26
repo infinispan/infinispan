@@ -175,7 +175,9 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
          cleanupSuiteClasses(context);
          // Only stop the extension resources when all tests in a Suite have been completed
          if (suiteTestClasses.isEmpty()) {
-            onTestsComplete(context);
+            if (!ServerRetryLifecycle.deferCleanup(this, context)) {
+               onTestsComplete(context);
+            }
          }
       } catch (Throwable t) {
          if (suite != null) {
@@ -187,4 +189,8 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
    }
 
    protected abstract void onTestsComplete(ExtensionContext extensionContext);
+
+   final void completeDeferredCleanup(ExtensionContext extensionContext) {
+      onTestsComplete(extensionContext);
+   }
 }

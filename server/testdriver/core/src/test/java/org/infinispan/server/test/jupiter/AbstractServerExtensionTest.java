@@ -8,12 +8,19 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 
 public class AbstractServerExtensionTest {
+
+   @AfterEach
+   public void resetRetryLifecycle() {
+      System.clearProperty(ServerRetryLifecycle.RERUN_FAILING_TESTS_COUNT);
+      ServerRetryLifecycle.reset();
+   }
 
    @Test
    public void testSingleClassSuiteRerunCompletes() {
@@ -67,6 +74,31 @@ public class AbstractServerExtensionTest {
       assertEquals(Set.of(RetrySuite.Third.class), extension.suiteTestClasses);
       extension.afterAll(third);
       assertEquals(4, extension.completedExecutions.get());
+   }
+
+   @Test
+   public void testSuiteCleanupWaitsForLauncherSessionWhenRetriesAreEnabled() {
+      System.setProperty(ServerRetryLifecycle.RERUN_FAILING_TESTS_COUNT, "1");
+      TrackingExtension extension = new TrackingExtension();
+      ExtensionContext first = contextFor(RetrySuite.First.class);
+      ExtensionContext second = contextFor(RetrySuite.Second.class);
+      ExtensionContext third = contextFor(RetrySuite.Third.class);
+
+      extension.initSuiteClasses(first);
+      extension.afterAll(first);
+      extension.initSuiteClasses(second);
+      extension.afterAll(second);
+      extension.initSuiteClasses(third);
+      extension.afterAll(third);
+
+      assertEquals(0, extension.completedExecutions.get());
+
+      extension.initSuiteClasses(second);
+      extension.afterAll(second);
+      assertEquals(0, extension.completedExecutions.get());
+
+      ServerRetryLifecycle.completeDeferredCleanups();
+      assertEquals(1, extension.completedExecutions.get());
    }
 
    private void completeInitialSuite(TrackingExtension extension) {
