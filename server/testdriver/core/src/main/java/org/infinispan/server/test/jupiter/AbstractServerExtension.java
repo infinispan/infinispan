@@ -23,13 +23,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.TestWatcher;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.platform.commons.support.HierarchyTraversalMode;
 import org.junit.platform.commons.support.ModifierSupport;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 
-public abstract class AbstractServerExtension implements BeforeAllCallback, AfterAllCallback {
+public abstract class AbstractServerExtension implements BeforeAllCallback, AfterAllCallback, TestWatcher {
 
    private static final Log log = LogFactory.getLog(AbstractServerExtension.class);
 
@@ -162,6 +163,11 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
    }
 
    protected abstract void onTestsStart(ExtensionContext extensionContext) throws Exception;
+
+   @Override
+   public final void testFailed(ExtensionContext context, Throwable cause) {
+      ServerRetryLifecycle.recordFailure(this);
+   }
 
    @Override
    public final void afterAll(ExtensionContext context) {
