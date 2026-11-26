@@ -368,6 +368,10 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    }
 
    private Set<UUID> getMemberUUIDsFromState(String cacheName) {
+      // Ignore a saved topology left by an older release, the cache joins with a fresh topology.
+      if (isEphemeralCache(cacheName))
+         return null;
+
       Optional<ScopedPersistentState> cacheStateOptional = globalStateManager.readScopedState(cacheName);
       if (cacheStateOptional.isEmpty())
          return null;
@@ -1033,8 +1037,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
 
    @Override
    public CompletionStage<Void> handleCacheShutdown(String cacheName) {
-      // The cache has shutdown, write the CH state
-      writeCHState(cacheName);
+      // The cache has shutdown, write the CH state.
+      // Do not store the topology of caches marked ephemeral.
+      if (!isEphemeralCache(cacheName)) {
+         writeCHState(cacheName);
+      }
       stopCache(cacheName);
       return completedNull();
    }
@@ -1083,6 +1090,19 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
       }
    }
 
+   /**
+    * Checks whether a cache restarts with a fresh topology after a graceful shutdown. The saved topology of such a cache
+    * is never written, read or deleted. A file left by an older release stays on disk, so a rollback to that release
+    * finds it on every node.
+    *
+    * @param cacheName the cache name.
+    * @return {@code true} if the cache is an internal cache registered with
+    * {@link InternalCacheRegistry.Flag#EPHEMERAL}, {@code false} otherwise.
+    */
+   private boolean isEphemeralCache(String cacheName) {
+      return internalCacheRegistry.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.EPHEMERAL);
+   }
+
    private void stopCache(String cacheName) {
       EmbeddedCacheManager ecm = gcr.getCacheManager();
       log.debugf("Stopping cache due to shutdown: %s", cacheName);
@@ -1090,6 +1110,11 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager, GlobalSta
    }
 
    private void deleteCHState(String cacheName) {
+      // Keep a saved topology left by an ephemeral cache for rollback scenarios.
+      // This is needed for newer versions to handle caches from before the ephemeral flag was in place.
+      if (isEphemeralCache(cacheName))
+         return;
+
       globalStateManager.deleteScopedState(cacheName);
       if (log.isTraceEnabled()) log.tracef("Removed CH state for cache %s", cacheName);
    }

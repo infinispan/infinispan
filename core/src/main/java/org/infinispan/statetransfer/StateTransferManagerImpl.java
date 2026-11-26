@@ -38,6 +38,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.persistence.manager.PreloadManager;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.topology.CacheJoinInfo;
@@ -80,6 +81,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Inject IracManager iracManager;
    @Inject IracVersionGenerator iracVersionGenerator;
    @Inject StateTransferTracker stateTracker;
+   @Inject InternalCacheRegistry internalCacheRegistry;
 
    private final CompletableFuture<Void> initialStateTransferComplete = new CompletableFuture<>();
 
@@ -91,7 +93,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
       }
 
       Optional<Integer> persistentStateChecksum;
-      if (globalStateManager != null) {
+      if (globalStateManager != null && !internalCacheRegistry.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.EPHEMERAL)) {
          persistentStateChecksum = globalStateManager.readScopedState(cacheName).map(ScopedPersistentState::getChecksum);
       } else {
          persistentStateChecksum = Optional.empty();

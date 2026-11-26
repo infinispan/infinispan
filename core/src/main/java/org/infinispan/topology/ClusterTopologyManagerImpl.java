@@ -67,6 +67,7 @@ import org.infinispan.partitionhandling.PartitionHandling;
 import org.infinispan.partitionhandling.impl.AvailabilityStrategy;
 import org.infinispan.partitionhandling.impl.PreferAvailabilityStrategy;
 import org.infinispan.partitionhandling.impl.PreferConsistencyStrategy;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.ValidResponse;
 import org.infinispan.remoting.transport.Address;
@@ -121,6 +122,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
    @Inject GlobalStateManager globalStateManager;
    @Inject OrderedGracefulLeaveHandler gracefulLeaveHandler;
    @Inject StateTransferTracker stateTransferTracker;
+   @Inject InternalCacheRegistry internalCacheRegistry;
 
    private TopologyManagementHelper helper;
    private ConditionFuture<ClusterTopologyManagerImpl> joinViewFuture;
@@ -622,8 +624,11 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager, Globa
             availabilityStrategy = new PreferAvailabilityStrategy(eventLogManager, persistentUUIDManager);
          }
          Optional<GlobalStateManager> globalStateManager = gcr.getOptionalComponent(GlobalStateManager.class);
+         // Ignore a saved topology left by an older release that didn't have the ephemeral flag.
          Optional<ScopedPersistentState> persistedState =
-               globalStateManager.flatMap(gsm -> gsm.readScopedState(cacheName));
+               internalCacheRegistry.internalCacheHasFlag(cacheName, InternalCacheRegistry.Flag.EPHEMERAL)
+                     ? Optional.empty()
+                     : globalStateManager.flatMap(gsm -> gsm.readScopedState(cacheName));
          return new ClusterCacheStatus(cacheManager, gcr, cacheName, availabilityStrategy, RebalanceType.from(cacheMode),
                                        this, transport, stateTransferTracker,
                                        persistentUUIDManager, eventLogManager, persistedState, resolveConflictsOnMerge);

@@ -137,6 +137,11 @@ If a node was terminated abruptly, the dangling lock file prevents it from resta
 +
 For more information, see link:{config_docs}#global-persistent-location_persistence[Global persistent location].
 
+No cluster shutdown during the upgrade::
+Do not perform a graceful shutdown of the whole cluster, for example with the `shutdown cluster` CLI command, while the cluster runs nodes on different versions.
+{brandname} supports a cluster shutdown only when every node runs the same version.
+Finish upgrading every node, or roll the upgraded nodes back to the original version, before you shut down the cluster.
+
 Cluster stability::
 Perform upgrades during low-load time windows on clusters that have a proven track record of stability.
 A cluster that is prone to network splits, high memory pressure, or other instability issues should be stabilized before you attempt an upgrade.
