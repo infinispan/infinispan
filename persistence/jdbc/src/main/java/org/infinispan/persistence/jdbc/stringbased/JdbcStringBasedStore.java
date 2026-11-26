@@ -408,7 +408,9 @@ public class JdbcStringBasedStore<K, V> extends BaseJdbcStore<K, V, JdbcStringBa
       assert possible.size() == deleteResults.length;
       for (int i = 0; i < deleteResults.length; ++i) {
          PossibleExpirationNotification notification = possible.get(i);
-         if (deleteResults[i] != Statement.EXECUTE_FAILED) {
+         // A concurrent update can change the expiry timestamp after selection, making the delete a no-op.
+         // Preserve SUCCESS_NO_INFO support for drivers that do not report individual update counts.
+         if (deleteResults[i] > 0 || deleteResults[i] == Statement.SUCCESS_NO_INFO) {
             Object key = ((TwoWayKey2StringMapper) this.key2StringMapper).getKeyMapping(notification.key);
             flowable.onNext(this.marshalledEntryFactory.create(key, notification.is));
             ++purgeAmount;
