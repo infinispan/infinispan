@@ -230,6 +230,9 @@ public interface Messages {
    @Message("Kubernetes client is unavailable in this mode")
    IllegalStateException noKubernetes();
 
+   @Message("The Kubernetes client has been closed")
+   IllegalStateException kubernetesClientClosed();
+
    @Message("Could not find an operator subscription in namespace '%s'")
    IllegalStateException noOperatorSubscription(String namespace);
 
