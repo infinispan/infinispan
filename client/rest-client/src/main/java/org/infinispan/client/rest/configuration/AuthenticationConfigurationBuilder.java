@@ -115,7 +115,8 @@ public class AuthenticationConfigurationBuilder extends AbstractSecurityConfigur
 
    /**
     * Specifies custom properties
-    * @param key the property key
+    *
+    * @param key   the property key
     * @param value the property value
     * @return this builder
     */

@@ -26,6 +26,7 @@ public interface RestTaskClient {
 
    /**
     * Retrieves a list of tasks from the server
+    *
     * @param resultType the type of task to return
     */
    CompletionStage<RestResponse> list(ResultType resultType);

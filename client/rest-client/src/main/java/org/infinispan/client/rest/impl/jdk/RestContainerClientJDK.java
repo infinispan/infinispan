@@ -32,6 +32,7 @@ public class RestContainerClientJDK implements RestContainerClient {
    public CompletionStage<RestResponse> shutdown() {
       return client.post(path + "?action=shutdown");
    }
+
    @Override
    public CompletionStage<RestResponse> globalConfiguration(String mediaType) {
       return client.get(path + "/config", Map.of(RestHeaders.ACCEPT, mediaType));

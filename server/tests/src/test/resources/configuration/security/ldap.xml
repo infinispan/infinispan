@@ -3,7 +3,7 @@
           xmlns="urn:infinispan:server:16.4">
    <security-realms>
       <security-realm name="default">
-         <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:10389"
+         <ldap-realm name="ldap" url="ldap://${org.infinispan.test.host.address}:${org.infinispan.test.ldap.port}"
                      principal="uid=admin,ou=People,dc=infinispan,dc=org" credential="strongPassword" connection-timeout="15s">
             <identity-mapping rdn-identifier="uid" search-dn="dc=infinispan,dc=org" search-recursive="true">
                <attribute-mapping>

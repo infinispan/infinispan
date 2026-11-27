@@ -169,7 +169,7 @@ public class MultiPartRestEntityJDK implements MultiPartRestEntity {
                         CONTENT_DISPOSITION + ": form-data; name=" + nextPart.name + "; filename=" + filename + CRLF +
                         CONTENT_TYPE + ": " + contentType + CRLF +
                         CONTENT_TRANSFER_ENCODING + ": " + encoding + CRLF +
-                        (size == 0 ? "" : CONTENT_LENGTH + ": " + size + CRLF ) +
+                        (size == 0 ? "" : CONTENT_LENGTH + ": " + size + CRLF) +
                         CRLF;
             return partHeader.getBytes(StandardCharsets.UTF_8);
          } else {

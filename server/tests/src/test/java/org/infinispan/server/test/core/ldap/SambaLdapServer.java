@@ -23,19 +23,18 @@ import org.testcontainers.utility.DockerImageName;
  * {@code src/test/resources/docker/samba-ad-dc}. A prebuilt image can be
  * substituted through the {@code org.infinispan.test.samba.image} system property.
  *
- * <p>The DC is reachable on the same fixed ports as {@link ApacheLdapServer},
- * {@value #LDAP_HOST_PORT} (LDAP) and {@value #LDAPS_HOST_PORT} (LDAPS). Unlike
- * Apache Directory, Samba stores entries as AD-style {@code CN=...} objects under
- * {@value #USERS_BASE_DN}; a Samba-backed realm therefore needs an AD-style bind
- * principal such as {@value #ADMIN_DN}. Simple binds over plain {@code ldap://} are
- * permitted by the container entrypoint; Samba otherwise requires strong auth.
+ * <p>The DC is reachable on the host ports allocated per test (see
+ * {@code LdapServerListener}), exposing the container's internal LDAP ({@value #LDAP_PORT})
+ * and LDAPS ({@value #LDAPS_PORT}) ports. Unlike Apache Directory, Samba stores entries
+ * as AD-style {@code CN=...} objects under {@value #USERS_BASE_DN}; a Samba-backed realm
+ * therefore needs an AD-style bind principal such as {@value #ADMIN_DN}. Simple binds over
+ * plain {@code ldap://} are permitted by the container entrypoint; Samba otherwise requires
+ * strong auth.
  */
 public class SambaLdapServer implements LdapServer {
 
    public static final int LDAP_PORT = 389;
    public static final int LDAPS_PORT = 636;
-   public static final int LDAP_HOST_PORT = 10389;
-   public static final int LDAPS_HOST_PORT = 10636;
    public static final String DOMAIN = "dc=infinispan,dc=org";
    public static final String REALM = "INFINISPAN.ORG";
    public static final String USERS_BASE_DN = "CN=Users," + DOMAIN;
@@ -60,7 +59,7 @@ public class SambaLdapServer implements LdapServer {
    private GenericContainer<?> container;
 
    @Override
-   public void start(String keystoreFile, File confDir) throws Exception {
+   public void start(String keystoreFile, File confDir, LdapPorts ports) throws Exception {
       GenericContainer<?> server = new GenericContainer<>(image())
             .withExposedPorts(LDAP_PORT, LDAPS_PORT)
             .withPrivilegedMode(true)
@@ -69,7 +68,7 @@ public class SambaLdapServer implements LdapServer {
             .withEnv("_PASSWORD", ADMIN_PASSWORD)
             .withEnv("_DNS_FORWARDER", "1.1.1.1 8.8.8.8")
             .waitingFor(Wait.forListeningPort());
-      server.setPortBindings(List.of(LDAP_HOST_PORT + ":" + LDAP_PORT, LDAPS_HOST_PORT + ":" + LDAPS_PORT));
+      server.setPortBindings(List.of(ports.ldap() + ":" + LDAP_PORT, ports.ldaps() + ":" + LDAPS_PORT));
       server.start();
       container = server;
       seedUsers();
