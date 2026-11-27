@@ -132,6 +132,9 @@ public class PassivationManagerImpl extends AbstractPassivationManager {
       int count = container.sizeIncludingExpired();
       Iterable<MarshallableEntry<Object, Object>> iterable = () -> new IteratorMapper<>(container.iterator(), e -> marshalledEntryFactory.create((InternalCacheEntry) e));
       return persistenceManager.writeEntries(iterable, PRIVATE)
+                               // Give entries that failed an earlier passivation a last chance to be persisted now
+                               // that we are shutting down and the store may have recovered (ISPN-18113).
+                               .thenCompose(ignore -> passivationPersistenceManager.flushPendingPassivations())
                                .thenRun(() -> {
                                   long durationMillis = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
                                   if (CONTAINER.isDebugEnabled()) {
