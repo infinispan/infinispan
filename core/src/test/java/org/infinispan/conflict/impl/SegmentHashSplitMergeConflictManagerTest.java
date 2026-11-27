@@ -6,19 +6,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.internal.PrivateCacheConfigurationBuilder;
 import org.infinispan.conflict.ConflictManagerFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.partitionhandling.BasePartitionHandlingTest;
 import org.infinispan.partitionhandling.PartitionHandling;
+import org.infinispan.protostream.SerializationContextInitializer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.ControlledConsistentHashFactory;
 import org.testng.annotations.Test;
 
 /**
@@ -47,9 +51,28 @@ public class SegmentHashSplitMergeConflictManagerTest extends BasePartitionHandl
    }
 
    @Override
+   protected SerializationContextInitializer serializationContextInitializer() {
+      return ControlledConsistentHashFactory.SCI.INSTANCE;
+   }
+
+   @Override
    protected void createCacheManagers() throws Throwable {
       super.createCacheManagers();
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC);
+      // Guarantee both (0, 1) and cross-partition (0, 2) ownership on multiple segments.
+      // Remaining members are fallbacks so each two-node partition still has two owners.
+      int[][] ownerPairs = {
+            {0, 1, 2, 3}, {0, 2, 1, 3}, {1, 2, 0, 3}, {1, 3, 0, 2},
+            {2, 3, 0, 1}, {2, 0, 1, 3}, {3, 0, 1, 2}, {3, 1, 0, 2}
+      };
+      int[][] segmentOwners = IntStream.range(0, 256)
+            .mapToObj(segment -> ownerPairs[segment % ownerPairs.length])
+            .toArray(int[][]::new);
+      builder.clustering().hash().numSegments(segmentOwners.length);
+      ControlledConsistentHashFactory.Default factory =
+            new ControlledConsistentHashFactory.Default(segmentOwners);
+      factory.setMembersToUse(List.of(address(0), address(1), address(2), address(3)));
+      builder.addModule(PrivateCacheConfigurationBuilder.class).consistentHashFactory(factory);
       builder.clustering().partitionHandling()
             .whenSplit(partitionHandling)
             .mergePolicy((preferredEntry, otherEntries) -> preferredEntry)
