@@ -407,8 +407,13 @@ public class DefaultConflictManager<K, V> implements InternalConflictManager<K, 
       return Flowable.fromCompletionStage(prefetchAllBucketHashesAsync(topology))
             .flatMap(prefetchedHashes ->
                   Flowable.range(0, totalSegments)
+                        // Segment fetches run concurrently, so several of them may fail at the same time (e.g. the transfer
+                        // source is suspected or has crashed). With delayErrors=false the merge coordinator terminates on
+                        // the first inner error and disposes the remaining in-flight fetches, so any error completing after
+                        // that termination is routed to RxJava's global undeliverable error handler. delayErrors=true lets
+                        // every segment settle first and reports all failures once as a single error instead.
                         .flatMap(segmentId -> processSegmentAsync(segmentId, topology, prefetchedHashes),
-                              false, SEGMENT_CONCURRENCY)
+                              true, SEGMENT_CONCURRENCY)
             )
             .filter(DefaultConflictManager::hasConflict)
             .timeout(conflictTimeout, TimeUnit.MILLISECONDS)
