@@ -99,7 +99,9 @@ public class DELEX extends RespCommand implements Resp3Command {
                   boolean shouldDelete = evaluateCondition(finalCondition, value, finalConditionValue);
 
                   if (shouldDelete) {
-                     return handler.cache().removeAsync(key).thenApply(prev -> prev != null ? 1L : 0L);
+                     // Remove only if the value is still the one the condition was evaluated against, so a
+                     // concurrent replacement is not deleted
+                     return handler.cache().removeAsync(key, value).thenApply(removed -> (boolean) removed ? 1L : 0L);
                   } else {
                      return java.util.concurrent.CompletableFuture.completedFuture(0L);
                   }
