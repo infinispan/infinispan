@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.functional.FunctionalMap;
+import org.infinispan.multimap.impl.function.hmap.HashMapGetAndRemoveFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapKeySetFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapPutFunction;
 import org.infinispan.multimap.impl.function.hmap.HashMapRemoveFunction;
@@ -245,6 +246,24 @@ public class EmbeddedMultimapPairCache<K, HK, HV> {
 
       if (properties.isEmpty()) return CompletableFuture.completedFuture(0);
       return readWriteMap.eval(key, new HashMapRemoveFunction<>(properties));
+   }
+
+   /**
+    * Atomically removes the given properties from the hash map stored under the given key, returning their values.
+    * <p>
+    * The values are returned in the same order as the properties. A property that does not exist, or that is repeated
+    * after it was already removed, has a {@code null} value. The key is removed when the hash map becomes empty.
+    *
+    * @param key: Cache key to remove the properties.
+    * @param properties: Properties to remove.
+    * @return {@link CompletionStage} with the removed values.
+    */
+   public CompletionStage<List<HV>> getAndRemove(K key, List<HK> properties) {
+      requireNonNull(key, ERR_KEY_CAN_T_BE_NULL);
+      requireNonNull(properties, ERR_PROPERTY_CANT_BE_NULL);
+      requireTrue(!properties.isEmpty(), ERR_PROPERTIES_CANT_BE_EMPTY);
+      requireNonNullArgument(properties, ERR_PROPERTY_CANT_BE_NULL);
+      return readWriteMap.eval(key, new HashMapGetAndRemoveFunction<>(properties));
    }
 
    /**

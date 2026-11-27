@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -94,6 +95,19 @@ public class HashMapBucket<K, V> {
          copied.put(entry.getKey(), entry.getValue());
       }
       return new HashMapBucketResponse<>(res, new HashMapBucket<>(copied));
+   }
+
+   /**
+    * Removes the given keys, in order, returning the value each one had. A key that is missing, or repeated after it
+    * was already removed, maps to {@code null}.
+    */
+   public HashMapBucketResponse<List<V>, K, V> getAndRemoveAll(Collection<K> keys) {
+      Map<MultimapObjectWrapper<K>, V> copied = new HashMap<>(values);
+      List<V> removed = new ArrayList<>(keys.size());
+      for (K key : keys) {
+         removed.add(copied.remove(new MultimapObjectWrapper<>(key)));
+      }
+      return new HashMapBucketResponse<>(removed, new HashMapBucket<>(copied));
    }
 
    public V get(K k) {

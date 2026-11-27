@@ -86,6 +86,7 @@ import org.infinispan.server.resp.commands.hash.HDEL;
 import org.infinispan.server.resp.commands.hash.HEXISTS;
 import org.infinispan.server.resp.commands.hash.HGET;
 import org.infinispan.server.resp.commands.hash.HGETALL;
+import org.infinispan.server.resp.commands.hash.HGETDEL;
 import org.infinispan.server.resp.commands.hash.HINCRBY;
 import org.infinispan.server.resp.commands.hash.HINCRBYFLOAT;
 import org.infinispan.server.resp.commands.hash.HKEYS;
@@ -272,7 +273,7 @@ public final class Commands {
       ALL_COMMANDS[6] = new RespCommand[]{new GET(), new GETDEL(), new GETEX(), new GETRANGE(), new GETSET(), new GETBIT(),
             new GEOADD(), new GEODIST(), new GEOHASH(), new GEOPOS(), new GEORADIUS(), new GEORADIUSBYMEMBER(),
             new GEOSEARCH(), new GEOSEARCHSTORE()};
-      ALL_COMMANDS[7] = new RespCommand[]{new HELLO(), new HGET(), new HSET(), new HLEN(), new HEXISTS(), new HDEL(), new HMGET(), new HSETNX(), new HKEYS(), new HVALS(), new HSCAN(), new HGETALL(), new HMSET(), new HINCRBY(), new HINCRBYFLOAT(), new HRANDFIELD(), new HSTRLEN()};
+      ALL_COMMANDS[7] = new RespCommand[]{new HELLO(), new HGET(), new HSET(), new HLEN(), new HEXISTS(), new HDEL(), new HMGET(), new HSETNX(), new HKEYS(), new HVALS(), new HSCAN(), new HGETALL(), new HGETDEL(), new HMSET(), new HINCRBY(), new HINCRBYFLOAT(), new HRANDFIELD(), new HSTRLEN()};
       ALL_COMMANDS[8] = new RespCommand[]{new INCR(), new INCRBY(), new INCRBYFLOAT(), new INFO()};
       ALL_COMMANDS[9] = new RespCommand[]{new JSONGET(), new JSONSET(), new JSONARRLEN(), new JSONOBJLEN(), new JSONSTRLEN(), new JSONTYPE(), new JSONDEL(), new JSONSTRAPPEND(), new JSONARRAPPEND(), new JSONTOGGLE(), new JSONOBJKEYS(), new JSONNUMINCRBY(), new JSONNUMMULTBY(), new JSONFORGET(), new JSONARRINDEX(), new JSONARRINSERT(), new JSONARRTRIM(), new JSONCLEAR(), new JSONARRPOP(), new JSONMSET(), new JSONMERGE(), new JSONMGET(), new JSONRESP(), new JSONDEBUG()};
       ALL_COMMANDS[10] = new RespCommand[]{new KEYS()};
