@@ -27,6 +27,7 @@
 * **Full build (skip tests):** `mvn install -DskipTests -Dcheckstyle.skip`
 * **Build a single module:** `mvn install -pl core -DskipTests -Dcheckstyle.skip`
 * **Build a module and its dependencies:** `mvn install -pl server/runtime -am -DskipTests -Dcheckstyle.skip`
+* **Suspected stale SNAPSHOTs in `~/.m2`:** partial/subset builds accumulate stale SNAPSHOT poms and jars in the local repository, which cause misleading downstream failures (missing transitive dependencies, half-regenerated ANTLR sources, compile errors in modules you did not touch). Always rebuild the module *and all of its dependencies* from a clean state: `mvn clean install -pl <module> -am -DskipTests -Dcheckstyle.skip`
 * **Run a single test class:** `mvn verify -pl core -Dtest=SomeTest`
 * **Run a single integration test:** `mvn verify -pl server/tests -Dit.test=SomeTestIT`
 * **Run a single test method:** `mvn verify -pl core -Dtest=SomeTest#testMethod`
@@ -81,6 +82,7 @@ Rolling upgrade tests run against older Infinispan server versions. If new tests
 
 ## Related projects
 
+* **Benchmarks:** Performance (JMH) benchmarks live in the separate ../infinispan-benchmarks repository (e.g. its `query/` module for query benchmarks) — never in this repository.
 * **Operator:** The Infinispan Operator source code is in ../infinispan-operator
 * **Website:** The Infinispan website source code is in ../infinispan.github.io
 * **ProtoStream:** The ProtoStream source code is in ../protostream

@@ -132,4 +132,69 @@ public interface Log extends BasicLogger {
    @Message(id = 28536, value = "Invalid query max nesting depth %d, using default %d.")
    void invalidNestingDepth(int configuredValue, int defaultValue);
 
+   @Message(id = 28537, value = "Cannot assign a %s value to property '%s': incompatible with property type %s")
+   ParsingException getIncompatibleUpdateValueException(String valueType, String propertyPath, Class<?> targetType);
+
+   @Message(id = 28538, value = "Arithmetic operator %s requires numeric operands")
+   ParsingException getArithmeticRequiresNumericOperandsException(String operator);
+
+   @Message(id = 28539, value = "Value %s is not integral and cannot be assigned to integer property '%s'")
+   ParsingException getNonIntegralValueException(Number value, String propertyPath);
+
+   @Message(id = 28540, value = "Division or modulo by zero in constant expression")
+   ParsingException getConstantDivisionByZeroException();
+
+   @Message(id = 28541, value = "Value %s is out of range for property '%s' of type %s")
+   ParsingException getValueOutOfRangeException(Number value, String propertyPath, Class<?> targetType);
+
+   @Message(id = 28542, value = "Unknown function '%s' in Ickle statement")
+   ParsingException getUnknownUpdateFunctionException(String functionName);
+
+   @Message(id = 28543, value = "Division by zero")
+   ArithmeticException divisionByZeroException();
+
+   @Message(id = 28544, value = "Missing value for parameter '%s'")
+   IllegalArgumentException missingParameterException(String name);
+
+   @Message(id = 28545, value = "Cannot apply operator '%s' to operands of type %s and %s")
+   IllegalArgumentException cannotApplyOperatorException(String operator, String leftType, String rightType);
+
+   @Message(id = 28546, value = "Cannot negate a value of type %s")
+   IllegalArgumentException cannotNegateException(String type);
+
+   @Message(id = 28547, value = "Unknown function '%s'")
+   IllegalArgumentException unknownFunctionException(String name);
+
+   @Message(id = 28548, value = "Function %s expects %d argument(s) but got %d")
+   IllegalArgumentException functionArityException(String name, int expected, int actual);
+
+   @Message(id = 28549, value = "Function %s expects between %d and %d argument(s) but got %d")
+   IllegalArgumentException functionArityRangeException(String name, int min, int max, int actual);
+
+   @Message(id = 28550, value = "Function %s expects a numeric argument but got %s")
+   IllegalArgumentException functionNumericArgException(String name, String type);
+
+   @Message(id = 28551, value = "Function %s argument %d must be a number, got '%s'")
+   IllegalArgumentException functionArgumentNotNumberException(String name, int argIndex, String value);
+
+   @Message(id = 28552, value = "Function %s expects numeric arguments")
+   IllegalArgumentException functionNumericArgsException(String name);
+
+   @Message(id = 28553, value = "Function %s cannot parse '%s' as a number")
+   IllegalArgumentException functionCannotParseNumberException(String name, String value);
+
+   @Message(id = 28554, value = "Function %s cannot convert a value of type %s")
+   IllegalArgumentException functionCannotConvertTypeException(String name, String type);
+
+   @Message(id = 28555, value = "substring: invalid range [%d, %d) for string of length %d")
+   IllegalArgumentException substringRangeException(int begin, int end, int length);
+
+   @Message(id = 28556, value = "dateAdd: unknown unit '%s', expected one of %s")
+   IllegalArgumentException dateAddUnknownUnitException(String unit, Object expected);
+
+   @Message(id = 28557, value = "Function %s expects a date/time argument (java.util.Date, java.util.Calendar or a java.time type) but got %s")
+   IllegalArgumentException functionDateArgException(String name, String type);
+
+   @Message(id = 28558, value = "Function already registered: %s")
+   IllegalArgumentException functionAlreadyRegisteredException(String name);
 }
