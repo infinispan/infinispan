@@ -19,6 +19,7 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.actions.SecurityActions;
 import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
+import org.infinispan.server.resp.stream.EmbeddedStreamCache;
 import org.infinispan.util.concurrent.BlockingManager;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -31,6 +32,7 @@ public class Resp3Handler extends Resp3AuthHandler {
    protected EmbeddedSetCache<byte[], byte[]> embeddedSetCache;
    protected EmbeddedMultimapSortedSetCache<byte[], byte[]> sortedSetMultimap;
    protected EmbeddedJsonCache jsonCache;
+   protected EmbeddedStreamCache streamCache;
    protected final ScheduledExecutorService scheduler;
    protected final BlockingManager blockingManager;
 
@@ -59,6 +61,7 @@ public class Resp3Handler extends Resp3AuthHandler {
       embeddedSetCache = new EmbeddedSetCache<>(toMultimap);
       sortedSetMultimap = new EmbeddedMultimapSortedSetCache<>(toMultimap);
       jsonCache = new EmbeddedJsonCache(toMultimap);
+      streamCache = new EmbeddedStreamCache(toMultimap);
    }
 
    public EmbeddedJsonCache getJsonCache() {
@@ -79,6 +82,10 @@ public class Resp3Handler extends Resp3AuthHandler {
 
    public EmbeddedMultimapSortedSetCache<byte[], byte[]> getSortedSeMultimap() {
       return sortedSetMultimap;
+   }
+
+   public EmbeddedStreamCache getStreamCache() {
+      return streamCache;
    }
 
    public ScheduledExecutorService getScheduler() {

@@ -35,6 +35,7 @@ import org.infinispan.server.resp.commands.Resp3Command;
 import org.infinispan.server.resp.json.EmbeddedJsonCache;
 import org.infinispan.server.resp.json.JsonBucket;
 import org.infinispan.server.resp.serialization.ResponseWriter;
+import org.infinispan.server.resp.stream.StreamBucket;
 
 import io.netty.channel.ChannelHandlerContext;
 
@@ -107,6 +108,8 @@ public class COPY extends RespCommand implements Resp3Command {
                         return copySet(handler, ctx, targetCache, vmt, dstKey, value, isReplace, targetDb, originalCache.getName());
                      } else if (type == RespTypes.zset) {
                         return copySortedSet(handler, ctx, targetCache, vmt, dstKey, value, isReplace, targetDb, originalCache.getName());
+                     } else if (type == RespTypes.stream) {
+                        return copyStream(targetCache, vmt, dstKey, value, isReplace);
                      } else if (type == RespTypes.string) {
                         return copyString(targetCache, vmt, dstKey, (byte[]) value, lifespan, isReplace);
                      } else {
@@ -146,6 +149,26 @@ public class COPY extends RespCommand implements Resp3Command {
       } else {
          result = targetCache.putAsync(dstKey, value, lifespan, TimeUnit.MILLISECONDS);
       }
+      return result.thenApply(r -> 1);
+   }
+
+   /**
+    * Copies a stream: the bucket is duplicated with its entries and bookkeeping, so the copy does not share any
+    * mutable state with the original stream.
+    */
+   private CompletionStage<Integer> copyStream(Cache<byte[], byte[]> targetCache, MediaType vmt,
+          byte[] dstKey, Object value, boolean isReplace) {
+      AdvancedCache<byte[], Object> typedCache = targetCache.getAdvancedCache()
+            .<byte[], Object>withMediaType(MediaType.APPLICATION_OCTET_STREAM, vmt);
+
+      if (!isReplace && typedCache.containsKey(dstKey)) {
+         return CompletableFuture.completedFuture(0);
+      }
+
+      StreamBucket bucket = ((StreamBucket) value).copy();
+      CompletionStage<?> result = isReplace
+            ? typedCache.removeAsync(dstKey).thenCompose(v -> typedCache.putAsync(dstKey, bucket))
+            : typedCache.putAsync(dstKey, bucket);
       return result.thenApply(r -> 1);
    }
 
