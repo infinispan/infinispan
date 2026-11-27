@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   packages: read
   # Needed to write commit status
   statuses: write
@@ -21,7 +22,6 @@ concurrency:
   cancel-in-progress: ${{ github.event.workflow_run.event == 'pull_request' }}
 jobs:
   get-info:
-      if: github.event.workflow_run.conclusion == 'success'
       name: Get Origin Workflow Info
       runs-on: ubuntu-latest
       outputs:
@@ -29,7 +29,7 @@ jobs:
          pull-request-number: ${{ steps.workflow-run-info.outputs.pull-request-number }}
          source-head-branch: ${{ steps.workflow-run-info.outputs.source-head-branch }}
          source-event: ${{ github.event.workflow_run.event }}
-         build-type: ${{ steps.build-type.outputs.build-type }}
+         build-type: ${{ steps.trusted-build-type.outputs.build-type || steps.build-type.outputs.build-type }}
       steps:
          - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
            with:
@@ -45,7 +45,18 @@ jobs:
             head-branch: ${{ github.event.workflow_run.head_branch }}
             event: ${{ github.event.workflow_run.event }}
 
+         # This checkout and action come from the default branch, never the PR.
+         - name: Validate PR build type
+           if: github.event.workflow_run.event == 'pull_request'
+           id: trusted-build-type
+           uses: ./.github/actions/detect-changes
+           env:
+             GH_TOKEN: ${{ github.token }}
+           with:
+             pull-request-number: ${{ steps.workflow-run-info.outputs.pull-request-number }}
+
          - name: Download build type
+           if: github.event.workflow_run.event != 'pull_request'
            id: download-build-type
            uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
            continue-on-error: true
@@ -55,16 +66,68 @@ jobs:
              github-token: ${{ github.token }}
 
          - name: Read build type
+           if: github.event.workflow_run.event != 'pull_request'
            id: build-type
            run: |
              if [ -f build-type.txt ]; then
                BUILD_TYPE=$(cat build-type.txt)
+               case "$BUILD_TYPE" in
+                 full|docs-only|skip) ;;
+                 *) BUILD_TYPE=full ;;
+               esac
              else
                BUILD_TYPE="full"
                echo "build-type artifact not found (older branch?), defaulting to full build"
              fi
              echo "build-type=$BUILD_TYPE" >> "$GITHUB_OUTPUT"
              echo "Build type: $BUILD_TYPE"
+
+  skip-test-reports:
+    needs: get-info
+    if: needs.get-info.outputs.build-type == 'docs-only' || needs.get-info.outputs.build-type == 'skip'
+    name: Skip Test Reports
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3
+        id: app-token
+        with:
+          client-id: ${{ secrets.GH_APP_ISPN_ID }}
+          private-key: ${{ secrets.GH_APP_ISPN_KEY }}
+
+      - name: Report skipped tests
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          SOURCE_HEAD_SHA: ${{ needs.get-info.outputs.source-head-sha }}
+          BUILD_TYPE: ${{ needs.get-info.outputs.build-type }}
+        run: |
+          CHECK_NAMES=(
+            'Test Report Result'
+            'Test Report Result db2'
+            'Test Report Result mssql'
+            'Test Report Result oracle'
+            'Test Report Result tomcat'
+            'Test Report Rolling Upgrades (latest)'
+            'Test Report Rolling Upgrades (first-version)'
+          )
+          for CHECK_NAME in "${CHECK_NAMES[@]}"; do
+            gh api "repos/$GITHUB_REPOSITORY/check-runs" \
+              --method POST \
+              -f name="$CHECK_NAME" \
+              -f head_sha="$SOURCE_HEAD_SHA" \
+              -f status=completed \
+              -f conclusion=skipped \
+              -f "output[title]=Tests skipped" \
+              -f "output[summary]=Tests are not required for build type: $BUILD_TYPE."
+          done
+
+      - name: Report skipped test count
+        uses: myrotvorets/set-commit-status-action@3730c0a348a2ace3c110851bed53331bc6406e9f # v2.0.1
+        with:
+          status: success
+          sha: ${{ needs.get-info.outputs.source-head-sha }}
+          context: Tests number check
+          description: Tests are not required for build type ${{ needs.get-info.outputs.build-type }}.
+          targetUrl: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
   ci-build-test-pr:
     needs: get-info

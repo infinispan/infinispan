@@ -6,27 +6,11 @@ on:
       - feature/*
       - main
       - '*.x'
-    paths-ignore:
-      - '**.md'
-      - 'LICENSE*'
-      - '.gitignore'
-      - '.gitattributes'
-      - '.editorconfig'
-      - 'CODEOWNERS'
-      - 'documentation/**'
   pull_request:
     branches:
       - feature/*
       - main
       - '*.x'
-    paths-ignore:
-      - '**.md'
-      - 'LICENSE*'
-      - '.gitignore'
-      - '.gitattributes'
-      - '.editorconfig'
-      - 'CODEOWNERS'
-      - 'documentation/**'
 
 permissions:
   contents: read
@@ -40,7 +24,23 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      build-type: ${{ steps.check.outputs.build-type }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Determine build type
+        id: check
+        uses: ./.github/actions/detect-changes
+
   build:
+    needs: detect-changes
+    if: ${{ !cancelled() }}
+    # Keep the matrix jobs so every required OS check is reported, even when builds are skipped.
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -58,19 +58,37 @@ jobs:
             asset_name: windows-amd64
             gu_binary: gu.cmd
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+      - name: Validate change detection
+        shell: bash
+        env:
+          DETECTION_RESULT: ${{ needs.detect-changes.result }}
+          BUILD_TYPE: ${{ needs.detect-changes.outputs.build-type }}
+        run: |
+          if [ "$DETECTION_RESULT" != success ]; then
+            echo 'Change detection failed'
+            exit 1
+          fi
+          case "$BUILD_TYPE" in
+            full|docs-only|skip) ;;
+            *) echo 'Invalid build type'; exit 1 ;;
+          esac
 
-      - if: ${{ matrix.os == 'windows-2022' }}
+      - if: needs.detect-changes.outputs.build-type == 'full'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+
+      - if: needs.detect-changes.outputs.build-type == 'full' && matrix.os == 'windows-2022'
         name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3
 
-      - uses: graalvm/setup-graalvm@60e76998d25690099182b796e99b8804da582d90 # v1
+      - if: needs.detect-changes.outputs.build-type == 'full'
+        uses: graalvm/setup-graalvm@60e76998d25690099182b796e99b8804da582d90 # v1
         with:
           version: '25.0'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Cache local Maven repository
+      - if: needs.detect-changes.outputs.build-type == 'full'
+        name: Cache local Maven repository
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
         with:
           path: ~/.m2/repository
@@ -78,24 +96,25 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Detect CLI module path
+      - if: needs.detect-changes.outputs.build-type == 'full'
+        name: Detect CLI module path
         id: detect-cli
         shell: bash
         run: |
           if [ -f graalvm/cli/pom.xml ]; then
-            echo "module=graalvm/cli" >> $GITHUB_OUTPUT
+            echo "module=graalvm/cli" >> "$GITHUB_OUTPUT"
           else
-            echo "module=quarkus/cli" >> $GITHUB_OUTPUT
+            echo "module=quarkus/cli" >> "$GITHUB_OUTPUT"
           fi
 
-      - if: ${{ matrix.os == 'windows-2022' }}
+      - if: needs.detect-changes.outputs.build-type == 'full' && matrix.os == 'windows-2022'
         name: Build native executable
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
           mvnw.cmd -V install -Pdistribution -Pnative -Pwindows -am -pl ${{ steps.detect-cli.outputs.module }} ${{ matrix.native_extra_args }}
         shell: cmd
 
-      - if: ${{ matrix.os != 'windows-2022' }}
+      - if: needs.detect-changes.outputs.build-type == 'full' && matrix.os != 'windows-2022'
         name: Build native executable
         run: ./mvnw -V install -Pdistribution -Pnative -am -pl ${{ steps.detect-cli.outputs.module }} ${{ matrix.native_extra_args }}
 

@@ -1,0 +1,23 @@
+name: Detect Changes
+description: Classify changes as full, docs-only, or skip using local history or trusted PR file metadata
+inputs:
+  pull-request-number:
+    description: PR to classify through the API in a trusted workflow_run checkout
+    default: ''
+outputs:
+  build-type:
+    description: Build required for the changed files (full, docs-only, or skip)
+    value: ${{ steps.check.outputs.build-type }}
+runs:
+  using: composite
+  steps:
+    - name: Determine build type
+      id: check
+      shell: bash
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        SOURCE_EVENT: ${{ github.event.workflow_run.event }}
+        SOURCE_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        PR_NUMBER: ${{ inputs.pull-request-number }}
+      run: bash "$GITHUB_ACTION_PATH/detect-changes.sh"

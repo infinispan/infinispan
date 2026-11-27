@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/**'
+      - '.github/actions/detect-changes/**'
     types: [opened, synchronize, reopened]
 
 permissions:
@@ -17,6 +18,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+
+      - name: Test CI change detection
+        run: bash .github/actions/detect-changes/test-detect-changes.sh
 
       - name: actionlint with reviewdog
         uses: reviewdog/action-actionlint@ae857e78c1b42b3d0a49637181b09d3d56d402b4 # v1.84.1
