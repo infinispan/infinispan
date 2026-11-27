@@ -2,11 +2,15 @@
 = Allowing deserialization of Java classes
 For security reasons {brandname} does not allow deserialization of arbitrary Java classes.
 If you use `JavaSerializationMarshaller` or `GenericJBossMarshaller`, you must add your Java classes to a deserialization allow list.
+The allow list also controls which custom exception types can be reconstructed from remote nodes during cluster communication.
 
 [NOTE]
 ====
 The deserialization allow list applies to the Cache Manager so your Java classes can be deserialized by all caches.
 ====
+
+Exception types from standard JDK packages (`java.lang`, `java.util`, `java.io`) and {brandname} packages (`org.infinispan`) are allowed by default during remote exception reconstruction.
+If your application uses custom exception types from other packages that propagate across cluster nodes, you must add them to the allow list.
 
 .Procedure
 

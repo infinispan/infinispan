@@ -39,7 +39,9 @@ public class MarshallerFactory extends AbstractComponentFactory implements AutoI
          case KnownComponentNames.PERSISTENCE_MARSHALLER:
             return new PersistenceMarshallerImpl();
          case KnownComponentNames.INTERNAL_MARSHALLER:
-            return new GlobalMarshaller();
+            GlobalMarshaller globalMarshaller = new GlobalMarshaller();
+            globalMarshaller.initialize(globalComponentRegistry.getCacheManager().getClassAllowList());
+            return globalMarshaller;
          case KnownComponentNames.USER_MARSHALLER:
             Marshaller marshaller = globalConfiguration.serialization().marshaller();
             if (marshaller != null) {
