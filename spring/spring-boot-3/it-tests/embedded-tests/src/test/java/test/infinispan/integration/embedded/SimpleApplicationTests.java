@@ -41,4 +41,19 @@ public class SimpleApplicationTests {
         assertThat(body).contains("cache_size{cache=\"simpleCache\"");
         assertThat(body).contains("cache_evictions_total{cache=\"simpleCache\"");
     }
+
+    @Test
+    void healthEndpointReportsTheCacheManager() {
+        ResponseEntity<String> response = testRestTemplate
+                .withBasicAuth("user", "password")
+                .getForEntity("http://localhost:" + port + "/actuator/health", String.class);
+
+        // The overall status also depends on the other contributors, so only the Infinispan component is asserted.
+        String body = response.getBody();
+        assertThat(body).contains("\"infinispanEmbedded\"");
+        assertThat(body).contains("\"cluster_health\":\"HEALTHY\"");
+        assertThat(body).contains("\"cluster_size\":1");
+        assertThat(body).contains("\"node_address\":\"local\"");
+        assertThat(body).contains("\"rolling_upgrade\":false");
+    }
 }
