@@ -252,11 +252,17 @@ public class OperationDispatcher {
       return operation.executeOperations(identifyOperationTarget(cacheName, connectionFailedServers),
             (op, addr) -> {
                OperationChannel ch = channelHandler.getChannelForAddress(addr);
-               if (ch == null || ch.isOpSupported(requiredOpCode)) {
+               if (ch == null)
                   return executeOnSingleAddress(op, addr);
-               } else {
-                  return fallbackInvoker.apply(op, addr);
-               }
+
+               // A channel trying to connect doesn't have a codec yet, since negotiation hasn't taken place.
+               // Wait until the connection happened and then proceed with the check and operations.
+               // If the connection fails, or the channel is closed, it goes through execute on a single address, which redirects and retries.
+               return ch.acceptingRequests()
+                     .handle((ignored, t) -> t != null || !ch.isAcceptingRequests() || ch.isOpSupported(requiredOpCode)
+                           ? executeOnSingleAddress(op, addr)
+                           : fallbackInvoker.apply(op, addr))
+                     .thenCompose(Function.identity());
             });
    }
 
