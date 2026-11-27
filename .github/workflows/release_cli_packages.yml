@@ -25,6 +25,15 @@ on:
 jobs:
   linux-packages:
     runs-on: ubuntu-latest
+    concurrency:
+      # Serializes with any other run signing the same release's package assets, so that
+      # package and signature uploads cannot interleave across runs. The matrix leg is part
+      # of the key: GitHub keeps only one pending job per group and a queued job displaces
+      # the pending one, so a group shared by both legs would let a queued leg of a newer
+      # run cancel its still-pending sibling and silently drop that architecture's packages.
+      # The legs upload disjoint files, so they do not need mutual serialization.
+      group: sign-package-assets-${{ inputs.version }}-${{ matrix.asset_name }}
+      cancel-in-progress: false
     strategy:
       fail-fast: false
       matrix:
@@ -36,6 +45,19 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
 
+      - name: Validate release version
+        id: validate-version
+        env:
+          # Indirected so the dispatch input reaches the script as data, never as shell
+          # syntax; the regex below rejects anything that is not a release version.
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){2}(\.[A-Za-z][A-Za-z0-9]*)?(-[A-Za-z0-9._-]+)?$ ]]; then
+            echo "::error::Invalid release version: $VERSION"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Install nfpm
         run: |
           echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | sudo tee /etc/apt/sources.list.d/goreleaser.list
@@ -45,8 +67,8 @@ jobs:
       - name: Download native CLI artifact
         run: |
           mkdir -p artifacts
-          gh release download ${{ inputs.version }} \
-            --pattern "infinispan-cli-${{ inputs.version }}-${{ matrix.asset_name }}.zip" \
+          gh release download ${{ steps.validate-version.outputs.version }} \
+            --pattern "infinispan-cli-${{ steps.validate-version.outputs.version }}-${{ matrix.asset_name }}.zip" \
             --dir artifacts/
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -54,11 +76,11 @@ jobs:
       - name: Extract binary
         run: |
           cd artifacts
-          unzip infinispan-cli-${{ inputs.version }}-${{ matrix.asset_name }}.zip
-          chmod +x infinispan-cli-${{ inputs.version }}-${{ matrix.asset_name }}/infinispan-cli
+          unzip infinispan-cli-${{ steps.validate-version.outputs.version }}-${{ matrix.asset_name }}.zip
+          chmod +x infinispan-cli-${{ steps.validate-version.outputs.version }}-${{ matrix.asset_name }}/infinispan-cli
 
       - name: Build deb package
-        working-directory: artifacts/infinispan-cli-${{ inputs.version }}-${{ matrix.asset_name }}
+        working-directory: artifacts/infinispan-cli-${{ steps.validate-version.outputs.version }}-${{ matrix.asset_name }}
         run: |
           cp ../../distribution/src/main/packaging/cli/postinstall.sh .
           cp ../../distribution/src/main/packaging/cli/preremove.sh .
@@ -67,27 +89,31 @@ jobs:
             --packager deb \
             --target ../
         env:
-          VERSION: ${{ inputs.version }}
+          VERSION: ${{ steps.validate-version.outputs.version }}
           NFPM_ARCH: ${{ matrix.nfpm_arch }}
 
       - name: Build rpm package
-        working-directory: artifacts/infinispan-cli-${{ inputs.version }}-${{ matrix.asset_name }}
+        working-directory: artifacts/infinispan-cli-${{ steps.validate-version.outputs.version }}-${{ matrix.asset_name }}
         run: |
           nfpm package \
             --config ../../distribution/src/main/packaging/cli/nfpm.yaml \
             --packager rpm \
             --target ../
         env:
-          VERSION: ${{ inputs.version }}
+          VERSION: ${{ steps.validate-version.outputs.version }}
           NFPM_ARCH: ${{ matrix.nfpm_arch }}
 
-      - name: Upload packages to release
-        run: |
-          gh release upload ${{ inputs.version }} \
-            artifacts/*.deb artifacts/*.rpm \
-            --clobber
-        env:
-          GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+      - name: Sign and attach packages to release
+        uses: ./.github/actions/sign-release-assets
+        with:
+          release-tag: ${{ steps.validate-version.outputs.version }}
+          asset-paths: |
+            artifacts/*.deb
+            artifacts/*.rpm
+          gpg-armored-key: ${{ secrets.INFINISPAN_MAVEN_GPG_ARMORED }}
+          gpg-passphrase: ${{ secrets.INFINISPAN_MAVEN_GPG_PASSPHRASE }}
+          token: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
+          clobber: "true"
 
   publish-linux-repos:
     needs: linux-packages
@@ -108,6 +134,19 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
         with:
           sparse-checkout: .github/workflows/filemgmt-known-hosts
+
+      - name: Validate release version
+        id: validate-version
+        env:
+          # Indirected so the dispatch input reaches the script as data, never as shell
+          # syntax; the regex below rejects anything that is not a release version.
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){2}(\.[A-Za-z][A-Za-z0-9]*)?(-[A-Za-z0-9._-]+)?$ ]]; then
+            echo "::error::Invalid release version: $VERSION"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Install tools
         run: sudo apt-get update && sudo apt-get install -y createrepo-c dpkg-dev apt-utils
@@ -220,7 +259,7 @@ jobs:
       - name: Download new packages from release
         run: |
           mkdir -p packages
-          gh release download ${{ inputs.version }} \
+          gh release download ${{ steps.validate-version.outputs.version }} \
             --repo infinispan/infinispan \
             --pattern "*.deb" --pattern "*.rpm" \
             --dir packages/
@@ -308,12 +347,25 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
 
+      - name: Validate release version
+        id: validate-version
+        env:
+          # Indirected so the dispatch input reaches the script as data, never as shell
+          # syntax; the regex below rejects anything that is not a release version.
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){2}(\.[A-Za-z][A-Za-z0-9]*)?(-[A-Za-z0-9._-]+)?$ ]]; then
+            echo "::error::Invalid release version: $VERSION"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Download all native CLI artifacts
         run: |
           mkdir -p artifacts
           for platform in linux-x86_64 linux-aarch_64 osx-aarch_64 osx-x86_64 windows-x86_64; do
-            gh release download ${{ inputs.version }} \
-              --pattern "infinispan-cli-${{ inputs.version }}-${platform}.zip" \
+            gh release download ${{ steps.validate-version.outputs.version }} \
+              --pattern "infinispan-cli-${{ steps.validate-version.outputs.version }}-${platform}.zip" \
               --dir artifacts/ || echo "::warning::${platform} artifact not found, skipping"
           done
         env:
@@ -325,7 +377,7 @@ jobs:
           arguments: full-release --basedir . --config-file distribution/src/main/packaging/cli/jreleaser/jreleaser.yml
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.INFINISPAN_RELEASE_TOKEN }}
-          JRELEASER_PROJECT_VERSION: ${{ inputs.version }}
+          JRELEASER_PROJECT_VERSION: ${{ steps.validate-version.outputs.version }}
 
       - name: Upload JReleaser output on failure
         if: failure()
@@ -335,6 +387,9 @@ jobs:
           path: |
             out/jreleaser/trace.log
             out/jreleaser/output.properties
+          # Re-running the job after an artifact of this name was already uploaded
+          # would otherwise fail on the duplicate name.
+          overwrite: true
 
   publish-aur:
     runs-on: ubuntu-latest
@@ -343,10 +398,23 @@ jobs:
         with:
           sparse-checkout: distribution/src/main/packaging/cli/aur
 
+      - name: Validate release version
+        id: validate-version
+        env:
+          # Indirected so the dispatch input reaches the script as data, never as shell
+          # syntax; the regex below rejects anything that is not a release version.
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){2}(\.[A-Za-z][A-Za-z0-9]*)?(-[A-Za-z0-9._-]+)?$ ]]; then
+            echo "::error::Invalid release version: $VERSION"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Compute checksums
         run: |
           for arch in x86_64 aarch_64; do
-            url="https://github.com/infinispan/infinispan/releases/download/${{ inputs.version }}/infinispan-cli-${{ inputs.version }}-linux-${arch}.zip"
+            url="https://github.com/infinispan/infinispan/releases/download/${{ steps.validate-version.outputs.version }}/infinispan-cli-${{ steps.validate-version.outputs.version }}-linux-${arch}.zip"
             sha=$(curl -sL "$url" | sha256sum | cut -d' ' -f1)
             echo "SHA_${arch}=${sha}" >> "$GITHUB_ENV"
           done
@@ -366,14 +434,14 @@ jobs:
         run: |
           cp distribution/src/main/packaging/cli/aur/PKGBUILD aur/PKGBUILD
           cd aur
-          sed -i "s/^pkgver=.*/pkgver=${{ inputs.version }}/" PKGBUILD
+          sed -i "s/^pkgver=.*/pkgver=${{ steps.validate-version.outputs.version }}/" PKGBUILD
           sed -i "s/SHA_X86_64_PLACEHOLDER/${SHA_x86_64}/" PKGBUILD
           sed -i "s/SHA_AARCH64_PLACEHOLDER/${SHA_aarch_64}/" PKGBUILD
 
       - name: Generate .SRCINFO
         run: |
           cd aur
-          VER="${{ inputs.version }}"
+          VER="${{ steps.validate-version.outputs.version }}"
           printf 'pkgbase = infinispan-cli-bin\n' > .SRCINFO
           printf '\t%s\n' \
             "pkgdesc = Command-line interface for Infinispan data grid" \
@@ -398,7 +466,7 @@ jobs:
           git config user.email "aur@infinispan.org"
           git config user.name "Infinispan"
           git add PKGBUILD .SRCINFO
-          git commit -m "infinispan-cli-bin ${{ inputs.version }}"
+          git commit -m "infinispan-cli-bin ${{ steps.validate-version.outputs.version }}"
           git push
 
       - name: Cleanup SSH key

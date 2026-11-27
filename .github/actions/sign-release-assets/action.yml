@@ -1,0 +1,254 @@
+name: Sign Release Assets
+description: Signs files with the project OpenPGP key and uploads them, together with their detached .asc signatures, to a GitHub release
+
+inputs:
+  release-tag:
+    description: "Name of the target GitHub release (tag)"
+    required: true
+  asset-paths:
+    description: "Newline-separated file paths or shell patterns; each matched file is signed and uploaded alongside its .asc signature"
+    required: true
+  gpg-armored-key:
+    description: "ASCII armored OpenPGP signing key (secret)"
+    required: true
+  gpg-passphrase:
+    description: "Passphrase of the OpenPGP signing key (secret)"
+    required: true
+  token:
+    description: "Token used to upload release assets"
+    required: true
+  clobber:
+    description: "Whether to replace existing assets with the same name, so that failed releases can be retried without manual cleanup"
+    required: false
+    default: "false"
+  upload-signatures-only:
+    description: "Upload only the generated .asc signatures, not the assets themselves; for re-signing assets that are already attached to the release"
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    # Windows runners get GnuPG from the Git Bash they run this action in (Git for Windows >= 2.44.0
+    # ships GnuPG). If the runner image ever drops it, fall back to the Chocolatey package
+    # (Chocolatey is preinstalled on GitHub's Windows images and puts a gpg shim on the PATH);
+    # the availability check below still guards the signing step either way.
+    # macOS runners usually ship GnuPG already.
+    - name: Install GnuPG on Windows runner if missing
+      if: ${{ runner.os == 'Windows' }}
+      shell: bash
+      run: command -v gpg >/dev/null 2>&1 || choco install gnupg --no-progress
+
+    - name: Install GnuPG on macOS runner if missing
+      if: ${{ runner.os == 'macOS' }}
+      shell: bash
+      run: command -v gpg >/dev/null 2>&1 || brew install gnupg
+
+    - name: Verify GnuPG is available
+      shell: bash
+      run: |
+        command -v gpg >/dev/null 2>&1 || { echo "::error::GnuPG (gpg) is not installed on this runner"; exit 1; }
+        gpg --version | head -1
+
+    - name: Sign assets and upload to release
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        RELEASE_TAG: ${{ inputs.release-tag }}
+        ASSET_PATHS: ${{ inputs.asset-paths }}
+        CLOBBER: ${{ inputs.clobber }}
+        SIGNATURES_ONLY: ${{ inputs.upload-signatures-only }}
+        MAVEN_GPG_KEY: ${{ inputs.gpg-armored-key }}
+        MAVEN_GPG_PASSPHRASE: ${{ inputs.gpg-passphrase }}
+      run: |
+        set -euo pipefail
+
+        # sha256sum is a GNU coreutils command absent on stock macOS; shasum is the
+        # BSD alternative. Pick whichever is on the PATH so the digest checks work
+        # on both Linux and macOS runners.
+        if command -v sha256sum >/dev/null 2>&1; then
+          file_sha256() { sha256sum "$1" | cut -d' ' -f1; }
+        else
+          file_sha256() { shasum -a 256 "$1" | cut -d' ' -f1; }
+        fi
+
+        echo "$MAVEN_GPG_KEY" | gpg --batch --import >/dev/null 2>&1 \
+          || { echo "::error::Failed to import the OpenPGP signing key"; exit 1; }
+
+        # The imported key must be one of the keys published in KEYS: signing with any
+        # other valid key would produce signatures that users cannot verify against the
+        # project's published keys. KEYS is read from the caller's workspace, which is a
+        # checkout of this repository.
+        if [ -f KEYS ]; then
+          fingerprint=$(gpg --batch --list-secret-keys --with-colons | awk -F: '/^fpr:/ {print $10; exit}')
+          if [ -z "$fingerprint" ]; then
+            echo "::error::Could not determine the fingerprint of the imported signing key"
+            exit 1
+          fi
+          if ! gpg --show-keys KEYS | grep -qi "$fingerprint"; then
+            echo "::error::The configured signing key ($fingerprint) is not published in KEYS; refusing to sign with it"
+            exit 1
+          fi
+        else
+          echo "::warning::No KEYS file in the workspace; skipping the signing-key fingerprint check"
+        fi
+
+        uploads=()
+        while IFS= read -r pattern || [ -n "$pattern" ]; do
+          [ -z "$pattern" ] && continue
+          matched=false
+          for file in $pattern; do
+            if [ ! -f "$file" ]; then echo "::error::Asset not found: $pattern"; exit 1; fi
+            gpg --batch --yes --pinentry-mode loopback \
+              --passphrase "$MAVEN_GPG_PASSPHRASE" \
+              --detach-sign --armor -o "${file}.asc" "$file" \
+              || { echo "::error::Failed to sign $file"; exit 1; }
+            if [ "$SIGNATURES_ONLY" = "true" ]; then
+              uploads+=("${file}.asc")
+            else
+              # gh uploads the files of a single invocation concurrently, so the order of
+              # this array provides no guarantee; partial states are made safe by the
+              # cleanup and verification below, not by ordering.
+              uploads+=("${file}.asc" "$file")
+            fi
+            matched=true
+          done
+          if [ "$matched" = "false" ]; then echo "::error::No files matched: $pattern"; exit 1; fi
+        done <<< "$(printf '%s' "$ASSET_PATHS")"
+
+        clobber_flag=""
+        if [ "$CLOBBER" = "true" ]; then clobber_flag="--clobber"; fi
+
+        published_digest() {
+          gh release view "$RELEASE_TAG" --json assets --jq ".assets[] | select(.name == \"$(basename "$1")\") | .digest" | sed 's/^sha256://'
+        }
+
+        # Sets PUBLISHED to the digest of the asset named by $1 on the release (empty when
+        # the asset is absent) and returns the query's exit status, so callers can tell
+        # "absent" (success, empty) from "could not tell" (failure).
+        query_published_digest() {
+          local rc=0
+          PUBLISHED=$(published_digest "$1") || rc=$?
+          if [ "$rc" -ne 0 ]; then PUBLISHED=""; fi
+          return "$rc"
+        }
+
+        # Downloads the signature published for $1 and verifies it against the local file
+        # $2. Returns 0 when the signature is valid, 1 when it is not, and 2 when it could
+        # not be downloaded (which proves nothing either way).
+        verify_published_signature() {
+          local dir
+          dir=$(mktemp -d)
+          if ! gh release download "$RELEASE_TAG" --pattern "$(basename "$1")" --dir "$dir" >/dev/null 2>&1; then
+            echo "::warning::Could not download $(basename "$1") from release $RELEASE_TAG to verify it"
+            rm -rf "$dir"
+            return 2
+          fi
+          if gpg --batch --verify "$dir/$(basename "$1")" "$2" >/dev/null 2>&1; then
+            echo "Preserving the valid published signature for $(basename "$2")"
+            rm -rf "$dir"
+            return 0
+          fi
+          rm -rf "$dir"
+          return 1
+        }
+
+        # A partially applied replacement can leave the release with a signature that
+        # does not belong to the published asset: ours under an asset that never
+        # landed, a stale one under an asset that just did, or any signature whose
+        # asset a clobbering upload deleted before dying. Remove signatures that do
+        # not belong to the asset published now, so a failed or interrupted upload
+        # leaves the release missing a signature — which retries and the resume
+        # workflow repair — rather than carrying an invalid one. A previous run's
+        # intact pair is never touched: a signature is only deleted after successful
+        # queries positively establish that it is orphaned, invalid, or paired with a
+        # foreign asset, and a signature over our own bytes is verified before
+        # deletion so a valid one from an earlier run survives (signatures are
+        # nondeterministic, so identical bytes yield different digests per run).
+        # A failed query proves nothing and leaves the pair untouched. In
+        # signatures-only mode the assets are already published and were signed as
+        # published, so any partial state is already consistent and nothing needs
+        # removing.
+        repair_partial_upload() {
+          [ "$SIGNATURES_ONLY" = "true" ] && return 0
+          local i asc file local_asc local_file published_asc published_file verify_rc
+          for ((i = 0; i < ${#uploads[@]}; i += 2)); do
+            asc="${uploads[$i]}"
+            file="${uploads[$((i + 1))]}"
+            local_asc=$(file_sha256 "$asc")
+            local_file=$(file_sha256 "$file")
+            if ! query_published_digest "$asc"; then
+              echo "::warning::Could not query $(basename "$asc") on release $RELEASE_TAG; leaving its pair untouched"
+              continue
+            fi
+            published_asc="$PUBLISHED"
+            if ! query_published_digest "$file"; then
+              echo "::warning::Could not query $(basename "$file") on release $RELEASE_TAG; leaving its pair untouched"
+              continue
+            fi
+            published_file="$PUBLISHED"
+            if [ -z "$published_file" ]; then
+              # The asset is absent: any published signature is orphaned, whether or
+              # not it is ours (a clobbering upload may have deleted the old asset
+              # before failing).
+              if [ -n "$published_asc" ]; then
+                gh release delete-asset "$RELEASE_TAG" "$(basename "$asc")" --yes || true
+              fi
+            elif [ "$published_file" = "$local_file" ]; then
+              # Our asset is published. Our own signature under it means the pair is
+              # intact; a foreign one may be a valid signature from an earlier run
+              # over the same bytes, so verify it and only delete it when it is
+              # actually invalid.
+              if [ "$published_asc" != "$local_asc" ] && [ -n "$published_asc" ]; then
+                verify_rc=0
+                verify_published_signature "$asc" "$file" || verify_rc=$?
+                if [ "$verify_rc" -eq 1 ]; then
+                  gh release delete-asset "$RELEASE_TAG" "$(basename "$asc")" --yes || true
+                fi
+              fi
+            elif [ "$published_asc" = "$local_asc" ]; then
+              # Our signature is published over an asset that is not ours: the pair
+              # mixes runs, so delete our signature. The foreign asset belongs to a
+              # concurrent run and is left alone.
+              gh release delete-asset "$RELEASE_TAG" "$(basename "$asc")" --yes || true
+            fi
+          done
+        }
+
+        # Arm the repair for hard terminations (job cancel, runner loss) as well: the
+        # failure path below only runs when gh reports the failure itself.
+        trap 'echo "::warning::Upload interrupted; repairing the partial state"; repair_partial_upload; exit 1' INT TERM HUP
+
+        # shellcheck disable=SC2086
+        if ! gh release upload "$RELEASE_TAG" $clobber_flag "${uploads[@]}"; then
+          trap - INT TERM HUP
+          repair_partial_upload
+          exit 1
+        fi
+
+        # Verify what is actually published: if a concurrent run replaced an asset between
+        # the uploads, the release could pair one run's asset with another run's signature.
+        # A failed query must not fail the job after a successful upload, so it degrades to
+        # a warning and skips verification for that file. An asset that a successful query
+        # reports as absent fails the job: the upload did not take effect, and leaving an
+        # orphaned signature behind would make the release look complete when it is not.
+        # Failures run the same partial-upload repair as the upload-failure path, so the
+        # release is left in a repairable state rather than carrying an invalid pair.
+        verify_failed=false
+        for file in "${uploads[@]}"; do
+          digest=$(published_digest "$file") || { echo "::warning::Could not verify $(basename "$file") on release $RELEASE_TAG: the release query failed"; continue; }
+          if [ -z "$digest" ]; then
+            echo "::error::$(basename "$file") is absent from release $RELEASE_TAG after the upload"
+            verify_failed=true
+            continue
+          fi
+          if [ "$digest" != "$(file_sha256 "$file")" ]; then
+            echo "::error::$(basename "$file") on release $RELEASE_TAG does not match the file just uploaded; a concurrent run may have replaced it"
+            verify_failed=true
+          fi
+        done
+        if [ "$verify_failed" = true ]; then
+          trap - INT TERM HUP
+          repair_partial_upload
+          exit 1
+        fi
