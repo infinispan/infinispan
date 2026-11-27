@@ -266,6 +266,7 @@
                   <!-- this is picked up in log4j2.xml, which adds it to each module's log file name-->
                   <infinispan.module-suffix>${infinispan.module-suffix}</infinispan.module-suffix>
                   <ansi.strip>${ansi.strip}</ansi.strip>
+                  <infinispan.server.test.rerunFailingTestsCount>${rerunFailingTestsCount}</infinispan.server.test.rerunFailingTestsCount>
                   <!-- versions for dependencies resolved by the tests -->
                   <version.bouncycastle>${version.bouncycastle}</version.bouncycastle>
                   <version.jboss.marshalling>${version.jboss.marshalling}</version.jboss.marshalling>

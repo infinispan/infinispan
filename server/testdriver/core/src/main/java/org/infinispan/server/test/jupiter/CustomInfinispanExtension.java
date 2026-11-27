@@ -11,10 +11,11 @@ import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.extension.TestWatcher;
 import org.junit.platform.commons.support.ModifierSupport;
 import org.junit.platform.commons.support.ReflectionSupport;
 
-public class CustomInfinispanExtension implements BeforeAllCallback, BeforeEachCallback, AfterEachCallback, AfterAllCallback {
+public class CustomInfinispanExtension implements BeforeAllCallback, BeforeEachCallback, AfterEachCallback, AfterAllCallback, TestWatcher {
 
    public static final String EXTENSION_OVERRIDE = "org.infinispan.server.test.jupiter.extension";
 
@@ -107,5 +108,35 @@ public class CustomInfinispanExtension implements BeforeAllCallback, BeforeEachC
    @Override
    public void beforeEach(ExtensionContext extensionContext) {
       invokeMethodIfPresent(extensionContext, "beforeEach");
+   }
+
+   @Override
+   public void testFailed(ExtensionContext extensionContext, Throwable cause) {
+      findAnnotatedFields(extensionContext.getRequiredTestClass(), InfinispanServer.class, ModifierSupport::isStatic)
+            .forEach(field -> {
+               try {
+                  Object extension = field.get(null);
+                  if (extension instanceof TestWatcher watcher) {
+                     watcher.testFailed(extensionContext, cause);
+                  }
+               } catch (IllegalAccessException e) {
+                  throw new RuntimeException(e);
+               }
+            });
+   }
+
+   @Override
+   public void testSuccessful(ExtensionContext extensionContext) {
+      findAnnotatedFields(extensionContext.getRequiredTestClass(), InfinispanServer.class, ModifierSupport::isStatic)
+            .forEach(field -> {
+               try {
+                  Object extension = field.get(null);
+                  if (extension instanceof TestWatcher watcher) {
+                     watcher.testSuccessful(extensionContext);
+                  }
+               } catch (IllegalAccessException e) {
+                  throw new RuntimeException(e);
+               }
+            });
    }
 }
