@@ -1,6 +1,7 @@
 package test.org.infinispan.spring.starter.embedded.health;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -50,6 +51,7 @@ public class InfinispanEmbeddedHealthIndicatorTest {
       when(cacheManager.getCacheManagerInfo()).thenReturn(cacheManagerInfo);
       when(cacheManager.getHealth()).thenReturn(health);
       when(cacheManager.getMembers()).thenReturn(List.of(NODE_A, NODE_B));
+      when(cacheManager.cacheExists(anyString())).thenReturn(true);
       when(health.getClusterHealth()).thenReturn(clusterHealth);
       when(health.getCacheHealth()).thenReturn(List.of(cacheHealth("people", HealthStatus.HEALTHY)));
       when(clusterHealth.getHealthStatus()).thenReturn(HealthStatus.HEALTHY);
@@ -59,7 +61,6 @@ public class InfinispanEmbeddedHealthIndicatorTest {
       when(cacheManagerInfo.getNodeAddress()).thenReturn("node-a");
       when(cacheManagerInfo.getNodeName()).thenReturn("node-a");
       when(cacheManagerInfo.getVersion()).thenReturn(Version.getVersion());
-      when(cacheManagerInfo.getClusterSize()).thenReturn(2);
       when(cacheManagerInfo.isCoordinator()).thenReturn(true);
       when(cacheManagerInfo.getPhysicalAddressesRaw()).thenReturn(List.of("127.0.0.1:7800"));
    }
@@ -107,10 +108,35 @@ public class InfinispanEmbeddedHealthIndicatorTest {
    }
 
    @Test
+   public void testMemberWithoutAVersionIsNotAnInPlaceRollingUpgrade() {
+      when(cacheManager.getMembers()).thenReturn(List.of(NODE_A, addressWithoutVersion("quiet-node")));
+
+      Health result = health();
+
+      // The version of one member is unknown, which is not evidence that the members run different versions.
+      assertThat(result.getDetails()).containsEntry("rolling_upgrade", false);
+      assertThat(members(result)).containsExactly(
+            Map.of("node_address", "node-a", "version", NodeVersion.INSTANCE.toString()),
+            Map.of("node_address", "quiet-node", "version", "unknown"));
+   }
+
+   @Test
+   public void testClusterSizeAndMembershipDescribeTheSameView() {
+      // CacheManagerInfo reads the transport again, so taking the size from there would let a view change in
+      // between report a size that contradicts the members next to it.
+      when(cacheManagerInfo.getClusterSize()).thenReturn(5);
+      when(cacheManager.getMembers()).thenReturn(List.of(NODE_A, NODE_B, OLD_NODE));
+
+      Health result = health();
+
+      assertThat(result.getDetails()).containsEntry("cluster_size", 3);
+      assertThat(members(result)).hasSize(3);
+   }
+
+   @Test
    public void testCacheManagerWithoutTransportReportsItselfAsTheOnlyMember() {
       when(cacheManager.getMembers()).thenReturn(null);
       when(cacheManagerInfo.getNodeAddress()).thenReturn("local");
-      when(cacheManagerInfo.getClusterSize()).thenReturn(1);
 
       Health result = health();
 
@@ -186,6 +212,21 @@ public class InfinispanEmbeddedHealthIndicatorTest {
    }
 
    @Test
+   public void testCachesThatAreNotStartedYetAreLeftOut() {
+      // A cache that is configured but not started has no component registry, so the Cache Manager reports it as
+      // FAILED while the cluster health skips it. Listing it would contradict the cluster_health next to it.
+      when(cacheManager.cacheExists("pending")).thenReturn(false);
+      when(health.getCacheHealth()).thenReturn(List.of(
+            cacheHealth("people", HealthStatus.HEALTHY),
+            cacheHealth("pending", HealthStatus.FAILED)));
+
+      Health result = health();
+
+      assertThat(result.getStatus()).isEqualTo(Status.UP);
+      assertThat(result.getDetails()).containsEntry("caches", Map.of("people", HealthStatus.HEALTHY.name()));
+   }
+
+   @Test
    public void testStoppedCacheManagerIsDown() {
       when(cacheManager.getStatus()).thenReturn(ComponentStatus.TERMINATED);
       when(cacheManagerInfo.getCacheManagerStatus()).thenReturn(ComponentStatus.TERMINATED.toString());
@@ -237,5 +278,15 @@ public class InfinispanEmbeddedHealthIndicatorTest {
 
    private static Address address(String name, NodeVersion version) {
       return Address.fromExtendedUUID(Address.randomUUID(name, version, null, null, null));
+   }
+
+   /**
+    * An address that does not advertise a version, which is what an address unmarshalled without the version field
+    * looks like.
+    */
+   private static Address addressWithoutVersion(String name) {
+      var uuid = Address.randomUUID(name, null, null, null);
+      return Address.protoFactory(uuid.getMostSignificantBits(), uuid.getLeastSignificantBits(), null, null, null,
+            null);
    }
 }

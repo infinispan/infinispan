@@ -76,7 +76,12 @@ public class InfinispanEmbeddedHealthIndicator extends AbstractHealthIndicator {
          return;
       }
 
-      builder.withDetail(CLUSTER_SIZE, info.getClusterSize())
+      // A single read of the cluster view backs both the size and the membership details. Reading the view twice
+      // would let a member join or leave in between and report a size taken from one view next to the members of
+      // another, which the tooling driving a rolling upgrade would see as a contradictory cluster state.
+      List<Address> members = cacheManager.getMembers();
+
+      builder.withDetail(CLUSTER_SIZE, clusterSize(members))
             .withDetail(COORDINATOR, info.isCoordinator())
             // The physical addresses of the local node. Resolving them for the other members would need a
             // cluster-wide request, which this indicator deliberately avoids.
@@ -89,8 +94,16 @@ public class InfinispanEmbeddedHealthIndicator extends AbstractHealthIndicator {
             .withDetail(CACHES, cacheHealth(health.getCacheHealth()));
 
       if (properties.getMembership().isEnabled()) {
-         addMembership(builder, info);
+         addMembership(builder, info, members);
       }
+   }
+
+   /**
+    * The number of nodes in the cluster view. A Cache Manager without a transport has no view and counts as a cluster
+    * of one, which is what {@link CacheManagerInfo#getClusterSize()} reports for it as well.
+    */
+   private static int clusterSize(List<Address> members) {
+      return members == null || members.isEmpty() ? 1 : members.size();
    }
 
    /**
@@ -114,12 +127,21 @@ public class InfinispanEmbeddedHealthIndicator extends AbstractHealthIndicator {
    }
 
    /**
-    * The health of every user cache, keyed by cache name. Internal caches are left out because they are an
-    * implementation detail, but they are still accounted for in the overall cluster health.
+    * The health of every cache the Cache Manager exposes, keyed by cache name. Private internal caches are left out
+    * because the Cache Manager already hides them, but they are still accounted for in the overall cluster health.
+    * <p>
+    * A cache that is configured but has not been started yet is left out as well. Such a cache has no component
+    * registry, so the Cache Manager reports it as {@link HealthStatus#FAILED}, while the cluster health skips it
+    * altogether. Reporting it here would show a failed cache next to the {@code cluster_health} that calls the
+    * cluster healthy.
+    * </p>
     */
-   private static Map<String, String> cacheHealth(List<CacheHealth> cacheHealths) {
+   private Map<String, String> cacheHealth(List<CacheHealth> cacheHealths) {
       Map<String, String> result = new TreeMap<>();
       for (CacheHealth cacheHealth : cacheHealths) {
+         if (!cacheManager.cacheExists(cacheHealth.getCacheName())) {
+            continue;
+         }
          result.put(cacheHealth.getCacheName(), cacheHealth.getStatus().name());
       }
       return Collections.unmodifiableMap(result);
@@ -129,9 +151,11 @@ public class InfinispanEmbeddedHealthIndicator extends AbstractHealthIndicator {
     * Adds the address and the version of every cluster member, in view order, along with a flag telling whether the
     * members run different versions, which is the case while an in-place rolling upgrade is in progress. A Cache
     * Manager without a transport has no view, so it reports itself as the only member.
+    *
+    * @param members the cluster view that {@link #doHealthCheck(Health.Builder)} read, so that the membership and the
+    *                reported cluster size always describe the same view.
     */
-   private void addMembership(Health.Builder builder, CacheManagerInfo info) {
-      List<Address> members = cacheManager.getMembers();
+   private static void addMembership(Health.Builder builder, CacheManagerInfo info, List<Address> members) {
       if (members == null || members.isEmpty()) {
          builder.withDetail(MEMBERS, List.of(member(info.getNodeAddress(), NodeVersion.INSTANCE.toString())))
                .withDetail(ROLLING_UPGRADE, false);
@@ -142,7 +166,11 @@ public class InfinispanEmbeddedHealthIndicator extends AbstractHealthIndicator {
       Set<NodeVersion> versions = new HashSet<>();
       for (Address member : members) {
          NodeVersion version = member.getVersion();
-         versions.add(version);
+         // An address that does not advertise a version is no evidence that the members run different versions, so
+         // it is rendered as unknown but must not raise the rolling upgrade flag on its own.
+         if (version != null) {
+            versions.add(version);
+         }
          details.add(member(member.toString(), version == null ? UNKNOWN_VERSION : version.toString()));
       }
       builder.withDetail(MEMBERS, Collections.unmodifiableList(details))

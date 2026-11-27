@@ -18,10 +18,17 @@ include::dependencies_maven/sb_actuator.xml[]
 [source,properties,options="nowrap",subs="attributes+"]
 ----
 management.endpoints.web.exposure.include=health
-management.endpoint.health.show-details=always
+management.endpoint.health.show-details=when-authorized
 ----
 +
 . Poll the `/actuator/health` endpoint.
+
+[IMPORTANT]
+====
+The health details include the address and the version of every cluster member, the physical addresses of the local node, and the names of your caches.
+Restrict the endpoint to callers that you authenticate and authorize, for example with the `when-authorized` policy and the `management.endpoint.health.roles` property, or expose the management port on a trusted network only.
+Set `management.endpoint.health.show-details` to `always` only when every caller that can reach the endpoint is allowed to learn the topology of your cluster.
+====
 
 .Verification
 
