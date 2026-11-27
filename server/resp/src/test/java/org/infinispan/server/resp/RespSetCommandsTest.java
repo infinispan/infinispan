@@ -19,6 +19,9 @@ import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.ValueScanCursor;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.IntegerOutput;
+import io.lettuce.core.protocol.CommandArgs;
 
 @Test(groups = "functional", testName = "server.resp.RespSetCommandsTest")
 public class RespSetCommandsTest extends SingleNodeRespBaseTest {
@@ -1216,5 +1219,105 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       var copyArgs = new CopyArgs().replace(true);
       assertThat(redis.copy("copy-cross-set-r-src", "copy-cross-set-r-dst", copyArgs)).isTrue();
       assertThat(redis.smembers("copy-cross-set-r-dst")).containsExactlyInAnyOrder("a", "b", "c");
+   }
+
+   private Long sdiffcard(String... args) {
+      CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
+      for (String arg : args) {
+         commandArgs.add(arg);
+      }
+      return redisConnection.sync().dispatch(new RespSingleNodeTest.SimpleCommand("SDIFFCARD"),
+            new IntegerOutput<>(StringCodec.UTF8), commandArgs);
+   }
+
+   public void testSdiffcard() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.sadd("sdc1", "a", "b", "c");
+      redis.sadd("sdc2", "c", "d", "e");
+      redis.sadd("sdc3", "a", "e", "f");
+
+      assertThat(sdiffcard("2", "sdc1", "sdc2")).isEqualTo(2);
+      assertThat(sdiffcard("3", "sdc1", "sdc2", "sdc3")).isEqualTo(1);
+      assertThat(sdiffcard("2", "sdc2", "sdc1")).isEqualTo(2);
+      assertThat(sdiffcard("1", "sdc1")).isEqualTo(3);
+      // A set minus itself is empty, wherever the repeated key appears
+      assertThat(sdiffcard("2", "sdc1", "sdc1")).isEqualTo(0);
+      assertThat(sdiffcard("3", "sdc1", "sdc2", "sdc1")).isEqualTo(0);
+      // Missing keys are empty sets
+      assertThat(sdiffcard("2", "sdc1", "sdc-missing")).isEqualTo(3);
+      assertThat(sdiffcard("2", "sdc-missing", "sdc1")).isEqualTo(0);
+      assertThat(sdiffcard("1", "sdc-missing")).isEqualTo(0);
+      // Agrees with SDIFF
+      assertThat(sdiffcard("3", "sdc1", "sdc2", "sdc3")).isEqualTo(redis.sdiff("sdc1", "sdc2", "sdc3").size());
+      // Read-only
+      assertThat(redis.smembers("sdc1")).containsExactlyInAnyOrder("a", "b", "c");
+      assertThat(redis.exists("sdc-missing")).isZero();
+   }
+
+   public void testSdiffcardLimit() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.sadd("sdcl1", "a", "b", "c", "d", "e");
+      redis.sadd("sdcl2", "e", "f");
+
+      assertThat(sdiffcard("2", "sdcl1", "sdcl2", "LIMIT", "1")).isEqualTo(1);
+      assertThat(sdiffcard("2", "sdcl1", "sdcl2", "LIMIT", "3")).isEqualTo(3);
+      assertThat(sdiffcard("2", "sdcl1", "sdcl2", "LIMIT", "4")).isEqualTo(4);
+      assertThat(sdiffcard("2", "sdcl1", "sdcl2", "LIMIT", "100")).isEqualTo(4);
+      // 0 means no limit
+      assertThat(sdiffcard("2", "sdcl1", "sdcl2", "LIMIT", "0")).isEqualTo(4);
+      assertThat(sdiffcard("2", "sdcl1", "sdcl2", "limit", "2")).isEqualTo(2);
+      // The last LIMIT wins
+      assertThat(sdiffcard("2", "sdcl1", "sdcl2", "LIMIT", "1", "LIMIT", "2")).isEqualTo(2);
+   }
+
+   public void testSdiffcardWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.sadd("sdcwt-set", "a");
+      assertWrongType(() -> redis.set("sdcwt-string", "value"), () -> sdiffcard("2", "sdcwt-set", "sdcwt-string"));
+      assertWrongType(() -> redis.rpush("sdcwt-list", "value"), () -> sdiffcard("1", "sdcwt-list"));
+      // Every key is type checked, even when the result is already known to be empty or LIMIT is reached
+      assertThatThrownBy(() -> sdiffcard("2", "sdcwt-missing", "sdcwt-string"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("WRONGTYPE");
+      assertThatThrownBy(() -> sdiffcard("3", "sdcwt-set", "sdcwt-set", "sdcwt-string"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("WRONGTYPE");
+      assertThatThrownBy(() -> sdiffcard("2", "sdcwt-set", "sdcwt-string", "LIMIT", "1"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("WRONGTYPE");
+   }
+
+   public void testSdiffcardErrors() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.sadd("sdce", "a", "b");
+
+      assertThatThrownBy(() -> sdiffcard("0", "sdce"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR numkeys should be greater than 0");
+      assertThatThrownBy(() -> sdiffcard("-1", "sdce"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR numkeys should be greater than 0");
+      assertThatThrownBy(() -> sdiffcard("x", "sdce"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR numkeys should be greater than 0");
+      assertThatThrownBy(() -> sdiffcard("3", "sdce", "sdce2"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR Number of keys can't be greater than number of args");
+      assertThatThrownBy(() -> sdiffcard("1", "sdce", "LIMIT", "-1"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR LIMIT can't be negative");
+      assertThatThrownBy(() -> sdiffcard("1", "sdce", "LIMIT", "abc"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR LIMIT can't be negative");
+      assertThatThrownBy(() -> sdiffcard("1", "sdce", "LIMIT"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR syntax error");
+      // APPROX is a SUNIONCARD option only
+      assertThatThrownBy(() -> sdiffcard("1", "sdce", "APPROX"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR syntax error");
+      assertThatThrownBy(() -> sdiffcard("1"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR wrong number of arguments for 'sdiffcard' command");
    }
 }

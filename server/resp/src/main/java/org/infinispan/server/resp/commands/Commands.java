@@ -162,6 +162,7 @@ import org.infinispan.server.resp.commands.search.FT_LIST;
 import org.infinispan.server.resp.commands.set.SADD;
 import org.infinispan.server.resp.commands.set.SCARD;
 import org.infinispan.server.resp.commands.set.SDIFF;
+import org.infinispan.server.resp.commands.set.SDIFFCARD;
 import org.infinispan.server.resp.commands.set.SDIFFSTORE;
 import org.infinispan.server.resp.commands.set.SINTER;
 import org.infinispan.server.resp.commands.set.SINTERCARD;
@@ -285,7 +286,7 @@ public final class Commands {
       ALL_COMMANDS[18] = new RespCommand[]{new SET(), new SETEX(), new SETNX(), new SMEMBERS(), new SISMEMBER(),
             new SMISMEMBER(), new SADD(), new STRLEN(), new SMOVE(), new SCARD(), new SINTER(), new SINTERSTORE(),
             new SINTERCARD(), new SUNION(), new SUNIONSTORE(), new SPOP(), new SRANDMEMBER(), new SREM(), new SDIFF(),
-            new SDIFFSTORE(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SSCAN(), new SETRANGE(),
+            new SDIFFCARD(), new SDIFFSTORE(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SSCAN(), new SETRANGE(),
             new SORT(), new SORT_RO(), new SUBSTR(), new SCRIPT(), new SETBIT()};
       ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE(), new TOUCH(), new TIME(), new TOPKRESERVE(), new TOPKADD(), new TOPKINCRBY(), new TOPKQUERY(), new TOPKLIST(), new TOPKINFO(), new TOPKCOUNT()};
       ALL_COMMANDS[20] = new RespCommand[]{new UNLINK(), new UNSUBSCRIBE(), new UNWATCH()};
