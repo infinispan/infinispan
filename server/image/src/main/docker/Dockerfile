@@ -3,7 +3,7 @@
 # If set, JDK_DIST below will be ignored.
 ARG OPENJDK_PACKAGE=""
 # Packages needed by the builder
-ARG BUILDER_PACKAGES="file unzip wget"
+ARG BUILDER_PACKAGES="file unzip wget rpm-build"
 # Packages to be installed in the target image
 ARG MAIN_PACKAGES="coreutils-single curl grep gzip iproute libstdc++ lsof procps-ng sed tar vim-minimal ${OPENJDK_PACKAGE}"
 # Packages to be removed
@@ -27,6 +27,10 @@ ARG DNF_FLAGS="-y --installroot=${NEWROOT} \
 # If it points to an empty file, the JDK will be downloaded from Adoptium.
 # If OPENJDK_PACKAGE is non-empty, then that will be used instead.
 ARG JDK_DIST=src/main/docker/adoptium
+# The major version of the Temurin OpenJDK to download when JDK_DIST is an empty file
+ARG JDK_MAJOR=25
+# The release channel of the Temurin OpenJDK to download from Adoptium (ga or ea)
+ARG JDK_CHANNEL=ga
 # The Infinispan server distribution. Can be a local file or a remote URL. Must be a zip.
 ARG SERVER_DIST
 # The target architecture. This is automatically configured by the container builder.
@@ -47,6 +51,8 @@ ARG NEWROOT
 ARG DNF_CACHE
 ARG DNF_FLAGS
 ARG JDK_DIST
+ARG JDK_MAJOR
+ARG JDK_CHANNEL
 ARG SERVER_DIST
 ARG BUILDER_PACKAGES
 ARG OPENJDK_PACKAGE
@@ -70,14 +76,19 @@ RUN dnf ${DNF_FLAGS} install ${MAIN_PACKAGES}
 
 # Install the JDK distribution
 ADD src/main/docker/install-jdk.sh /tmp/
-RUN /tmp/install-jdk.sh ${NEWROOT} /tmp/jdk ${OPENJDK_PACKAGE}
+RUN /tmp/install-jdk.sh ${NEWROOT} /tmp/jdk "${OPENJDK_PACKAGE}" ${JDK_MAJOR} ${JDK_CHANNEL}
 
 # Remove unwanted packages. Ignore errors
 RUN rpm -r ${NEWROOT} --erase --nodeps --allmatches ${REMOVE_PACKAGES} || true
 
-# Delete unnecessary files
+# Link the RPM database from its traditional location, as installroots do not
+# inherit the symlink from the base image
+RUN ln -s ../../usr/lib/sysimage/rpm ${NEWROOT}/var/lib/rpm
+
+# Delete unnecessary files. The RPM database (usr/lib/sysimage/rpm, linked
+# from /var/lib/rpm) is kept, so that the installed packages, including the
+# bundled OpenJDK, remain visible to container scanners
 RUN rm -rf \
-      ${NEWROOT}/usr/lib/sysimage \
       ${NEWROOT}/usr/share/licenses \
       ${NEWROOT}/usr/share/locale \
       ${NEWROOT}/var/lib/dnf \
