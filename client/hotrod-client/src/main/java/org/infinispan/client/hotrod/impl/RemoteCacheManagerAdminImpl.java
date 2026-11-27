@@ -172,7 +172,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       params.put(CACHE_NAME, string(name));
       if (configuration != null) params.put(CACHE_CONFIGURATION, string(configuration.toStringConfiguration(name)));
       if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@template@create", params)));
+      operationDispatcher.await(operationDispatcher.execute(adminOperation("@@template@create", params)));
    }
 
    @Override
@@ -180,7 +180,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       Map<String, byte[]> params = new HashMap<>(2);
       params.put(CACHE_NAME, string(name));
       if (flags != null && !flags.isEmpty()) params.put(FLAGS, flags(flags));
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@template@remove", params)));
+      operationDispatcher.await(operationDispatcher.execute(adminOperation("@@template@remove", params)));
    }
 
    @Override
@@ -191,7 +191,7 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
       if (flags != null && !flags.isEmpty()) {
          params.put(FLAGS, flags(flags));
       }
-      operationDispatcher.await(operationDispatcher.execute(operationsFactory.executeOperation("@@cache@assignAlias", params)));
+      operationDispatcher.await(operationDispatcher.execute(adminOperation("@@cache@assignAlias", params)));
    }
 
    @Override
@@ -209,7 +209,15 @@ public class RemoteCacheManagerAdminImpl implements RemoteCacheManagerAdmin {
    }
 
    private CompletionStage<String> submitOperation(String name, String operation, Map<String, byte[]> params) {
-      HotRodOperation<String> op = operationsFactory.executeOperation(operation, params);
-      return operationDispatcher.executeOnSingleAddress(op, operationDispatcher.addressForCache(name));
+      return operationDispatcher.executeOnSingleAddress(adminOperation(operation, params), operationDispatcher.addressForCache(name));
+   }
+
+   /**
+    * Administrative operations may involve the whole cluster and the whole data set, so they are given the long
+    * running operation timeout rather than the socket timeout.
+    */
+   private HotRodOperation<String> adminOperation(String operation, Map<String, byte[]> params) {
+      long timeout = ConfigurationProperties.longRunningOperationTimeout(cacheManager.getConfiguration().socketTimeout());
+      return new TimeoutHotRodOperation<>(operationsFactory.executeOperation(operation, params), timeout);
    }
 }

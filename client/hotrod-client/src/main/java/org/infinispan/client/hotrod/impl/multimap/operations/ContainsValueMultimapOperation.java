@@ -69,4 +69,9 @@ public class ContainsValueMultimapOperation extends AbstractCacheOperation<Boole
    public short responseOpCode() {
       return CONTAINS_VALUE_MULTIMAP_RESPONSE;
    }
+
+   @Override
+   public long timeout() {
+      return longRunningTimeout();
+   }
 }

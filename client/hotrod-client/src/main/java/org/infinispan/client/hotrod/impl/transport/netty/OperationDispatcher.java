@@ -40,6 +40,7 @@ import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateExcept
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.ClientTopology;
+import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.TopologyInfo;
 import org.infinispan.client.hotrod.impl.Util;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
@@ -128,7 +129,10 @@ public class OperationDispatcher {
       this.timeService = timeService;
       this.clientListenerNotifier = clientListenerNotifier;
       this.maxRetries = configuration.maxRetries();
-      this.awaitTimeout = Math.max(TimeUnit.MINUTES.toMillis(2), configuration.socketTimeout());
+      // The blocking await must never expire before the operation itself times out, otherwise the caller would see a
+      // TimeoutException instead of the more informative SocketTimeoutException raised by the decoder.
+      this.awaitTimeout = Math.max(TimeUnit.MINUTES.toMillis(2),
+            ConfigurationProperties.longRunningOperationTimeout(configuration.socketTimeout()));
 
       this.connectionFailedServers = configuration.serverFailureTimeout() > 0 ?
             Collections.newSetFromMap(Caffeine.newBuilder()

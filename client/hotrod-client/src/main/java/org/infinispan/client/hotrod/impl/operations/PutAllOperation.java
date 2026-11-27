@@ -63,4 +63,9 @@ public class PutAllOperation extends AbstractCacheOperation<Void> {
    public short responseOpCode() {
       return PUT_ALL_RESPONSE;
    }
+
+   @Override
+   public long timeout() {
+      return longRunningTimeout();
+   }
 }
