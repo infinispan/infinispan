@@ -82,6 +82,9 @@ Default is `OPTIMISTIC`.
 * `auto-commit` - if enabled, the user does not need to start a transaction manually for a single operation. The transaction is automatically started and committed.
  Default is `true`.
 * `complete-timeout` - the duration in milliseconds to keep information about completed transactions. Default is `60000`.
+The value must be greater than zero.
+For transactional clustered caches, set this timeout higher than the cache `remote-timeout` so that transaction information remains available while remote operations complete.
+{brandname} rejects a lower value and logs a warning when the values are equal.
 * `mode` - configures whether the cache is transactional or not. Default is `NONE`. The available options are:
 ** `NONE` - non-transactional cache
 ** `FULL_XA` - XA transactional cache with recovery enabled. Check section link:#tx_recovery[Transaction recovery] for more details about recovery.
@@ -92,11 +95,26 @@ Check section link:#tx_sync_enlist[Enlisting Synchronizations] for details.
 * `notifications` - enables/disables triggering transactional events in cache listeners. Default is `true`.
 * `reaper-interval` - the time interval in millisecond at which the thread that cleans up transaction completion information kicks in.
 Defaults is `30000`.
+The value must be greater than zero.
 * `recovery-cache` - configures the cache name to store the recovery information. Check section link:#tx_recovery[Transaction recovery] for more details about recovery.
 Default is `__recoveryInfoCacheName__`.
 * `stop-timeout` - the time in millisecond to wait for ongoing transaction when the cache is stopping. Default is  `30000`.
+The value must be greater than or equal to zero.
+For transactional caches, {brandname} logs a warning if this value is shorter than `acquire-timeout` or, for clustered caches, `remote-timeout`, because in-flight transactions might not finish before the cache stops.
+You can still configure a shorter timeout, including zero, to bound shutdown time.
 * `transaction-manager-lookup` - configures the fully qualified class name of a class that looks up a reference to a `jakarta.transaction.TransactionManager`.
 Default is `org.infinispan.transaction.lookup.GenericTransactionManagerLookup`.
+
+For clustered caches, set the cache `remote-timeout` higher than the locking `acquire-timeout` so that remote operations can report lock acquisition failures before timing out.
+The `remote-timeout` must be greater than zero milliseconds, including when you update it at runtime.
+Zero and negative values are rejected; infinite remote timeouts are not supported.
+{brandname} rejects a lower remote timeout and logs a warning when the values are equal.
+For synchronous cross-site backups, the backup `timeout` must also be greater than zero milliseconds and should be less than `remote-timeout`.
+If the locking `acquire-timeout` is positive, the backup `timeout` must be strictly less than it.
+{brandname} rejects equal or greater backup timeouts.
+Zero and negative locking `acquire-timeout` values remain valid and mean that lock acquisition does not wait.
+For distributed and replicated caches, a finite state transfer `timeout` must be strictly greater than `remote-timeout`.
+For clustered caches, a finite transport `lock-timeout` (`distributedSyncTimeout`) must also be strictly greater than `remote-timeout`.
 
 
 For more details on how Two-Phase-Commit (2PC) is implemented in {brandname} and how locks are being acquired see the section below.

@@ -1252,7 +1252,7 @@
         },
         "jku-timeout": {
           "type": "string",
-          "description": "A timeout for cached jwks when using jku claim. Default is 2m. Supports time units: ms, s, m, h, d.",
+          "description": "The lifetime of cached JSON Web Keys when using the jku claim, independent of the connection and read timeouts. Does not limit the duration of a key fetch. Default is 2m. Supports time units: ms, s, m, h, d.",
           "default": "2m"
         },
         "connection-timeout": {
@@ -1891,8 +1891,8 @@
         },
         "replication-timeout": {
           "type": "string",
-          "description": "Configures replication timeouts for topology caches. Defaults to 10s. Supports time units: ms, s, m, h, d.",
-          "default": "10s"
+          "description": "Configures replication timeouts for topology caches. Must be greater than zero milliseconds; infinite timeouts are not supported. Defaults to 15s. Supports time units: ms, s, m, h, d.",
+          "default": "15s"
         },
         "await-initial-retrieval": {
           "type": "boolean",

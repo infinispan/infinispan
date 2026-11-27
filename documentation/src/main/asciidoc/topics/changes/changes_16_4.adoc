@@ -1,5 +1,31 @@
 == Upgrading from 16.3 to 16.4
 
+=== Remote timeout must be positive
+
+The cache `remote-timeout` attribute, configured with `ClusteringConfigurationBuilder.remoteTimeout()` in the embedded API, must now be greater than zero milliseconds.
+{brandname} rejects zero and negative values during configuration validation and runtime updates.
+This restriction also applies to local caches because persistence and stream operations use the same timeout.
+
+Before upgrading, replace any zero or negative `remote-timeout` values with a positive, finite duration that allows your remote operations to complete.
+To use the default timeout of 15 seconds, remove the attribute from your configuration.
+Earlier versions handled nonpositive values inconsistently: some operations waited indefinitely, while others timed out immediately or failed.
+Infinite remote timeouts are no longer supported.
+
+The Hot Rod topology cache `replication-timeout` also becomes a cache `remote-timeout` and must be greater than zero milliseconds.
+The server rejects zero and negative topology replication timeouts during configuration validation.
+
+=== Synchronous backup timeout must be positive
+
+For backups with `strategy="SYNC"`, the backup `timeout` attribute must now be greater than zero milliseconds, including when you update it at runtime.
+Before upgrading, replace zero or negative synchronous backup timeouts with a positive, finite duration.
+Set this duration below the cache `remote-timeout` so that cross-site failures can be reported before the remote call times out.
+The default backup timeout decreases from 15 seconds to 10 seconds.
+The default locking `acquire-timeout` increases from 10 seconds to 15 seconds so that the backup timeout is shorter than the lock-acquisition timeout.
+For synchronous backups with a positive locking `acquire-timeout`, the backup `timeout` must now be strictly less than `acquire-timeout`.
+Configurations and administration API updates that make the backup timeout equal to or greater than the lock-acquisition timeout are rejected.
+Asynchronous backup timeout validation is unchanged.
+Zero and negative locking `acquire-timeout` values remain valid and mean that lock acquisition does not wait.
+
 === Hot Rod server limits the size of near cache Bloom filters
 
 The Hot Rod connector now rejects registrations of near cache listeners that request a Bloom filter larger than `max-bloom-filter-bits`.

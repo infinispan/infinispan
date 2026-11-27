@@ -36,6 +36,7 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.DIST_SYNC)
             .remoteTimeout(5000)
+            .locking().lockAcquisitionTimeout(1000)
             .transaction().transactionMode(TransactionMode.TRANSACTIONAL).cacheStopTimeout(100);
       createCluster(TestDataSCI.INSTANCE, cb, 2);
       c1 = cache(0);

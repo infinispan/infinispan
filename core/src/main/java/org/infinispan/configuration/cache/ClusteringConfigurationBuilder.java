@@ -69,6 +69,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    /**
     * This is the timeout used to wait for an acknowledgment when making a remote call, after which
     * the call is aborted and an exception is thrown.
+    * The timeout must be greater than zero milliseconds; infinite timeouts are not supported.
     */
    public ClusteringConfigurationBuilder remoteTimeout(long l) {
       attributes.attribute(REMOTE_TIMEOUT).set(TimeQuantity.valueOf(l));
@@ -77,6 +78,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
 
    /**
     * Same as {@link #remoteTimeout(long)} but supporting time units.
+    * The timeout must resolve to more than zero milliseconds.
     */
    public ClusteringConfigurationBuilder remoteTimeout(String s) {
       attributes.attribute(REMOTE_TIMEOUT).set(TimeQuantity.valueOf(s));
@@ -86,6 +88,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
    /**
     * This is the timeout used to wait for an acknowledgment when making a remote call, after which
     * the call is aborted and an exception is thrown.
+    * The timeout must resolve to more than zero milliseconds; infinite timeouts are not supported.
     */
    public ClusteringConfigurationBuilder remoteTimeout(long l, TimeUnit unit) {
       return remoteTimeout(unit.toMillis(l));
@@ -124,6 +127,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
 
    @Override
    public void validate() {
+      attributes.validate();
       for (Builder<?> validatable : Arrays.asList(hashConfigurationBuilder, l1ConfigurationBuilder,
             stateTransferConfigurationBuilder, partitionHandlingConfigurationBuilder)) {
          validatable.validate();
@@ -135,8 +139,19 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
+      attributes.validate();
       if (cacheMode().isClustered() && globalConfig.transport().transport() == null && !builder.template()) {
          throw CONFIG.missingTransportConfiguration();
+      }
+
+      if (cacheMode().isClustered() && globalConfig.transport().transport() != null) {
+         long distSyncTimeout = globalConfig.transport().distributedSyncTimeout();
+         long remoteTimeout = attributes.attribute(REMOTE_TIMEOUT).get().longValue();
+         if (distSyncTimeout >= 0) {
+            if (remoteTimeout < 0 || distSyncTimeout <= remoteTimeout) {
+               throw CONFIG.invalidDistributedSyncTimeout(TimeQuantity.valueOf(distSyncTimeout).toString(), attributes.attribute(REMOTE_TIMEOUT).get().toString());
+            }
+         }
       }
 
       for (ConfigurationChildBuilder validatable : Arrays

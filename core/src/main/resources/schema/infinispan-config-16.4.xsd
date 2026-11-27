@@ -1850,6 +1850,7 @@
           <xs:annotation>
             <xs:documentation>
               In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown.
+              The value must be greater than zero milliseconds. Infinite timeouts are not supported.
               You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
           </xs:annotation>
@@ -2298,7 +2299,8 @@
     <xs:attribute name="timeout" type="xs:long" default="${StateTransfer.timeout}">
       <xs:annotation>
         <xs:documentation>The maximum amount of time (ms) to wait for state from neighboring caches, before throwing an exception and aborting startup.
-        Must be greater than or equal to 'remote-timeout' in the clustering configuration.</xs:documentation>
+        A finite timeout must be strictly greater than 'remote-timeout' in the clustering configuration.
+        A negative value means an infinite timeout.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="chunk-size" type="xs:integer" default="${StateTransfer.chunk-size}">
@@ -2462,6 +2464,8 @@
       <xs:annotation>
         <xs:documentation>
           Specifies timeout, in milliseconds, for synchronous and asynchronous backup operations.
+          For synchronous backups, the value must be greater than zero milliseconds; infinite timeouts are not supported.
+          If the locking acquire-timeout is positive, a synchronous backup timeout must be strictly less than it.
           You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
         </xs:documentation>
       </xs:annotation>

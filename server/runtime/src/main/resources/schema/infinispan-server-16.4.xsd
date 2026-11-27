@@ -651,10 +651,11 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="replication-timeout" type="xs:string" default="10s">
+      <xs:attribute name="replication-timeout" type="xs:string" default="15s">
          <xs:annotation>
             <xs:documentation>
-               Configures replication timeouts for topology caches. Defaults to 10 seconds.
+               Configures replication timeouts for topology caches. Defaults to 15 seconds.
+               The timeout must be greater than zero milliseconds; infinite timeouts are not supported.
                You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
          </xs:annotation>
@@ -1966,8 +1967,9 @@
       <xs:attribute type="xs:string" name="jku-timeout" default="2m">
          <xs:annotation>
             <xs:documentation>
-               A timeout, in milliseconds for cached jwks when using jku claim.
-               After this timeout, the keys of need to be re-cached before use. Default value is 2 minutes.
+               The lifetime, in milliseconds, of cached JSON Web Keys when using the jku claim.
+               After this duration, the keys need to be fetched again before use. Default value is 2 minutes.
+               This is independent of the connection and read timeouts and does not limit the duration of a key fetch.
                You can optionally set one of the following units: ms (milliseconds), s (seconds), m (minutes), h (hours), d (days).
             </xs:documentation>
          </xs:annotation>

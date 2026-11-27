@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.serverPort;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.startHotRodServer;
@@ -8,11 +10,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.function.BiConsumer;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.server.core.test.Stoppable;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.testing.skip.StringLogAppender;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 /**
@@ -24,6 +31,17 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "server.hotrod.HotRodConfigurationTest")
 public class HotRodConfigurationTest extends AbstractInfinispanTest {
 
+   public void testDefaultTimeouts() {
+      HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
+      withClusteredServer(builder, (cfg, distSyncTimeout) -> {
+         assertEquals(10000, cfg.locking().lockAcquisitionTimeout());
+         assertEquals(15000, cfg.clustering().remoteTimeout());
+         assertTrue(cfg.clustering().stateTransfer().fetchInMemoryState());
+         assertEquals(cfg.clustering().stateTransfer().timeout(), 15000 + distSyncTimeout);
+         assertTrue(cfg.persistence().stores().isEmpty());
+      });
+   }
+
    public void testUserDefinedTimeouts() {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
       builder.topologyLockTimeout(26000).topologyReplTimeout(31000);
@@ -34,6 +52,87 @@ public class HotRodConfigurationTest extends AbstractInfinispanTest {
          assertEquals(cfg.clustering().stateTransfer().timeout(), 31000 + distSyncTimeout);
          assertTrue(cfg.persistence().stores().isEmpty());
       });
+   }
+
+   public void testValidationThrowsWhenReplTimeoutLessThanLockTimeout() {
+      HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
+      builder.topologyLockTimeout(20000).topologyReplTimeout(15000);
+      assertThatThrownBy(builder::validate)
+            .isInstanceOf(CacheConfigurationException.class)
+            .hasMessageContaining("ISPN006033");
+   }
+
+   public void testValidationWarnsWhenReplTimeoutEqualsLockTimeout() {
+      StringLogAppender logAppender = new StringLogAppender("org.infinispan.CONFIG",
+            Level.WARN,
+            t -> true,
+            PatternLayout.newBuilder().setPattern("%m").build());
+      logAppender.install();
+      try {
+         HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
+         builder.topologyLockTimeout(15000).topologyReplTimeout(15000);
+         builder.validate();
+         assertThat(logAppender).anyMatch(line -> line.contains("ISPN006031"));
+      } finally {
+         logAppender.uninstall();
+      }
+   }
+
+   @DataProvider(name = "immediateLockTimeouts")
+   public Object[][] immediateLockTimeouts() {
+      return new Object[][] {{0L}, {-1L}};
+   }
+
+   @Test(dataProvider = "immediateLockTimeouts")
+   public void testNonPositiveLockTimeoutWithFiniteReplTimeout(long lockTimeout) {
+      HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
+      builder.topologyLockTimeout(lockTimeout).topologyReplTimeout(15000);
+      withClusteredServer(builder, (cfg, distSyncTimeout) ->
+            assertEquals(lockTimeout, cfg.locking().lockAcquisitionTimeout()));
+   }
+
+   @DataProvider(name = "invalidTopologyTimeouts")
+   public Object[][] invalidTopologyTimeouts() {
+      return new Object[][] {
+            {10000L, -1L},
+            {-1L, -1L},
+            {10000L, 0L},
+            {0L, 0L},
+            {-1L, 0L}
+      };
+   }
+
+   @Test(dataProvider = "invalidTopologyTimeouts")
+   public void testValidationRejectsNonPositiveReplTimeout(long lockTimeout, long replTimeout) {
+      HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
+      builder.topologyLockTimeout(lockTimeout).topologyReplTimeout(replTimeout);
+      assertThatThrownBy(builder::build)
+            .isInstanceOf(CacheConfigurationException.class)
+            .hasMessageContaining("replication-timeout");
+   }
+
+   @DataProvider(name = "topologyTimeouts")
+   public Object[][] topologyTimeouts() {
+      return new Object[][] {
+            {60000L, 15000L, 75000L},
+            {Long.MAX_VALUE - 15000L, 15000L, Long.MAX_VALUE},
+            {Long.MAX_VALUE, 15000L, Long.MAX_VALUE},
+            {-1L, 15000L, -1L}
+      };
+   }
+
+   @Test(dataProvider = "topologyTimeouts")
+   public void testDerivedTopologyStateTransferTimeout(long distSyncTimeout, long replTimeout, long expectedTimeout) {
+      HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
+      builder.topologyReplTimeout(replTimeout);
+      Configuration cfg = new HotRodServer() {
+         Configuration topologyCacheConfig() {
+            configuration = builder.build();
+            return createTopologyCacheConfig(distSyncTimeout).build();
+         }
+      }.topologyCacheConfig();
+      assertEquals(expectedTimeout, cfg.clustering().stateTransfer().timeout());
+      assertEquals(replTimeout, cfg.clustering().remoteTimeout());
    }
 
    private void withClusteredServer(HotRodServerConfigurationBuilder builder,

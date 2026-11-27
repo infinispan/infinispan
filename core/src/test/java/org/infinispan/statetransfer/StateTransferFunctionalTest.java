@@ -1,6 +1,7 @@
 package org.infinispan.statetransfer;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.infinispan.test.TestingUtil.sequence;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,7 +35,6 @@ import org.infinispan.test.data.DelayedMarshallingPojo;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.testing.Exceptions;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.LockingMode;
@@ -305,7 +305,8 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
 
       ConfigurationBuilder configToUse = new ConfigurationBuilder();
       configToUse.read(configurationBuilder.build(), Combine.DEFAULT)
-            .clustering().remoteTimeout(1, TimeUnit.NANOSECONDS).stateTransfer().timeout(1, TimeUnit.NANOSECONDS);
+            .clustering().remoteTimeout(1, TimeUnit.MILLISECONDS).stateTransfer().timeout(2, TimeUnit.MILLISECONDS)
+            .locking().lockAcquisitionTimeout(0);
 
       assertEquals(1, cache1.getAdvancedCache().getDistributionManager().getCacheTopology().getMembers().size());
 
@@ -314,7 +315,9 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       Future<Cache<Object, Object>> future = fork(() -> embeddedCacheManager.getCache(cacheName));
       // This guarantees the timeout will hit
       checkPoint.awaitStrict("rebalance_begin", 10, SECONDS);
-      Exceptions.expectException(ExecutionException.class, TimeoutException.class, () -> future.get(10, SECONDS));
+      assertThatThrownBy(() -> future.get(10, SECONDS))
+            .isInstanceOf(ExecutionException.class)
+            .hasRootCauseInstanceOf(TimeoutException.class);
       // Let the operation finally complete
       checkPoint.triggerForever("merge");
 

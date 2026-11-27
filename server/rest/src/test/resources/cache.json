@@ -1,6 +1,7 @@
 {
   "distributed-cache": {
     "mode": "SYNC",
+    "remote-timeout": 40000,
     "l1-lifespan": 1200000,
     "segments": "2",
     "locking": {

@@ -61,19 +61,19 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
       c = getCacheConfiguration(cm, "transactional");
       assertTrue(c.transaction().transactionMode().isTransactional());
       assertEquals(32, c.locking().concurrencyLevel());
-      assertEquals(10000, c.locking().lockAcquisitionTimeout());
+      assertEquals(15000, c.locking().lockAcquisitionTimeout());
       assertInstanceOf(GenericTransactionManagerLookup.class, c.transaction().transactionManagerLookup());
 
       // test the "replicated" cache
       c = getCacheConfiguration(cm, "syncRepl");
       assertEquals(32, c.locking().concurrencyLevel());
-      assertEquals(10000, c.locking().lockAcquisitionTimeout());
+      assertEquals(15000, c.locking().lockAcquisitionTimeout());
       assertEquals(TransactionMode.NON_TRANSACTIONAL, c.transaction().transactionMode());
 
       // test the "txSyncRepl" cache
       c = getCacheConfiguration(cm, "txSyncRepl");
       assertEquals(32, c.locking().concurrencyLevel());
-      assertEquals(10000, c.locking().lockAcquisitionTimeout());
+      assertEquals(15000, c.locking().lockAcquisitionTimeout());
       assertInstanceOf(GenericTransactionManagerLookup.class, c.transaction().transactionManagerLookup());
    }
 

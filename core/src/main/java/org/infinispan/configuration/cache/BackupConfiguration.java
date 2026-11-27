@@ -14,7 +14,7 @@ import org.infinispan.configuration.parsing.Element;
 public class BackupConfiguration extends ConfigurationElement<BackupConfiguration> {
    public static final AttributeDefinition<String> SITE = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.SITE, null, String.class).autoPersist(false).immutable().build();
    public static final AttributeDefinition<BackupConfiguration.BackupStrategy> STRATEGY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.STRATEGY, BackupConfiguration.BackupStrategy.ASYNC).immutable().build();
-   public static final AttributeDefinition<TimeQuantity> REPLICATION_TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TIMEOUT, TimeQuantity.valueOf("15s")).parser(TimeQuantity.PARSER).build();
+   public static final AttributeDefinition<TimeQuantity> REPLICATION_TIMEOUT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.TIMEOUT, TimeQuantity.valueOf("10s")).parser(TimeQuantity.PARSER).build();
    public static final AttributeDefinition<BackupFailurePolicy> FAILURE_POLICY = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.BACKUP_FAILURE_POLICY, BackupFailurePolicy.WARN).build();
    public static final AttributeDefinition<String> FAILURE_POLICY_CLASS = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.FAILURE_POLICY_CLASS, null, String.class).immutable().build();
    public static final AttributeDefinition<Boolean> USE_TWO_PHASE_COMMIT = AttributeDefinition.builder(org.infinispan.configuration.parsing.Attribute.USE_TWO_PHASE_COMMIT, false).immutable().build();
@@ -68,8 +68,30 @@ public class BackupConfiguration extends ConfigurationElement<BackupConfiguratio
       return strategy() == BackupStrategy.SYNC;
    }
 
+   static void validateReplicationTimeout(BackupStrategy strategy, TimeQuantity timeout) {
+      if (strategy == BackupStrategy.SYNC && timeout.longValue() <= 0) {
+         throw org.infinispan.commons.logging.Log.CONFIG.attributeMustBeGreaterThanZero(timeout, Attribute.TIMEOUT);
+      }
+   }
+
+   /**
+    * Returns the cross-site replication timeout in milliseconds.
+    * For synchronous backups, this timeout must be greater than zero.
+    */
    public long replicationTimeout() {
       return attributes.attribute(REPLICATION_TIMEOUT).get().longValue();
+   }
+
+   @Override
+   public void validateUpdate(String parentName, BackupConfiguration other) {
+      validateReplicationTimeout(other.strategy(), other.attributes.attribute(REPLICATION_TIMEOUT).get());
+      super.validateUpdate(parentName, other);
+   }
+
+   @Override
+   public void update(String parentName, BackupConfiguration other) {
+      validateReplicationTimeout(other.strategy(), other.attributes.attribute(REPLICATION_TIMEOUT).get());
+      super.update(parentName, other);
    }
 
    /**

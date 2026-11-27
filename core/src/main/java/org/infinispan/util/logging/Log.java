@@ -1225,10 +1225,10 @@ public interface Log extends BasicLogger {
          "order to define a clustered cache", id = 343)
    CacheConfigurationException missingTransportConfiguration();
 
-   @Message(value = "reaperWakeUpInterval must be >= 0, we got %d", id = 344)
+   @Message(value = "reaperWakeUpInterval must be > 0, we got %d", id = 344)
    CacheConfigurationException invalidReaperWakeUpInterval(long timeout);
 
-   @Message(value = "completedTxTimeout must be >= 0, we got %d", id = 345)
+   @Message(value = "completedTxTimeout must be > 0, we got %d", id = 345)
    CacheConfigurationException invalidCompletedTxTimeout(long timeout);
 
 //   @Message(value = "Total Order based protocol not available for transaction mode %s", id = 346)
@@ -2176,7 +2176,7 @@ public interface Log extends BasicLogger {
    @Description("Before it starts automatic cross-site state transfer operations, the coordinator node checks all local nodes to determine if state transfer is necessary. This error occurs when the coordinator node gets an exception from one or more local nodes. Check that nodes in the cluster are online and operating as expected.")
    void unableToStartXSiteAutStateTransfer(String cacheName, String targetSite, @Cause Throwable t);
 
-   @Message(value = "State transfer timeout (%s) must be greater than or equal to the remote timeout (%s)", id = 636)
+   @Message(value = "State transfer timeout (%s) must be greater than the remote timeout (%s)", id = 636)
    CacheConfigurationException invalidStateTransferTimeout(String stateTransferTimeout, String remoteTimeout);
 
    @Message(value = "Timeout waiting for topology %d, current topology is %d", id = 637)
@@ -2514,4 +2514,40 @@ public interface Log extends BasicLogger {
    @Description("A tombstone cleanup round for cross-site replication failed, for example because a cluster member did not " +
          "respond in time. The next round retries the cleanup. If this message persists, check the health of the cluster.")
    void warnFailedIracTask(String cacheName, String failure);
+
+   @Message(value = "Clustered cache remote timeout (%s) cannot be less than backup site '%s' replication timeout (%s)", id = 734)
+   CacheConfigurationException invalidBackupReplicationTimeout(String remoteTimeout, String siteName, String replicationTimeout);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Clustered cache remote timeout (%s) is equal to backup site '%s' replication timeout (%s). Remote timeouts may mask cross-site replication timeouts.", id = 735)
+   void remoteTimeoutEqualsBackupReplicationTimeout(String remoteTimeout, String siteName, String replicationTimeout);
+
+   @Message(value = "Cache stop timeout must be greater than or equal to 0, we got %d", id = 736)
+   CacheConfigurationException invalidCacheStopTimeout(long timeout);
+
+   @Message(value = "Completed transaction timeout (%s) cannot be less than remote timeout (%s)", id = 737)
+   CacheConfigurationException invalidCompletedTxTimeoutLessThanRemoteTimeout(String completedTxTimeout, String remoteTimeout);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Completed transaction timeout (%s) is equal to remote timeout (%s). Remote transactions may be purged prematurely.", id = 738)
+   void completedTxTimeoutEqualsRemoteTimeout(String completedTxTimeout, String remoteTimeout);
+
+   // id = 739 no longer used
+
+   @Message(value = "Transport distributedSyncTimeout (%s) must be greater than cache remote timeout (%s)", id = 740)
+   CacheConfigurationException invalidDistributedSyncTimeout(String distributedSyncTimeout, String remoteTimeout);
+
+   @Message(value = "Clustered cache remote timeout (%s) cannot be less than lock acquisition timeout (%s)", id = 742)
+   CacheConfigurationException invalidRemoteTimeout(String remoteTimeout, String lockAcquisitionTimeout);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Clustered cache remote timeout (%s) is equal to lock acquisition timeout (%s). Remote timeouts may mask lock acquisition timeouts.", id = 743)
+   void remoteTimeoutEqualsLockAcquisitionTimeout(String remoteTimeout, String lockAcquisitionTimeout);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Cache stop timeout (%s) is less than %s timeout (%s). In-flight transactions may be aborted during cache stop.", id = 744)
+   void cacheStopTimeoutTooShort(String cacheStopTimeout, String operation, String timeout);
+
+   @Message(value = "Backup site '%s' replication timeout (%s) must be less than lock acquisition timeout (%s)", id = 745)
+   CacheConfigurationException backupReplicationTimeoutTooLong(String siteName, String replicationTimeout, String lockTimeout);
 }
