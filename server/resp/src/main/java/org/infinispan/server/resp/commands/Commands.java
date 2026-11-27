@@ -175,6 +175,7 @@ import org.infinispan.server.resp.commands.set.SRANDMEMBER;
 import org.infinispan.server.resp.commands.set.SREM;
 import org.infinispan.server.resp.commands.set.SSCAN;
 import org.infinispan.server.resp.commands.set.SUNION;
+import org.infinispan.server.resp.commands.set.SUNIONCARD;
 import org.infinispan.server.resp.commands.set.SUNIONSTORE;
 import org.infinispan.server.resp.commands.sortedset.ZADD;
 import org.infinispan.server.resp.commands.sortedset.ZCARD;
@@ -284,8 +285,8 @@ public final class Commands {
       // SET should always be first here
       ALL_COMMANDS[18] = new RespCommand[]{new SET(), new SETEX(), new SETNX(), new SMEMBERS(), new SISMEMBER(),
             new SMISMEMBER(), new SADD(), new STRLEN(), new SMOVE(), new SCARD(), new SINTER(), new SINTERSTORE(),
-            new SINTERCARD(), new SUNION(), new SUNIONSTORE(), new SPOP(), new SRANDMEMBER(), new SREM(), new SDIFF(),
-            new SDIFFSTORE(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SSCAN(), new SETRANGE(),
+            new SINTERCARD(), new SUNION(), new SUNIONCARD(), new SUNIONSTORE(), new SPOP(), new SRANDMEMBER(), new SREM(),
+            new SDIFF(), new SDIFFSTORE(), new SUBSCRIBE(), new SELECT(), new STRALGO(), new SCAN(), new SSCAN(), new SETRANGE(),
             new SORT(), new SORT_RO(), new SUBSTR(), new SCRIPT(), new SETBIT()};
       ALL_COMMANDS[19] = new RespCommand[]{new TTL(), new TYPE(), new TOUCH(), new TIME(), new TOPKRESERVE(), new TOPKADD(), new TOPKINCRBY(), new TOPKQUERY(), new TOPKLIST(), new TOPKINFO(), new TOPKCOUNT()};
       ALL_COMMANDS[20] = new RespCommand[]{new UNLINK(), new UNSUBSCRIBE(), new UNWATCH()};

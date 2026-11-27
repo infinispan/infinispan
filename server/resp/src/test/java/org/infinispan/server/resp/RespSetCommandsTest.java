@@ -19,6 +19,9 @@ import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.ValueScanCursor;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.IntegerOutput;
+import io.lettuce.core.protocol.CommandArgs;
 
 @Test(groups = "functional", testName = "server.resp.RespSetCommandsTest")
 public class RespSetCommandsTest extends SingleNodeRespBaseTest {
@@ -1216,5 +1219,128 @@ public class RespSetCommandsTest extends SingleNodeRespBaseTest {
       var copyArgs = new CopyArgs().replace(true);
       assertThat(redis.copy("copy-cross-set-r-src", "copy-cross-set-r-dst", copyArgs)).isTrue();
       assertThat(redis.smembers("copy-cross-set-r-dst")).containsExactlyInAnyOrder("a", "b", "c");
+   }
+
+   private Long sunioncard(String... args) {
+      CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
+      for (String arg : args) {
+         commandArgs.add(arg);
+      }
+      return redisConnection.sync().dispatch(new RespSingleNodeTest.SimpleCommand("SUNIONCARD"),
+            new IntegerOutput<>(StringCodec.UTF8), commandArgs);
+   }
+
+   public void testSunioncard() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.sadd("suc1", "a", "b", "c");
+      redis.sadd("suc2", "c", "d", "e");
+      redis.sadd("suc3", "a", "e", "f");
+
+      assertThat(sunioncard("2", "suc1", "suc2")).isEqualTo(5);
+      assertThat(sunioncard("3", "suc1", "suc2", "suc3")).isEqualTo(6);
+      assertThat(sunioncard("1", "suc1")).isEqualTo(3);
+      // The same key twice counts its members once
+      assertThat(sunioncard("2", "suc1", "suc1")).isEqualTo(3);
+      // Missing keys are empty sets
+      assertThat(sunioncard("2", "suc1", "suc-missing")).isEqualTo(3);
+      assertThat(sunioncard("2", "suc-missing", "suc-missing2")).isEqualTo(0);
+      // Agrees with SUNION
+      assertThat(sunioncard("3", "suc1", "suc2", "suc3")).isEqualTo(redis.sunion("suc1", "suc2", "suc3").size());
+      // Read-only
+      assertThat(redis.smembers("suc1")).containsExactlyInAnyOrder("a", "b", "c");
+      assertThat(redis.exists("suc-missing")).isZero();
+   }
+
+   public void testSunioncardLimit() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.sadd("sucl1", "a", "b", "c");
+      redis.sadd("sucl2", "c", "d", "e");
+
+      assertThat(sunioncard("2", "sucl1", "sucl2", "LIMIT", "3")).isEqualTo(3);
+      assertThat(sunioncard("2", "sucl1", "sucl2", "LIMIT", "1")).isEqualTo(1);
+      assertThat(sunioncard("2", "sucl1", "sucl2", "LIMIT", "5")).isEqualTo(5);
+      assertThat(sunioncard("2", "sucl1", "sucl2", "LIMIT", "100")).isEqualTo(5);
+      // 0 means no limit
+      assertThat(sunioncard("2", "sucl1", "sucl2", "LIMIT", "0")).isEqualTo(5);
+      assertThat(sunioncard("2", "sucl1", "sucl2", "limit", "3")).isEqualTo(3);
+      // LIMIT is a 64-bit integer, like in Redis
+      assertThat(sunioncard("2", "sucl1", "sucl2", "LIMIT", String.valueOf(Long.MAX_VALUE))).isEqualTo(5);
+   }
+
+   public void testSunioncardApprox() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.sadd("suca1", "a", "b", "c");
+      redis.sadd("suca2", "c", "d", "e");
+      // Small unions are counted exactly
+      assertThat(sunioncard("2", "suca1", "suca2", "APPROX")).isEqualTo(5);
+      assertThat(sunioncard("2", "suca1", "suca2", "approx")).isEqualTo(5);
+      assertThat(sunioncard("2", "suca-missing", "suca-missing2", "APPROX")).isEqualTo(0);
+
+      // Large union: 15000 distinct members across two overlapping sets
+      String[] first = new String[10000];
+      String[] second = new String[10000];
+      for (int i = 0; i < 10000; i++) {
+         first[i] = "m" + i;
+         second[i] = "m" + (i + 5000);
+      }
+      redis.sadd("suca-big1", first);
+      redis.sadd("suca-big2", second);
+      assertThat(sunioncard("2", "suca-big1", "suca-big2")).isEqualTo(15000);
+      // HyperLogLog standard error is ~0.81%; allow 3%
+      assertThat(sunioncard("2", "suca-big1", "suca-big2", "APPROX")).isBetween(14550L, 15450L);
+
+      // LIMIT applies in approximate mode, in either order
+      assertThat(sunioncard("2", "suca-big1", "suca-big2", "APPROX", "LIMIT", "100")).isEqualTo(100);
+      assertThat(sunioncard("2", "suca-big1", "suca-big2", "LIMIT", "100", "APPROX")).isEqualTo(100);
+      assertThat(sunioncard("2", "suca1", "suca2", "APPROX", "LIMIT", "100")).isEqualTo(5);
+      // A limit close to the union's size stops early; a limit above it returns the estimate
+      assertThat(sunioncard("2", "suca-big1", "suca-big2", "APPROX", "LIMIT", "14000")).isEqualTo(14000);
+      assertThat(sunioncard("2", "suca-big1", "suca-big2", "APPROX", "LIMIT", "20000")).isBetween(14550L, 15450L);
+   }
+
+   public void testSunioncardWrongType() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.sadd("sucwt-set", "a");
+      assertWrongType(() -> redis.set("sucwt-string", "value"), () -> sunioncard("2", "sucwt-set", "sucwt-string"));
+      assertWrongType(() -> redis.rpush("sucwt-list", "value"), () -> sunioncard("1", "sucwt-list"));
+      assertThatThrownBy(() -> sunioncard("2", "sucwt-set", "sucwt-string", "APPROX"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("WRONGTYPE");
+   }
+
+   public void testSunioncardErrors() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.sadd("suce", "a", "b");
+
+      assertThatThrownBy(() -> sunioncard("0", "suce"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR numkeys should be greater than 0");
+      assertThatThrownBy(() -> sunioncard("-1", "suce"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR numkeys should be greater than 0");
+      assertThatThrownBy(() -> sunioncard("x", "suce"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR numkeys should be greater than 0");
+      assertThatThrownBy(() -> sunioncard("3", "suce", "suce2"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR Number of keys can't be greater than number of args");
+      assertThatThrownBy(() -> sunioncard(String.valueOf(Integer.MAX_VALUE), "suce"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR Number of keys can't be greater than number of args");
+      assertThatThrownBy(() -> sunioncard("1", "suce", "LIMIT", "-1"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR LIMIT can't be negative");
+      assertThatThrownBy(() -> sunioncard("1", "suce", "LIMIT", "abc"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR LIMIT can't be negative");
+      assertThatThrownBy(() -> sunioncard("1", "suce", "LIMIT"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR syntax error");
+      assertThatThrownBy(() -> sunioncard("1", "suce", "WITHSCORES"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR syntax error");
+      assertThatThrownBy(() -> sunioncard("1"))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessage("ERR wrong number of arguments for 'sunioncard' command");
    }
 }
