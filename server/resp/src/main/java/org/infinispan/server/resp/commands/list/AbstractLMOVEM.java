@@ -2,13 +2,13 @@ package org.infinispan.server.resp.commands.list;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.util.concurrent.CompletableFutures;
 import org.infinispan.multimap.impl.EmbeddedMultimapListCache;
@@ -61,12 +61,24 @@ public abstract class AbstractLMOVEM extends RespCommand {
 
       long timeout = 0;
       if (withTimeout) {
-         long timeoutSeconds = ArgumentUtils.toLong(arguments.get(4));
+         double timeoutSeconds = ArgumentUtils.toDouble(arguments.get(4));
          if (timeoutSeconds < 0) {
             handler.writer().mustBePositive();
             return null;
          }
-         timeout = Duration.of(timeoutSeconds, ChronoUnit.SECONDS).toMillis();
+         if (Double.isNaN(timeoutSeconds)) {
+            handler.writer().customError("timeout is not a float or out of range");
+            return null;
+         }
+         // Round up like Redis, so a positive sub-millisecond timeout does not become 0 (block forever).
+         double timeoutMillis = Math.ceil(timeoutSeconds * Duration.ofSeconds(1).toMillis());
+         // Reject timeouts whose deadline would overflow the nanosecond clock (including +inf).
+         long now = Math.max(handler.respServer().getTimeService().time(), 0);
+         if (timeoutMillis > (double) (Long.MAX_VALUE - now) / TimeUnit.MILLISECONDS.toNanos(1)) {
+            handler.writer().customError("timeout is out of range");
+            return null;
+         }
+         timeout = (long) timeoutMillis;
       }
 
       int count = 1;

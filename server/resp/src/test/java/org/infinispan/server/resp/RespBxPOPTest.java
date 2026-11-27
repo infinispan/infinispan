@@ -36,14 +36,17 @@ import org.testng.annotations.Test;
 
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.LMPopArgs;
+import io.lettuce.core.LMoveArgs;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisFuture;
+import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.ArrayOutput;
+import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ProtocolKeyword;
 
@@ -815,4 +818,166 @@ public class RespBxPOPTest extends SingleNodeRespBaseTest {
       assertThat(execResult).hasSize(1);
       assertThat((List<Object>) execResult.get(0)).isEmpty();
    }
+
+   // BLMOVE tests
+
+   private RedisFuture<String> blmoveAsync(String source, String dest, LMoveArgs args, double timeout) {
+      RedisAsyncCommands<String, String> async = newConnection().async();
+      return registerListener(() -> async.blmove(source, dest, args, timeout));
+   }
+
+   public void testBLMOVE() throws Exception {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      LMoveArgs args = isRight() ? LMoveArgs.Builder.rightLeft() : LMoveArgs.Builder.leftRight();
+      RedisFuture<String> cf = blmoveAsync("blm-src", "blm-dst", args, 0);
+      redis.rpush("blm-src", "a", "b", "c");
+      String expected = isRight() ? "c" : "a";
+      assertThat(cf.get(10, TimeUnit.SECONDS)).isEqualTo(expected);
+      assertThat(redis.lrange("blm-src", 0, -1)).containsExactly(isRight() ? new String[]{"a", "b"} : new String[]{"b", "c"});
+      assertThat(redis.lrange("blm-dst", 0, -1)).containsExactly(expected);
+      verifyListenerUnregistered();
+   }
+
+   public void testBLMOVEWithExistingData() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.rpush("blm-exist-src", "a", "b", "c");
+      redis.rpush("blm-exist-dst", "x");
+      assertThat(redis.blmove("blm-exist-src", "blm-exist-dst", LMoveArgs.Builder.rightLeft(), 0)).isEqualTo("c");
+      assertThat(redis.lrange("blm-exist-src", 0, -1)).containsExactly("a", "b");
+      assertThat(redis.lrange("blm-exist-dst", 0, -1)).containsExactly("c", "x");
+   }
+
+   public void testBLMOVESameListRotates() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.rpush("blm-rot", "a", "b", "c");
+      assertThat(redis.blmove("blm-rot", "blm-rot", LMoveArgs.Builder.leftRight(), 0)).isEqualTo("a");
+      assertThat(redis.lrange("blm-rot", 0, -1)).containsExactly("b", "c", "a");
+   }
+
+   public void testBLMOVETimeout() throws Exception {
+      RedisFuture<String> cf = blmoveAsync("blm-to-src", "blm-to-dst", LMoveArgs.Builder.leftRight(), 1);
+      timeService.advance(TimeUnit.SECONDS.toMillis(2));
+      eventually(cf::isDone);
+      assertThat(cf.get()).isNull();
+      assertThat(redisConnection.sync().exists("blm-to-dst")).isZero();
+      verifyListenerUnregistered();
+   }
+
+   public void testBLMOVEFractionalTimeout() throws Exception {
+      // Like BLPOP/BLMPOP, the BLMOVE timeout is a double
+      RedisFuture<String> cf = blmoveAsync("blm-frac-src", "blm-frac-dst", LMoveArgs.Builder.leftRight(), 0.5);
+      assertThat(cf.isDone()).isFalse();
+      timeService.advance(TimeUnit.SECONDS.toMillis(1));
+      eventually(cf::isDone);
+      assertThat(cf.get()).isNull();
+      verifyListenerUnregistered();
+   }
+
+   public void testBLMOVESubMillisecondTimeoutExpires() throws Exception {
+      // A positive timeout below 1ms is rounded up, not truncated to 0 (which would block forever)
+      RedisFuture<String> cf = blmoveAsync("blm-subms-src", "blm-subms-dst", LMoveArgs.Builder.leftRight(), 0.0001);
+      timeService.advance(TimeUnit.SECONDS.toMillis(1));
+      eventually(cf::isDone);
+      assertThat(cf.get()).isNull();
+      verifyListenerUnregistered();
+   }
+
+   public void testBLMOVETimeoutOutOfRange() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      for (String timeout : new String[]{"+inf", "1e300"}) {
+         assertThatThrownBy(() -> redis.dispatch(BLMOVE_CMD, new StatusOutput<>(codec),
+               new CommandArgs<>(codec).addKey("blm-oor-src").addKey("blm-oor-dst").add("LEFT").add("RIGHT").add(timeout)))
+               .isInstanceOf(RedisCommandExecutionException.class)
+               .hasMessageContaining("ERR timeout is out of range");
+      }
+   }
+
+   public void testBLMOVEDestinationBecomesWrongTypeWhileBlocked() throws Exception {
+      // Like Redis, a blocked BLMOVE fails with WRONGTYPE when the destination is no longer a list
+      RedisCommands<String, String> redis = redisConnection.sync();
+      RedisFuture<String> cf = blmoveAsync("blm-dwt-src", "blm-dwt-dst", LMoveArgs.Builder.leftRight(), 0);
+      redis.set("blm-dwt-dst", "value");
+      redis.rpush("blm-dwt-src", "a");
+      assertThatThrownBy(() -> cf.get(10, TimeUnit.SECONDS))
+            .isInstanceOf(ExecutionException.class)
+            .hasMessageContaining("WRONGTYPE");
+      assertThat(redis.lrange("blm-dwt-src", 0, -1)).containsExactly("a");
+      assertThat(redis.get("blm-dwt-dst")).isEqualTo("value");
+      verifyListenerUnregistered();
+   }
+
+   public void testBLMOVESourceBecomesWrongTypeKeepsBlocking() throws Exception {
+      // Like Redis, a blocked BLMOVE keeps waiting when the source is overwritten with a non-list
+      RedisCommands<String, String> redis = redisConnection.sync();
+      RedisFuture<String> cf = blmoveAsync("blm-swt-src", "blm-swt-dst", LMoveArgs.Builder.leftRight(), 0);
+      redis.set("blm-swt-src", "value");
+      assertThat(cf.isDone()).isFalse();
+      redis.del("blm-swt-src");
+      redis.rpush("blm-swt-src", "a");
+      assertThat(cf.get(10, TimeUnit.SECONDS)).isEqualTo("a");
+      assertThat(redis.lrange("blm-swt-dst", 0, -1)).containsExactly("a");
+      verifyListenerUnregistered();
+   }
+
+   public void testBLMOVENegativeTimeout() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertThatThrownBy(() -> redis.blmove("blm-neg-src", "blm-neg-dst", LMoveArgs.Builder.leftRight(), -1))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR value is out of range, must be positive");
+   }
+
+   public void testBLMOVEInvalidDirection() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      assertThatThrownBy(() -> redis.dispatch(BLMOVE_CMD, new StatusOutput<>(codec),
+            new CommandArgs<>(codec).addKey("blm-dir-src").addKey("blm-dir-dst").add("UP").add("RIGHT").add("0")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR syntax error");
+   }
+
+   public void testBLMOVERejectsCountArguments() {
+      // Unlike BLMOVEM, BLMOVE takes no COUNT|EXACTLY block
+      RedisCommands<String, String> redis = redisConnection.sync();
+      RedisCodec<String, String> codec = StringCodec.UTF8;
+      assertThatThrownBy(() -> redis.dispatch(BLMOVE_CMD, new StatusOutput<>(codec),
+            new CommandArgs<>(codec).addKey("blm-cnt-src").addKey("blm-cnt-dst")
+                  .add("LEFT").add("RIGHT").add("0").add("COUNT").add("2").add("OBO")))
+            .isInstanceOf(RedisCommandExecutionException.class)
+            .hasMessageContaining("ERR wrong number of arguments for 'blmove' command");
+   }
+
+   public void testBLMOVEWrongTypeSource() {
+      RedisCommands<String, String> redis = redisConnection.sync();
+      assertWrongType(() -> redis.set("blm-wt-src", "value"),
+            () -> redis.blmove("blm-wt-src", "blm-wt-dst", LMoveArgs.Builder.leftRight(), 0));
+   }
+
+   public void testBLMOVEInsideMulti() {
+      // Inside MULTI a blocking command must not block: empty source replies nil immediately
+      RedisCommands<String, String> redis = redisConnection.sync();
+      redis.rpush("blm-multi-full", "a");
+      redis.multi();
+      redis.blmove("blm-multi-empty", "blm-multi-dst", LMoveArgs.Builder.leftRight(), 0);
+      redis.blmove("blm-multi-full", "blm-multi-dst", LMoveArgs.Builder.leftRight(), 0);
+      TransactionResult execResult = redis.exec();
+      assertThat(execResult).hasSize(2);
+      assertThat((String) execResult.get(0)).isNull();
+      assertThat((String) execResult.get(1)).isEqualTo("a");
+      assertThat(redis.lrange("blm-multi-dst", 0, -1)).containsExactly("a");
+   }
+
+   private static final ProtocolKeyword BLMOVE_CMD = new ProtocolKeyword() {
+      private final byte[] bytes = "BLMOVE".getBytes(StandardCharsets.US_ASCII);
+
+      @Override
+      public byte[] getBytes() {
+         return bytes;
+      }
+
+      @Override
+      public String name() {
+         return "BLMOVE";
+      }
+   };
 }

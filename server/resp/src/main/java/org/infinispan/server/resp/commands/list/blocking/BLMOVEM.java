@@ -1,6 +1,7 @@
 package org.infinispan.server.resp.commands.list.blocking;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -40,8 +41,12 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public class BLMOVEM extends AbstractLMOVEM implements Resp3Command {
    public BLMOVEM() {
-      super(-6,
+      this(-6,
             AclCategory.WRITE.mask() | AclCategory.LIST.mask() | AclCategory.SLOW.mask() | AclCategory.BLOCKING.mask());
+   }
+
+   protected BLMOVEM(int arity, long aclMask) {
+      super(arity, aclMask);
    }
 
    @Override
@@ -50,25 +55,35 @@ public class BLMOVEM extends AbstractLMOVEM implements Resp3Command {
       LmovemConfig config = parseArguments(handler, arguments, true);
       if (config == null) return handler.myStage();
 
+      return handler.stageToReturn(moveOrBlock(handler, ctx, config), ctx, ResponseWriter.ARRAY_BULK_STRING_OR_NIL);
+   }
+
+   /**
+    * Moves immediately if the source has elements, otherwise blocks until it does or the timeout expires.
+    * Inside MULTI it never blocks.
+    */
+   protected CompletionStage<Collection<byte[]>> moveOrBlock(Resp3Handler handler, ChannelHandlerContext ctx,
+                                                             LmovemConfig config) {
       EmbeddedMultimapListCache<byte[], byte[]> listMultimap = handler.getListMultimap();
-      CompletionStage<Collection<byte[]>> moveStage = executeLmovem("BLMOVEM", listMultimap, config);
+      CompletionStage<Collection<byte[]>> moveStage = executeLmovem(getName(), listMultimap, config);
 
       if (TransactionContext.isInTransactionContext(ctx)) {
-         return handler.stageToReturn(moveStage, ctx, ResponseWriter.ARRAY_BULK_STRING_OR_NIL);
+         return moveStage;
       }
 
-      return handler.stageToReturn(moveStage.thenCompose(v -> {
+      return moveStage.thenCompose(v -> {
          if (v != null && !v.isEmpty()) {
             return CompletableFuture.completedFuture(v);
          }
-         return addSubscriber(config, handler);
-      }), ctx, ResponseWriter.ARRAY_BULK_STRING_OR_NIL);
+         return addSubscriber(config, handler, getName());
+      });
    }
 
-   private CompletableFuture<Collection<byte[]>> addSubscriber(LmovemConfig config, Resp3Handler handler) {
+   private CompletableFuture<Collection<byte[]>> addSubscriber(LmovemConfig config, Resp3Handler handler,
+                                                              String command) {
       AdvancedCache<byte[], Object> cache = handler.typedCache(null);
       DataConversion vc = cache.getValueDataConversion();
-      MoveListener listener = new MoveListener(handler, cache, config);
+      MoveListener listener = new MoveListener(handler, cache, config, command);
       EventListenerKeysFilter filter = new EventListenerKeysFilter(Stream.of(config.source()));
       long timeout = config.timeout();
       long deadline = AbstractBlockingPop.deadline(handler, timeout);
@@ -109,10 +124,11 @@ public class BLMOVEM extends AbstractLMOVEM implements Resp3Command {
       private final Resp3Handler handler;
       private final MoveSynchronizer synchronizer;
 
-      private MoveListener(Resp3Handler handler, AdvancedCache<byte[], Object> cache, LmovemConfig config) {
+      private MoveListener(Resp3Handler handler, AdvancedCache<byte[], Object> cache, LmovemConfig config,
+                           String command) {
          this.cache = cache;
          this.handler = handler;
-         this.synchronizer = new MoveSynchronizer(handler.getListMultimap(), config);
+         this.synchronizer = new MoveSynchronizer(handler.getListMultimap(), config, command);
 
          synchronizer.resultFuture.whenComplete((ignore_v, ignore_t) -> {
             deleteTimer();
@@ -156,36 +172,62 @@ public class BLMOVEM extends AbstractLMOVEM implements Resp3Command {
       final CompletableFuture<Collection<byte[]>> resultFuture;
       private final EmbeddedMultimapListCache<byte[], byte[]> multimapList;
       private final LmovemConfig config;
+      private final String command;
       private final BiConsumer<? super Collection<byte[]>, ? super Throwable> whenCompleteConsumer;
       private volatile boolean listenerAdded;
 
-      MoveSynchronizer(EmbeddedMultimapListCache<byte[], byte[]> multimapList, LmovemConfig config) {
+      MoveSynchronizer(EmbeddedMultimapListCache<byte[], byte[]> multimapList, LmovemConfig config, String command) {
          this.eventQueue = new ArrayDeque<>();
          this.resultFuture = new CompletableFuture<>();
          this.multimapList = multimapList;
          this.config = config;
+         this.command = command;
          this.whenCompleteConsumer = (v, t) -> {
             if (t != null) {
                if (!RespUtil.isWrongTypeError(t)) {
                   resultFuture.completeExceptionally(t);
+               } else {
+                  onWrongType();
                }
             } else if (v != null && !v.isEmpty()) {
                resultFuture.complete(v);
             } else {
-               boolean hasMore;
-               synchronized (this) {
-                  eventQueue.poll();
-                  hasMore = !eventQueue.isEmpty();
-               }
-               if (hasMore) {
-                  tryMove();
-               }
+               nextAttempt();
             }
          };
       }
 
+      /**
+       * Like Redis, a source that is not a list keeps the client blocked, but a destination that is not a list
+       * fails the command with WRONGTYPE.
+       */
+      private void onWrongType() {
+         if (Arrays.equals(config.source(), config.destination())) {
+            nextAttempt();
+            return;
+         }
+         multimapList.get(config.destination()).whenComplete((ignore, t) -> {
+            if (t != null) {
+               resultFuture.completeExceptionally(t);
+            } else {
+               nextAttempt();
+            }
+         });
+      }
+
+      private void nextAttempt() {
+         boolean hasMore;
+         synchronized (this) {
+            eventQueue.poll();
+            hasMore = !eventQueue.isEmpty();
+         }
+         if (hasMore) {
+            tryMove();
+         }
+      }
+
       private void tryMove() {
-         AbstractLMOVEM.executeLmovem("BLMOVEM", multimapList, config).whenComplete(whenCompleteConsumer);
+         AbstractLMOVEM.executeLmovem(command, multimapList, config).whenComplete(whenCompleteConsumer);
       }
 
       void onListenerAdded() {
