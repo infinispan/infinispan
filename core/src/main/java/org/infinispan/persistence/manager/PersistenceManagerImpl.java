@@ -90,6 +90,7 @@ import org.infinispan.persistence.support.DelegatingNonBlockingStore;
 import org.infinispan.persistence.support.SegmentPublisherWrapper;
 import org.infinispan.persistence.support.SingleSegmentPublisher;
 import org.infinispan.reactive.FlowableTimeoutAfterRequest;
+import org.infinispan.reactive.internal.TimeServiceScheduler;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.util.concurrent.BlockingManager;
@@ -217,7 +218,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
       isInvalidationCache = configuration.clustering().cacheMode().isInvalidation();
       // Initialize even when no stores are configured at startup, as stores can be added dynamically (e.g. Hot Rod migration)
       TIMEOUT_FLOWABLE = Flowable.error(log.storeTimeoutBetweenEntries(configuration.clustering().remoteTimeout()));
-      rxTimeoutScheduler = Schedulers.from(timeoutExecutor);
+      // Uses a scheduler that has a monotonic source of time for scheduling operations.
+      rxTimeoutScheduler = new TimeServiceScheduler(Schedulers.from(timeoutExecutor), timeService);
       if (!enabled)
          return;
       // Blocks here waiting for stores and availability task to start if needed
