@@ -3,6 +3,7 @@ package org.infinispan.spring.embedded.provider;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
 
 import org.infinispan.Cache;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -32,6 +33,7 @@ public class SpringEmbeddedCacheManager implements CacheManager {
    private final EmbeddedCacheManager nativeCacheManager;
    private final ConcurrentMap<String, SpringCache> springCaches = new ConcurrentHashMap<>();
    private final boolean reactive;
+   private final Predicate<String> putForExternalReadOnLoad;
 
    /**
     * @param nativeCacheManager Underlying cache manager
@@ -44,10 +46,39 @@ public class SpringEmbeddedCacheManager implements CacheManager {
     * @param nativeCacheManager Underlying cache manager
     */
    public SpringEmbeddedCacheManager(final EmbeddedCacheManager nativeCacheManager, boolean reactive) {
+      this(nativeCacheManager, reactive, false);
+   }
+
+   /**
+    * @param nativeCacheManager       Underlying cache manager
+    * @param reactive                 Whether reactive mode is enabled
+    * @param putForExternalReadOnLoad Whether values computed by a value loader on a cache miss
+    *                                 (e.g. {@code @Cacheable(sync = true)}) are stored with
+    *                                 {@link Cache#putForExternalRead(Object, Object)}. In invalidation mode this
+    *                                 avoids invalidating the key on the other nodes when a node merely populates
+    *                                 its local cache from the source of truth.
+    * @see SpringEmbeddedCache
+    */
+   public SpringEmbeddedCacheManager(final EmbeddedCacheManager nativeCacheManager, boolean reactive,
+                                     boolean putForExternalReadOnLoad) {
+      this(nativeCacheManager, reactive, cacheName -> putForExternalReadOnLoad);
+   }
+
+   /**
+    * @param nativeCacheManager       Underlying cache manager
+    * @param reactive                 Whether reactive mode is enabled
+    * @param putForExternalReadOnLoad Selects, by cache name, the caches for which values computed by a value loader
+    *                                 on a cache miss are stored with {@link Cache#putForExternalRead(Object, Object)}
+    * @see SpringEmbeddedCache
+    */
+   public SpringEmbeddedCacheManager(final EmbeddedCacheManager nativeCacheManager, boolean reactive,
+                                     Predicate<String> putForExternalReadOnLoad) {
       Assert.notNull(nativeCacheManager,
                      "A non-null instance of EmbeddedCacheManager needs to be supplied");
+      Assert.notNull(putForExternalReadOnLoad, "A non-null putForExternalReadOnLoad predicate needs to be supplied");
       this.nativeCacheManager = nativeCacheManager;
       this.reactive = reactive;
+      this.putForExternalReadOnLoad = putForExternalReadOnLoad;
    }
 
    @Override
@@ -55,7 +86,7 @@ public class SpringEmbeddedCacheManager implements CacheManager {
       return springCaches.computeIfAbsent(name, n -> {
          final Cache<Object, Object> nativeCache = this.nativeCacheManager.getCache(n);
 
-         return new SpringCache(nativeCache, reactive);
+         return new SpringEmbeddedCache(nativeCache, reactive, putForExternalReadOnLoad.test(n));
       });
    }
 
