@@ -154,6 +154,29 @@ public class OperationChannel implements MessagePassingQueue.Consumer<HotRodOper
       return f != null && f.isDone();
    }
 
+   /**
+    * Returns a stage that completes once this channel accepts requests: it's connected, authenticated if needed,
+    * and the protocol version is negotiated with the server. After that, {@link #isOpSupported(short)} reflects the
+    * operations the server supports.
+    *
+    * <p>
+    * The stage is already complete when the channel accepts requests. It completes exceptionally if the connection
+    * attempt fails, or if there is no connection attempt in progress. If the channel is closed before it connects, it
+    * completes normally even though no codec was negotiated.
+    * </p>
+    *
+    * @return a stage that completes once this channel accepts requests, or exceptionally if it can't connect
+    * @throws TransportException never thrown directly; a stage failed with it is returned when no connection
+    *                            attempt is in progress
+    */
+   public CompletionStage<Void> acceptingRequests() {
+      CompletableFuture<Void> cf = attemptedConnect.get();
+      if (cf == null)
+         return CompletableFuture.failedFuture(new TransportException("No connection attempt in progress", address));
+
+      return cf.minimalCompletionStage();
+   }
+
    public void markAcceptingRequests() {
       channel.eventLoop().submit(() -> {
          // We can't mark it as complete until we are authenticated
