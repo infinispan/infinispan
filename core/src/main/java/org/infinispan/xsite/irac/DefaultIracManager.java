@@ -53,6 +53,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.metadata.impl.IracMetadata;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -73,9 +74,10 @@ import org.infinispan.xsite.status.SiteState;
 import org.infinispan.xsite.status.TakeOfflineManager;
 
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.CompletableSource;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Notification;
+import io.reactivex.rxjava3.core.Single;
 
 /**
  * Default implementation of {@link IracManager}.
@@ -115,6 +117,8 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
    CommandsFactory commandsFactory;
    @Inject
    IracTombstoneManager iracTombstoneManager;
+   @Inject
+   PersistenceManager persistenceManager;
 
    private final Map<Object, IracManagerKeyState> updatedKeys;
    private final Collection<IracXSiteBackup> asyncBackups;
@@ -350,11 +354,31 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          return sendClearUpdate();
       }
 
+      // A round loads every queued key, even while the backups back off, that is, the back-off only holds the sends.
+      // A write during a back-off starts a round that loads the kept keys again before the back-off has elapsed.
+      // This is an intentional design choice, the loads follow the write rate, a round at a time.
       return Flowable.fromIterable(updatedKeys.values())
             .filter(this::canStateBeSent)
-            .concatMapMaybe(this::fetchEntry)
+            // A failed load becomes an error notification instead of failing the round.
+            // An individual entry failing should not stall other entries.
+            .concatMapSingle(state -> fetchEntry(state).materialize())
             .buffer(batchSize)
-            .concatMapCompletable(this::sendUpdateBatch)
+            .concatMapSingle(this::sendLoadedBatch)
+            // reduce, not any(), or it could cancel the full round at the first failed entry.
+            .reduce(false, Boolean::logicalOr)
+            .doOnSuccess(retry -> {
+               // Retry the failed loads and the missing entries after each backup's back-off.
+               // It is enabled only after the round has sent every other key, so failed loads don't block other entries.
+               // Avoid a redirected retry, as it could potentially enter a busy-loop.
+               if (retry) {
+                  // This is the *backup's* back-off, and not of a specific key, and this is an intentional design choice.
+                  // We do not want to control per-key, only directly from the backup's state.
+                  // Therefore, this will intentionally follow the backup maximum back-off period (up to 5m).
+                  // In addition to not handling back-off per-key, we do not want keys to retry when we know the backup is not responding.
+                  asyncBackups.forEach(IracXSiteBackup::enableBackOff);
+               }
+            })
+            .ignoreElement()
             .onErrorComplete(t -> {
                onUnexpectedThrowable(t);
                return true;
@@ -383,37 +407,83 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
       return dInfo.isPrimary() && state.canSend();
    }
 
+   /**
+    * Loads the key's entry and tombstone to send to the remote site(s).
+    * <p>
+    * A failure to load the entry does not mean the entry is missing, so the key is never discarded. It is marked to be
+    * retried and the failure is propagated, so the round backs off once it completes.
+    * </p>
+    *
+    * @param state The key's state.
+    * @return The key's entry and tombstone, or an error if the entry failed to load.
+    */
    private Maybe<IracStateData> fetchEntry(IracManagerKeyState state) {
-      return Maybe.fromCompletionStage(clusteringDependentLogic.getEntryLoader()
+      CompletionStage<IracStateData> cs = clusteringDependentLogic.getEntryLoader()
             .loadAndStoreInDataContainer(state.getKey(), state.getSegment())
-            .thenApply(e -> new IracStateData(state, e, iracTombstoneManager.getTombstone(state.getKey())))
-            .exceptionally(throwable -> {
-               log.debugf(throwable, "[IRAC] Failed to load entry to send to remote sites. It will be retried. State=%s", state);
+            .thenApply(e -> new IracStateData(state, e, iracTombstoneManager.getTombstone(state.getKey())));
+      return Maybe.fromCompletionStage(cs)
+            .doOnError(t -> {
+               log.debugf(t, "[IRAC] Failed to load entry to send to remote sites. It will be retried. State=%s", state);
                state.retry();
-               iracExecutor.run();
-               return null;
-            }));
+            });
    }
 
-   private CompletableSource sendUpdateBatch(Collection<? extends IracStateData> batch) {
-      int size = batch.size();
+   /**
+    * Sends the keys loaded successfully in the batch to the remote site(s).
+    *
+    * @param loaded The outcome of loading each key in the batch: the key's entry and tombstone, or the load failure.
+    * @return A {@link Single} completed with {@code true} if at least one key in the batch must be retried after the
+    *         back-off, because it failed to load or its entry is missing, once the batch is sent.
+    */
+   private Single<Boolean> sendLoadedBatch(List<Notification<IracStateData>> loaded) {
+      List<IracStateData> batch = new ArrayList<>(loaded.size());
+      boolean loadFailed = false;
+      for (Notification<IracStateData> notification : loaded) {
+         if (notification.isOnNext()) {
+            batch.add(notification.getValue());
+         } else if (notification.isOnError()) {
+            loadFailed = true;
+         }
+      }
+      final boolean failed = loadFailed;
+      return sendUpdateBatch(batch)
+            .map(hasMissingEntries -> hasMissingEntries || failed);
+   }
+
+   /**
+    * Sends the keys in the batch to the remote site(s).
+    * <p>
+    * Keys without an entry and without a tombstone are discarded when the entry can never be loaded, otherwise they are
+    * kept to be retried after the back-off. The caller enables the back-off once the round completes, so a batch with
+    * nothing to send never blocks the batches after it.
+    * </p>
+    *
+    * @param batch The keys loaded in this round.
+    * @return A {@link Single} completed with {@code true} if at least one key in the batch is kept to be retried, once
+    *         the batch is sent.
+    */
+   private Single<Boolean> sendUpdateBatch(Collection<? extends IracStateData> batch) {
       boolean trace = log.isTraceEnabled();
 
       if (trace) {
-         log.tracef("[IRAC] Batch ready to send remote site with %d keys", size);
+         log.tracef("[IRAC] Batch ready to send remote site with %d keys", batch.size());
       }
 
-      if (size == 0) {
+      if (batch.isEmpty()) {
          if (trace) {
             log.trace("[IRAC] Batch not sent, reason: batch is empty");
          }
-         return Completable.complete();
+         return Single.just(false);
       }
+
+      Collection<IracStateData> toSend = new ArrayList<>(batch.size());
+      boolean hasMissingEntries = filterMissingEntries(batch, toSend);
+      int size = toSend.size();
 
       AggregateCompletionStage<Void> aggregation = CompletionStages.aggregateCompletionStage();
       for (IracXSiteBackup backup : asyncBackups) {
          if (backup.isBackOffEnabled()) {
-            for (IracStateData data : batch) {
+            for (IracStateData data : toSend) {
                data.state.retry();
             }
             continue;
@@ -422,18 +492,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          IracPutManyRequest cmd = commandsFactory.buildIracPutManyCommand(size);
          Collection<IracManagerKeyState> invalidState = new ArrayList<>(size);
          Collection<IracManagerKeyState> validState = new ArrayList<>(size);
-         for (IracStateData data : batch) {
-            if (data.entry == null && data.tombstone == null) {
-               // Entry may not be loadable yet if passivation is still in progress after eviction.
-               // Retry instead of discarding so the next batch cycle can find the entry in the store.
-               if (log.isTraceEnabled()) {
-                  log.tracef("[IRAC] Entry and tombstone both null for key %s, scheduling retry", data.state.getKeyInfo());
-               }
-               data.state.retry();
-               iracExecutor.run();
-               continue;
-            }
-
+         for (IracStateData data : toSend) {
             if (data.state.wasSuccessful(backup))
                continue;
 
@@ -471,7 +530,7 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
                // safety net; should never happen
                // onUnexpectedThrowable() log the exception!
                onUnexpectedThrowable(throwable);
-               for (IracStateData data : batch) {
+               for (IracStateData data : toSend) {
                   data.state.retry();
                }
             }
@@ -486,7 +545,66 @@ public class DefaultIracManager implements IracManager, JmxStatisticsExposer {
          }
       }
 
-      return Completable.fromCompletionStage(aggregation.freeze());
+      return Completable.fromCompletionStage(aggregation.freeze())
+            .toSingleDefault(hasMissingEntries);
+   }
+
+   /**
+    * Splits the batch into the keys to send to the remote site(s) and the keys without an entry and without a
+    * tombstone.
+    * <p>
+    * There is nothing to send to the remote site(s) for a key without an entry and without a tombstone. If the cache
+    * has no store to load the entry from, the entry can never be loaded, for example, when it was evicted and removed,
+    * and the key is discarded. Otherwise, the entry may be temporarily missing while passivation is still in progress
+    * after an eviction, and the key is kept to be retried for as long as the entry is missing.
+    * </p>
+    *
+    * @param batch  The keys loaded in this round.
+    * @param toSend Receives the keys with an entry or a tombstone to send to the remote site(s).
+    * @return {@code true} if at least one key is kept to be retried, so the caller must back off before the next
+    * round.
+    */
+   private boolean filterMissingEntries(Collection<? extends IracStateData> batch, Collection<IracStateData> toSend) {
+      List<IracManagerKeyState> toDiscard = null;
+      boolean retry = false;
+      // Entries are never loaded from write-only stores, so only a store without write-only matters here.
+      boolean hasLoadableStore = persistenceManager.hasStore(c -> !c.writeOnly());
+      for (IracStateData data : batch) {
+         if (data.entry != null || data.tombstone != null) {
+            toSend.add(data);
+            continue;
+         }
+
+         if (!hasLoadableStore) {
+            if (log.isDebugEnabled()) {
+               // Intentionally logs the key with Util.toStr().
+               // It could cause line breaks in the logs, but we want the full key logged here.
+               log.debugf("[IRAC] Entry and tombstone both null for key %s and the cache has no store to load from. The update is discarded.",
+                     data.state.getKeyInfo());
+            }
+            if (toDiscard == null)
+               toDiscard = new ArrayList<>(batch.size());
+            toDiscard.add(data.state);
+            continue;
+         }
+
+         if (log.isTraceEnabled()) {
+            log.tracef("[IRAC] Entry and tombstone both null for key %s, retrying after back-off", data.state.getKeyInfo());
+         }
+         // A store-backed key is retried for as long as its entry is missing, without a limit.
+         // IRAC intentionally doesn't give up on a key.
+         // A missing entry may still be passivating, so discarding it could lose the update.
+         // The cost is that a key missing for good stays queued, and a cross-site state transfer waiting for it never completes.
+         data.state.retry();
+         retry = true;
+      }
+
+      if (toDiscard != null) {
+         log.iracDiscardedUpdatesWithoutEntry(commandsFactory.getCacheName(), toDiscard.size());
+         toDiscard.forEach(IracManagerKeyState::discard);
+         removeStateFromCluster(toDiscard);
+      }
+      return retry;
    }
 
    private CompletionStage<Void> sendClearUpdate() {
