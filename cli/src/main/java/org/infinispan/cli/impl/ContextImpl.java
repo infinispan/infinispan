@@ -25,6 +25,7 @@ import org.aesh.terminal.utils.ANSI;
 import org.infinispan.cli.Context;
 import org.infinispan.cli.connection.Connection;
 import org.infinispan.cli.connection.ConnectionFactory;
+import org.infinispan.cli.connection.NoConnection;
 import org.infinispan.cli.logging.Messages;
 import org.infinispan.cli.resources.CacheKeyResource;
 import org.infinispan.cli.resources.Resource;
@@ -41,7 +42,8 @@ import org.infinispan.commons.util.Version;
  */
 public class ContextImpl implements Context, AeshContext, Closeable {
    private static final String CONFIG_FILE = "cli.properties";
-   private Connection connection;
+   private final Shell shell;
+   private Connection connection = NoConnection.INSTANCE;
    private final Properties properties;
    private org.aesh.io.Resource cwd;
    private ReadlineConsole console;
@@ -49,8 +51,17 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    private CommandRegistry<? extends CommandInvocation> registry;
    private final Path configPath;
 
-   public ContextImpl(Properties defaults) {
+   public ContextImpl() {
+      this(System.getProperties());
+   }
+
+   public ContextImpl(Properties properties) {
+      this(properties, null);
+   }
+
+   public ContextImpl(Properties defaults, Shell shell) {
       this.properties = new Properties(defaults);
+      this.shell = shell;
       String userDir = properties.getProperty("user.dir");
       cwd = userDir != null ? new FileResource(userDir) : null;
       configPath = getConfigurationDirectory(properties);
@@ -62,17 +73,11 @@ public class ContextImpl implements Context, AeshContext, Closeable {
             System.err.println(Messages.MSG.configLoadFailed(configFile.toString()));
          }
       }
-
    }
 
    @Override
    public Path configPath() {
       return configPath;
-   }
-
-   @Override
-   public boolean isConnected() {
-      return connection != null && connection.isConnected();
    }
 
    @Override
@@ -123,9 +128,31 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    }
 
    @Override
-   public void connect(Shell shell, String connectionString) {
+   public void setConnection(String connectionString) {
       disconnect();
       connection = ConnectionFactory.getConnection(this, connectionString, sslContext);
+   }
+
+   @Override
+   public void setConnection(String connectionString, String username, String password) {
+      disconnect();
+      connection = ConnectionFactory.getConnection(this, connectionString, sslContext);
+   }
+
+   @Override
+   public Connection connection() {
+      if (!connection.isConnected()) {
+         connect();
+      }
+      return connection;
+   }
+
+   @Override
+   public boolean isConnected() {
+      return connection().isConnected();
+   }
+
+   private void connect() {
       // Attempt a connection. If we receive an exception we might need credentials
       try {
          connection.connect();
@@ -160,31 +187,6 @@ public class ContextImpl implements Context, AeshContext, Closeable {
       refreshPrompt();
    }
 
-   private void showError(Shell shell, Throwable t) {
-      if (shell != null) {
-         shell.writeln(t.getMessage());
-      } else {
-         System.err.println(t.getMessage());
-      }
-   }
-
-   @Override
-   public void connect(Shell shell, String connectionString, String username, String password) {
-      disconnect();
-      connection = ConnectionFactory.getConnection(this, connectionString, sslContext);
-      try {
-         connection.connect(username, password);
-      } catch (IOException e) {
-         disconnect();
-         if (shell != null) {
-            shell.writeln(ANSI.RED_TEXT + e.getLocalizedMessage() + ANSI.DEFAULT_TEXT);
-         } else {
-            System.err.println(e.getLocalizedMessage());
-         }
-      }
-      refreshPrompt();
-   }
-
    private void buildPrompt(Resource resource, StringBuilder builder) {
       if (resource != null) {
          if (resource.getParent() != null) {
@@ -196,7 +198,7 @@ public class ContextImpl implements Context, AeshContext, Closeable {
 
    public void refreshPrompt() {
       if (console != null) {
-         if (connection != null) {
+         if (connection.isConnected()) {
             StringBuilder prompt = new StringBuilder();
             prompt.append("[").append(ANSI.GREEN_TEXT).append(connection.getConnectionInfo()).append(ANSI.DEFAULT_TEXT);
             buildPrompt(connection.getActiveResource(), prompt);
@@ -230,7 +232,7 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    @Override
    public void disconnect() {
       Util.close(connection);
-      connection = null;
+      connection = NoConnection.INSTANCE;
       refreshPrompt();
    }
 
@@ -258,11 +260,6 @@ public class ContextImpl implements Context, AeshContext, Closeable {
    @Override
    public void setRegistry(CommandRegistry<? extends CommandInvocation> registry) {
       this.registry = registry;
-   }
-
-   @Override
-   public Connection connection() {
-      return connection;
    }
 
    @Override
@@ -299,6 +296,29 @@ public class ContextImpl implements Context, AeshContext, Closeable {
          return Paths.get(cliDir);
       } else {
          return Paths.get(SystemUtils.getAppConfigFolder(Version.getBrandName().toLowerCase().replace(' ', '_')));
+      }
+   }
+
+   @Override
+   public String readPassword(String prompt, String confirmPrompt) throws InterruptedException {
+      String password = null;
+      while (password == null) {
+         password = shell.readLine(new Prompt(prompt, '*'));
+      }
+      if (confirmPrompt != null) {
+         String confirm = null;
+         while (confirm == null || !confirm.equals(password)) {
+            confirm = shell.readLine(new Prompt(confirmPrompt, '*'));
+         }
+      }
+      return password;
+   }
+
+   private void showError(Shell shell, Throwable t) {
+      if (shell != null) {
+         shell.writeln(t.getMessage());
+      } else {
+         System.err.println(t.getMessage());
       }
    }
 }

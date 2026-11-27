@@ -26,7 +26,7 @@ import org.kohsuke.MetaInfServices;
 @MetaInfServices(Command.class)
 @CommandDefinition(name = "connect", description = "Connects to a remote server")
 public class Connect extends CliCommand {
-   @Argument(description = "The connection string 'http://<host>:<port>' or a bookmark name", completer = BookmarkCompleter.class)
+   @Argument(description = "The connection string 'http[s]://<host>:<port>' or a bookmark name", completer = BookmarkCompleter.class)
    String connectionString;
 
    @Option(shortName = 'u')
@@ -74,32 +74,18 @@ public class Connect extends CliCommand {
 
       // If the connection string doesn't look like a URL, try to resolve it as a bookmark
       if (connectionString != null && !connectionString.contains("://")) {
-         Bookmark.ResolvedBookmark bookmark = Bookmark.resolve(invocation, connectionString);
+         Bookmark.ResolvedBookmark bookmark = Bookmark.resolve(invocation.getContext(), connectionString);
          if (bookmark != null) {
             resolvedUrl = bookmark.url();
-            if (resolvedUsername == null) {
-               resolvedUsername = bookmark.username();
-            }
-            if (resolvedPassword == null) {
-               resolvedPassword = bookmark.password();
-            }
-            if (resolvedTruststore == null) {
-               resolvedTruststore = bookmark.truststore();
-            }
-            if (resolvedTruststorePassword == null) {
-               resolvedTruststorePassword = bookmark.truststorePassword();
-            }
-            if (resolvedKeystore == null) {
-               resolvedKeystore = bookmark.keystore();
-            }
-            if (resolvedKeystorePassword == null) {
-               resolvedKeystorePassword = bookmark.keystorePassword();
-            }
+            resolvedUsername = resolvedUsername != null ? resolvedUsername : bookmark.username();
+            resolvedPassword = resolvedPassword != null ? resolvedPassword : bookmark.password();
+            resolvedKeystore = resolvedKeystore != null ? resolvedKeystore : bookmark.keystore();
+            resolvedKeystorePassword = resolvedKeystorePassword != null ? resolvedKeystorePassword : bookmark.keystorePassword();
+            resolvedTruststore = resolvedTruststore != null ? resolvedTruststore : bookmark.truststore();
+            resolvedTruststorePassword = resolvedTruststorePassword != null ? resolvedTruststorePassword : bookmark.truststorePassword();
+            resolvedHostnameVerifier = resolvedHostnameVerifier != null ? resolvedHostnameVerifier : "";
             if (!resolvedTrustAll) {
                resolvedTrustAll = bookmark.trustAll();
-            }
-            if (resolvedHostnameVerifier == null) {
-               resolvedHostnameVerifier = bookmark.hostnameVerifier();
             }
          }
       }
@@ -115,17 +101,17 @@ public class Connect extends CliCommand {
       try {
          CLI.configureSslContext(invocation.getContext(), resolvedTruststore, resolvedTruststorePassword, resolvedKeystore, resolvedKeystorePassword, provider, resolvedHostnameVerifier, resolvedTrustAll);
       } catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException | IOException e) {
-         invocation.getShell().writeln(Messages.MSG.keyStoreError(e));
+         invocation.getShell().writeln(Messages.MSG.keyStoreError(e.getMessage()));
          throw new RuntimeException(e);
       }
       if (contextPath != null) {
          invocation.getContext().setProperty(RestClientConfigurationProperties.CONTEXT_PATH, contextPath);
       }
       if (resolvedUsername != null) {
-         invocation.getContext().connect(invocation.getShell(), resolvedUrl, resolvedUsername, resolvedPassword);
+         invocation.getContext().setConnection(resolvedUrl, resolvedUsername, resolvedPassword);
       } else {
-         invocation.getContext().connect(invocation.getShell(), resolvedUrl);
+         invocation.getContext().setConnection(resolvedUrl);
       }
-      return invocation.getContext().isConnected() ? CommandResult.SUCCESS : CommandResult.FAILURE;
+      return invocation.getContext().connection().isConnected() ? CommandResult.SUCCESS : CommandResult.FAILURE;
    }
 }
