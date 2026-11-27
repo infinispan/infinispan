@@ -4,6 +4,7 @@ import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_JSON;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_OCTET_STREAM;
+import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_SERIALIZED_OBJECT;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_UNKNOWN;
 import static org.infinispan.commons.dataconversion.MediaType.APPLICATION_WWW_FORM_URLENCODED;
 import static org.infinispan.commons.dataconversion.MediaType.TEXT_PLAIN;
@@ -11,6 +12,7 @@ import static org.infinispan.commons.dataconversion.StandardConversions.convertC
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
 
 import org.infinispan.commons.dataconversion.EncodingException;
@@ -133,6 +135,17 @@ public class JsonTranscoderTest extends AbstractTranscoderTest {
    public void testPreventInvalidJson3() {
       byte[] invalidContent = "{a:1}".getBytes(UTF_8);
       transcoder.transcode(invalidContent, TEXT_PLAIN, APPLICATION_JSON);
+   }
+
+   /**
+    * A java-serialized value that declares an array size within the deserializer's accepted limits but carries no
+    * payload behind it must fail conversion cleanly: before the fix the declared size alone drove the allocation,
+    * exhausting the server heap.
+    */
+   @Test(expectedExceptions = EncodingException.class)
+   public void testJavaSerializedWithUnbackedArraySizeIsRejected() throws IOException {
+      byte[] forged = DeserializerTest.streamDeclaringByteArrayOfSize(1 << 29);
+      transcoder.transcode(forged, APPLICATION_SERIALIZED_OBJECT, APPLICATION_JSON);
    }
 
 }

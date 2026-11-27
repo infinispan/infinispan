@@ -37,6 +37,7 @@ import org.infinispan.server.functional.rest.RestPeekOperations;
 import org.infinispan.server.functional.rest.RestProtobufResourceTest;
 import org.infinispan.server.functional.rest.RestRouter;
 import org.infinispan.server.functional.rest.RestServerResource;
+import org.infinispan.server.functional.rest.RestStreamingUnconvertible;
 import org.infinispan.server.test.artifacts.Artifacts;
 import org.infinispan.server.test.core.Common;
 import org.infinispan.server.test.core.ServerRunMode;
@@ -84,9 +85,10 @@ import org.junit.platform.suite.api.Suite;
       RespStringTest.class,
       RespTransactionTest.class,
       RestContainerListenerTest.class,
+      RestGlobalConfigurationTest.class,
       RestPeekOperations.class,
       RestProtobufResourceTest.class,
-      RestGlobalConfigurationTest.class,
+      RestStreamingUnconvertible.class,
 })
 public class ClusteredIT extends InfinispanSuite {
 

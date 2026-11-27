@@ -53,6 +53,14 @@ public class EncoderEntryMapper<K, V, T extends Map.Entry<K, V>> implements Enco
       this.valueDataConversion = valueDataConversion;
    }
 
+   public DataConversion getKeyDataConversion() {
+      return keyDataConversion;
+   }
+
+   public DataConversion getValueDataConversion() {
+      return valueDataConversion;
+   }
+
    @Inject
    public void injectDependencies(ComponentRegistry registry) {
       registry.wireDependencies(keyDataConversion);

@@ -6,15 +6,18 @@ import org.infinispan.commons.dataconversion.internal.Json;
  * Based on Serialisys by Eamonn McManus
  */
 public class SBlockData extends SEntity {
-   private final byte[] data;
 
-   SBlockData(byte[] data) {
+   // only the length is rendered, never the payload, so the bytes are read and discarded as they are counted (see
+   // Deserializer.blockData) instead of being buffered
+   private final long length;
+
+   SBlockData(long length) {
       super("byte[]");
-      this.data = data;
+      this.length = length;
    }
 
    @Override
    public Json json() {
-      return Json.make("byte[" + data.length + "]");
+      return Json.make("byte[" + length + "]");
    }
 }
