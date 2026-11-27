@@ -80,6 +80,9 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * {@link org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent} and
  * {@link org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent}.
  * For performance reasons, a clustered listener only receives post events.
+ * A clustered listener may also declare a
+ * {@link org.infinispan.notifications.cachelistener.annotation.SegmentsLost} method. Unlike the entry events, that
+ * one is not collected from the other nodes: it is raised locally, once, by the node the listener was registered on.
  *
  * <h2>Summary of Notification Annotations</h2>
  * <table border="1">
@@ -163,6 +166,11 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  *       <td>{@link org.infinispan.notifications.cachelistener.annotation.CacheEntryInvalidated}</td>
  *       <td>{@link org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent}</td>
  *       <td>A cache entry was invalidated by a remote cache.  Only if cache mode is INVALIDATION_SYNC or INVALIDATION_ASYNC.</td>
+ *    </tr>
+ *    <tr>
+ *       <td>{@link org.infinispan.notifications.cachelistener.annotation.SegmentsLost}</td>
+ *       <td>{@link org.infinispan.notifications.cachelistener.event.SegmentsLostEvent}</td>
+ *       <td>One or more segments lost all their owners, so the entries they held are no longer in the cluster</td>
  *    </tr>
   * </table>
   *
