@@ -15,6 +15,7 @@ import java.util.function.Predicate;
 import org.infinispan.server.test.core.TestClient;
 import org.infinispan.server.test.core.TestServer;
 import org.infinispan.server.test.core.TestSetupUtil;
+import org.infinispan.testing.ThreadLeakChecker;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.junit.jupiter.api.Assertions;
@@ -23,6 +24,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
+import org.junit.jupiter.api.extension.ExtensionContext.StoreScope;
 import org.junit.jupiter.api.extension.TestWatcher;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.platform.commons.support.HierarchyTraversalMode;
@@ -166,7 +169,16 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
 
    @Override
    public final void testFailed(ExtensionContext context, Throwable cause) {
-      ServerRetryLifecycle.recordFailure(this);
+      if (rerunFailingTestsEnabled()) {
+         retryLifecycle(context).recordFailure(this);
+      }
+   }
+
+   @Override
+   public final void testSuccessful(ExtensionContext context) {
+      if (rerunFailingTestsEnabled()) {
+         retryLifecycle(context).recordSuccess(this);
+      }
    }
 
    @Override
@@ -181,7 +193,7 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
          cleanupSuiteClasses(context);
          // Only stop the extension resources when all tests in a Suite have been completed
          if (suiteTestClasses.isEmpty()) {
-            if (!ServerRetryLifecycle.deferCleanup(this, context)) {
+            if (!rerunFailingTestsEnabled() || !deferCleanup(context)) {
                onTestsComplete(context);
             }
          }
@@ -198,5 +210,22 @@ public abstract class AbstractServerExtension implements BeforeAllCallback, Afte
 
    final void completeDeferredCleanup(ExtensionContext extensionContext) {
       onTestsComplete(extensionContext);
+   }
+
+   private ServerRetryLifecycle retryLifecycle(ExtensionContext context) {
+      return context.getStore(StoreScope.LAUNCHER_SESSION, Namespace.create(ServerRetryLifecycle.class))
+            .getOrComputeIfAbsent(ServerRetryLifecycle.class, ignored -> new ServerRetryLifecycle(), ServerRetryLifecycle.class);
+   }
+
+   private boolean rerunFailingTestsEnabled() {
+      return Integer.getInteger(ServerRetryLifecycle.RERUN_FAILING_TESTS_COUNT, 0) > 0;
+   }
+
+   private boolean deferCleanup(ExtensionContext context) {
+      boolean deferred = retryLifecycle(context).deferCleanup(this, context);
+      if (deferred) {
+         ThreadLeakChecker.ignoreThreadsContaining("docker-java-stream-");
+      }
+      return deferred;
    }
 }

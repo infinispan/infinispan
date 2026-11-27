@@ -1,21 +1,19 @@
 package org.infinispan.server.test.jupiter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Proxy;
-import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.platform.launcher.LauncherSession;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 
@@ -24,7 +22,6 @@ public class AbstractServerExtensionTest {
    @AfterEach
    public void resetRetryLifecycle() {
       System.clearProperty(ServerRetryLifecycle.RERUN_FAILING_TESTS_COUNT);
-      ServerRetryLifecycle.reset();
    }
 
    @Test
@@ -82,16 +79,14 @@ public class AbstractServerExtensionTest {
    }
 
    @Test
-   public void testSuiteCleanupWaitsForLauncherSessionWhenRetriesAreEnabled() {
+   public void testSuccessfulRetryCompletesCleanup() {
       System.setProperty(ServerRetryLifecycle.RERUN_FAILING_TESTS_COUNT, "1");
-      InfinispanServerLauncherSessionListener listener = new InfinispanServerLauncherSessionListener();
-      LauncherSession session = launcherSession();
+      StoreHolder store = new StoreHolder();
       TrackingExtension extension = new TrackingExtension();
-      ExtensionContext first = contextFor(RetrySuite.First.class);
-      ExtensionContext second = contextFor(RetrySuite.Second.class);
-      ExtensionContext third = contextFor(RetrySuite.Third.class);
+      ExtensionContext first = contextFor(RetrySuite.First.class, store);
+      ExtensionContext second = contextFor(RetrySuite.Second.class, store);
+      ExtensionContext third = contextFor(RetrySuite.Third.class, store);
 
-      listener.launcherSessionOpened(session);
       extension.initSuiteClasses(first);
       extension.afterAll(first);
       extension.initSuiteClasses(second);
@@ -103,61 +98,73 @@ public class AbstractServerExtensionTest {
       assertEquals(0, extension.completedExecutions.get());
 
       extension.initSuiteClasses(second);
+      extension.testSuccessful(second);
       extension.afterAll(second);
-      assertEquals(0, extension.completedExecutions.get());
+      assertEquals(1, extension.completedExecutions.get());
 
-      listener.launcherSessionClosed(session);
+      store.close();
       assertEquals(1, extension.completedExecutions.get());
    }
 
    @Test
    public void testLauncherSessionsCleanUpOnlyTheirOwnExtensions() {
       System.setProperty(ServerRetryLifecycle.RERUN_FAILING_TESTS_COUNT, "1");
-      InfinispanServerLauncherSessionListener listener = new InfinispanServerLauncherSessionListener();
       TrackingExtension firstExtension = new TrackingExtension();
       TrackingExtension secondExtension = new TrackingExtension();
-      LauncherSession firstSession = launcherSession();
-      LauncherSession secondSession = launcherSession();
+      StoreHolder firstStore = new StoreHolder();
+      StoreHolder secondStore = new StoreHolder();
 
-      listener.launcherSessionOpened(firstSession);
-      completeFailedSuite(firstExtension);
-      listener.launcherSessionOpened(secondSession);
-      completeFailedSuite(secondExtension);
+      completeFailedSuite(firstExtension, firstStore);
+      completeFailedSuite(secondExtension, secondStore);
 
-      listener.launcherSessionClosed(firstSession);
+      firstStore.close();
       assertEquals(1, firstExtension.completedExecutions.get());
       assertEquals(0, secondExtension.completedExecutions.get());
 
-      listener.launcherSessionClosed(secondSession);
+      secondStore.close();
       assertEquals(1, secondExtension.completedExecutions.get());
    }
 
    @Test
    public void testLauncherSessionCompletesAllCleanupsWhenOneFails() {
       System.setProperty(ServerRetryLifecycle.RERUN_FAILING_TESTS_COUNT, "1");
-      InfinispanServerLauncherSessionListener listener = new InfinispanServerLauncherSessionListener();
       FailingTrackingExtension failingExtension = new FailingTrackingExtension();
       TrackingExtension successfulExtension = new TrackingExtension();
-      LauncherSession session = launcherSession();
+      StoreHolder store = new StoreHolder();
 
-      listener.launcherSessionOpened(session);
-      completeFailedSuite(failingExtension);
-      completeFailedSuite(successfulExtension);
+      completeFailedSuite(failingExtension, store);
+      completeFailedSuite(successfulExtension, store);
 
-      assertThrows(RuntimeException.class, () -> listener.launcherSessionClosed(session));
+      RuntimeException exception = org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class, store::close);
+      assertEquals(1, exception.getSuppressed().length);
       assertEquals(1, failingExtension.completedExecutions.get());
       assertEquals(1, successfulExtension.completedExecutions.get());
 
-      listener.launcherSessionClosed(session);
-      assertEquals(2, failingExtension.completedExecutions.get());
+      store.close();
+      assertEquals(1, failingExtension.completedExecutions.get());
    }
 
    @Test
-   public void testLauncherSessionListenerIsRegistered() throws IOException {
-      try (InputStream stream = getClass().getClassLoader().getResourceAsStream(
-            "META-INF/services/org.junit.platform.launcher.LauncherSessionListener")) {
-         assertEquals(InfinispanServerLauncherSessionListener.class.getName(), new String(stream.readAllBytes(), StandardCharsets.UTF_8).trim());
-      }
+   public void testInfinispanServerFieldForwardsFailureNotification() {
+      System.setProperty(ServerRetryLifecycle.RERUN_FAILING_TESTS_COUNT, "1");
+      StoreHolder store = new StoreHolder();
+      TrackingExtension extension = new TrackingExtension();
+      InfinispanServerFieldTest.SERVER = extension;
+      ExtensionContext first = contextFor(RetrySuite.First.class, store);
+      ExtensionContext second = contextFor(RetrySuite.Second.class, store);
+      ExtensionContext third = contextFor(RetrySuite.Third.class, store);
+
+      extension.initSuiteClasses(first);
+      extension.afterAll(first);
+      extension.initSuiteClasses(second);
+      extension.afterAll(second);
+      new CustomInfinispanExtension().testFailed(contextFor(InfinispanServerFieldTest.class, store), new AssertionError());
+      extension.initSuiteClasses(third);
+      extension.afterAll(third);
+
+      assertEquals(0, extension.completedExecutions.get());
+      store.close();
+      assertEquals(1, extension.completedExecutions.get());
    }
 
    private void completeInitialSuite(TrackingExtension extension) {
@@ -182,10 +189,10 @@ public class AbstractServerExtensionTest {
       assertEquals(completedExecutions, extension.completedExecutions.get());
    }
 
-   private void completeFailedSuite(TrackingExtension extension) {
-      ExtensionContext first = contextFor(RetrySuite.First.class);
-      ExtensionContext second = contextFor(RetrySuite.Second.class);
-      ExtensionContext third = contextFor(RetrySuite.Third.class);
+   private void completeFailedSuite(TrackingExtension extension, StoreHolder store) {
+      ExtensionContext first = contextFor(RetrySuite.First.class, store);
+      ExtensionContext second = contextFor(RetrySuite.Second.class, store);
+      ExtensionContext third = contextFor(RetrySuite.Third.class, store);
       extension.initSuiteClasses(first);
       extension.afterAll(first);
       extension.initSuiteClasses(second);
@@ -195,22 +202,44 @@ public class AbstractServerExtensionTest {
       extension.afterAll(third);
    }
 
-   private LauncherSession launcherSession() {
-      return (LauncherSession) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{LauncherSession.class},
-            (proxy, method, args) -> switch (method.getName()) {
-               case "equals" -> proxy == args[0];
-               case "hashCode" -> System.identityHashCode(proxy);
-               default -> throw new UnsupportedOperationException(method.getName());
-            });
+   private ExtensionContext contextFor(Class<?> testClass) {
+      return contextFor(testClass, new StoreHolder());
    }
 
-   private ExtensionContext contextFor(Class<?> testClass) {
+   private ExtensionContext contextFor(Class<?> testClass, StoreHolder store) {
       return (ExtensionContext) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{ExtensionContext.class},
             (proxy, method, args) -> switch (method.getName()) {
                case "getRequiredTestClass" -> testClass;
                case "getTestClass" -> Optional.of(testClass);
+               case "getStore" -> store.store;
                default -> throw new UnsupportedOperationException(method.getName());
             });
+   }
+
+   private static class StoreHolder {
+      private final Map<Object, Object> values = new HashMap<>();
+      private final ExtensionContext.Store store = (ExtensionContext.Store) Proxy.newProxyInstance(
+            AbstractServerExtensionTest.class.getClassLoader(), new Class<?>[]{ExtensionContext.Store.class},
+            (proxy, method, args) -> {
+               if (method.getName().equals("getOrComputeIfAbsent")) {
+                  return values.computeIfAbsent(args[0], ignored -> ((Function<Object, Object>) args[1]).apply(args[0]));
+               }
+               throw new UnsupportedOperationException(method.getName());
+            });
+
+      void close() {
+         for (Object value : values.values()) {
+            if (value instanceof ExtensionContext.Store.CloseableResource closeable) {
+               try {
+                  closeable.close();
+               } catch (RuntimeException e) {
+                  throw e;
+               } catch (Throwable t) {
+                  throw new RuntimeException(t);
+               }
+            }
+         }
+      }
    }
 
    @Suite
@@ -233,6 +262,14 @@ public class AbstractServerExtensionTest {
          public void test() {
          }
       }
+   }
+
+   public static class DummySuite extends InfinispanSuite {
+   }
+
+   public static class InfinispanServerFieldTest {
+      @InfinispanServer(DummySuite.class)
+      public static TrackingExtension SERVER;
    }
 
    static class TrackingExtension extends AbstractServerExtension {
