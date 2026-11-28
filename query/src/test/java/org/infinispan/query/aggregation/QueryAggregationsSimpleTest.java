@@ -19,7 +19,7 @@ public class QueryAggregationsSimpleTest extends SingleCacheManagerTest {
 
    // these results depend on the seed
    public static final Object[][] AGG_RESULT_SUM = {{"PINK", 100}};
-   public static final Object[][] AGG_RESULT_AVG = {{"PINK", 50}};
+   public static final Object[][] AGG_RESULT_AVG = {{"PINK", 50.0d}};
    public static final Object[][] AGG_RESULT_COUNT = {{"PINK", 3L}};
    public static final Object[][] AGG_RESULT_COUNT_NUMBER = {{"PINK", 2L}};
    public static final Object[][] AGG_RESULT_MAX = {{"PINK", 56}};

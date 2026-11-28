@@ -1265,8 +1265,8 @@ public class QueryConditionsTest extends AbstractQueryTest {
       assertEquals(2, list.get(0).length);
       assertEquals(2, list.get(1).length);
       assertEquals(2, list.get(2).length);
-      assertEquals(156, list.get(0)[1]);
-      assertEquals(150, list.get(1)[1]);
+      assertEquals(156.0d, list.get(0)[1]);
+      assertEquals(150.0d, list.get(1)[1]);
       assertNull(list.get(2)[1]);
    }
 
@@ -1283,7 +1283,7 @@ public class QueryConditionsTest extends AbstractQueryTest {
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).length);
-      assertEquals(152, list.get(0)[0]);
+      assertEquals(152.0d, list.get(0)[0]);
    }
 
    public void testMin() {
@@ -1461,7 +1461,7 @@ public class QueryConditionsTest extends AbstractQueryTest {
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).length);
-      assertEquals(22, list.get(0)[0]);  // only non-null "age"s were used in the average
+      assertEquals(22.0d, list.get(0)[0]);  // only non-null "age"s were used in the average
    }
 
    public void testDateGrouping1() {
@@ -1711,7 +1711,7 @@ public class QueryConditionsTest extends AbstractQueryTest {
       assertEquals(2, list.get(0).length);
       assertNull(list.get(0)[0]);
       assertEquals("Spider", list.get(0)[1]);
-      assertEquals(22, list.get(1)[0]);
+      assertEquals(22.0d, list.get(1)[0]);
       assertEquals("John", list.get(1)[1]);
    }
 

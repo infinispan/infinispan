@@ -34,7 +34,7 @@ public final class SearchQueryBuilder {
    private final SearchSession querySession;
    private final SearchScope<?> scope;
    private final SearchProjectionInfo projectionInfo;
-   private final InfinispanAggregation<?> aggregation;
+   private final InfinispanAggregation<?, ?> aggregation;
    private final SearchPredicate predicate;
    private final SearchSort sort;
    private final Integer knn;
@@ -47,7 +47,7 @@ public final class SearchQueryBuilder {
    private TimeUnit timeUnit;
 
    public SearchQueryBuilder(SearchSession querySession, SearchScope<?> scope, SearchProjectionInfo projectionInfo,
-                             InfinispanAggregation<?> aggregation, SearchPredicate predicate, SearchSort sort,
+                             InfinispanAggregation<?, ?> aggregation, SearchPredicate predicate, SearchSort sort,
                              int hitCountAccuracy, Integer knn) {
       this.querySession = querySession;
       this.scope = scope;
@@ -121,7 +121,7 @@ public final class SearchQueryBuilder {
       return knn;
    }
 
-   public InfinispanAggregation<?> aggregation() {
+   public InfinispanAggregation<?, ?> aggregation() {
       return aggregation;
    }
 
@@ -143,9 +143,9 @@ public final class SearchQueryBuilder {
       return queryOptionsStep.toQuery();
    }
 
-   private <T, A> LuceneSearchQuery<T> buildWithAggregation(SearchProjection<T> searchProjection,
-                                                                   InfinispanAggregation<A> aggregation) {
-      AggregationKey<Map<A, Long>> aggregationKey = AggregationKey.of(INFINISPAN_AGGREGATION_KEY_NAME);
+   private <T, A, V> LuceneSearchQuery<T> buildWithAggregation(SearchProjection<T> searchProjection,
+                                                                InfinispanAggregation<A, V> aggregation) {
+      AggregationKey<Map<A, V>> aggregationKey = AggregationKey.of(INFINISPAN_AGGREGATION_KEY_NAME);
       LuceneSearchQueryOptionsStep<?, T, ?> queryOptionsStep = querySession.search(scope)
             .extension(LuceneExtension.get())
             .select(searchProjection)
